@@ -1,0 +1,25 @@
+enum AccessibilityIdentifier {
+  static let workspaceCanvas = "leather.workspace.canvas"
+  static let workspaceStatusBar = "leather.workspace.status-bar"
+
+  static let toolbarDrawingLayer = "leather.toolbar.drawing-layer"
+  static let toolbarZoomToFit = "leather.toolbar.zoom-to-fit"
+  static let toolbarZoomOut = "leather.toolbar.zoom-out"
+  static let toolbarZoomIn = "leather.toolbar.zoom-in"
+  static let toolbarGrid = "leather.toolbar.grid"
+  static let toolbarA4Reference = "leather.toolbar.a4-reference"
+  static let toolbarPortraitOrientation = "leather.toolbar.orientation.portrait"
+  static let toolbarLandscapeOrientation = "leather.toolbar.orientation.landscape"
+  static let toolbarGridSnap = "leather.toolbar.grid-snap"
+  static let toolbarPointSnap = "leather.toolbar.point-snap"
+  static let toolbarTools = "leather.toolbar.tools"
+  static let toolbarInspector = "leather.toolbar.inspector"
+  static let toolbarViewMode = "leather.toolbar.view-mode"
+  static let toolbarOverflow = "leather.toolbar.overflow"
+  static let toolbarCopySelection = "leather.toolbar.copy-selection"
+  static let toolbarPasteSelection = "leather.toolbar.paste-selection"
+  static let toolbarDuplicateSelection = "leather.toolbar.duplicate-selection"
+
+  static let statusBottomWorkbench = "leather.status.bottom-workbench"
+  static let pasteOptions = "leather.paste-options"
+}

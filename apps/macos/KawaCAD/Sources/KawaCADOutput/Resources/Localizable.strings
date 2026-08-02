@@ -1,0 +1,10 @@
+"output.save_pdf_failed" = "PDFの保存に失敗しました: %@";
+"output.pdf_exported" = "%@ に PDF を出力しました";
+"output.pdf_exported_with_warning" = "%@ に PDF を出力しました（警告: %@）";
+"output.direct_print_opened" = "直接印刷ダイアログを開きました";
+"output.direct_print_opened_with_warning" = "直接印刷ダイアログを開きました（警告: %@）";
+"output.warning_separator" = " / ";
+"output.direct_print_job_title" = "%@ の直接印刷";
+"output.direct_print_start_failed" = "直接印刷を開始できませんでした";
+"output.direct_print_requires_a4" = "OS 印刷設定で A4 を選択してください。";
+"output.direct_print_requires_actual_scale" = "OS 印刷設定で倍率を 100%% にしてください。";

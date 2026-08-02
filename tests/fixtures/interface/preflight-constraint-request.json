@@ -1,0 +1,10 @@
+{
+  "kind": "preflightConstraint",
+  "payload": {
+    "kind": "angle",
+    "targets": [
+      { "entity": "entity:first" },
+      { "entity": "entity:second" }
+    ]
+  }
+}

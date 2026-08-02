@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:leather}/apps/macos/KawaCAD",
+            "name": "Debug KawaCAD (apps/macos/KawaCAD)",
+            "target": "KawaCAD",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug KawaCAD (apps/macos/KawaCAD)"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:leather}/apps/macos/KawaCAD",
+            "name": "Release KawaCAD (apps/macos/KawaCAD)",
+            "target": "KawaCAD",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release KawaCAD (apps/macos/KawaCAD)"
+        }
+    ]
+}

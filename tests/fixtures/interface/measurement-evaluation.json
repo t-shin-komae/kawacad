@@ -1,0 +1,7 @@
+{
+  "annotationId": "measurement:length-a",
+  "kind": "segmentLength",
+  "value": { "fixedMm": 25.0 },
+  "start": { "xMm": 0.0, "yMm": 0.0 },
+  "end": { "xMm": 25.0, "yMm": 0.0 }
+}

@@ -1,0 +1,13 @@
+{
+  "kind": "exportSelection",
+  "payload": {
+    "selection": {
+      "entityIds": ["entity:line-a"],
+      "derivedElementIds": [],
+      "constraintIds": [],
+      "measurementAnnotationIds": [],
+      "stitchStartPointIds": [],
+      "freeTextIds": []
+    }
+  }
+}

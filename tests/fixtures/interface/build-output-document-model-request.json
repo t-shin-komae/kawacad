@@ -1,0 +1,15 @@
+{
+  "kind": "buildOutputDocumentModel",
+  "payload": {
+    "orientation": "portrait",
+    "includeDimensionLabels": true,
+    "includeScaleGuide": true,
+    "rotationDeg": 0,
+    "printableAreaMm": {
+      "leftMm": -100.0,
+      "rightMm": 100.0,
+      "topMm": 143.5,
+      "bottomMm": -143.5
+    }
+  }
+}

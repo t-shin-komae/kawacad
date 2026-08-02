@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "renderInvalidPageSize",
+    "message": "render page size is invalid",
+    "details": { "target": "pdf" }
+  }
+}

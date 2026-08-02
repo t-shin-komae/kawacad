@@ -1,0 +1,21 @@
+{
+  "kind": "applyCommand",
+  "payload": {
+    "command": {
+      "kind": "updateDerivedElement",
+      "payload": {
+        "id": "derived:offset",
+        "layerId": "layer:cut-line",
+        "styleId": "style:stitch-line",
+        "kind": {
+          "offsetCurve": {
+            "sourceEntityIds": ["entity:outer-a", "entity:outer-b"],
+            "distance": { "fixedMm": 3.0 },
+            "direction": "inward"
+          }
+        }
+      }
+    },
+    "viewMode": "editDisplay"
+  }
+}

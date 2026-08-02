@@ -1,0 +1,9 @@
+{
+  "kind": "preflightDerivedElement",
+  "payload": {
+    "kind": "offsetCurve",
+    "hitEntityId": "entity:line-a",
+    "selectedEntityIds": [],
+    "clickPoint": { "xMm": 4.0, "yMm": 2.0 }
+  }
+}

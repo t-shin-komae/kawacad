@@ -1,0 +1,72 @@
+# Project automation
+
+All local automation is exposed through the Node.js CLI. It uses only Node's standard library and invokes the existing Rust, Swift, npm, and Tauri tools directly.
+
+Configure the repository hook once:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+## Pre-commit
+
+```bash
+node scripts/kawacad.mjs pre-commit
+node scripts/kawacad.mjs pre-commit --fix
+```
+
+The check runs Rust formatting and Clippy, Swift formatting checks on macOS, and Tauri formatting and TypeScript checks.
+
+## Tests
+
+```bash
+node scripts/kawacad.mjs test --scope core
+node scripts/kawacad.mjs test --scope swift
+node scripts/kawacad.mjs test --scope tauri
+node scripts/kawacad.mjs test --scope tauri --e2e
+node scripts/kawacad.mjs test --scope all
+```
+
+`--live-core` enables the Swift tests that start a real `kawacad-core-process`. Swift commands require macOS. The `all` scope skips Swift on other operating systems and reports the skip.
+
+## Coverage
+
+Coverage reports are written under `coverage/`, never as report artifacts under `target/`:
+
+```bash
+node scripts/kawacad.mjs coverage --scope core
+node scripts/kawacad.mjs coverage --scope swift
+node scripts/kawacad.mjs coverage --scope tauri
+node scripts/kawacad.mjs coverage --scope all
+```
+
+The Rust report contains LCOV and HTML, Swift contains the SwiftPM coverage JSON, and Tauri contains LCOV and the V8 HTML report. No cross-tool summary or CI-specific report is generated.
+
+Rust coverage requires `cargo-llvm-cov`. Swift coverage requires SwiftPM on macOS. Tauri coverage requires dependencies installed with:
+
+```bash
+npm ci --prefix apps/tauri/KawaCAD
+```
+
+## Release
+
+macOS can produce both application variants:
+
+```bash
+node scripts/kawacad.mjs release --platform macos --variant swift
+node scripts/kawacad.mjs release --platform macos --variant tauri
+node scripts/kawacad.mjs release --platform macos --variant all
+```
+
+The artifacts are `dist/macos/swift/KawaCAD.app` and `dist/macos/tauri/KawaCAD.app`.
+
+Windows and Linux release commands must run natively on their respective operating systems:
+
+```bash
+node scripts/kawacad.mjs release --platform windows
+node scripts/kawacad.mjs release --platform linux
+```
+
+They produce `dist/windows/KawaCAD.exe` and `dist/linux/KawaCAD`. Installer packages, signing, notarization, DMG, MSI, deb, and AppImage generation are intentionally outside this layer.
+
+Use `--dry-run` with any command to inspect the commands without invoking build tools.

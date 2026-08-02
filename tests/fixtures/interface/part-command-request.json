@@ -1,0 +1,15 @@
+{
+  "kind": "applyCommand",
+  "payload": {
+    "command": {
+      "kind": "createPart",
+      "payload": {
+        "id": "part:wallet-outer",
+        "name": "財布外装",
+        "originMm": { "xMm": 0.0, "yMm": 0.0 },
+        "entityIds": ["entity:bottom", "entity:right", "entity:top", "entity:left"]
+      }
+    },
+    "viewMode": "editDisplay"
+  }
+}

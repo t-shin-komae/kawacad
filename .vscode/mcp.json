@@ -1,0 +1,15 @@
+{
+	"servers": {
+		"xcodebuildmcp-server-c0e0192a": {
+			"type": "stdio",
+			"command": "xcodebuildmcp",
+			"args": ["mcp"],
+			"cwd": "${workspaceFolder}"
+		},
+		 "github": {
+			"type": "http",
+			"url": "https://api.githubcopilot.com/mcp/"
+    }
+	},
+	"inputs": []
+}

@@ -1,0 +1,13 @@
+{
+  "kind": "applyCommand",
+  "payload": {
+    "command": {
+      "kind": "setEntityMetric",
+      "payload": {
+        "entityId": "entity:line-a",
+        "metric": { "kind": "segmentLength", "valueMm": 25.0 }
+      }
+    },
+    "viewMode": "editDisplay"
+  }
+}

@@ -1,0 +1,1564 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/leather/schemas/interface/0.1.0.schema.json",
+  "title": "Leather UI/Core Interface Schema 0.1.0",
+  "type": "object",
+  "description": "Machine-readable contract for UI/Core pipe JSON messages used by KawaCAD.",
+  "$defs": {
+    "pointMm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["xMm", "yMm"],
+      "properties": {
+        "xMm": { "type": "number" },
+        "yMm": { "type": "number" }
+      }
+    },
+    "rgba": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["red", "green", "blue", "alpha"],
+      "properties": {
+        "red": { "type": "number" },
+        "green": { "type": "number" },
+        "blue": { "type": "number" },
+        "alpha": { "type": "number" }
+      }
+    },
+    "layerStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stroke", "strokeWidthMm", "pattern"],
+      "properties": {
+        "stroke": { "$ref": "#/$defs/rgba" },
+        "strokeWidthMm": { "type": "number" },
+        "pattern": {
+          "type": "string",
+          "enum": ["solid", "dashed", "dotted", "construction"]
+        }
+      }
+    },
+    "sharedStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "style"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "style": { "$ref": "#/$defs/layerStyle" }
+      }
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "originMm", "outlineEntityIds", "holeEntityIdGroups", "entityIds", "derivedElementIds", "freeTextIds", "measurementAnnotationIds", "visible", "printable", "locked", "quantity"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "originMm": { "$ref": "#/$defs/pointMm" },
+        "outlineEntityIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "holeEntityIdGroups": {
+          "type": "array",
+          "items": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+        },
+        "entityIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "derivedElementIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "freeTextIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "measurementAnnotationIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "visible": { "type": "boolean" },
+        "printable": { "type": "boolean" },
+        "locked": { "const": true },
+        "quantity": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "derivedElement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "layerId": {
+          "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ]
+        },
+        "styleId": {
+          "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ]
+        },
+        "kind": { "$ref": "#/$defs/derivedElementKind" }
+      }
+    },
+    "roundHoleKind": {
+      "type": "string",
+      "enum": ["keyRing", "rivet", "snapFastener", "decorative"]
+    },
+    "roundHole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "entityId", "kind"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "entityId": { "type": "string", "minLength": 1 },
+        "kind": { "$ref": "#/$defs/roundHoleKind" }
+      }
+    },
+    "stitchStartPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "targetId", "positionRatio"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "targetId": { "type": "string", "minLength": 1 },
+        "resolvedIndex": { "type": "integer", "minimum": 0 },
+        "positionRatio": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "derivedElementKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["offsetCurve"],
+          "properties": {
+            "offsetCurve": { "$ref": "#/$defs/offsetCurve" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fillet"],
+          "properties": {
+            "fillet": { "$ref": "#/$defs/fillet" }
+          }
+        }
+      ]
+    },
+    "offsetCurve": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceEntityIds", "distance", "direction"],
+      "properties": {
+        "sourceEntityIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "sourceResolvedEntityIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "distance": { "$ref": "#/$defs/constraintValue" },
+        "direction": {
+          "type": "string",
+          "enum": ["left", "right", "inward", "outward"]
+        }
+      }
+    },
+    "fillet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceEntityIds", "radius"],
+      "properties": {
+        "sourceEntityIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "radius": { "$ref": "#/$defs/constraintValue" },
+        "closed": { "type": "boolean" }
+      }
+    },
+    "sharedStyleCommand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "addSharedStyle" },
+            "payload": { "$ref": "#/$defs/sharedStyle" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "updateSharedStyle" },
+            "payload": { "$ref": "#/$defs/sharedStyle" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "deleteSharedStyle" },
+            "payload": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setEntitySharedStyle" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["entityId", "styleId"],
+              "properties": {
+                "entityId": { "type": "string", "minLength": 1 },
+                "styleId": {
+                  "anyOf": [
+                    { "type": "string", "minLength": 1 },
+                    { "type": "null" }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "updateDerivedElement" },
+            "payload": { "$ref": "#/$defs/derivedElement" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "addRoundHole" },
+            "payload": { "$ref": "#/$defs/roundHole" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "updateRoundHole" },
+            "payload": { "$ref": "#/$defs/roundHole" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "deleteRoundHole" },
+            "payload": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "addStitchStartPoint" },
+            "payload": { "$ref": "#/$defs/stitchStartPoint" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "updateStitchStartPoint" },
+            "payload": { "$ref": "#/$defs/stitchStartPoint" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "deleteStitchStartPoint" },
+            "payload": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "moveEntities" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["entityIds", "delta", "allowSingleLineStretch"],
+              "properties": {
+                "entityIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "delta": { "$ref": "#/$defs/pointMm" },
+                "allowSingleLineStretch": { "type": "boolean" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "moveControlPoint" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["target", "position", "allowProjection"],
+              "properties": {
+                "target": { "$ref": "#/$defs/constraintTarget" },
+                "position": { "$ref": "#/$defs/pointMm" },
+                "allowProjection": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sharedStyleApplyCommandRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "enum": ["applyCommand", "previewCommand"] },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["command"],
+          "properties": {
+            "command": { "$ref": "#/$defs/sharedStyleCommand" },
+            "viewMode": { "type": "string", "enum": ["editDisplay", "outputPreview"] }
+          }
+        }
+      }
+    },
+    "selectionReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityIds", "derivedElementIds", "constraintIds", "measurementAnnotationIds", "stitchStartPointIds", "freeTextIds"],
+      "properties": {
+        "entityIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "derivedElementIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "constraintIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "measurementAnnotationIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "stitchStartPointIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "freeTextIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "entityMetric": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "valueMm"],
+          "properties": { "kind": { "const": "segmentLength" }, "valueMm": { "type": "number", "exclusiveMinimum": 0 } }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "valueMm"],
+          "properties": { "kind": { "const": "circleRadius" }, "valueMm": { "type": "number", "exclusiveMinimum": 0 } }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "radiusMm", "startAngleRad", "sweepAngleRad"],
+          "properties": {
+            "kind": { "const": "arc" },
+            "radiusMm": { "type": "number", "exclusiveMinimum": 0 },
+            "startAngleRad": { "type": "number" },
+            "sweepAngleRad": { "type": "number" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "arcUpdate" },
+            "radiusMm": { "type": "number", "exclusiveMinimum": 0 },
+            "startAngleRad": { "type": "number" },
+            "sweepAngleRad": { "type": "number" }
+          }
+        }
+      ]
+    },
+    "entityGesture": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "position"],
+          "properties": {
+            "kind": { "const": "point" },
+            "position": { "$ref": "#/$defs/pointMm" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "start", "end"],
+          "properties": {
+            "kind": { "const": "line" },
+            "start": { "$ref": "#/$defs/pointMm" },
+            "end": { "$ref": "#/$defs/pointMm" },
+            "centerLine": { "type": "boolean" },
+            "axis": { "type": "string", "enum": ["horizontal", "vertical"] }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "center", "radiusPoint"],
+          "properties": {
+            "kind": { "const": "circle" },
+            "center": { "$ref": "#/$defs/pointMm" },
+            "radiusPoint": { "$ref": "#/$defs/pointMm" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "center", "start", "end"],
+          "properties": {
+            "kind": { "const": "arc" },
+            "center": { "$ref": "#/$defs/pointMm" },
+            "start": { "$ref": "#/$defs/pointMm" },
+            "end": { "$ref": "#/$defs/pointMm" },
+            "sweepReferenceRad": { "type": "number" }
+          }
+        }
+      ]
+    },
+    "gestureSnapConstraint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["constraintId", "target"],
+      "properties": {
+        "constraintId": { "type": "string", "minLength": 1 },
+        "target": { "$ref": "#/$defs/constraintTarget" }
+      }
+    },
+    "resolvedCanvasPoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "positionMm", "visible"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "positionMm": { "$ref": "#/$defs/pointMm" },
+        "visible": { "type": "boolean" }
+      }
+    },
+    "resolvedCanvasGeometry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "visible"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "visible": { "type": "boolean" },
+        "arc": { "type": "boolean" },
+        "centerMm": { "$ref": "#/$defs/pointMm" },
+        "startMm": { "$ref": "#/$defs/pointMm" },
+        "endMm": { "$ref": "#/$defs/pointMm" }
+      }
+    },
+    "canvasProjection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["visibleFreeTextIds", "stitchStartPoints", "measurementAnnotations", "dimensionConstraints", "constraintMarkers"],
+      "properties": {
+        "visibleFreeTextIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "stitchStartPoints": { "type": "array", "items": { "$ref": "#/$defs/resolvedCanvasPoint" } },
+        "measurementAnnotations": { "type": "array", "items": { "$ref": "#/$defs/resolvedCanvasGeometry" } },
+        "dimensionConstraints": { "type": "array", "items": { "$ref": "#/$defs/resolvedCanvasGeometry" } },
+        "constraintMarkers": { "type": "array", "items": { "$ref": "#/$defs/resolvedCanvasPoint" } }
+      }
+    },
+    "semanticCommand": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "createEntityFromGesture" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["id", "layerId", "gesture"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "layerId": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+                "styleId": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+                "gesture": { "$ref": "#/$defs/entityGesture" },
+                "startSnap": { "$ref": "#/$defs/gestureSnapConstraint" },
+                "endSnap": { "$ref": "#/$defs/gestureSnapConstraint" },
+                "axisConstraintId": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "enum": ["setDerivedDistance", "setDerivedRadius"] },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["derivedElementId", "value"],
+              "properties": {
+                "derivedElementId": { "type": "string", "minLength": 1 },
+                "value": { "$ref": "#/$defs/constraintValue" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setDerivedRadiusFromPoint" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["derivedElementId", "resolvedIndex", "position"],
+              "properties": {
+                "derivedElementId": { "type": "string", "minLength": 1 },
+                "resolvedIndex": { "type": "integer", "minimum": 0 },
+                "position": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setDerivedDirection" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["derivedElementId", "direction"],
+              "properties": {
+                "derivedElementId": { "type": "string", "minLength": 1 },
+                "direction": { "type": "string", "enum": ["left", "right", "inward", "outward"] }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setRoundHoleDiameter" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["roundHoleId", "diameterMm"],
+              "properties": {
+                "roundHoleId": { "type": "string", "minLength": 1 },
+                "diameterMm": { "type": "number", "exclusiveMinimum": 0 }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "createRoundHole" },
+            "payload": {
+              "type": "object", "additionalProperties": false,
+              "required": ["id", "entityId", "center", "diameterMm", "roundHoleKind", "layerId", "styleId"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "entityId": { "type": "string", "minLength": 1 },
+                "center": { "$ref": "#/$defs/pointMm" },
+                "diameterMm": { "type": "number", "exclusiveMinimum": 0 },
+                "roundHoleKind": { "$ref": "#/$defs/roundHoleKind" },
+                "layerId": { "type": "string", "minLength": 1 },
+                "styleId": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setRoundHoleKind" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["roundHoleId", "kind"],
+              "properties": {
+                "roundHoleId": { "type": "string", "minLength": 1 },
+                "kind": { "$ref": "#/$defs/roundHoleKind" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setConstraintValue" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["constraintId", "value"],
+              "properties": {
+                "constraintId": { "type": "string", "minLength": 1 },
+                "value": { "$ref": "#/$defs/constraintValue" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setConstraintParameter" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["constraintId", "parameterId"],
+              "properties": {
+                "constraintId": { "type": "string", "minLength": 1 },
+                "parameterId": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setEntityMetric" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["entityId", "metric"],
+              "properties": { "entityId": { "type": "string", "minLength": 1 }, "metric": { "$ref": "#/$defs/entityMetric" } }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "smoothArcTangencies" },
+            "payload": { "type": "object", "additionalProperties": false, "required": ["arcEntityId"], "properties": { "arcEntityId": { "type": "string", "minLength": 1 } } }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": { "kind": { "enum": ["setEntityLayer"] }, "payload": { "type": "object", "additionalProperties": false, "required": ["entityId", "layerId"], "properties": { "entityId": {"type":"string","minLength":1}, "layerId": {"anyOf":[{"type":"string","minLength":1},{"type":"null"}]} } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": { "kind": { "enum": ["setDerivedLayer", "setDerivedSharedStyle"] }, "payload": { "type": "object", "additionalProperties": false, "required": ["derivedElementId"], "properties": { "derivedElementId": {"type":"string","minLength":1}, "layerId": {"anyOf":[{"type":"string","minLength":1},{"type":"null"}]}, "styleId": {"anyOf":[{"type":"string","minLength":1},{"type":"null"}]} } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": { "kind": { "const": "setFilletSources" }, "payload": { "type": "object", "additionalProperties": false, "required": ["derivedElementId", "sourceEntityIds", "closed"], "properties": { "derivedElementId": {"type":"string","minLength":1}, "sourceEntityIds": {"type":"array","minItems":2,"items":{"type":"string","minLength":1}}, "closed":{"type":"boolean"} } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": { "kind": { "enum": ["moveMeasurementAnnotation", "moveDimensionConstraintAnnotation"] }, "payload": { "type": "object", "additionalProperties": false, "required": ["delta", "labelOnly"], "properties": { "annotationId":{"type":"string","minLength":1}, "constraintId":{"type":"string","minLength":1}, "delta":{"$ref":"#/$defs/pointMm"}, "labelOnly":{"type":"boolean"} } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "placeStitchStartPoint" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["id", "position", "maxDistanceMm"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 }, "position": { "$ref": "#/$defs/pointMm" },
+                "candidateTargetIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+                "maxDistanceMm": { "type": "number", "exclusiveMinimum": 0 }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "convertMeasurementToConstraint" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["annotationId", "constraintId"],
+              "properties": { "annotationId": { "type": "string", "minLength": 1 }, "constraintId": { "type": "string", "minLength": 1 } }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "duplicateSelection" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["selection", "idNamespace", "delta"],
+              "properties": {
+                "selection": { "$ref": "#/$defs/selectionReference" }, "idNamespace": { "type": "string", "minLength": 1 }, "delta": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "pasteSelection" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["clipboardJson", "idNamespace", "delta"],
+              "properties": {
+                "clipboardJson": { "type": "string", "minLength": 1 }, "idNamespace": { "type": "string", "minLength": 1 }, "delta": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "createPart" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["id", "name", "entityIds"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "originMm": { "$ref": "#/$defs/pointMm" },
+                "entityIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "updatePart" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["id", "name", "originMm"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "originMm": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "updatePartSettings" },
+            "payload": {
+              "type": "object", "additionalProperties": false,
+              "required": ["partId", "visible", "printable", "locked", "quantity"],
+              "properties": {
+                "partId": { "type": "string", "minLength": 1 },
+                "visible": { "type": "boolean" },
+                "printable": { "type": "boolean" },
+                "locked": { "const": true },
+                "quantity": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": { "kind": { "const": "renamePart" }, "payload": { "type": "object", "additionalProperties": false, "required": ["partId", "name"], "properties": { "partId": {"type":"string","minLength":1}, "name":{"type":"string","minLength":1} } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": { "kind": { "enum": ["setPartVisibility", "setPartPrintable", "setPartQuantity"] }, "payload": { "type": "object", "additionalProperties": false, "required": ["partId"], "properties": { "partId": {"type":"string","minLength":1}, "visible":{"type":"boolean"}, "printable":{"type":"boolean"}, "quantity":{"type":"integer","minimum":1} } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "deletePart" },
+            "payload": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "movePart" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["partId", "delta"],
+              "properties": { "partId": { "type": "string", "minLength": 1 }, "delta": { "$ref": "#/$defs/pointMm" } }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setPartPosition" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["partId", "position"],
+              "properties": {
+                "partId": { "type": "string", "minLength": 1 },
+                "position": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "duplicatePart" },
+            "payload": {
+              "type": "object", "additionalProperties": false,
+              "required": ["partId", "newPartId", "newName", "idNamespace", "delta"],
+              "properties": {
+                "partId": { "type": "string", "minLength": 1 },
+                "newPartId": { "type": "string", "minLength": 1 },
+                "newName": { "type": "string", "minLength": 1 },
+                "idNamespace": { "type": "string", "minLength": 1 },
+                "delta": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "insertPartLibraryItem" },
+            "payload": {
+              "type": "object", "additionalProperties": false,
+              "required": ["libraryJson", "newPartId", "newName", "idNamespace", "delta"],
+              "properties": {
+                "libraryJson": { "type": "string", "minLength": 1 },
+                "legacySourcePart": { "anyOf": [{ "$ref": "#/$defs/part" }, { "type": "null" }] },
+                "newPartId": { "type": "string", "minLength": 1 },
+                "newName": { "type": "string", "minLength": 1 },
+                "idNamespace": { "type": "string", "minLength": 1 },
+                "delta": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "enum": ["addEntitiesToPart", "removeEntitiesFromPart", "setPartBoundary"] },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["partId", "entityIds"],
+              "properties": {
+                "partId": { "type": "string", "minLength": 1 },
+                "entityIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "alignParts" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["partIds", "alignment"],
+              "properties": {
+                "partIds": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+                "alignment": { "type": "string", "enum": ["left", "horizontalCenter", "right", "bottom", "verticalCenter", "top"] }
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "distributeParts" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["partIds", "axis"],
+              "properties": {
+                "partIds": { "type": "array", "minItems": 3, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+                "axis": { "type": "string", "enum": ["horizontal", "vertical"] }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "semanticApplyCommandRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "enum": ["applyCommand", "previewCommand"] },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["command"],
+          "properties": { "command": { "$ref": "#/$defs/semanticCommand" }, "viewMode": { "type": "string", "enum": ["editDisplay", "outputPreview"] } }
+        }
+      }
+    },
+    "printableAreaMm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["leftMm", "rightMm", "topMm", "bottomMm"],
+      "properties": {
+        "leftMm": { "type": "number" },
+        "rightMm": { "type": "number" },
+        "topMm": { "type": "number" },
+        "bottomMm": { "type": "number" }
+      }
+    },
+    "constraintTarget": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entity"],
+          "properties": {
+            "entity": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["controlPoint"],
+          "properties": {
+            "controlPoint": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["entity_id", "point"],
+              "properties": {
+                "entity_id": { "type": "string", "minLength": 1 },
+                "point": { "type": "string", "enum": ["start", "end", "center"] }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "constraintValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fixedMm"],
+          "properties": {
+            "fixedMm": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fixedDegrees"],
+          "properties": {
+            "fixedDegrees": { "type": "number" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["parameter"],
+          "properties": {
+            "parameter": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "preflightConstraintRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "preflightConstraint" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "targets"],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "coincident",
+                "horizontal",
+                "vertical",
+                "parallel",
+                "perpendicular",
+                "tangent",
+                "symmetric",
+                "distance",
+                "horizontalDistance",
+                "verticalDistance",
+                "pointLineDistance",
+                "lineLineDistance",
+                "pointOnLine",
+                "segmentLength",
+                "angle",
+                "fixed",
+                "diameter",
+                "radius",
+                "equalSegmentLength"
+              ]
+            },
+            "targets": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/constraintTarget" }
+            }
+          }
+        }
+      }
+    },
+    "layerDeletionImpactRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": { "kind": { "const": "layerDeletionImpact" }, "payload": { "type": "object", "additionalProperties": false, "required": ["layerId"], "properties": { "layerId": { "type": "string", "minLength": 1 } } } }
+    },
+    "layerDeletionImpactResponse": {
+      "type": "object", "additionalProperties": false, "required": ["layerId", "entityCount", "derivedElementCount"],
+      "properties": { "layerId": { "type": "string", "minLength": 1 }, "entityCount": { "type": "integer", "minimum": 0 }, "derivedElementCount": { "type": "integer", "minimum": 0 } }
+    },
+    "preflightConstraintResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "normalizedTargets"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "coincident",
+            "horizontal",
+            "vertical",
+            "parallel",
+            "perpendicular",
+            "tangent",
+            "symmetric",
+            "distance",
+            "horizontalDistance",
+            "verticalDistance",
+            "pointLineDistance",
+            "lineLineDistance",
+            "pointOnLine",
+            "segmentLength",
+            "angle",
+            "fixed",
+            "diameter",
+            "radius",
+            "equalSegmentLength"
+          ]
+        },
+        "value": { "$ref": "#/$defs/constraintValue" },
+        "normalizedTargets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/constraintTarget" }
+        }
+      }
+    },
+    "preflightDerivedElementRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "preflightDerivedElement" },
+        "payload": {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "hitEntityId", "selectedEntityIds", "clickPoint"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["offsetCurve", "fillet"] },
+            "hitEntityId": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+            "selectedEntityIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "clickPoint": { "anyOf": [{ "$ref": "#/$defs/pointMm" }, { "type": "null" }] }
+          }
+        }
+      }
+    },
+    "preflightDerivedElementResponse": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "offsetOptions", "sourceEntityIds", "updateDerivedElementId", "closed"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["offsetCurve", "fillet"] },
+        "offsetOptions": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["scope", "sourceEntityIds", "direction"],
+            "properties": {
+              "scope": { "type": "string", "enum": ["singleElement", "selectedRange", "closedContour"] },
+              "sourceEntityIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "sourceResolvedEntityIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "direction": { "type": "string", "enum": ["left", "right", "inward", "outward"] }
+            }
+          }
+        },
+        "sourceEntityIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "updateDerivedElementId": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "closed": { "type": "boolean" }
+      }
+    },
+    "measurementEvaluation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["annotationId", "kind", "value"],
+      "properties": {
+        "annotationId": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["distance", "segmentLength", "angle", "radius", "diameter", "arcSweepAngle"] },
+        "value": { "$ref": "#/$defs/constraintValue" },
+        "center": { "$ref": "#/$defs/pointMm" },
+        "start": { "$ref": "#/$defs/pointMm" },
+        "end": { "$ref": "#/$defs/pointMm" }
+      }
+    },
+    "evaluateMeasurementRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "evaluateMeasurement" },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["annotationId"],
+          "properties": { "annotationId": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "exportSelectionRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "exportSelection" },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["selection"],
+          "properties": { "selection": { "$ref": "#/$defs/selectionReference" } }
+        }
+      }
+    },
+    "selectionClipboardExport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clipboardJson", "rootCount", "anchorPoint", "bounds"],
+      "properties": {
+        "clipboardJson": { "type": "string", "minLength": 1 },
+        "rootCount": { "type": "integer", "minimum": 1 },
+        "anchorPoint": { "anyOf": [{ "$ref": "#/$defs/pointMm" }, { "type": "null" }] },
+        "bounds": {
+          "anyOf": [
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["minPoint", "maxPoint"],
+              "properties": {
+                "minPoint": { "$ref": "#/$defs/pointMm" },
+                "maxPoint": { "$ref": "#/$defs/pointMm" }
+              }
+            },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "exportPartLibraryItemRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "exportPartLibraryItem" },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["partId"],
+          "properties": { "partId": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "partLibraryExport": {
+      "type": "object", "additionalProperties": false, "required": ["libraryJson", "sourcePart"],
+      "properties": {
+        "libraryJson": { "type": "string", "minLength": 1 },
+        "sourcePart": { "$ref": "#/$defs/part" }
+      }
+    },
+    "writeLcraftFileRequest": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "writeLcraftFile" },
+        "payload": {
+          "type": "object", "additionalProperties": false, "required": ["path"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "markClean": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "persistenceState": {
+      "type": "object", "additionalProperties": false, "required": ["isDirty", "revision"],
+      "properties": {
+        "isDirty": { "type": "boolean" },
+        "revision": { "type": "string", "minLength": 1 }
+      }
+    },
+    "mutationIds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["layerIds", "sharedStyleIds", "parameterIds", "partIds", "entityIds", "derivedElementIds", "freeTextIds", "roundHoleIds", "stitchStartPointIds", "constraintIds", "measurementAnnotationIds", "dimensionConstraintAnnotationIds"],
+      "properties": {
+        "layerIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "sharedStyleIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "parameterIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "partIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "entityIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "derivedElementIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "freeTextIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "roundHoleIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "stitchStartPointIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "constraintIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "measurementAnnotationIds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "dimensionConstraintAnnotationIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "mutationResult": {
+      "type": "object", "additionalProperties": false, "required": ["created", "updated", "deleted"],
+      "properties": {
+        "created": { "$ref": "#/$defs/mutationIds" },
+        "updated": { "$ref": "#/$defs/mutationIds" },
+        "deleted": { "$ref": "#/$defs/mutationIds" }
+      }
+    },
+    "drawingEntityMetadata": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "derivedElementId": { "type": "string", "minLength": 1 },
+        "resolvedIndex": { "type": "integer", "minimum": 0 },
+        "sourceEntityId": { "type": "string", "minLength": 1 },
+        "suppressedByFillet": { "type": "boolean" }
+      }
+    },
+    "errorEnvelope": {
+      "type": "object", "additionalProperties": false, "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object", "additionalProperties": false, "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": ["invalidJson", "emptyId", "duplicateId", "missingId", "brokenReference", "invalidValue", "constraintInsufficientTargets", "invalidConstraintTarget", "duplicateConstraint", "conflictingConstraint", "outputOutOfGridBounds", "renderEmptyPages", "renderPageCountMismatch", "renderInvalidPageSize", "renderUnsupportedRotation", "ioError", "unsupportedVersion", "unknown"]
+            },
+            "message": { "type": "string" },
+            "details": { "type": "object" }
+          }
+        }
+      }
+    },
+    "outputGraphicGeometry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "point" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["position_mm"],
+              "properties": {
+                "position_mm": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "enum": ["lineSegment", "centerLine"] },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["start_mm", "end_mm"],
+              "properties": {
+                "start_mm": { "$ref": "#/$defs/pointMm" },
+                "end_mm": { "$ref": "#/$defs/pointMm" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "circle" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["center_mm", "radius_mm"],
+              "properties": {
+                "center_mm": { "$ref": "#/$defs/pointMm" },
+                "radius_mm": { "type": "number" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "arc" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["center_mm", "radius_mm", "start_angle_rad", "sweep_angle_rad"],
+              "properties": {
+                "center_mm": { "$ref": "#/$defs/pointMm" },
+                "radius_mm": { "type": "number" },
+                "start_angle_rad": { "type": "number" },
+                "sweep_angle_rad": { "type": "number" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "outputGraphic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityId", "kind", "geometry", "style"],
+      "properties": {
+        "entityId": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["point", "lineSegment", "circle", "arc", "centerLine"]
+        },
+        "geometry": { "$ref": "#/$defs/outputGraphicGeometry" },
+        "style": { "$ref": "#/$defs/layerStyle" }
+      }
+    },
+    "outputText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "content", "positionMm", "fontSizeMm"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["dimensionLabel", "guideLabel", "freeText"] },
+        "content": { "type": "string" },
+        "positionMm": { "$ref": "#/$defs/pointMm" },
+        "fontSizeMm": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "outputGuide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startMm", "endMm", "label", "labelPositionMm"],
+      "properties": {
+        "startMm": { "$ref": "#/$defs/pointMm" },
+        "endMm": { "$ref": "#/$defs/pointMm" },
+        "label": { "type": "string" },
+        "labelPositionMm": { "$ref": "#/$defs/pointMm" }
+      }
+    },
+    "outputPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["widthMm", "heightMm", "gridColumn", "gridRow", "rotationDeg", "printableAreaMm", "graphics", "texts", "guide"],
+      "properties": {
+        "widthMm": { "type": "number", "exclusiveMinimum": 0 },
+        "heightMm": { "type": "number", "exclusiveMinimum": 0 },
+        "gridColumn": { "type": "integer", "minimum": -2, "maximum": 2 },
+        "gridRow": { "type": "integer", "minimum": -2, "maximum": 2 },
+        "rotationDeg": { "type": "integer", "enum": [0, 90] },
+        "printableAreaMm": { "$ref": "#/$defs/printableAreaMm" },
+        "graphics": { "type": "array", "items": { "$ref": "#/$defs/outputGraphic" } },
+        "texts": { "type": "array", "items": { "$ref": "#/$defs/outputText" } },
+        "guide": {
+          "anyOf": [
+            { "$ref": "#/$defs/outputGuide" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "outputDocumentModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paperSize", "orientation", "scale", "pageCount", "pages"],
+      "properties": {
+        "paperSize": { "const": "a4" },
+        "orientation": { "type": "string", "enum": ["portrait", "landscape"] },
+        "scale": { "const": "actualSize" },
+        "pageCount": { "type": "integer", "minimum": 0 },
+        "pages": { "type": "array", "items": { "$ref": "#/$defs/outputPage" } }
+      }
+    },
+    "printWarning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "message"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["emptyDocument", "outOfPrintableBounds", "pageBoundaryCrossing", "actualScaleNotGuaranteed"]
+        },
+        "message": { "type": "string" }
+      }
+    },
+    "buildOutputDocumentModelRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "buildOutputDocumentModel" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["orientation", "includeDimensionLabels", "includeScaleGuide", "rotationDeg", "printableAreaMm"],
+          "properties": {
+            "orientation": { "type": "string", "enum": ["portrait", "landscape"] },
+            "includeDimensionLabels": { "type": "boolean" },
+            "includeScaleGuide": { "type": "boolean" },
+            "rotationDeg": { "type": "integer", "enum": [0, 90] },
+            "printableAreaMm": { "$ref": "#/$defs/printableAreaMm" }
+          }
+        }
+      }
+    },
+    "buildOutputDocumentModelResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outputDocumentModel", "warnings"],
+      "properties": {
+        "outputDocumentModel": { "$ref": "#/$defs/outputDocumentModel" },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/printWarning" } }
+      }
+    },
+    "renderPdfRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "renderPdf" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["outputDocumentModelJson"],
+          "properties": {
+            "outputDocumentModelJson": { "type": "string" }
+          }
+        }
+      }
+    },
+    "renderPdfResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pdfHex"],
+      "properties": {
+        "pdfHex": { "type": "string", "pattern": "^[0-9a-fA-F]*$" }
+      }
+    },
+    "printRenderCommand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "strokeLine" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["start_mm", "end_mm", "style", "kind"],
+              "properties": {
+                "start_mm": { "$ref": "#/$defs/pointMm" },
+                "end_mm": { "$ref": "#/$defs/pointMm" },
+                "style": { "$ref": "#/$defs/layerStyle" },
+                "kind": { "type": "string", "enum": ["graphic", "guide"] }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "strokeCircle" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["center_mm", "radius_mm", "style"],
+              "properties": {
+                "center_mm": { "$ref": "#/$defs/pointMm" },
+                "radius_mm": { "type": "number" },
+                "style": { "$ref": "#/$defs/layerStyle" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "strokeArc" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["center_mm", "radius_mm", "start_angle_rad", "sweep_angle_rad", "style"],
+              "properties": {
+                "center_mm": { "$ref": "#/$defs/pointMm" },
+                "radius_mm": { "type": "number" },
+                "start_angle_rad": { "type": "number" },
+                "sweep_angle_rad": { "type": "number" },
+                "style": { "$ref": "#/$defs/layerStyle" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "drawPoint" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["center_mm", "style"],
+              "properties": {
+                "center_mm": { "$ref": "#/$defs/pointMm" },
+                "style": { "$ref": "#/$defs/layerStyle" }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "drawText" },
+            "payload": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["position_mm", "content", "kind", "font_size_mm"],
+              "properties": {
+                "position_mm": { "$ref": "#/$defs/pointMm" },
+                "content": { "type": "string" },
+                "kind": { "type": "string", "enum": ["dimensionLabel", "guideLabel", "freeText"] },
+                "font_size_mm": { "type": "number", "exclusiveMinimum": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "printRenderPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["widthMm", "heightMm", "rotationDeg", "printableAreaMm", "commands"],
+      "properties": {
+        "widthMm": { "type": "number", "exclusiveMinimum": 0 },
+        "heightMm": { "type": "number", "exclusiveMinimum": 0 },
+        "rotationDeg": { "type": "integer", "enum": [0, 90] },
+        "printableAreaMm": { "$ref": "#/$defs/printableAreaMm" },
+        "clipAreaMm": { "$ref": "#/$defs/printableAreaMm" },
+        "commands": { "type": "array", "items": { "$ref": "#/$defs/printRenderCommand" } }
+      }
+    },
+    "printRenderData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orientation", "pages"],
+      "properties": {
+        "orientation": { "type": "string", "enum": ["portrait", "landscape"] },
+        "pages": { "type": "array", "items": { "$ref": "#/$defs/printRenderPage" } }
+      }
+    },
+    "renderPrintRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "payload"],
+      "properties": {
+        "kind": { "const": "renderPrint" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["outputDocumentModelJson"],
+          "properties": {
+            "outputDocumentModelJson": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/preflightConstraintRequest" },
+    { "$ref": "#/$defs/layerDeletionImpactRequest" },
+    { "$ref": "#/$defs/layerDeletionImpactResponse" },
+    { "$ref": "#/$defs/sharedStyleApplyCommandRequest" },
+    { "$ref": "#/$defs/semanticApplyCommandRequest" },
+    { "$ref": "#/$defs/preflightConstraintResponse" },
+    { "$ref": "#/$defs/preflightDerivedElementRequest" },
+    { "$ref": "#/$defs/preflightDerivedElementResponse" },
+    { "$ref": "#/$defs/evaluateMeasurementRequest" },
+    { "$ref": "#/$defs/measurementEvaluation" },
+    { "$ref": "#/$defs/exportSelectionRequest" },
+    { "$ref": "#/$defs/selectionClipboardExport" },
+    { "$ref": "#/$defs/exportPartLibraryItemRequest" },
+    { "$ref": "#/$defs/partLibraryExport" },
+    { "$ref": "#/$defs/writeLcraftFileRequest" },
+    { "$ref": "#/$defs/persistenceState" },
+    { "$ref": "#/$defs/mutationResult" },
+    { "$ref": "#/$defs/errorEnvelope" },
+    { "$ref": "#/$defs/buildOutputDocumentModelRequest" },
+    { "$ref": "#/$defs/buildOutputDocumentModelResponse" },
+    { "$ref": "#/$defs/renderPdfRequest" },
+    { "$ref": "#/$defs/renderPdfResponse" },
+    { "$ref": "#/$defs/renderPrintRequest" },
+    { "$ref": "#/$defs/printRenderData" },
+    { "$ref": "#/$defs/outputDocumentModel" }
+  ]
+}

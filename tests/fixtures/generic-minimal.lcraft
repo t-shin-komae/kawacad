@@ -1,0 +1,150 @@
+{
+  "fileFormatVersion": "0.2.0",
+  "schemaVersion": "0.1.0",
+  "document": {
+    "id": "document:generic-minimal",
+    "name": "Generic Minimal",
+    "unit": "mm"
+  },
+  "settings": {
+    "paperSize": "a4",
+    "orientation": "portrait",
+    "scale": "actualSize",
+    "printableArea": {
+      "leftMm": 5.0,
+      "rightMm": 5.0,
+      "topMm": 5.0,
+      "bottomMm": 5.0
+    },
+    "scaleGuide": {
+      "enabled": true,
+      "lengthMm": 50.0
+    }
+  },
+  "layers": [
+    {
+      "id": "layer:cut-line",
+      "name": "Cut Line",
+      "kind": "cutLine",
+      "visible": true,
+      "printable": true,
+      "style": {
+        "stroke": {
+          "red": 0.0,
+          "green": 0.0,
+          "blue": 0.0,
+          "alpha": 1.0
+        },
+        "strokeWidthMm": 0.2,
+        "pattern": "solid"
+      }
+    },
+    {
+      "id": "layer:dimension",
+      "name": "Dimension",
+      "kind": "dimension",
+      "visible": true,
+      "printable": true,
+      "style": {
+        "stroke": {
+          "red": 0.0,
+          "green": 0.0,
+          "blue": 0.0,
+          "alpha": 1.0
+        },
+        "strokeWidthMm": 0.2,
+        "pattern": "solid"
+      }
+    },
+    {
+      "id": "layer:construction",
+      "name": "Construction",
+      "kind": "construction",
+      "visible": true,
+      "printable": false,
+      "style": {
+        "stroke": {
+          "red": 0.0,
+          "green": 0.0,
+          "blue": 0.0,
+          "alpha": 1.0
+        },
+        "strokeWidthMm": 0.2,
+        "pattern": "dashed"
+      }
+    },
+    {
+      "id": "layer:print-guide",
+      "name": "Print Guide",
+      "kind": "printGuide",
+      "visible": true,
+      "printable": true,
+      "style": {
+        "stroke": {
+          "red": 0.0,
+          "green": 0.0,
+          "blue": 0.0,
+          "alpha": 1.0
+        },
+        "strokeWidthMm": 0.2,
+        "pattern": "solid"
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "id": "parameter:width",
+      "name": "Width",
+      "valueMm": 30.0,
+      "unit": "millimeter",
+      "memo": "sample width"
+    }
+  ],
+  "entities": [
+    {
+      "id": "entity:line-a",
+      "layerId": "layer:cut-line",
+      "kind": {
+        "lineSegment": {
+          "start": {
+            "xMm": 0.0,
+            "yMm": 0.0
+          },
+          "end": {
+            "xMm": 30.0,
+            "yMm": 0.0
+          }
+        }
+      }
+    },
+    {
+      "id": "entity:circle",
+      "layerId": "layer:cut-line",
+      "kind": {
+        "circle": {
+          "center": {
+            "xMm": 15.0,
+            "yMm": 20.0
+          },
+          "radiusMm": 3.0
+        }
+      }
+    }
+  ],
+  "derivedElements": [],
+  "constraints": [
+    {
+      "id": "constraint:line-width",
+      "kind": "segmentLength",
+      "targets": [
+        {
+          "entity": "entity:line-a"
+        }
+      ],
+      "value": {
+        "parameter": "parameter:width"
+      },
+      "status": "unknown"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "kind": "offsetCurve",
+  "offsetOptions": [
+    {
+      "scope": "selectedRange",
+      "sourceEntityIds": ["derived:fillet"],
+      "sourceResolvedEntityIds": [
+        "derived:fillet:resolved:0",
+        "derived:fillet:resolved:1",
+        "derived:fillet:resolved:2"
+      ],
+      "direction": "left"
+    }
+  ],
+  "sourceEntityIds": [],
+  "updateDerivedElementId": null,
+  "closed": false
+}

@@ -1,0 +1,14 @@
+.DS_Store
+.build/
+/target/
+/coverage/
+*.xcuserstate
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+node_modules/
+dist/
+test-results/
+mutants.out/
+/local/

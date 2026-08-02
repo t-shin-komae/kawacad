@@ -1,0 +1,60 @@
+{
+  "outputDocumentModel": {
+    "paperSize": "a4",
+    "orientation": "portrait",
+    "scale": "actualSize",
+    "pageCount": 1,
+    "pages": [
+      {
+        "widthMm": 210.0,
+        "heightMm": 297.0,
+        "gridColumn": 0,
+        "gridRow": 0,
+        "rotationDeg": 0,
+        "printableAreaMm": {
+          "leftMm": -100.0,
+          "rightMm": 100.0,
+          "topMm": 143.5,
+          "bottomMm": -143.5
+        },
+        "graphics": [
+          {
+            "entityId": "entity:line-a",
+            "kind": "lineSegment",
+            "geometry": {
+              "kind": "lineSegment",
+              "payload": {
+                "start_mm": {
+                  "xMm": 0.0,
+                  "yMm": 0.0
+                },
+                "end_mm": {
+                  "xMm": 20.0,
+                  "yMm": 0.0
+                }
+              }
+            },
+            "style": {
+              "stroke": {
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "alpha": 1.0
+              },
+              "strokeWidthMm": 0.2,
+              "pattern": "solid"
+            }
+          }
+        ],
+        "texts": [],
+        "guide": null
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "outOfPrintableBounds",
+      "message": "印刷可能領域からはみ出しています。"
+    }
+  ]
+}

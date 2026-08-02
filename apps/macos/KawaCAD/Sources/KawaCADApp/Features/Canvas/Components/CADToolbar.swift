@@ -1,0 +1,401 @@
+import KawaCADOutput
+import SwiftUI
+
+enum CADToolbarDensity: Equatable {
+  case expanded
+  case condensed
+}
+
+struct CADToolbar: View {
+  let state: CADToolbarState
+  let actions: CADToolbarActions
+  let workspaceLayoutMode: WindowLayoutMode
+  let density: CADToolbarDensity
+
+  var body: some View {
+    HStack(spacing: 8) {
+      if workspaceLayoutMode == .compact {
+        Button {
+          actions.showToolPalette()
+        } label: {
+          HStack(spacing: 8) {
+            Image(systemName: "sidebar.left")
+              .font(.system(size: 12, weight: .semibold))
+          }
+          .foregroundStyle(LeatherColors.secondaryInk)
+          .frame(width: 32, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .help(AppStrings.tr("toolbar.tool_palette"))
+        .accessibilityLabel(AppStrings.tr("toolbar.tool_palette"))
+        .accessibilityIdentifier(AccessibilityIdentifier.toolbarTools)
+      }
+
+      if workspaceLayoutMode == .compact {
+        Divider()
+          .frame(height: 30)
+      }
+
+      HStack(spacing: 8) {
+        CanvasToolIcon(tool: state.selectedTool, size: 18, color: LeatherColors.ink)
+          .frame(width: 22)
+        Text(state.selectedTool.displayName)
+          .font(.system(size: 13))
+        if density == .expanded {
+          ControlGroup {
+            copySelectionButton
+            pasteSelectionButton
+            duplicateSelectionButton
+          }
+        }
+      }
+      .foregroundStyle(LeatherColors.ink)
+
+      if density == .expanded {
+        Divider()
+          .frame(height: 30)
+
+        Picker(
+          AppStrings.tr("toolbar.drawing_layer"),
+          selection: Binding(
+            get: { state.activeLayerID },
+            set: actions.setActiveLayer
+          )
+        ) {
+          ForEach(state.layers) { layer in
+            Text(layer.name).tag(layer.id)
+          }
+        }
+        .frame(width: 220)
+        .accessibilityIdentifier(AccessibilityIdentifier.toolbarDrawingLayer)
+      }
+
+      ConstraintStatusBadge(status: state.constraintStatus, compact: true)
+
+      if density == .expanded {
+        ToolbarMetric(
+          text: AppStrings.tr("toolbar.zoom_percent", Int((state.zoomScale * 100).rounded())))
+      }
+
+      ControlGroup {
+        Button {
+          actions.zoomToFit()
+        } label: {
+          Image(systemName: "rectangle.arrowtriangle.2.inward")
+            .frame(width: 22, height: 22)
+        }
+        .help(AppStrings.tr("toolbar.zoom_to_fit"))
+        .accessibilityIdentifier(AccessibilityIdentifier.toolbarZoomToFit)
+
+        if density == .expanded {
+          Button {
+            actions.zoomOut()
+          } label: {
+            Image(systemName: "minus.magnifyingglass")
+              .frame(width: 22, height: 22)
+          }
+          .help(AppStrings.tr("toolbar.zoom_out"))
+          .accessibilityIdentifier(AccessibilityIdentifier.toolbarZoomOut)
+
+          Button {
+            actions.zoomIn()
+          } label: {
+            Image(systemName: "plus.magnifyingglass")
+              .frame(width: 22, height: 22)
+          }
+          .help(AppStrings.tr("toolbar.zoom_in"))
+          .accessibilityIdentifier(AccessibilityIdentifier.toolbarZoomIn)
+        }
+      }
+
+      if density == .expanded {
+        ControlGroup {
+          ToolbarToggleButton(
+            title: AppStrings.tr("toolbar.grid"),
+            iconKind: .grid,
+            isOn: state.gridVisible,
+            accessibilityIdentifier: AccessibilityIdentifier.toolbarGrid,
+            action: actions.setGridVisible
+          )
+          ToolbarToggleButton(
+            title: AppStrings.tr("toolbar.a4"),
+            iconKind: .page,
+            isOn: state.a4ReferenceVisible,
+            accessibilityIdentifier: AccessibilityIdentifier.toolbarA4Reference,
+            action: actions.setA4ReferenceVisible
+          )
+          ToolbarOrientationToggle(
+            orientation: state.a4ReferenceOrientation,
+            accessibilityIdentifier: AccessibilityIdentifier.toolbarLandscapeOrientation,
+            action: actions.setA4ReferenceOrientation
+          )
+          ToolbarToggleButton(
+            title: AppStrings.tr("toolbar.grid_snap"),
+            iconKind: .gridSnap,
+            isOn: state.gridSnapEnabled,
+            accessibilityIdentifier: AccessibilityIdentifier.toolbarGridSnap,
+            action: actions.setGridSnapEnabled
+          )
+          ToolbarToggleButton(
+            title: AppStrings.tr("toolbar.point_snap"),
+            iconKind: .pointSnap,
+            isOn: state.pointSnapEnabled,
+            accessibilityIdentifier: AccessibilityIdentifier.toolbarPointSnap,
+            action: actions.setPointSnapEnabled
+          )
+        }
+      }
+
+      Spacer()
+
+      Button {
+        actions.toggleInspector(workspaceLayoutMode)
+      } label: {
+        Image(systemName: "sidebar.right")
+          .font(.system(size: 12, weight: .semibold))
+          .frame(width: 24, height: 24)
+      }
+      .buttonStyle(.plain)
+      .help(AppStrings.tr("menu.inspector"))
+      .accessibilityLabel(AppStrings.tr("menu.inspector"))
+      .accessibilityIdentifier(AccessibilityIdentifier.toolbarInspector)
+
+      Picker(
+        AppStrings.tr("toolbar.view_mode"),
+        selection: Binding(
+          get: { state.viewMode },
+          set: actions.setViewMode
+        )
+      ) {
+        ForEach(CanvasViewMode.allCases) { mode in
+          Text(mode.displayName).tag(mode)
+        }
+      }
+      .pickerStyle(.segmented)
+      .labelsHidden()
+      .accessibilityLabel(AppStrings.tr("toolbar.view_mode"))
+      .accessibilityIdentifier(AccessibilityIdentifier.toolbarViewMode)
+      .frame(width: 236)
+
+      Menu {
+        overflowMenuContent
+      } label: {
+        Image(systemName: "ellipsis.circle")
+          .font(.system(size: 16, weight: .semibold))
+      }
+      .menuStyle(.borderlessButton)
+      .accessibilityIdentifier(AccessibilityIdentifier.toolbarOverflow)
+    }
+    .padding(.horizontal, 14)
+    .frame(height: 54)
+  }
+
+  @ViewBuilder
+  private var overflowMenuContent: some View {
+    if density == .condensed {
+      copySelectionButton
+        .keyboardShortcut("c", modifiers: [.command])
+      pasteSelectionButton
+        .keyboardShortcut("v", modifiers: [.command])
+      duplicateSelectionButton
+        .keyboardShortcut("d", modifiers: [.command])
+
+      Divider()
+    }
+
+    if density == .condensed {
+      layerPickerMenu
+      Divider()
+    }
+
+    Button(AppStrings.tr("toolbar.zoom_out")) {
+      actions.zoomOut()
+    }
+    Button(AppStrings.tr("toolbar.zoom_in")) {
+      actions.zoomIn()
+    }
+
+    Divider()
+
+    Button(AppStrings.tr("toolbar.grid")) {
+      actions.setGridVisible(!state.gridVisible)
+    }
+    Button(AppStrings.tr("toolbar.a4")) {
+      actions.setA4ReferenceVisible(!state.a4ReferenceVisible)
+    }
+    Button(AppStrings.tr("toolbar.grid_snap")) {
+      actions.setGridSnapEnabled(!state.gridSnapEnabled)
+    }
+    Button(AppStrings.tr("toolbar.point_snap")) {
+      actions.setPointSnapEnabled(!state.pointSnapEnabled)
+    }
+    Toggle(
+      AppStrings.tr("toolbar.a4_landscape"),
+      isOn: Binding(
+        get: { state.a4ReferenceOrientation == .landscape },
+        set: { actions.setA4ReferenceOrientation($0 ? .landscape : .portrait) }
+      )
+    )
+  }
+
+  private var layerPickerMenu: some View {
+    Menu(AppStrings.tr("toolbar.drawing_layer")) {
+      ForEach(state.layers) { layer in
+        Button(layer.name) {
+          actions.setActiveLayer(layer.id)
+        }
+      }
+    }
+  }
+
+  private var copySelectionButton: some View {
+    Button(AppStrings.tr("toolbar.copy_selection")) {
+      actions.copySelection()
+    }
+    .disabled(!state.canCopySelection)
+    .accessibilityIdentifier(AccessibilityIdentifier.toolbarCopySelection)
+  }
+
+  private var pasteSelectionButton: some View {
+    Button(AppStrings.tr("toolbar.paste_selection")) {
+      actions.pasteSelection()
+    }
+    .disabled(!state.canPasteSelection)
+    .accessibilityIdentifier(AccessibilityIdentifier.toolbarPasteSelection)
+  }
+
+  private var duplicateSelectionButton: some View {
+    Button(AppStrings.tr("toolbar.duplicate_selection")) {
+      actions.duplicateSelection()
+    }
+    .disabled(!state.canDuplicateSelection)
+    .accessibilityIdentifier(AccessibilityIdentifier.toolbarDuplicateSelection)
+  }
+}
+
+private struct ToolbarOrientationToggle: View {
+  let orientation: OutputPrintOrientation
+  let accessibilityIdentifier: String
+  let action: (OutputPrintOrientation) -> Void
+
+  var body: some View {
+    Toggle(
+      isOn: Binding(
+        get: { isLandscape },
+        set: { action($0 ? .landscape : .portrait) }
+      )
+    ) {
+      Image(systemName: isLandscape ? "rectangle" : "rectangle.portrait")
+        .font(.system(size: 12, weight: .semibold))
+        .frame(width: 22, height: 22)
+        .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
+        .background {
+          if isLandscape {
+            RoundedRectangle(cornerRadius: 5, style: .continuous)
+              .fill(LeatherColors.selectedFill)
+          }
+        }
+    }
+    .toggleStyle(.button)
+    .help(AppStrings.tr("toolbar.a4_landscape"))
+    .accessibilityLabel(AppStrings.tr("toolbar.a4_landscape"))
+    .accessibilityValue(isLandscape ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
+    .accessibilityIdentifier(accessibilityIdentifier)
+  }
+
+  private var isLandscape: Bool {
+    orientation == .landscape
+  }
+}
+
+private struct ToolbarMetric: View {
+  let text: String
+
+  var body: some View {
+    Text(text)
+      .font(.system(size: 11, weight: .medium))
+      .foregroundStyle(LeatherColors.secondaryInk)
+      .padding(.horizontal, 8)
+      .frame(height: 22)
+      .background(LeatherColors.insetFill)
+      .clipShape(Capsule())
+  }
+}
+
+private struct ToolbarToggleButton: View {
+  let title: String
+  let iconKind: ToolbarToggleIconKind
+  let isOn: Bool
+  let accessibilityIdentifier: String
+  let action: (Bool) -> Void
+
+  var body: some View {
+    Button {
+      action(!isOn)
+    } label: {
+      ToolbarToggleIcon(
+        kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
+      )
+      .frame(width: 22, height: 22)
+      .background {
+        if isOn {
+          RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .fill(LeatherColors.selectedFill)
+        }
+      }
+    }
+    .help(title)
+    .accessibilityLabel(title)
+    .accessibilityValue(isOn ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
+    .accessibilityIdentifier(accessibilityIdentifier)
+  }
+}
+
+private enum ToolbarToggleIconKind {
+  case grid
+  case page
+  case gridSnap
+  case pointSnap
+}
+
+private struct ToolbarToggleIcon: View {
+  let kind: ToolbarToggleIconKind
+  let color: Color
+
+  var body: some View {
+    ZStack {
+      Image(systemName: symbolName)
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(color)
+
+      if showsSnapDot {
+        Circle()
+          .fill(color)
+          .frame(width: 4.5, height: 4.5)
+          .offset(x: 5, y: -5)
+      }
+    }
+  }
+
+  private var symbolName: String {
+    switch kind {
+    case .grid:
+      return "squareshape.split.3x3"
+    case .gridSnap:
+      return "square.grid.3x3"
+    case .page:
+      return "doc"
+    case .pointSnap:
+      return "scope"
+    }
+  }
+
+  private var showsSnapDot: Bool {
+    switch kind {
+    case .gridSnap, .pointSnap:
+      return true
+    case .grid, .page:
+      return false
+    }
+  }
+}
