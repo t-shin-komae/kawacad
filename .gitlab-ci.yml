@@ -1,0 +1,11 @@
+stages:
+  - test
+
+runner_check:
+  stage: test
+  tags:
+    - macos-tart
+  image: ghcr.io/cirruslabs/macos-tahoe-xcode:26.5
+  script:
+    - sw_vers
+    - xcodebuild -version
