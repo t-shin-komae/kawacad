@@ -9,7 +9,6 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=lcov --coverage.reporter=html",
     "test:e2e": "playwright test",
-    "check:architecture": "node ../../../scripts/checks/ui-architecture.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "tauri": "tauri"

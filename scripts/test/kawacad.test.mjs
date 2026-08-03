@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseArgs, preCommitPlan, releaseArtifactPath, releasePlan, testPlan } from "../kawacad.mjs";
+import { parseArgs, releaseArtifactPath, releasePlan, testPlan } from "../kawacad.mjs";
 import { coverageOutputDirectory, coveragePlan } from "../lib/coverage.mjs";
 
 function commandText(spec) {
@@ -36,11 +36,6 @@ test("test scopes select the expected suites", () => {
   assert.doesNotMatch(core, /npm/);
   assert.match(tauri, /npm test/);
   assert.match(tauri, /test:e2e/);
-});
-
-test("pre-commit excludes the optional UI architecture check", () => {
-  const plan = preCommitPlan({ nodePlatform: "darwin" }).map(commandText).join("\n");
-  assert.doesNotMatch(plan, /ui-architecture/u);
 });
 
 test("Swift is skipped from all-tests planning on non-macOS", () => {

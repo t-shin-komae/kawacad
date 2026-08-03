@@ -1,8 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const chromePath =
-  process.env.LEATHER_E2E_CHROME ??
-  (process.platform === "darwin" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : undefined);
+const chromePath = process.env.LEATHER_E2E_CHROME;
 
 export default defineConfig({
   testDir: "./e2e",

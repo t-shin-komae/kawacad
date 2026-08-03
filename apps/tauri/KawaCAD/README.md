@@ -30,7 +30,7 @@ npm run tauri dev
 
 `npm run test:e2e` はViteで起動したUIにPlaywrightから接続し、実際の
 `kawacad-core-process` とTauriのinvoke形式の境界を通してワークスペースを検証します。
-macOSではGoogle Chromeを使用し、それ以外の環境や別のブラウザを使う場合は
+通常はPlaywrightが管理するChromiumを使用します。既存のGoogle Chromeなどを使う場合だけ、
 `LEATHER_E2E_CHROME` に実行ファイルのパスを指定してください。
 
 Rust adapter はリポジトリルートから検証します。
