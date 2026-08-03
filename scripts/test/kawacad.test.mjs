@@ -35,6 +35,7 @@ test("test scopes select the expected suites", () => {
   assert.match(core, /kawacad-core/);
   assert.doesNotMatch(core, /npm/);
   assert.match(tauri, /npm test/);
+  assert.match(tauri, /playwright install chromium/);
   assert.match(tauri, /test:e2e/);
 });
 

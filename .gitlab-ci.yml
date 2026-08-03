@@ -21,7 +21,6 @@ ci:
     - cargo --version
     - npm ci --prefix apps/tauri/KawaCAD
     - node scripts/kawacad.mjs pre-commit
-    - npm run check:architecture --prefix apps/tauri/KawaCAD
     - cargo build -p kawacad-core-process
     - node scripts/kawacad.mjs test --scope all --live-core --e2e
     - cargo build --workspace

@@ -82,7 +82,10 @@ export function testPlan(scope, { liveCore = false, e2e = false, nodePlatform = 
       npmCommand(["test"], { cwd: paths.tauriPackage }),
       command("cargo", ["test", "-p", "kawa-cad-tauri"], { cwd: paths.repositoryRoot }),
     );
-    if (e2e) specs.push(npmCommand(["run", "test:e2e"], { cwd: paths.tauriPackage }));
+    if (e2e) {
+      specs.push(command(localBinary(paths.tauriPackage, "playwright"), ["install", "chromium"], { cwd: paths.tauriPackage }));
+      specs.push(npmCommand(["run", "test:e2e"], { cwd: paths.tauriPackage }));
+    }
   }
   if (!["core", "swift", "tauri", "all"].includes(scope)) throw new Error(`Unknown test scope: ${scope}`);
   return specs;

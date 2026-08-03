@@ -21,6 +21,7 @@ PDF出力と直接印刷は意図的に含めません。出力機能のCoreは�
 ```bash
 cd apps/tauri/KawaCAD
 npm install
+npx playwright install chromium
 npm run format:check
 npm test
 npm run test:e2e
