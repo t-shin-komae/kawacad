@@ -46,8 +46,10 @@ swift test --package-path apps/macos/KawaCAD
 node scripts/kawacad.mjs pre-commit
 ```
 
-リポジトリ管理のGit hookも同じCLIを呼び出します。インストールするには、次を実行します。
+リポジトリ管理のGit hookは、pre-commitチェックとmacOS上のSwift pre-push検証を同じCLIから実行します。インストールするには、次を実行します。
 
 ```sh
-cp .githooks/pre-commit .git/hooks/pre-commit
+git config core.hooksPath .githooks
 ```
+
+Pull Request、GitHub Actions CI、pre-push検証の運用は[`CONTRIBUTING.md`](CONTRIBUTING.md)を参照してください。

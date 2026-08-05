@@ -17,6 +17,17 @@ node scripts/kawacad.mjs pre-commit --fix
 
 The check runs Rust formatting and Clippy, Swift formatting checks on macOS, and Tauri formatting and TypeScript checks.
 
+## Pre-push
+
+```bash
+node scripts/kawacad.mjs pre-push
+```
+
+The pre-push check requires macOS. It validates Swift formatting, builds the
+real Core process, runs the regular and live-Core Swift tests, and builds and
+stages the unsigned Swift release application. This is the Swift validation
+boundary that complements the Linux-only GitHub Actions workflow.
+
 ## Tests
 
 ```bash

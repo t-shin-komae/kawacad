@@ -21,6 +21,13 @@ import { currentPlatform, isNativePlatform, supportedPlatforms } from "./lib/pla
 
 const swiftSourceDirectory = path.join(paths.macosPackage, "Sources");
 const swiftTestDirectory = path.join(paths.macosPackage, "Tests");
+const prePushModuleCacheRoot = path.join(paths.repositoryRoot, "target", "pre-push-module-cache");
+const prePushSwiftEnvironment = {
+  CLANG_MODULE_CACHE_PATH: path.join(prePushModuleCacheRoot, "clang"),
+  KAWACAD_CORE_PROCESS: path.join(paths.repositoryRoot, "target", "debug", "kawacad-core-process"),
+  LEATHER_ENABLE_LIVE_CORE_TESTS: "1",
+  SWIFTPM_MODULECACHE_OVERRIDE: path.join(prePushModuleCacheRoot, "swiftpm"),
+};
 
 export function parseArgs(argv) {
   const [commandName = "help", ...tokens] = argv;
@@ -60,6 +67,23 @@ export function preCommitPlan({ fix = false, nodePlatform = process.platform } =
     command(localBinary(paths.tauriPackage, "tsc"), ["--noEmit"], { cwd: paths.tauriPackage }),
   );
   return specs;
+}
+
+export function prePushPlan() {
+  const releaseSpecs = releasePlan("macos", "swift").map((spec) =>
+    spec.program === "swift"
+      ? { ...spec, env: { ...spec.env, ...prePushSwiftEnvironment } }
+      : spec,
+  );
+  return [
+    command("swift", ["format", "lint", "--recursive", "--strict", swiftSourceDirectory, swiftTestDirectory], { cwd: paths.repositoryRoot }),
+    command("cargo", ["build", "-p", "kawacad-core-process"], { cwd: paths.repositoryRoot }),
+    command("swift", ["test", "--package-path", paths.macosPackage], {
+      cwd: paths.repositoryRoot,
+      env: prePushSwiftEnvironment,
+    }),
+    ...releaseSpecs,
+  ];
 }
 
 export function testPlan(scope, { liveCore = false, e2e = false, nodePlatform = process.platform } = {}) {
@@ -144,14 +168,14 @@ function writeInfoPlist(destination) {
   fs.writeFileSync(destination, contents);
 }
 
-function stageSwiftApp({ dryRun = false } = {}) {
+function stageSwiftApp({ dryRun = false, env = {} } = {}) {
   const destination = releaseArtifactPath("macos", "swift");
   const coreProcess = path.join(paths.rustReleaseDirectory, "kawacad-core-process");
   if (dryRun) {
     console.log(`[stage] Swift app -> ${destination}`);
     return;
   }
-  const binResult = runCommand(command("swift", ["build", "--package-path", paths.macosPackage, "--configuration", "release", "--show-bin-path"]), { cwd: paths.repositoryRoot, capture: true });
+  const binResult = runCommand(command("swift", ["build", "--package-path", paths.macosPackage, "--configuration", "release", "--show-bin-path"]), { cwd: paths.repositoryRoot, capture: true, env });
   const binDirectory = binResult.stdout.trim().split(/\r?\n/u).at(-1);
   if (!binDirectory) throw new Error("SwiftPM release bin path was not reported");
   const swiftExecutable = path.join(binDirectory, "KawaCAD");
@@ -222,8 +246,18 @@ function runPreCommit(options) {
   executeSpecs(preCommitPlan({ fix: options.fix }), { dryRun: options.dryRun });
 }
 
+function runPrePush(options) {
+  assertNative("macos", options.dryRun);
+  if (!options.dryRun) {
+    ensureDirectory(prePushSwiftEnvironment.CLANG_MODULE_CACHE_PATH);
+    ensureDirectory(prePushSwiftEnvironment.SWIFTPM_MODULECACHE_OVERRIDE);
+  }
+  executeSpecs(prePushPlan(), { dryRun: options.dryRun });
+  stageSwiftApp({ dryRun: options.dryRun, env: prePushSwiftEnvironment });
+}
+
 function printHelp() {
-  console.log(`KawaCAD project automation\n\nUsage:\n  node scripts/kawacad.mjs <command> [options]\n\nCommands:\n  pre-commit                 Run formatters and lint checks\n  test --scope <scope>      Run core, swift, tauri, or all tests\n  coverage --scope <scope>  Generate native coverage artifacts\n  release                   Build a native release artifact\n\nOptions:\n  --platform <macos|windows|linux>\n  --variant <swift|tauri|all>\n  --scope <core|swift|tauri|all>\n  --live-core               Include Swift tests using the real Core process\n  --e2e                     Include Tauri Playwright tests\n  --fix                     Apply formatters during pre-commit\n  --dry-run                 Print commands without running them\n  --help                    Show this help\n`);
+  console.log(`KawaCAD project automation\n\nUsage:\n  node scripts/kawacad.mjs <command> [options]\n\nCommands:\n  pre-commit                 Run formatters and lint checks\n  pre-push                   Verify the Swift application on macOS\n  test --scope <scope>      Run core, swift, tauri, or all tests\n  coverage --scope <scope>  Generate native coverage artifacts\n  release                   Build a native release artifact\n\nOptions:\n  --platform <macos|windows|linux>\n  --variant <swift|tauri|all>\n  --scope <core|swift|tauri|all>\n  --live-core               Include Swift tests using the real Core process\n  --e2e                     Include Tauri Playwright tests\n  --fix                     Apply formatters during pre-commit\n  --dry-run                 Print commands without running them\n  --help                    Show this help\n`);
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -232,6 +266,8 @@ export async function main(argv = process.argv.slice(2)) {
   switch (options.command) {
     case "pre-commit":
       return runPreCommit(options);
+    case "pre-push":
+      return runPrePush(options);
     case "test":
       return runTests(options);
     case "coverage":

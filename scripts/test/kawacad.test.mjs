@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseArgs, releaseArtifactPath, releasePlan, testPlan } from "../kawacad.mjs";
+import { parseArgs, prePushPlan, releaseArtifactPath, releasePlan, testPlan } from "../kawacad.mjs";
 import { coverageOutputDirectory, coveragePlan } from "../lib/coverage.mjs";
 
 function commandText(spec) {
@@ -37,6 +37,21 @@ test("test scopes select the expected suites", () => {
   assert.match(tauri, /npm test/);
   assert.match(tauri, /playwright install chromium/);
   assert.match(tauri, /test:e2e/);
+});
+
+test("pre-push verifies Swift formatting, real-Core tests, and the release build", () => {
+  const plan = prePushPlan();
+  const commands = plan.map(commandText).join("\n");
+  const swiftTest = plan.find((spec) => spec.program === "swift" && spec.args[0] === "test");
+
+  assert.match(commands, /swift format lint/);
+  assert.match(commands, /cargo build -p kawacad-core-process/);
+  assert.match(commands, /swift test/);
+  assert.match(commands, /swift build.*--configuration release/);
+  assert.equal(swiftTest?.env.KAWACAD_CORE_PROCESS.endsWith("target/debug/kawacad-core-process"), true);
+  assert.equal(swiftTest?.env.CLANG_MODULE_CACHE_PATH.endsWith("target/pre-push-module-cache/clang"), true);
+  assert.equal(swiftTest?.env.SWIFTPM_MODULECACHE_OVERRIDE.endsWith("target/pre-push-module-cache/swiftpm"), true);
+  assert.equal(swiftTest?.env.LEATHER_ENABLE_LIVE_CORE_TESTS, "1");
 });
 
 test("Swift is skipped from all-tests planning on non-macOS", () => {
