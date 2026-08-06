@@ -1166,7 +1166,7 @@ input[type="checkbox"] {
   color: var(--secondary-ink);
   font-size: 10px;
 }
-@container workspace-column (max-width: 1480px) {
+@container workspace-column (max-width: 1500px) {
   .toolbar-edit-actions > button:nth-child(2),
   .toolbar-edit-actions > button:nth-child(3),
   .toolbar-display-toggles,
