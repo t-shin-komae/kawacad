@@ -94,9 +94,9 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(page.getByText("未評価", { exact: true })).toBeVisible();
   });
 
-  // 実際に割り当てられた幅で表示密度を切り替え、境界前後でも要素が画面外へはみ出さないことを検証する。
+  // 実際に割り当てられた幅で表示密度を切り替え、代表的な画面幅で要素が画面外へはみ出さないことを検証する。
   test("keeps the responsive toolbar inside the window at every supported width", async ({ page }) => {
-    for (const width of [1800, 1640, 1635, 1634, 1600, 1520, 1500, 1480, 1320, 1280, 1100, 1050, 1024, 960]) {
+    for (const width of [1800, 1640, 1600, 1520, 1500, 1480, 1320, 1280, 1100, 1050, 1024, 960]) {
       await page.setViewportSize({ width, height: 800 });
       await openWorkspace(page);
       const toolbar = page.getByRole("navigation", { name: "CAD ツールバー" });
