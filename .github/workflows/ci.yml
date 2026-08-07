@@ -56,6 +56,14 @@ jobs:
           restore-keys: |
             cargo-downloads-${{ runner.os }}-${{ runner.arch }}-
 
+      - name: Cache Rust build output
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target
+          key: cargo-target-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Install Tauri system dependencies
         run: |
           sudo apt-get update
@@ -69,6 +77,14 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libxdo-dev \
             wget
+
+      - name: Cache frontend dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/tauri/KawaCAD/node_modules
+          key: tauri-node-modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('apps/tauri/KawaCAD/package-lock.json') }}
+          restore-keys: |
+            tauri-node-modules-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Install frontend dependencies
         run: npm ci --prefix apps/tauri/KawaCAD
@@ -119,6 +135,14 @@ jobs:
           restore-keys: |
             cargo-downloads-${{ runner.os }}-${{ runner.arch }}-
 
+      - name: Cache Rust build output
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: target
+          key: cargo-target-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ runner.arch }}-
+
       - name: Install Tauri system dependencies
         run: |
           sudo apt-get update
@@ -132,6 +156,14 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libxdo-dev \
             wget
+
+      - name: Cache frontend dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/tauri/KawaCAD/node_modules
+          key: tauri-node-modules-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('apps/tauri/KawaCAD/package-lock.json') }}
+          restore-keys: |
+            tauri-node-modules-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Install frontend dependencies
         run: npm ci --prefix apps/tauri/KawaCAD
