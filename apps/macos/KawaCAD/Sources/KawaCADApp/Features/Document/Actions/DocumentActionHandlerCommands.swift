@@ -61,6 +61,7 @@ extension DocumentActionHandler {
       canvasPresentation.setHoveredConstraintID(nil)
       return
     }
+    let printOrientationChanged = actions.workspace.syncPrintOrientation(state.printOrientation)
     if !layers.contains(where: { $0.id == canvasPresentation.activeLayerID }) {
       canvasPresentation.setActiveLayerID(
         layers.first(where: { $0.id == "layer:cut-line" })?.id
@@ -116,6 +117,9 @@ extension DocumentActionHandler {
     }
     if outputPresentation.requestDraft != nil {
       outputPresentation.scheduleBuild(session: cadSession)
+    }
+    if printOrientationChanged, canvasPresentation.viewMode == .outputPreview {
+      refreshOutputPreviewBuildResult()
     }
   }
 }

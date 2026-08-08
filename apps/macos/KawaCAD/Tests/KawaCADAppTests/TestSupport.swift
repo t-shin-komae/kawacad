@@ -52,6 +52,7 @@ func canvasProjection(
 func makeDocumentState(
   name: String = "Test Project",
   history: LeatherHistoryState = LeatherHistoryState(canUndo: false, canRedo: false),
+  printOrientation: OutputPrintOrientation = .portrait,
   layers: [ProjectLayer] = defaultLayers(),
   sharedStyles: [ProjectSharedStyle] = [],
   parameters: [ProjectParameter] = [],
@@ -105,6 +106,7 @@ func makeDocumentState(
     measurementEvaluations: [],
     dimensionConstraintAnnotations: dimensionConstraintAnnotations
   )
+  state.printOrientation = printOrientation
   state.parts = parts
   return state
 }

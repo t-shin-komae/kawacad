@@ -169,6 +169,28 @@ fn interface_schema_accepts_part_move_duplicate_and_membership_commands() {
 }
 
 #[test]
+fn interface_schema_accepts_print_orientation_command() {
+    let schema: Value =
+        serde_json::from_str(INTERFACE_SCHEMA).expect("interface schema should be valid json");
+    let definition = schema
+        .pointer("/$defs/semanticApplyCommandRequest")
+        .expect("semanticApplyCommandRequest definition should exist");
+    let request = serde_json::json!({
+        "kind": "applyCommand",
+        "payload": {
+            "command": {
+                "kind": "setPrintOrientation",
+                "payload": { "orientation": "landscape" }
+            },
+            "viewMode": "editDisplay"
+        }
+    });
+
+    validate(&request, definition, &schema)
+        .unwrap_or_else(|error| panic!("print orientation command should validate: {error}"));
+}
+
+#[test]
 fn interface_schema_accepts_core_owned_gesture_and_property_commands() {
     let schema: Value =
         serde_json::from_str(INTERFACE_SCHEMA).expect("interface schema should be valid json");
