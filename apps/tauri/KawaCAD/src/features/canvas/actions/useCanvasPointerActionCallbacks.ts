@@ -67,17 +67,28 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
           xMm: snappedPoint.xMm - move.current.start.xMm,
           yMm: snappedPoint.yMm - move.current.start.yMm,
         };
-        if (Math.hypot(delta.xMm, delta.yMm) > 0.0001)
+        if (Math.hypot(delta.xMm, delta.yMm) > 0.0001) {
+          const part = move.current.partId ? state?.parts.find((item) => item.id === move.current?.partId) : undefined;
           previewCommand(
             {
-              kind: event.altKey ? "duplicateSelection" : "moveEntities",
+              kind: event.altKey ? (part ? "duplicatePart" : "duplicateSelection") : part ? "movePart" : "moveEntities",
               payload: event.altKey
-                ? { selection: { entityIds: move.current.ids }, idNamespace: crypto.randomUUID(), delta }
-                : { entityIds: move.current.ids, delta, allowSingleLineStretch: true },
+                ? part
+                  ? {
+                      partId: part.id,
+                      newPartId: `part:${crypto.randomUUID()}`,
+                      newName: `${part.name} のコピー`,
+                      idNamespace: crypto.randomUUID(),
+                      delta,
+                    }
+                  : { selection: { entityIds: move.current.ids }, idNamespace: crypto.randomUUID(), delta }
+                : part
+                  ? { partId: part.id, delta }
+                  : { entityIds: move.current.ids, delta, allowSingleLineStretch: true },
             },
             event.altKey ? appStrings.app.duplicatePreview : appStrings.app.movePreview,
           );
-        else clearCanvasPreview();
+        } else clearCanvasPreview();
       }
       if (controlMove.current) {
         const target = controlMove.current.target;
@@ -150,12 +161,16 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
               { selection: { entityIds: current.ids }, idNamespace: crypto.randomUUID(), delta },
               appStrings.app.geometryDuplicated,
             );
-          else
-            void command(
-              "moveEntities",
-              { entityIds: current.ids, delta, allowSingleLineStretch: true },
-              appStrings.app.geometryMoved,
-            );
+          else {
+            const part = current.partId ? state?.parts.find((item) => item.id === current.partId) : undefined;
+            if (part) void command("movePart", { partId: part.id, delta }, appStrings.app.geometryMoved);
+            else
+              void command(
+                "moveEntities",
+                { entityIds: current.ids, delta, allowSingleLineStretch: true },
+                appStrings.app.geometryMoved,
+              );
+          }
       }
       if (controlMove.current) {
         const current = controlMove.current;
