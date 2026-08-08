@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Foundation
 
 public struct OutputDirectPrintSession {
@@ -8,6 +9,7 @@ public struct OutputDirectPrintSession {
   public let paperHeightMm: Double
   public let scalingFactor: Double
   public let printerName: String?
+  public let isSingleSided: Bool
 
   let printInfo: NSPrintInfo
 
@@ -21,6 +23,11 @@ public struct OutputDirectPrintSession {
     paperHeightMm = LivePrintController.pointsToMillimeters(copiedPrintInfo.paperSize.height)
     scalingFactor = copiedPrintInfo.scalingFactor
     printerName = copiedPrintInfo.printer.name
+    var duplexMode = PMDuplexMode(kPMDuplexNone)
+    let printSettings = OpaquePointer(copiedPrintInfo.pmPrintSettings())
+    isSingleSided =
+      PMGetDuplex(printSettings, &duplexMode) == noErr
+      && duplexMode == PMDuplexMode(kPMDuplexNone)
   }
 
   public var isA4Paper: Bool {
@@ -41,5 +48,6 @@ extension OutputDirectPrintSession: Equatable {
       && lhs.paperHeightMm == rhs.paperHeightMm
       && lhs.scalingFactor == rhs.scalingFactor
       && lhs.printerName == rhs.printerName
+      && lhs.isSingleSided == rhs.isSingleSided
   }
 }

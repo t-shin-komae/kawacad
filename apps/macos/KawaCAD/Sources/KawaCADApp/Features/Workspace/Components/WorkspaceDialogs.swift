@@ -192,18 +192,21 @@ struct OutputRequestSheet: View {
               settingGroupLabel(AppStrings.tr("output.sheet.print_session"))
               summaryRow(
                 AppStrings.tr("output.sheet.printer"),
-                value: draft.directPrintSession?.printerName
+                value: draft.selectedDirectPrinterName
+                  ?? draft.directPrintSession?.printerName
                   ?? AppStrings.tr("output.sheet.print_session_unknown")
               )
+              Picker(
+                AppStrings.tr("output.sheet.printer"), selection: directPrinterBinding(for: draft)
+              ) {
+                ForEach(draft.directPrinterNames, id: \.self) { printerName in
+                  Text(printerName).tag(printerName)
+                }
+              }
               summaryRow(
                 AppStrings.tr("output.sheet.printable_area"),
                 value: printableAreaText(for: draft.directPrintSession?.printableAreaMm)
               )
-
-              Button(AppStrings.tr("output.sheet.print_settings")) {
-                actions.refreshDirectPrintSession()
-              }
-              .buttonStyle(.bordered)
             }
           }
 
@@ -352,6 +355,18 @@ struct OutputRequestSheet: View {
 
   private var rotationBinding: Binding<Int> {
     draftOptionBinding(state.draft?.options.rotationDeg, default: 0, set: actions.setRotation)
+  }
+
+  private func directPrinterBinding(for draft: OutputRequestDraft) -> Binding<String> {
+    Binding(
+      get: {
+        draft.selectedDirectPrinterName
+          ?? draft.directPrintSession?.printerName
+          ?? draft.directPrinterNames.first
+          ?? ""
+      },
+      set: actions.selectDirectPrintPrinter
+    )
   }
 
   private var includeDimensionLabelsBinding: Binding<Bool> {

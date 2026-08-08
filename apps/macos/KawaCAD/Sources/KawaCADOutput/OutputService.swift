@@ -17,16 +17,15 @@ public final class OutputService {
     )
   }
 
-  public func makeDirectPrintBuildOptions(presentation: OutputPresentationOptions) -> OutputResult<
-    OutputBuildOptions
-  > {
-    printController.makeOutputBuildOptions(presentation: presentation)
+  public func availablePrinterNames() -> [String] {
+    printController.availablePrinterNames()
   }
 
-  public func captureDirectPrintSession(
-    presentation: OutputPresentationOptions
-  ) -> OutputResult<OutputDirectPrintCaptureResult> {
-    printController.captureDirectPrintSession(presentation: presentation)
+  public func makeDirectPrintSession(
+    presentation: OutputPresentationOptions,
+    printerName: String?
+  ) -> OutputResult<OutputDirectPrintSession> {
+    printController.makeDirectPrintSession(presentation: presentation, printerName: printerName)
   }
 
   public func prepareDirectPrintSession(
@@ -87,16 +86,22 @@ public final class OutputService {
     session: any OutputSession,
     documentName: String
   ) -> OutputResult<String> {
-    let options: OutputBuildOptions
-    switch makeDirectPrintBuildOptions(presentation: presentation) {
+    let directPrintSession: OutputDirectPrintSession
+    switch makeDirectPrintSession(presentation: presentation, printerName: nil) {
     case .success(let value):
-      options = value
+      directPrintSession = value
     case .failure(let error):
       return .failure(error)
     }
-
+    let preparedSession: OutputPreparedDirectPrintSession
+    switch prepareDirectPrintSession(presentation: presentation, session: directPrintSession) {
+    case .success(let value):
+      preparedSession = value
+    case .failure(let error):
+      return .failure(error)
+    }
     let buildResult: OutputBuildResult
-    switch prepareOutput(options: options, session: session) {
+    switch prepareOutput(options: preparedSession.buildOptions, session: session) {
     case .success(let value):
       buildResult = value
     case .failure(let error):
@@ -105,23 +110,8 @@ public final class OutputService {
     return runPreparedDirectPrint(
       buildResult: buildResult,
       documentName: documentName,
-      session: session
-    )
-  }
-
-  public func runPreparedDirectPrint(
-    buildResult: OutputBuildResult,
-    documentName: String,
-    session: any OutputSession
-  ) -> OutputResult<String> {
-    let defaultSession = OutputDirectPrintSession(
-      printInfo: LivePrintController.makePrintInfo(for: buildResult.outputDocumentModel.orientation)
-    )
-    return runPreparedDirectPrint(
-      buildResult: buildResult,
-      documentName: documentName,
       session: session,
-      directPrintSession: defaultSession
+      directPrintSession: preparedSession.session
     )
   }
 

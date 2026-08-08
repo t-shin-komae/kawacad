@@ -95,36 +95,43 @@ func live_print_controller_accepts_multi_page_render_data() {
   #expect(capturedOrientation == .portrait)
 }
 
-@Test("LivePrintController はA4横向きの印刷設定を渡し、印刷パネルのキャンセルを正常終了にする")
-func live_print_controller_handles_landscape_print_panel_cancellation() {
+@Test("LivePrintController は標準印刷パネルなしで選択プリンタ用のA4横向きセッションを作る")
+func live_print_controller_makes_landscape_a4_session_without_print_panel() {
   var capturedOrientation: NSPrintInfo.PaperOrientation?
   var capturedPaperSize: NSSize?
   let controller = LivePrintController(
     runPrintOperation: { _, _, _ in
-      Issue.record("cancelled print panel must not start a print operation")
+      Issue.record("creating a direct-print session must not start a print operation")
       return true
     },
-    runPrintPanel: { printInfo in
+    printerNames: { ["Test Printer"] },
+    makePrintInfoForPrinter: { printerName, orientation in
+      #expect(printerName == "Test Printer")
+      let printInfo = LivePrintController.makePrintInfo(for: orientation)
       capturedOrientation = printInfo.orientation
       capturedPaperSize = printInfo.paperSize
-      return .cancel
+      return .success(printInfo)
     }
   )
 
-  let result = controller.captureDirectPrintSession(
+  let result = controller.makeDirectPrintSession(
     presentation: OutputPresentationOptions(
       orientation: .landscape,
       includeDimensionLabels: true,
       includeScaleGuide: true,
       rotationDeg: 0
-    )
+    ),
+    printerName: "Test Printer"
   )
 
   switch result {
-  case .success(.cancelled):
+  case .success(let session):
+    #expect(session.isA4Paper)
+    #expect(session.isActualScale)
+    #expect(session.isSingleSided)
     break
   default:
-    Issue.record("print panel cancellation should return a successful cancellation")
+    Issue.record("the selected printer should create a direct-print session")
   }
   #expect(capturedOrientation == .landscape)
   #expect(abs((capturedPaperSize?.width ?? 0) - points(297.0)) < 0.001)
@@ -151,8 +158,8 @@ func live_print_controller_rejects_empty_render_data() {
   #expect(!didStartPrintOperation)
 }
 
-@Test("LivePrintController は非A4用紙の captured session を直接印刷準備で拒否する")
-func live_print_controller_rejects_non_a4_captured_session() {
+@Test("LivePrintController は選択済みセッションを直接印刷用のA4へ正規化する")
+func live_print_controller_normalizes_session_to_a4() {
   let printInfo = LivePrintController.makePrintInfo(for: .portrait)
   printInfo.paperSize = NSSize(width: points(148.0), height: points(210.0))
   let session = OutputDirectPrintSession(printInfo: printInfo)
@@ -172,10 +179,12 @@ func live_print_controller_rejects_non_a4_captured_session() {
   )
 
   switch result {
+  case .success(let prepared):
+    #expect(prepared.session.isA4Paper)
+    #expect(prepared.session.isActualScale)
+    #expect(prepared.session.isSingleSided)
   case .failure(let error):
-    #expect(error.message == OutputStrings.tr("output.direct_print_requires_a4"))
-  case .success:
-    Issue.record("non-A4 captured session should fail")
+    Issue.record("direct-print preparation should normalize to A4: \(error.message)")
   }
 }
 

@@ -834,11 +834,6 @@ public struct OutputPrintRenderData: Codable, Equatable {
   }
 }
 
-public enum OutputDirectPrintCaptureResult: Equatable {
-  case cancelled
-  case ready(OutputDirectPrintSession)
-}
-
 public struct OutputPreparedDirectPrintSession: Equatable {
   public let session: OutputDirectPrintSession
   public let buildOptions: OutputBuildOptions
@@ -856,12 +851,11 @@ public protocol OutputSession {
 }
 
 public protocol PrintControlling {
-  func makeOutputBuildOptions(presentation: OutputPresentationOptions) -> OutputResult<
-    OutputBuildOptions
-  >
-  func captureDirectPrintSession(
-    presentation: OutputPresentationOptions
-  ) -> OutputResult<OutputDirectPrintCaptureResult>
+  func availablePrinterNames() -> [String]
+  func makeDirectPrintSession(
+    presentation: OutputPresentationOptions,
+    printerName: String?
+  ) -> OutputResult<OutputDirectPrintSession>
   func prepareDirectPrintSession(
     presentation: OutputPresentationOptions,
     session: OutputDirectPrintSession

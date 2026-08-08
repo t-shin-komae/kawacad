@@ -28,7 +28,7 @@
 "output.sheet.print_session" = "印刷設定";
 "output.sheet.print_session_missing" = "印刷設定を再取得してください。";
 "output.sheet.print_session_unknown" = "未取得";
-"output.sheet.print_settings" = "OS印刷設定を変更";
+"output.direct_print_printer_unavailable" = "利用可能なプリンタがありません。";
 "output.sheet.printer" = "プリンタ";
 "output.sheet.printable_area" = "印刷可能領域";
 "output.sheet.printable_area_value" = "L %.1f / R %.1f / T %.1f / B %.1f mm";
