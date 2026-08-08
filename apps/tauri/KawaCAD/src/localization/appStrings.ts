@@ -56,6 +56,7 @@ const constraintStatusNames: Record<ConstraintStatus, string> = {
 const appStrings = {
   common: {
     close: "閉じる",
+    cancel: "キャンセル",
     details: "詳細",
   },
   document: {
@@ -279,6 +280,7 @@ const appStrings = {
       open: "開く…",
       save: "保存",
       saveAs: "別名で保存…",
+      exportPDF: "PDF出力…",
       undo: "元に戻す",
       redo: "やり直す",
       cut: "切り取り",

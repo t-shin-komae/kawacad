@@ -12,6 +12,7 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "open",
   "save",
   "saveAs",
+  "exportPDF",
   "undo",
   "redo",
   "cut",
@@ -121,6 +122,8 @@ export async function installNativeMenu() {
           item(appStrings.menu.item.open, "open", "CmdOrCtrl+O"),
           item(appStrings.menu.item.save, "save", "CmdOrCtrl+S"),
           item(appStrings.menu.item.saveAs, "saveAs", "CmdOrCtrl+Shift+S"),
+          { item: "Separator" },
+          item(appStrings.menu.item.exportPDF, "exportPDF"),
         ],
       },
       {

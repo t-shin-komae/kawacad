@@ -221,6 +221,12 @@ describe("React workspace shortcuts", () => {
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
   });
+  it("opens PDF output from the native File menu action", async () => {
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "exportPDF" }));
+    expect(await screen.findByRole("dialog", { name: "PDF出力" })).toBeInTheDocument();
+  });
   it("uses unmodified V to return to Select", async () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");

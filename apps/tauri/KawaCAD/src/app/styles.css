@@ -942,6 +942,163 @@ input[type="checkbox"] {
   background: var(--window);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
 }
+.pdf-export-dialog {
+  width: min(900px, 100%);
+  max-height: min(700px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--panel-stroke);
+  border-radius: 12px;
+  background: var(--window);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+.pdf-export-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--panel-stroke);
+}
+.pdf-export-header h2,
+.pdf-export-header p,
+.pdf-export-preview h3 {
+  margin: 0;
+}
+.pdf-export-header h2 {
+  font-size: 16px;
+}
+.pdf-export-header p {
+  margin-top: 4px;
+  color: var(--secondary-ink);
+  font-size: 12px;
+}
+.pdf-export-body {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  min-height: 470px;
+}
+.pdf-export-settings {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 20px;
+  border-right: 1px solid var(--panel-stroke);
+}
+.pdf-export-summary {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.pdf-export-summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+.pdf-export-summary dt {
+  color: var(--secondary-ink);
+}
+.pdf-export-summary dd {
+  margin: 0;
+}
+.pdf-export-settings fieldset {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--panel-stroke);
+  border-radius: 7px;
+}
+.pdf-export-settings legend {
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.pdf-export-settings fieldset label {
+  justify-content: space-between;
+  white-space: normal;
+}
+.pdf-export-settings fieldset label:has(input) {
+  justify-content: start;
+}
+.pdf-export-warnings {
+  padding: 12px;
+  border: 1px solid rgba(191, 76, 26, 0.4);
+  border-radius: 7px;
+  background: rgba(255, 242, 232, 0.7);
+}
+.pdf-export-warnings strong {
+  font-size: 12px;
+}
+.pdf-export-warnings ul {
+  margin: 8px 0;
+  padding-left: 18px;
+  color: var(--secondary-ink);
+  font-size: 11px;
+}
+.pdf-export-error {
+  margin: 0;
+  color: #9a3412;
+  font-size: 12px;
+}
+.pdf-export-actions {
+  justify-content: end;
+}
+.pdf-export-preview {
+  position: relative;
+  min-width: 0;
+  padding: 20px;
+  overflow: auto;
+  background: rgba(60, 60, 67, 0.04);
+}
+.pdf-export-preview h3 {
+  font-size: 13px;
+}
+.pdf-export-preview > p {
+  color: var(--secondary-ink);
+  font-size: 12px;
+}
+.pdf-export-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: start;
+  gap: 18px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.pdf-export-pages li {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  color: var(--secondary-ink);
+  font-size: 10px;
+}
+.pdf-page {
+  display: grid;
+  place-items: start end;
+  width: 100px;
+  height: 142px;
+  padding: 6px;
+  border: 1px solid rgba(60, 60, 67, 0.36);
+  background: white;
+  color: var(--secondary-ink);
+  font-size: 11px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.pdf-page.landscape {
+  width: 142px;
+  height: 100px;
+}
+.pdf-export-preview-updating {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(245, 245, 247, 0.72);
+  color: var(--secondary-ink);
+  font-size: 12px;
+}
 .licenses-dialog-header {
   display: flex;
   align-items: center;

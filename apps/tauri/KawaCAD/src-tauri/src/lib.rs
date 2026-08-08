@@ -3,13 +3,18 @@ use kawacad_core::constraints::{ConstraintKind, ConstraintTarget};
 use kawacad_core::document::DerivedElementPreflightKind;
 use kawacad_core::document::ProjectDocument;
 use kawacad_core::geometry::Point2;
-use kawacad_core::output::{BuildOutputDocumentModelOptions, PrintableAreaMm};
+use kawacad_core::output::{
+    BuildOutputDocumentModelOptions, BuildOutputDocumentModelResult, OutputDocumentModel,
+    PrintableAreaMm,
+};
 use kawacad_core::print::PrintOrientation;
 use kawacad_core::snapshot::CanvasViewMode;
+use kawacad_output_engine::render_pdf;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::Manager;
 
 struct CadSession {
@@ -49,6 +54,15 @@ struct RecoveryMetadata {
 struct RecoveryCandidate {
     display_name: String,
     original_document_path: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PdfOutputOptions {
+    orientation: PrintOrientation,
+    include_dimension_labels: bool,
+    include_scale_guide: bool,
+    rotation_deg: u16,
 }
 
 fn application_data_directory(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -230,10 +244,77 @@ fn lock_session(state: &AppState) -> Result<std::sync::MutexGuard<'_, CadSession
         .map_err(|_| "CAD session lock was poisoned".to_owned())
 }
 
+fn pdf_printable_area(orientation: PrintOrientation) -> PrintableAreaMm {
+    let (width_mm, height_mm) = match orientation {
+        PrintOrientation::Portrait => (210.0, 297.0),
+        PrintOrientation::Landscape => (297.0, 210.0),
+    };
+    let inset_mm = 5.0;
+    PrintableAreaMm {
+        left_mm: -width_mm / 2.0 + inset_mm,
+        right_mm: width_mm / 2.0 - inset_mm,
+        top_mm: height_mm / 2.0 - inset_mm,
+        bottom_mm: -height_mm / 2.0 + inset_mm,
+    }
+}
+
+fn temporary_pdf_path(path: &Path) -> Result<PathBuf, String> {
+    let directory = path
+        .parent()
+        .ok_or_else(|| "Could not determine the PDF destination directory".to_owned())?;
+    let file_name = path
+        .file_name()
+        .ok_or_else(|| "Could not determine the PDF file name".to_owned())?
+        .to_string_lossy();
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| format!("Could not create a temporary PDF path: {error}"))?
+        .as_nanos();
+    Ok(directory.join(format!(".{file_name}.{nonce}.tmp")))
+}
+
+fn save_pdf_bytes(path: PathBuf, bytes: &[u8]) -> Result<(), String> {
+    let temporary_path = temporary_pdf_path(&path)?;
+    fs::write(&temporary_path, bytes)
+        .map_err(|error| format!("Could not write PDF data: {error}"))?;
+    fs::rename(&temporary_path, &path).map_err(|error| {
+        let _ = fs::remove_file(&temporary_path);
+        format!("Could not save PDF: {error}")
+    })
+}
+
 #[tauri::command]
 fn document_state(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let session = lock_session(&state)?;
     Ok(state_for(&session))
+}
+
+#[tauri::command]
+fn prepare_pdf_output(
+    options: PdfOutputOptions,
+    state: tauri::State<'_, AppState>,
+) -> Result<BuildOutputDocumentModelResult, String> {
+    let session = lock_session(&state)?;
+    session
+        .document
+        .build_output_document_model(BuildOutputDocumentModelOptions {
+            orientation: options.orientation,
+            include_dimension_labels: options.include_dimension_labels,
+            include_scale_guide: options.include_scale_guide,
+            rotation_deg: options.rotation_deg,
+            printable_area_mm: pdf_printable_area(options.orientation),
+        })
+        .map_err(|error| format!("Could not prepare PDF output: {error}"))
+}
+
+#[tauri::command]
+fn save_prepared_pdf(
+    output_document_model: OutputDocumentModel,
+    path: String,
+) -> Result<(), String> {
+    let pdf = render_pdf(&output_document_model)
+        .map_err(|error| format!("Could not render PDF: {error:?}"))?;
+    save_pdf_bytes(PathBuf::from(path), &pdf.bytes)
 }
 
 #[tauri::command]
@@ -581,6 +662,8 @@ pub fn run() {
         .manage(AppState(Mutex::new(CadSession::new("Untitled".to_owned()))))
         .invoke_handler(tauri::generate_handler![
             document_state,
+            prepare_pdf_output,
+            save_prepared_pdf,
             new_document,
             open_document,
             save_document,
@@ -924,6 +1007,52 @@ mod tests {
         assert_eq!(preview["pages"].as_array().map(Vec::len), Some(1));
         assert_eq!(preview["pages"][0]["gridColumn"], 0);
         assert_eq!(preview["pages"][0]["gridRow"], 0);
+    }
+
+    #[test]
+    fn prepared_pdf_uses_the_pdf_margin_and_writes_pdf_bytes() {
+        let directory = temporary_directory("pdf-output");
+        fs::create_dir_all(&directory).expect("PDF directory should be created");
+        let path = directory.join("pattern.pdf");
+        let mut session = CadSession::new("PDF".to_owned());
+        session
+            .document
+            .apply_command(
+                serde_json::from_value(json!({
+                    "kind": "createEntityFromGesture",
+                    "payload": {
+                        "id": "point-1",
+                        "layerId": null,
+                        "gesture": { "kind": "point", "position": { "xMm": 0.0, "yMm": 0.0 } }
+                    }
+                }))
+                .expect("PDF test command should deserialize"),
+            )
+            .expect("point should be created");
+
+        let area = pdf_printable_area(PrintOrientation::Portrait);
+        assert_eq!(area.left_mm, -100.0);
+        assert_eq!(area.right_mm, 100.0);
+        let prepared = session
+            .document
+            .build_output_document_model(BuildOutputDocumentModelOptions {
+                orientation: PrintOrientation::Portrait,
+                include_dimension_labels: true,
+                include_scale_guide: true,
+                rotation_deg: 0,
+                printable_area_mm: area,
+            })
+            .expect("PDF model should be prepared");
+
+        save_prepared_pdf(
+            prepared.output_document_model,
+            path.to_string_lossy().into_owned(),
+        )
+        .expect("PDF should be written");
+        assert!(fs::read(&path)
+            .expect("PDF should exist")
+            .starts_with(b"%PDF-"));
+        let _ = fs::remove_dir_all(directory);
     }
 
     #[test]
