@@ -395,6 +395,28 @@ fn render_pdf_contains_expected_a4_structure_object_ids_and_media_box() {
 }
 
 #[test]
+fn render_pdf_uses_landscape_a4_media_box_and_keeps_content_clipped() {
+    let mut model = manual_pdf_output_model();
+    model.orientation = PrintOrientation::Landscape;
+    model.pages[0].width_mm = 297.0;
+    model.pages[0].height_mm = 210.0;
+    model.pages[0].printable_area_mm = PrintableAreaMm {
+        left_mm: -143.5,
+        right_mm: 143.5,
+        top_mm: 100.0,
+        bottom_mm: -100.0,
+    };
+
+    let pdf = render_pdf(&model).expect("landscape pdf should render");
+    let text = String::from_utf8_lossy(&pdf.bytes);
+    let stream = extract_first_pdf_stream(&pdf.bytes);
+
+    assert!(text.contains("/MediaBox [0 0 841.890 595.276]"));
+    assert!(stream.starts_with("q\n0.000 0.000 841.890 595.276 re W n"));
+    assert!(stream.ends_with("\nQ"));
+}
+
+#[test]
 fn render_pdf_contains_multiple_a4_pages_for_multi_page_model() {
     let model = multi_page_output_model();
 

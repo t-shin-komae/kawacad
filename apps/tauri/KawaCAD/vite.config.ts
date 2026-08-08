@@ -8,13 +8,17 @@ const productInfo = JSON.parse(
 );
 const isReleaseBuild = process.env.KAWACAD_RELEASE === "1";
 
+export function productInfoForBuild(release: boolean) {
+  return {
+    ...productInfo,
+    displayVersion: release ? productInfo.version : `${productInfo.version}-dev`,
+  };
+}
+
 export default defineConfig({
   plugins: [react()],
   define: {
-    __KAWACAD_PRODUCT__: JSON.stringify({
-      ...productInfo,
-      displayVersion: isReleaseBuild ? productInfo.version : `${productInfo.version}-dev`,
-    }),
+    __KAWACAD_PRODUCT__: JSON.stringify(productInfoForBuild(isReleaseBuild)),
   },
   resolve: {
     alias: {

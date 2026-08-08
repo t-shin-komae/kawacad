@@ -6,6 +6,7 @@ import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresenta
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { State } from "@/shared/domain/workspaceState";
 import type { DocumentActionContext } from "@/app/actions/useActionRuntime";
+import { normalizeProjectSavePath } from "@/features/document/domain/projectFilePath";
 
 type DocumentActionDependencies = Pick<
   DocumentActionContext,
@@ -49,7 +50,10 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
         filters: [{ name: appStrings.app.fileFilterName, extensions: ["kawa"] }],
       }));
     if (!path) return false;
-    return Boolean(await run(() => documentAdapter.command<State>("save_document", { path }), appStrings.app.saved));
+    const normalizedPath = normalizeProjectSavePath(path);
+    return Boolean(
+      await run(() => documentAdapter.command<State>("save_document", { path: normalizedPath }), appStrings.app.saved),
+    );
   }, [commitPendingDocumentName, documentNameForFileDialog, run, state?.persistence.path, state?.snapshot.name]);
   const resolveDirtyReplacement = useCallback(
     async (actionLabel: string) => {
@@ -106,7 +110,10 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
       defaultPath: `${documentNameForFileDialog.current ?? state?.snapshot.name ?? appStrings.app.untitled}.kawa`,
       filters: [{ name: appStrings.app.fileFilterName, extensions: ["kawa"] }],
     });
-    if (path) await run(() => documentAdapter.command<State>("save_document", { path }), appStrings.app.saved);
+    if (path) {
+      const normalizedPath = normalizeProjectSavePath(path);
+      await run(() => documentAdapter.command<State>("save_document", { path: normalizedPath }), appStrings.app.saved);
+    }
   }, [commitPendingDocumentName, documentNameForFileDialog, run, state?.snapshot.name]);
   const saveCurrentDocument = useCallback(async () => {
     if (!(await commitPendingDocumentName())) return;

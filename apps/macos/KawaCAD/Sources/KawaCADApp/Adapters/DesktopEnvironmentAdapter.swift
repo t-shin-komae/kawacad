@@ -18,7 +18,7 @@ struct DesktopEnvironmentAdapter: DesktopEnvironmentAdapting {
 
   func promptForOpenProjectURL() -> URL? {
     let panel = NSOpenPanel()
-    panel.allowedContentTypes = projectContentTypes
+    panel.allowedContentTypes = ProjectFileDialogConfiguration.contentTypes
     panel.allowsMultipleSelection = false
     panel.canChooseDirectories = false
     panel.canChooseFiles = true
@@ -30,12 +30,14 @@ struct DesktopEnvironmentAdapter: DesktopEnvironmentAdapting {
 
   func promptForSaveProjectURL(documentName: String) -> URL? {
     let panel = NSSavePanel()
-    panel.allowedContentTypes = projectContentTypes
+    panel.allowedContentTypes = ProjectFileDialogConfiguration.contentTypes
     panel.canCreateDirectories = true
-    panel.nameFieldStringValue = "\(documentName).kawa"
+    panel.nameFieldStringValue = ProjectFileDialogConfiguration.suggestedFilename(
+      documentName: documentName
+    )
     panel.title = AppStrings.tr("core.panel.save_project_title")
     guard panel.runModal() == .OK else { return nil }
-    return panel.url
+    return panel.url.map(ProjectFileDialogConfiguration.normalizedSaveURL)
   }
 
   func promptForSavePDFURL(documentName: String) -> URL? {
@@ -51,11 +53,21 @@ struct DesktopEnvironmentAdapter: DesktopEnvironmentAdapting {
   func revealInFinder(_ url: URL) {
     NSWorkspace.shared.activateFileViewerSelecting([url])
   }
+}
 
-  private var projectContentTypes: [UTType] {
-    if let kawa = UTType(filenameExtension: "kawa") {
-      return [kawa, .json]
-    }
-    return [.json]
+enum ProjectFileDialogConfiguration {
+  static let fileExtension = "kawa"
+
+  static var contentTypes: [UTType] {
+    UTType(filenameExtension: fileExtension).map { [$0] } ?? []
+  }
+
+  static func suggestedFilename(documentName: String) -> String {
+    "\(documentName).\(fileExtension)"
+  }
+
+  static func normalizedSaveURL(_ url: URL) -> URL {
+    guard url.pathExtension.isEmpty else { return url }
+    return url.appendingPathExtension(fileExtension)
   }
 }

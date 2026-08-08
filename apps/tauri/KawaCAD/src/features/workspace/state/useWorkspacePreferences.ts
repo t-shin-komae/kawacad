@@ -5,7 +5,6 @@ import { defaultCollapsedToolGroups } from "@/features/canvas/domain/workspaceTo
 export function useWorkspacePreferences() {
   const [gridVisible, setGridVisible] = useState(true);
   const [a4Visible, setA4Visible] = useState(true);
-  const [a4Landscape, setA4Landscape] = useState(false);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [pointSnapEnabled, setPointSnapEnabled] = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(workspacePreferencesAdapter.loadInspectorOpen);
@@ -30,7 +29,6 @@ export function useWorkspacePreferences() {
     workspacePreferencesAdapter.resetWorkspacePreferences();
     setGridVisible(true);
     setA4Visible(true);
-    setA4Landscape(false);
     setSnapEnabled(true);
     setPointSnapEnabled(true);
     setPaletteOpen(true);
@@ -44,8 +42,6 @@ export function useWorkspacePreferences() {
     setGridVisible,
     a4Visible,
     setA4Visible,
-    a4Landscape,
-    setA4Landscape,
     snapEnabled,
     setSnapEnabled,
     pointSnapEnabled,

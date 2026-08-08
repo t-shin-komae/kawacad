@@ -10,12 +10,12 @@ type OutputActionDependencies = Pick<OutputActionContext, "state" | "a4Landscape
 };
 
 export function useOutputActionCallbacks(dependencies: OutputActionDependencies) {
-  const { state, a4Landscape, run, setTool, clearTransientCanvasState } = dependencies;
+  const { state, run, setTool, clearTransientCanvasState } = dependencies;
   const setDocumentViewMode = useCallback(
     (viewMode: CanvasViewMode, activeTool: Tool = "select") => {
       if (state?.viewMode === viewMode) return;
       void run(
-        () => documentAdapter.command<State>("set_view_mode", { viewMode, outputLandscape: a4Landscape }),
+        () => documentAdapter.command<State>("set_view_mode", { viewMode }),
         appStrings.app.viewModeChanged(viewMode === "outputPreview"),
       ).then((next) => {
         if (!next) return;
@@ -23,22 +23,23 @@ export function useOutputActionCallbacks(dependencies: OutputActionDependencies)
         setTool(activeTool);
       });
     },
-    [a4Landscape, clearTransientCanvasState, run, setTool, state?.viewMode],
+    [clearTransientCanvasState, run, setTool, state?.viewMode],
   );
 
   const setOutputOrientation = useCallback(
     (landscape: boolean) => {
-      if (state?.viewMode !== "outputPreview") return;
       void run(
         () =>
-          documentAdapter.command<State>("set_view_mode", {
-            viewMode: "outputPreview",
-            outputLandscape: landscape,
+          documentAdapter.command<State>("apply_command", {
+            command: {
+              kind: "setPrintOrientation",
+              payload: { orientation: landscape ? "landscape" : "portrait" },
+            },
           }),
-        appStrings.app.viewModeChanged(true),
+        appStrings.app.a4OrientationChanged(landscape),
       );
     },
-    [run, state?.viewMode],
+    [run],
   );
 
   return { setDocumentViewMode, setOutputOrientation };

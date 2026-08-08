@@ -17,7 +17,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tauriDir = join(root, "apps/tauri/KawaCAD");
@@ -176,29 +176,44 @@ function uniquePackages(packages) {
     );
 }
 
-const metadata = cargoMetadata();
-const tauriPackages = uniquePackages([
-  ...nodePackages(),
-  ...rustPackages(metadata, "kawa-cad-tauri"),
-]);
-const swiftPackagesForDisplay = uniquePackages([
-  ...rustPackages(metadata, "kawacad-core-process"),
-  ...swiftPackages(),
-]);
-mkdirSync(dirname(tauriOutputPath), { recursive: true });
-writeFileSync(
-  tauriOutputPath,
-  `${JSON.stringify({ schemaVersion: 1, components: tauriPackages }, null, 2)}\n`,
-);
+export function generateLicenseNotices() {
+  const metadata = cargoMetadata();
+  const tauriPackages = uniquePackages([
+    ...nodePackages(),
+    ...rustPackages(metadata, "kawa-cad-tauri"),
+  ]);
+  const swiftPackagesForDisplay = uniquePackages([
+    ...rustPackages(metadata, "kawacad-core-process"),
+    ...swiftPackages(),
+  ]);
+  mkdirSync(dirname(tauriOutputPath), { recursive: true });
+  writeFileSync(
+    tauriOutputPath,
+    `${JSON.stringify({ schemaVersion: 1, components: tauriPackages }, null, 2)}\n`,
+  );
 
-const swiftSource = `# Third-party notices\n\n${swiftPackagesForDisplay
-  .map(
-    (item) =>
-      `## ${item.name} ${item.version}\n\nLicense: ${item.license}\n\nSource: ${item.source}\n\n${item.text}`,
-  )
-  .join("\n\n")}\n`;
-writeFileSync(swiftOutputPath, swiftSource);
+  const swiftSource = `# Third-party notices\n\n${swiftPackagesForDisplay
+    .map(
+      (item) =>
+        `## ${item.name} ${item.version}\n\nLicense: ${item.license}\n\nSource: ${item.source}\n\n${item.text}`,
+    )
+    .join("\n\n")}\n`;
+  writeFileSync(swiftOutputPath, swiftSource);
 
-console.log(
-  `Generated ${tauriPackages.length} Tauri and ${swiftPackagesForDisplay.length} macOS third-party license entries.`,
-);
+  return {
+    tauriPackages,
+    swiftPackages: swiftPackagesForDisplay,
+    tauriOutputPath,
+    swiftOutputPath,
+  };
+}
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+) {
+  const result = generateLicenseNotices();
+  console.log(
+    `Generated ${result.tauriPackages.length} Tauri and ${result.swiftPackages.length} macOS third-party license entries.`,
+  );
+}
