@@ -85,6 +85,8 @@ Core <--> Kawa : 保存 / 読み込み
 Engine -down-> SwiftOSAdapter
 SwiftOSAdapter -down-> PDF
 SwiftOSAdapter -down-> Printer
+TauriBackend -up-> Engine : PDF 生成
+TauriBackend -down-> PDF : 保存
 @enduml
 ```
 
@@ -97,7 +99,7 @@ SwiftOSAdapter -down-> Printer
 | React UI ↔ Tauri backend | invoke の開始と応答の表示 | セッション保持、Core 呼び出し、OS 連携 |
 | Core ↔ `.kawa` | 保存・読み込みの意味 | JSON の検証可能な形状は Schema |
 | Core ↔ Output Engine | 出力対象、ページ、位置、警告 | PDF / 印刷用データへの描画 |
-| UI ↔ OS adapter | アプリ上の導線と判断 | ダイアログ、ウィンドウ、端末内データなどの副作用 |
+| UI ↔ OS adapter | アプリ上の導線と判断 | ダイアログ、ウィンドウ、PDF 保存、端末内データなどの副作用 |
 
 ### 3.2 ドメイン概念
 
@@ -371,9 +373,9 @@ participant ".kawa" as File
 
 ファイル選択と Core 呼び出しの具体的な接続方法は UI ごとに異なるが、保存対象、読み込み検証、成功・失敗時の状態保証は共通である。
 
-### 4.3 PDF・直接印刷（Swift/macOS）
+### 4.3 PDF 出力・直接印刷
 
-Tauri/React は Output Document Model による出力プレビューまでを提供し、PDF 生成と直接印刷は行わない。次のフローは Swift/macOS に適用する。
+Swift/macOS と Tauri/React は、Output Document Model から PDF を生成する。直接印刷は Swift/macOS にだけ適用する。
 
 ```plantuml
 @startuml
@@ -398,11 +400,11 @@ participant "macOS" as OS
         UI-->User: はみ出し・境界またぎなどを表示
         User->UI: 続行または中止
     end
-    alt PDF
+    alt PDF（Swift/macOS / Tauri/React）
         UI->Engine: renderPdf(model)
         Engine-->UI: PDF データ
         UI->OS: 保存
-    else 直接印刷
+    else 直接印刷（Swift/macOS）
         UI->Engine: renderPrint(model)
         Engine-->UI: 印刷用描画データ
         UI->OS: 印刷
@@ -499,7 +501,7 @@ KawaCAD は、OS 依存の UI / adapter と OS 非依存の Rust Core を分離�
 | 領域 | 方針 |
 | --- | --- |
 | Swift/macOS | SwiftUI、AppKit、Core Graphics。macOS 13 以降の UI、ファイルダイアログ、PDF 保存、直接印刷を担当 |
-| Tauri/React | Tauri、React、TypeScript。Windows・Linux・macOS の編集 UI と出力プレビューを担当し、PDF/直接印刷は含めない |
+| Tauri/React | Tauri、React、TypeScript。Windows・Linux・macOS の編集 UI、出力プレビュー、PDF 保存を担当し、直接印刷は含めない |
 | Rust Core | 図形、拘束、派生要素、パラメータ、パーツ、履歴、保存、表示状態、出力中間表現を担当 |
 | `kawacad-core-process` | macOS UI と Core の標準入出力 JSON 境界を担当 |
 | Tauri adapter | React UI の invoke を受け、同じプロセス内の Core を直接呼び出す。UI から OS や Core の内部実装を直接参照させない |

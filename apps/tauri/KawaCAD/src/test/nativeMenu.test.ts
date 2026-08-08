@@ -11,7 +11,7 @@ describe("cross-platform native menu", () => {
     expect(crossPlatformMenuActions).toContain("tangent");
     expect(crossPlatformMenuActions).toContain("outputPreview");
     expect(crossPlatformMenuActions).toContain("openLicenses");
-    expect(crossPlatformMenuActions).not.toContain("exportPDF");
+    expect(crossPlatformMenuActions).toContain("exportPDF");
     expect(crossPlatformMenuActions).not.toContain("print");
   });
 

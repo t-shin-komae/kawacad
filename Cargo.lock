@@ -1583,6 +1583,7 @@ name = "kawa-cad-tauri"
 version = "0.1.0"
 dependencies = [
  "kawacad-core",
+ "kawacad-output-engine",
  "serde",
  "serde_json",
  "tauri",

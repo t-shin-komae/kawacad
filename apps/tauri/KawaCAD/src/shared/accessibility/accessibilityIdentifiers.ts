@@ -29,6 +29,8 @@ export const accessibilityIdentifiers = {
 
   statusBottomWorkbench: "leather.status.bottom-workbench",
   pasteOptions: "leather.paste-options",
+  pdfExportDialog: "leather.pdf-export.dialog",
+  pdfExportSave: "leather.pdf-export.save",
 } as const;
 
 export type AccessibilityIdentifier = (typeof accessibilityIdentifiers)[keyof typeof accessibilityIdentifiers];

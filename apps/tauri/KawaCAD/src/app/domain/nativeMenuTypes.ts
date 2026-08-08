@@ -5,6 +5,7 @@ export type MenuAction =
   | "open"
   | "save"
   | "saveAs"
+  | "exportPDF"
   | "undo"
   | "redo"
   | "cut"

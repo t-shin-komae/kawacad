@@ -45,7 +45,7 @@ Core はドキュメントの正本と意味を扱う。
 - 失敗した変更は、直前のドキュメント状態と Undo/Redo 履歴を変えない。
 - UI は Core の最後に確認できた状態を表示し、独自の永続状態を正本にしない。
 
-Swift/macOS UI と Tauri/React UI は同じ意味契約を利用する。Swift/macOS は macOS 13 以降のファイル、PDF、印刷 adapter を持つ。Tauri/React は Windows・Linux・macOS の編集と出力プレビューを扱うが、PDF 生成と直接印刷の adapter を持たない。
+Swift/macOS UI と Tauri/React UI は同じ意味契約を利用する。Swift/macOS は macOS 13 以降のファイル、PDF、印刷 adapter を持つ。Tauri/React は Windows・Linux・macOS の編集、出力プレビュー、PDF 保存を扱い、直接印刷の adapter は持たない。
 
 ```mermaid
 flowchart LR
@@ -102,7 +102,7 @@ UI による transport の違いは接続方法に限り、request、response、
 | UI | Core 接続 | OS 固有の境界 | 出力境界 |
 | --- | --- | --- | --- |
 | Swift/macOS | `kawacad-core-process` の標準入力/標準出力。1行1 JSON、1セッション1ドキュメント | Swift adapter がプロセス起動、ファイル選択、PDF 保存、macOS 印刷を担当 | Core の Output Document Model → Output Engine → Swift/macOS adapter |
-| Tauri/React | React から Tauri の `invoke` adapter を経由し、Tauri backend と同じプロセス内で `kawacad-core` を直接呼び出す | Tauri adapter がダイアログ、ウィンドウ、ローカルデータを担当 | Core の Output Document Model を出力プレビューへ渡す。PDF/直接印刷は提供しない |
+| Tauri/React | React から Tauri の `invoke` adapter を経由し、Tauri backend と同じプロセス内で `kawacad-core` を直接呼び出す | Tauri adapter がダイアログ、ウィンドウ、ローカルデータ、PDF 保存を担当 | Core の Output Document Model を出力プレビューへ渡し、同じモデルを Output Engine で PDF 化する。直接印刷は提供しない |
 
 Tauri/React は `kawacad-core-process` を起動せず、Tauri backend が Core のセッションを保持する。invoke 名や adapter 内部の transport は、この文書で定める Core の request/response 意味を変更しない。直接 Core 境界を使う場合も、React の feature が Core の内部型や永続状態を直接所有してはならない。
 
@@ -311,6 +311,8 @@ Core は `buildOutputDocumentModel` で、A4、100% 実寸、指定向きと印�
 - 貼り合わせガイドとページ番号は保存図形ではなく出力時の補助要素である。
 
 PDF と直接印刷は同じ Output Document Model を入力にする。`renderPdf` は `pdfHex` に PDF byte 列の16進表現を返す。`renderPrint` は各ページの寸法、回転、印刷可能領域、clip 領域、描画 command を返し、macOS 側が同じ clip 領域で描画する。
+
+Tauri backend は `prepare_pdf_output` で PDF 用の印刷可能領域を使って中間表現と警告を返す。React は警告確認後、返された同一の中間表現を `save_prepared_pdf` へ渡す。backend は Output Engine で PDF byte 列を生成し、選択済みパスへ保存する。これらの invoke は Tauri 固有の adapter 境界であり、`kawacad-core-process` の request 一覧には含めない。
 
 ## 9. エラー
 
