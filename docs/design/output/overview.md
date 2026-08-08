@@ -10,7 +10,7 @@
 
 1. Core が「何を、どのページの、どこへ出すか」を確定する。
 2. Output Engine は確定済みの中間表現を PDF または印刷用データへ描画する。
-3. Swift/macOS と Tauri/React の UI は設定・警告・OS ダイアログを扱い、図形配置を再判断しない。直接印刷は Swift/macOS のみが扱う。
+3. Swift/macOS と Tauri/React の UI は設定・警告を扱い、図形配置を再判断しない。Swift/macOS の直接印刷はアプリ内のプリンタ選択を使い、OS の印刷設定ダイアログを表示しない。
 
 PDF と直接印刷は、入口と出口だけが異なる。中央のページ配置と描画規則を共有することで、同じレイアウトにする。
 
@@ -87,7 +87,7 @@ UI --> OS
 
 | 領域 | 責務 |
 | --- | --- |
-| UI / OS Adapter | 出力導線、設定入力、保存/印刷ダイアログ、警告表示、macOS API との接続 |
+| UI / OS Adapter | 出力導線、設定入力、保存先選択、アプリ内プリンタ選択、警告表示、macOS API との接続 |
 | Core | 出力対象の抽出、配置、警告判定、出力用中間表現の生成 |
 | Output Engine | 中間表現から PDF data と Print render data を生成 |
 
