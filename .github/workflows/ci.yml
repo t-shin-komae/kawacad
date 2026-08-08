@@ -45,13 +45,17 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Restore and share Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Cache Cargo registry and Rust build outputs
+        uses: actions/cache@v4
         with:
-          shared-key: kawacad-rust-${{ runner.os }}-${{ runner.arch }}
-          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
-          cache-all-crates: true
-          cache-targets: true
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-
+          save-always: true
 
       - name: Install Tauri system dependencies
         run: |
@@ -113,13 +117,17 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Restore and share Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Cache Cargo registry and Rust build outputs
+        uses: actions/cache@v4
         with:
-          shared-key: kawacad-rust-${{ runner.os }}-${{ runner.arch }}
-          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
-          cache-all-crates: true
-          cache-targets: true
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-
+          save-always: true
 
       - name: Install Tauri system dependencies
         run: |
