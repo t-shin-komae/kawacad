@@ -10,7 +10,6 @@ const repoRoot = path.resolve(appRoot, "../..");
 const coreBinary = process.env.KAWACAD_CORE_PROCESS ?? path.join(repoRoot, "target/debug/kawacad-core-process");
 
 function ensureCoreBinary() {
-  if (existsSync(coreBinary)) return;
   const result = spawnSync("cargo", ["build", "-p", "kawacad-core-process"], {
     cwd: repoRoot,
     encoding: "utf8",
