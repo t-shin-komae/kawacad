@@ -45,13 +45,25 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Restore and share Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Cache Cargo registry and git dependencies
+        uses: actions/cache@v4
         with:
-          shared-key: kawacad-rust-${{ runner.os }}-${{ runner.arch }}
-          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
-          cache-all-crates: true
-          cache-targets: true
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-
+          save-always: true
+
+      - name: Cache Rust target for linux-quality-core
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-linux-quality-core-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-linux-quality-core-kawacad-rust-
+          save-always: true
 
       - name: Install Tauri system dependencies
         run: |
@@ -113,13 +125,25 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Restore and share Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: Cache Cargo registry and git dependencies
+        uses: actions/cache@v4
         with:
-          shared-key: kawacad-rust-${{ runner.os }}-${{ runner.arch }}
-          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
-          cache-all-crates: true
-          cache-targets: true
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-
+          save-always: true
+
+      - name: Cache Rust target for linux-tauri
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-linux-tauri-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-linux-tauri-kawacad-rust-
+          save-always: true
 
       - name: Install Tauri system dependencies
         run: |
