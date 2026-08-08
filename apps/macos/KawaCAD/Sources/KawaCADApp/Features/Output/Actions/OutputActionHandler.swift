@@ -60,7 +60,7 @@ extension OutputActionHandler {
           ),
           directPrintSession: directPrintSession
         ))
-      workspacePreferences.setA4ReferenceOrientation(directPrintSession.orientation)
+      actions.workspace.setA4ReferenceOrientation(directPrintSession.orientation)
     case .failure(let error):
       coreStatus = .unavailable(error.message)
       presentAlert(error.message)
@@ -109,7 +109,7 @@ extension OutputActionHandler {
   }
 
   func setOutputRequestOrientation(_ orientation: OutputPrintOrientation) {
-    workspacePreferences.setA4ReferenceOrientation(orientation)
+    actions.workspace.setA4ReferenceOrientation(orientation)
     outputPresentation.updateDraft(session: cadSession) { draft in
       draft.options = OutputPresentationOptions(
         orientation: orientation,
@@ -179,7 +179,7 @@ extension OutputActionHandler {
           rotationDeg: refreshedDraft.options.rotationDeg
         )
       }
-      workspacePreferences.setA4ReferenceOrientation(directPrintSession.orientation)
+      actions.workspace.setA4ReferenceOrientation(directPrintSession.orientation)
     case .failure(let error):
       coreStatus = .unavailable(error.message)
       presentAlert(error.message)

@@ -910,6 +910,12 @@ enum LeatherCoreProcessAdapter {
         objects: dimensionConstraintAnnotationsObject
       )
     )
+    if let settings = object["settings"] as? [String: Any],
+      let rawOrientation = settings["orientation"] as? String,
+      let orientation = OutputPrintOrientation(rawValue: rawOrientation)
+    {
+      state.printOrientation = orientation
+    }
     if let canvasProjection = object["canvasProjection"] {
       let projectionData = try JSONSerialization.data(withJSONObject: canvasProjection)
       state.canvasProjection = try JSONDecoder().decode(

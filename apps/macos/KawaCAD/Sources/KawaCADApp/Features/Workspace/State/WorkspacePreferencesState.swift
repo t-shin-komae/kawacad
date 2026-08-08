@@ -15,7 +15,6 @@ final class WorkspacePreferencesState: ObservableObject {
     WorkspacePreferencesAdapter.showsDetailedTools()
   @Published private(set) var collapsedToolGroupIDs: Set<String> = []
   @Published private(set) var bottomWorkbenchVisible = false
-
   init() {
     collapsedToolGroupIDs = Set(
       ProjectSidebar.allToolGroups.compactMap { group in
@@ -30,6 +29,13 @@ final class WorkspacePreferencesState: ObservableObject {
   func setA4ReferenceVisible(_ visible: Bool) { a4ReferenceVisible = visible }
   func setA4ReferenceOrientation(_ orientation: OutputPrintOrientation) {
     a4ReferenceOrientation = orientation
+  }
+
+  @discardableResult
+  func syncLoadedPrintOrientation(_ orientation: OutputPrintOrientation) -> Bool {
+    let changed = a4ReferenceOrientation != orientation
+    a4ReferenceOrientation = orientation
+    return changed
   }
   func setGridSnapEnabled(_ enabled: Bool) { gridSnapEnabled = enabled }
   func setPointSnapEnabled(_ enabled: Bool) { pointSnapEnabled = enabled }

@@ -1,3 +1,5 @@
+import KawaCADOutput
+
 struct LeatherCoreVersionInfo: Equatable {
   let fileFormatMajor: UInt32
   let schemaMajor: UInt32
@@ -154,6 +156,7 @@ struct LeatherMutationIDs: Codable, Equatable {
 struct LeatherDocumentState: Equatable {
   let snapshot: LeatherDocumentSnapshot
   let history: LeatherHistoryState
+  var printOrientation: OutputPrintOrientation = .portrait
   var persistence: LeatherPersistenceState = .clean
   var mutation: LeatherMutationResult?
   let layers: [ProjectLayer]

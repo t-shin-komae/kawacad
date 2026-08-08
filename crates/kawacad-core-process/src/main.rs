@@ -11,7 +11,7 @@ use kawacad_core::document::{
 };
 use kawacad_core::output::{BuildOutputDocumentModelOptions, PrintableAreaMm};
 use kawacad_core::output::{OutputBuildError, OutputDocumentModel};
-use kawacad_core::print::PrintOrientation;
+use kawacad_core::print::{PrintOrientation, PrintSettings};
 use kawacad_core::snapshot::CanvasViewMode;
 use kawacad_output_engine::{render_pdf, render_print, RenderError};
 use std::collections::BTreeMap;
@@ -154,6 +154,7 @@ struct CoreDocumentState {
     snapshot: CoreDocumentSnapshotSummary,
     history: CoreHistoryState,
     persistence: CorePersistenceState,
+    settings: PrintSettings,
     #[serde(skip_serializing_if = "Option::is_none")]
     mutation: Option<CoreMutationResult>,
     layers: Vec<kawacad_core::layers::Layer>,
@@ -700,6 +701,7 @@ fn document_state_with_context(
             is_dirty,
             revision: persistence_revision(document),
         },
+        settings: document.settings().clone(),
         mutation,
         layers: document.layers().to_vec(),
         shared_styles: document.shared_styles().to_vec(),

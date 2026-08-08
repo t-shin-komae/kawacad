@@ -29,8 +29,22 @@ extension WorkspaceActionHandler {
     guard workspacePreferences.a4ReferenceOrientation != orientation else {
       return
     }
-    workspacePreferences.setA4ReferenceOrientation(orientation)
-    if var draft = outputPresentation.requestDraft {
+    guard
+      actions.document.executeDocumentCommand(
+        commandFactory.makeSetPrintOrientationCommand(orientation)
+      )
+    else {
+      return
+    }
+    statusMessage = AppStrings.tr("status.a4_reference_orientation", orientation.displayName)
+  }
+
+  @discardableResult
+  func syncPrintOrientation(_ orientation: OutputPrintOrientation) -> Bool {
+    let changed = workspacePreferences.syncLoadedPrintOrientation(orientation)
+    if var draft = outputPresentation.requestDraft,
+      draft.options.orientation != orientation
+    {
       draft.options = OutputPresentationOptions(
         orientation: orientation,
         includeDimensionLabels: draft.options.includeDimensionLabels,
@@ -38,12 +52,8 @@ extension WorkspaceActionHandler {
         rotationDeg: draft.options.rotationDeg
       )
       outputPresentation.setRequestDraft(draft)
-      outputPresentation.scheduleBuild(session: cadSession)
     }
-    if canvasPresentation.viewMode == .outputPreview {
-      refreshOutputPreviewBuildResult()
-    }
-    statusMessage = AppStrings.tr("status.a4_reference_orientation", orientation.displayName)
+    return changed
   }
 
   func setLayerPanelVisible(_ visible: Bool) {

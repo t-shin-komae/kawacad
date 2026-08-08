@@ -262,6 +262,14 @@ impl ProjectDocument {
         &self.settings
     }
 
+    pub(crate) fn set_print_orientation(
+        &mut self,
+        orientation: crate::print::PrintOrientation,
+    ) -> CommandResult {
+        self.settings.orientation = orientation;
+        Ok(())
+    }
+
     /// ドキュメントで利用可能な描画レイヤーを返す。
     pub fn layers(&self) -> &[Layer] {
         &self.layers

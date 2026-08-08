@@ -1558,8 +1558,17 @@ func uc8_app_state_diameter_constraint_on_circle_waits_for_value_entry() {
 @Test("UC4 AppCoordinator の Undo/Redo は一時状態を消して状態を戻す")
 @MainActor
 func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
+  let currentState = makeDocumentState(
+    name: "Current State",
+    printOrientation: .landscape,
+    entities: [
+      lineEntity(id: "entity:line-a", start: .zero, end: ModelPoint(xMM: 15.0, yMM: 0.0))
+    ],
+    constraintStatus: .underConstrained
+  )
   let undoState = makeDocumentState(
     name: "Undo State",
+    printOrientation: .portrait,
     entities: [
       lineEntity(id: "entity:line-a", start: .zero, end: ModelPoint(xMM: 10.0, yMM: 0.0))
     ],
@@ -1567,12 +1576,13 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   )
   let redoState = makeDocumentState(
     name: "Redo State",
+    printOrientation: .landscape,
     entities: [
       lineEntity(id: "entity:line-a", start: .zero, end: ModelPoint(xMM: 20.0, yMM: 0.0))
     ],
     constraintStatus: .underConstrained
   )
-  let store = StubDocumentSessionAdapter(createNewDocumentState: undoState)
+  let store = StubDocumentSessionAdapter(createNewDocumentState: currentState)
   store.undoState = undoState
   store.redoState = redoState
   store.canUndo = true
@@ -1580,6 +1590,17 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   let appState = AppCoordinator(
     documentAdapter: store,
     coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) })
+  appState.actions.output.outputRequestDraft = OutputRequestDraft(
+    destination: .pdf,
+    options: OutputPresentationOptions(
+      orientation: .landscape,
+      includeDimensionLabels: true,
+      includeScaleGuide: false,
+      rotationDeg: 0
+    ),
+    directPrintSession: nil
+  )
+  #expect(appState.actions.workspace.a4ReferenceOrientation == .landscape)
   appState.actions.canvas.selectedEntityID = "entity:point-a"
   appState.actions.canvas.pendingConstraintTargets = [
     CanvasSelectionTarget(
@@ -1602,6 +1623,8 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   #expect(appState.actions.canvas.draftCurrentPoint == nil)
   #expect(appState.actions.document.documentName == "Undo State")
   #expect(appState.actions.document.entities.map(\.id) == ["entity:line-a"])
+  #expect(appState.actions.workspace.a4ReferenceOrientation == .portrait)
+  #expect(appState.actions.output.outputRequestDraft?.options.orientation == .portrait)
   #expect(appState.actions.document.statusMessage == "元に戻しました")
 
   appState.actions.document.redo()
@@ -1614,7 +1637,38 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
         lineEntity(id: "entity:line-a", start: .zero, end: ModelPoint(xMM: 20.0, yMM: 0.0)).geometry
       ]
   )
+  #expect(appState.actions.workspace.a4ReferenceOrientation == .landscape)
+  #expect(appState.actions.output.outputRequestDraft?.options.orientation == .landscape)
   #expect(appState.actions.document.statusMessage == "やり直しました")
+}
+
+@Test("UC1 復旧した文書の印刷向きをワークスペースへ反映する")
+@MainActor
+func uc1_recovery_restores_print_orientation() {
+  let initialState = makeDocumentState(name: "Initial", printOrientation: .portrait)
+  let recoveredState = makeDocumentState(name: "Recovered", printOrientation: .landscape)
+  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
+  store.recoveredDocumentState = recoveredState
+  let appState = AppCoordinator(
+    documentAdapter: store,
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) }
+  )
+  let snapshotURL = uniqueTempURL("orientation-recovery.lcraft")
+  let candidate = DocumentRecoveryCandidate(
+    recoveryID: "recovery:orientation",
+    generationID: "generation:orientation",
+    displayName: "Recovered",
+    originalDocumentURL: nil,
+    updatedAt: Date(),
+    containerURL: snapshotURL.deletingLastPathComponent(),
+    metadataURL: nil,
+    status: .recoverable(snapshotURL: snapshotURL)
+  )
+
+  appState.actions.recovery.recoverRecoveryCandidate(candidate)
+
+  #expect(store.recoverDocumentCalls.count == 1)
+  #expect(appState.actions.workspace.a4ReferenceOrientation == .landscape)
 }
 
 @Test("UC4 AppCoordinator の空履歴 Undo/Redo は状態を壊さず拒否される")
@@ -6262,6 +6316,16 @@ final class StubDocumentSessionAdapter: DocumentSessionAdapting {
     let nextState =
       !applyCommandStates.isEmpty ? applyCommandStates.removeFirst() : applyCommandState
     var state = nextState
+    let command = payload.legacyObject
+    if command["kind"] as? String == "setPrintOrientation",
+      let commandPayload = command["payload"] as? [String: Any],
+      let rawOrientation = commandPayload["orientation"] as? String,
+      let orientation = OutputPrintOrientation(rawValue: rawOrientation)
+    {
+      state.printOrientation = orientation
+      applyCommandState.printOrientation = orientation
+      loadStateValue.printOrientation = orientation
+    }
     state.mutation = mutation(from: lastAppliedState, to: nextState)
     state.persistence = LeatherPersistenceState(
       isDirty: true, revision: "stub-\(appliedPayloads.count)")
