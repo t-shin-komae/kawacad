@@ -310,8 +310,6 @@ struct WorkspaceViewPropsFactory {
   }
   var outputRequestSheetActions: OutputRequestSheetActions {
     OutputRequestSheetActions(
-      setOrientation: { [self] in actions.output.setOutputRequestOrientation($0) },
-      setRotation: { [self] in actions.output.setOutputRequestRotation($0) },
       setIncludeDimensionLabels: { [self] in
         actions.output.setOutputRequestIncludeDimensionLabels($0)
       },

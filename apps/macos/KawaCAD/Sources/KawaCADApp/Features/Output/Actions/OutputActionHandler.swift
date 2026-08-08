@@ -108,29 +108,6 @@ extension OutputActionHandler {
     )
   }
 
-  func setOutputRequestOrientation(_ orientation: OutputPrintOrientation) {
-    actions.workspace.setA4ReferenceOrientation(orientation)
-    outputPresentation.updateDraft(session: cadSession) { draft in
-      draft.options = OutputPresentationOptions(
-        orientation: orientation,
-        includeDimensionLabels: draft.options.includeDimensionLabels,
-        includeScaleGuide: draft.options.includeScaleGuide,
-        rotationDeg: draft.options.rotationDeg
-      )
-    }
-  }
-
-  func setOutputRequestRotation(_ rotationDeg: Int) {
-    outputPresentation.updateDraft(session: cadSession) { draft in
-      draft.options = OutputPresentationOptions(
-        orientation: draft.options.orientation,
-        includeDimensionLabels: draft.options.includeDimensionLabels,
-        includeScaleGuide: draft.options.includeScaleGuide,
-        rotationDeg: rotationDeg
-      )
-    }
-  }
-
   func setOutputRequestIncludeDimensionLabels(_ enabled: Bool) {
     outputPresentation.updateDraft(session: cadSession) { draft in
       draft.options = OutputPresentationOptions(

@@ -165,23 +165,6 @@ struct OutputRequestSheet: View {
           }
 
           VStack(alignment: .leading, spacing: 12) {
-            settingGroupLabel(AppStrings.tr("sheet.paper_orientation"))
-            Picker(AppStrings.tr("sheet.paper_orientation"), selection: orientationBinding) {
-              Text(AppStrings.tr("sheet.orientation.portrait")).tag(OutputPrintOrientation.portrait)
-              Text(AppStrings.tr("sheet.orientation.landscape")).tag(
-                OutputPrintOrientation.landscape)
-            }
-            .pickerStyle(.segmented)
-            .accessibilityValue(
-              Text(state.draft?.options.orientation.displayName ?? ""))
-
-            settingGroupLabel(AppStrings.tr("sheet.rotation"))
-            Picker(AppStrings.tr("sheet.rotation"), selection: rotationBinding) {
-              Text("0°").tag(0)
-              Text("90°").tag(90)
-            }
-            .pickerStyle(.segmented)
-
             Toggle(
               AppStrings.tr("sheet.include_dimension_labels"), isOn: includeDimensionLabelsBinding)
             Toggle(AppStrings.tr("sheet.include_scale_guide"), isOn: includeScaleGuideBinding)
@@ -343,15 +326,6 @@ struct OutputRequestSheet: View {
     case .actualScaleNotGuaranteed:
       return "ruler"
     }
-  }
-
-  private var orientationBinding: Binding<OutputPrintOrientation> {
-    draftOptionBinding(
-      state.draft?.options.orientation, default: .portrait, set: actions.setOrientation)
-  }
-
-  private var rotationBinding: Binding<Int> {
-    draftOptionBinding(state.draft?.options.rotationDeg, default: 0, set: actions.setRotation)
   }
 
   private var includeDimensionLabelsBinding: Binding<Bool> {

@@ -73,13 +73,7 @@ describe("PDFExportDialog", () => {
   it("prepares the configured model and saves that same model", async () => {
     const onSaved = vi.fn();
     render(
-      <PDFExportDialog
-        documentName="Pattern"
-        initialOrientation="portrait"
-        onClose={vi.fn()}
-        onOrientationChange={vi.fn()}
-        onSaved={onSaved}
-      />,
+      <PDFExportDialog documentName="Pattern" initialOrientation="portrait" onClose={vi.fn()} onSaved={onSaved} />,
     );
 
     await screen.findByText("1 ページ");
@@ -100,13 +94,7 @@ describe("PDFExportDialog", () => {
       command === "prepare_pdf_output" ? { ...prepared, warnings: [{ message: "境界をまたいでいます" }] } : undefined,
     );
     render(
-      <PDFExportDialog
-        documentName="Pattern"
-        initialOrientation="portrait"
-        onClose={vi.fn()}
-        onOrientationChange={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <PDFExportDialog documentName="Pattern" initialOrientation="portrait" onClose={vi.fn()} onSaved={vi.fn()} />,
     );
 
     const save = await screen.findByRole("button", { name: "保存へ進む" });
@@ -127,18 +115,12 @@ describe("PDFExportDialog", () => {
       });
     });
     render(
-      <PDFExportDialog
-        documentName="Pattern"
-        initialOrientation="portrait"
-        onClose={vi.fn()}
-        onOrientationChange={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <PDFExportDialog documentName="Pattern" initialOrientation="portrait" onClose={vi.fn()} onSaved={vi.fn()} />,
     );
 
     const save = await screen.findByRole("button", { name: "保存へ進む" });
     expect(save).toBeEnabled();
-    fireEvent.change(screen.getByLabelText("用紙向き"), { target: { value: "landscape" } });
+    fireEvent.click(screen.getByLabelText("寸法数値を出力に含める"));
     await waitFor(() => expect(preparationCount).toBe(2));
     rejectRegeneration(new Error("範囲外です"));
 
@@ -149,13 +131,7 @@ describe("PDFExportDialog", () => {
 
   it("renders graphics, text, the printable area, and the scale guide in the final preview", async () => {
     render(
-      <PDFExportDialog
-        documentName="Pattern"
-        initialOrientation="portrait"
-        onClose={vi.fn()}
-        onOrientationChange={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <PDFExportDialog documentName="Pattern" initialOrientation="portrait" onClose={vi.fn()} onSaved={vi.fn()} />,
     );
 
     const page = await screen.findByTestId("pdf-preview-page-1");
@@ -169,40 +145,16 @@ describe("PDFExportDialog", () => {
     expect(within(page).getByText("50mm")).toBeInTheDocument();
   });
 
-  it("updates the final preview with the regenerated rotation", async () => {
-    mocks.invoke.mockImplementation(async (command: string, payload?: { options?: { rotationDeg?: number } }) => {
-      if (command !== "prepare_pdf_output") return undefined;
-      const rotationDeg = payload?.options?.rotationDeg ?? 0;
-      return {
-        ...prepared,
-        outputDocumentModel: {
-          ...prepared.outputDocumentModel,
-          pages: prepared.outputDocumentModel.pages.map((page) => ({ ...page, rotationDeg })),
-        },
-      };
-    });
+  it("does not expose orientation or rotation controls", async () => {
     render(
-      <PDFExportDialog
-        documentName="Pattern"
-        initialOrientation="portrait"
-        onClose={vi.fn()}
-        onOrientationChange={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <PDFExportDialog documentName="Pattern" initialOrientation="landscape" onClose={vi.fn()} onSaved={vi.fn()} />,
     );
 
-    const page = await screen.findByTestId("pdf-preview-page-1");
-    const line = within(page).getByTestId("pdf-output-line");
-    expect(line).toHaveAttribute("x1", "85");
-    fireEvent.change(screen.getByLabelText("回転"), { target: { value: "90" } });
-
-    await waitFor(() => expect(screen.getByTestId("pdf-preview-page-1")).toHaveAttribute("data-rotation-deg", "90"));
-    expect(within(screen.getByTestId("pdf-preview-page-1")).getByTestId("pdf-output-line")).toHaveAttribute(
-      "x1",
-      "145",
-    );
+    await screen.findByTestId("pdf-preview-page-1");
+    expect(screen.queryByLabelText("用紙向き")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("回転")).not.toBeInTheDocument();
     expect(mocks.invoke).toHaveBeenLastCalledWith("prepare_pdf_output", {
-      options: expect.objectContaining({ rotationDeg: 90 }),
+      options: expect.objectContaining({ orientation: "landscape", rotationDeg: 0 }),
     });
   });
 });

@@ -48,7 +48,6 @@ type Props = {
   documentName: string;
   initialOrientation: Orientation;
   onClose: () => void;
-  onOrientationChange: (orientation: Orientation) => void;
   onSaved: (path: string) => void;
 };
 
@@ -67,7 +66,7 @@ function pdfFileName(documentName: string) {
 }
 
 /** PDF output settings. The prepared model remains stable while the OS save panel is open. */
-export function PDFExportDialog({ documentName, initialOrientation, onClose, onOrientationChange, onSaved }: Props) {
+export function PDFExportDialog({ documentName, initialOrientation, onClose, onSaved }: Props) {
   const [options, setOptions] = useState(() => initialOptions(initialOrientation));
   const [prepared, setPrepared] = useState<PreparedPDF>();
   const [loading, setLoading] = useState(true);
@@ -163,30 +162,6 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onO
             </dl>
             <fieldset disabled={saving}>
               <legend>出力設定</legend>
-              <label>
-                用紙向き
-                <select
-                  value={options.orientation}
-                  onChange={(event) => {
-                    const orientation = event.target.value as Orientation;
-                    changeOptions({ orientation });
-                    onOrientationChange(orientation);
-                  }}
-                >
-                  <option value="portrait">縦向き</option>
-                  <option value="landscape">横向き</option>
-                </select>
-              </label>
-              <label>
-                回転
-                <select
-                  value={options.rotationDeg}
-                  onChange={(event) => changeOptions({ rotationDeg: Number(event.target.value) as 0 | 90 })}
-                >
-                  <option value={0}>0°</option>
-                  <option value={90}>90°</option>
-                </select>
-              </label>
               <label>
                 <input
                   type="checkbox"
