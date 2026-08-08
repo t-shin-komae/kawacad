@@ -1075,20 +1075,35 @@ input[type="checkbox"] {
   font-size: 10px;
 }
 .pdf-page {
-  display: grid;
-  place-items: start end;
+  display: block;
   width: 100px;
   height: 142px;
-  padding: 6px;
   border: 1px solid rgba(60, 60, 67, 0.36);
   background: white;
-  color: var(--secondary-ink);
-  font-size: 11px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 .pdf-page.landscape {
   width: 142px;
   height: 100px;
+}
+.pdf-page-background {
+  fill: white;
+}
+.pdf-printable-area {
+  fill: none;
+  stroke: rgba(60, 60, 67, 0.32);
+  stroke-width: 0.35;
+  stroke-dasharray: 2 1.5;
+}
+.pdf-output-guide {
+  fill: #111114;
+  stroke: #111114;
+  stroke-width: 0.2;
+}
+.pdf-output-guide text,
+.pdf-page text {
+  fill: #111114;
+  stroke: none;
 }
 .pdf-export-preview-updating {
   position: absolute;

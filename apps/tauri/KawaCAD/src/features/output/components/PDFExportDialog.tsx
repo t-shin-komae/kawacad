@@ -12,7 +12,34 @@ type OutputOptions = {
   rotationDeg: 0 | 90;
 };
 
-type OutputPage = { gridColumn: number; gridRow: number; widthMm: number; heightMm: number };
+type PointMm = { xMm: number; yMm: number };
+type OutputStyle = {
+  stroke: { red: number; green: number; blue: number; alpha: number };
+  strokeWidthMm: number;
+  pattern: "solid" | "dashed" | "dotted" | "construction";
+};
+type OutputGeometry =
+  | { kind: "point"; payload: { positionMm: PointMm } }
+  | { kind: "lineSegment" | "centerLine"; payload: { startMm: PointMm; endMm: PointMm } }
+  | { kind: "circle"; payload: { centerMm: PointMm; radiusMm: number } }
+  | {
+      kind: "arc";
+      payload: { centerMm: PointMm; radiusMm: number; startAngleRad: number; sweepAngleRad: number };
+    };
+type OutputGraphic = { geometry: OutputGeometry; style: OutputStyle };
+type OutputText = { content: string; positionMm: PointMm; fontSizeMm: number };
+type OutputGuide = { startMm: PointMm; endMm: PointMm; label: string; labelPositionMm: PointMm };
+type OutputPage = {
+  gridColumn: number;
+  gridRow: number;
+  widthMm: number;
+  heightMm: number;
+  rotationDeg: 0 | 90;
+  printableAreaMm: { leftMm: number; rightMm: number; topMm: number; bottomMm: number };
+  graphics: OutputGraphic[];
+  texts: OutputText[];
+  guide?: OutputGuide | null;
+};
 type OutputDocumentModel = { pageCount: number; pages: OutputPage[] } & Record<string, unknown>;
 type OutputWarning = { message: string };
 type PreparedPDF = { outputDocumentModel: OutputDocumentModel; warnings: OutputWarning[] };
@@ -52,6 +79,7 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onO
   useEffect(() => {
     const currentRequest = ++request.current;
     setLoading(true);
+    setPrepared(undefined);
     setError(undefined);
     setWarningsAcknowledged(false);
     void documentAdapter
@@ -61,21 +89,25 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onO
         setPrepared(result);
       })
       .catch((reason) => {
-        if (currentRequest === request.current) setError(`出力内容を生成できません: ${String(reason)}`);
+        if (currentRequest === request.current) {
+          setPrepared(undefined);
+          setError(`出力内容を生成できません: ${String(reason)}`);
+        }
       })
       .finally(() => {
         if (currentRequest === request.current) setLoading(false);
       });
   }, [options]);
 
+  const outputDocumentModel = prepared?.outputDocumentModel;
   const warnings = prepared?.warnings ?? [];
-  const pageCount = prepared?.outputDocumentModel.pageCount ?? 0;
+  const pageCount = outputDocumentModel?.pageCount ?? 0;
   const canSave = Boolean(
-    prepared && pageCount > 0 && !loading && !saving && (warnings.length === 0 || warningsAcknowledged),
+    outputDocumentModel && pageCount > 0 && !loading && !saving && (warnings.length === 0 || warningsAcknowledged),
   );
   const changeOptions = (update: Partial<OutputOptions>) => setOptions((current) => ({ ...current, ...update }));
   const save = async () => {
-    if (!prepared || !canSave) return;
+    if (!outputDocumentModel || !canSave) return;
     const path = await dialogAdapter.save({
       defaultPath: pdfFileName(documentName),
       filters: [{ name: "PDF", extensions: ["pdf"] }],
@@ -84,7 +116,7 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onO
     setSaving(true);
     setError(undefined);
     try {
-      await documentAdapter.command("save_prepared_pdf", { outputDocumentModel: prepared.outputDocumentModel, path });
+      await documentAdapter.command("save_prepared_pdf", { outputDocumentModel, path });
       onSaved(path);
       onClose();
     } catch (reason) {
@@ -215,7 +247,7 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onO
               </button>
             </div>
           </div>
-          <PDFPreview pages={prepared?.outputDocumentModel.pages ?? []} loading={loading} />
+          <PDFPreview pages={outputDocumentModel?.pages ?? []} loading={loading} />
         </div>
       </section>
     </div>
@@ -230,7 +262,7 @@ function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean 
         <ol className="pdf-export-pages">
           {pages.map((page, index) => (
             <li key={`${page.gridColumn}-${page.gridRow}`}>
-              <div className={page.widthMm > page.heightMm ? "pdf-page landscape" : "pdf-page"}>{index + 1}</div>
+              <PDFPreviewPage page={page} pageNumber={index + 1} />
               <span>
                 {page.gridColumn}, {page.gridRow}
               </span>
@@ -243,4 +275,123 @@ function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean 
       {loading && pages.length > 0 ? <div className="pdf-export-preview-updating">設定を反映中…</div> : null}
     </section>
   );
+}
+
+function PDFPreviewPage({ page, pageNumber }: { page: OutputPage; pageNumber: number }) {
+  const pageClassName = page.widthMm > page.heightMm ? "pdf-page landscape" : "pdf-page";
+  return (
+    <svg
+      className={pageClassName}
+      data-testid={`pdf-preview-page-${pageNumber}`}
+      data-rotation-deg={page.rotationDeg}
+      viewBox={`0 0 ${page.widthMm} ${page.heightMm}`}
+      role="img"
+      aria-label={`PDF ${pageNumber}ページ目`}
+    >
+      <rect width={page.widthMm} height={page.heightMm} className="pdf-page-background" />
+      <PrintableArea page={page} />
+      {page.graphics.map((graphic, index) => (
+        <OutputGraphicPreview key={index} graphic={graphic} page={page} />
+      ))}
+      {page.texts.map((text, index) => (
+        <OutputTextPreview key={`${text.content}-${index}`} text={text} page={page} />
+      ))}
+      {page.guide ? <OutputGuidePreview guide={page.guide} page={page} /> : null}
+    </svg>
+  );
+}
+
+function PrintableArea({ page }: { page: OutputPage }) {
+  const area = page.printableAreaMm;
+  const upperLeft = pagePoint(page, { xMm: area.leftMm, yMm: area.topMm }, false);
+  const lowerRight = pagePoint(page, { xMm: area.rightMm, yMm: area.bottomMm }, false);
+  return (
+    <rect
+      className="pdf-printable-area"
+      data-testid="pdf-printable-area"
+      x={Math.min(upperLeft.x, lowerRight.x)}
+      y={Math.min(upperLeft.y, lowerRight.y)}
+      width={Math.abs(lowerRight.x - upperLeft.x)}
+      height={Math.abs(lowerRight.y - upperLeft.y)}
+    />
+  );
+}
+
+function OutputGraphicPreview({ graphic, page }: { graphic: OutputGraphic; page: OutputPage }) {
+  const style = outputStyle(graphic.style);
+  const { geometry } = graphic;
+  if (geometry.kind === "point") {
+    const point = pagePoint(page, geometry.payload.positionMm);
+    return <circle data-testid="pdf-output-point" cx={point.x} cy={point.y} r={0.5} {...style} />;
+  }
+  if (geometry.kind === "lineSegment" || geometry.kind === "centerLine") {
+    const start = pagePoint(page, geometry.payload.startMm);
+    const end = pagePoint(page, geometry.payload.endMm);
+    return <line data-testid="pdf-output-line" x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...style} />;
+  }
+  if (geometry.kind === "circle") {
+    const center = pagePoint(page, geometry.payload.centerMm);
+    return (
+      <circle data-testid="pdf-output-circle" cx={center.x} cy={center.y} r={geometry.payload.radiusMm} {...style} />
+    );
+  }
+  if (geometry.kind !== "arc") return null;
+  const { centerMm, radiusMm, startAngleRad, sweepAngleRad } = geometry.payload;
+  if (Math.abs(sweepAngleRad) >= Math.PI * 2 - 0.001) {
+    const center = pagePoint(page, centerMm);
+    return <circle data-testid="pdf-output-arc" cx={center.x} cy={center.y} r={radiusMm} {...style} />;
+  }
+  const rotation = page.rotationDeg === 90 ? Math.PI / 2 : 0;
+  const start = polarPoint(centerMm, radiusMm, startAngleRad + rotation);
+  const end = polarPoint(centerMm, radiusMm, startAngleRad + sweepAngleRad + rotation);
+  const startPoint = pagePoint(page, start, false);
+  const endPoint = pagePoint(page, end, false);
+  const largeArc = Math.abs(sweepAngleRad) > Math.PI ? 1 : 0;
+  const sweep = sweepAngleRad >= 0 ? 0 : 1;
+  return (
+    <path
+      data-testid="pdf-output-arc"
+      d={`M ${startPoint.x} ${startPoint.y} A ${radiusMm} ${radiusMm} 0 ${largeArc} ${sweep} ${endPoint.x} ${endPoint.y}`}
+      {...style}
+    />
+  );
+}
+
+function OutputTextPreview({ text, page }: { text: OutputText; page: OutputPage }) {
+  const point = pagePoint(page, text.positionMm);
+  return (
+    <text data-testid="pdf-output-text" x={point.x} y={point.y} fontSize={text.fontSizeMm} textAnchor="middle">
+      {text.content}
+    </text>
+  );
+}
+
+function OutputGuidePreview({ guide, page }: { guide: OutputGuide; page: OutputPage }) {
+  const start = pagePoint(page, guide.startMm);
+  const end = pagePoint(page, guide.endMm);
+  return (
+    <g className="pdf-output-guide" data-testid="pdf-output-guide">
+      <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} />
+    </g>
+  );
+}
+
+function pagePoint(page: OutputPage, point: PointMm, applyRotation = true) {
+  const rotated = applyRotation && page.rotationDeg === 90 ? { xMm: -point.yMm, yMm: point.xMm } : point;
+  return { x: page.widthMm / 2 + rotated.xMm, y: page.heightMm / 2 - rotated.yMm };
+}
+
+function polarPoint(center: PointMm, radius: number, angle: number): PointMm {
+  return { xMm: center.xMm + radius * Math.cos(angle), yMm: center.yMm + radius * Math.sin(angle) };
+}
+
+function outputStyle(style: OutputStyle) {
+  const { stroke, strokeWidthMm, pattern } = style;
+  const dashArray = pattern === "solid" ? undefined : { dashed: "6 3", dotted: "1 2", construction: "3 2" }[pattern];
+  return {
+    fill: "none",
+    stroke: `rgba(${Math.round(stroke.red * 255)}, ${Math.round(stroke.green * 255)}, ${Math.round(stroke.blue * 255)}, ${stroke.alpha})`,
+    strokeWidth: strokeWidthMm,
+    strokeDasharray: dashArray,
+  };
 }
