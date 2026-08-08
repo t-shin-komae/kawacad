@@ -45,8 +45,8 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     const path =
       state?.persistence.path ??
       (await dialogAdapter.save({
-        defaultPath: `${documentNameForFileDialog.current ?? state?.snapshot.name ?? appStrings.app.untitled}.lcraft`,
-        filters: [{ name: appStrings.app.fileFilterName, extensions: ["lcraft"] }],
+        defaultPath: `${documentNameForFileDialog.current ?? state?.snapshot.name ?? appStrings.app.untitled}.kawa`,
+        filters: [{ name: appStrings.app.fileFilterName, extensions: ["kawa"] }],
       }));
     if (!path) return false;
     return Boolean(await run(() => documentAdapter.command<State>("save_document", { path }), appStrings.app.saved));
@@ -91,7 +91,7 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     if (!(await resolveDirtyReplacement(appStrings.app.openOtherProjectAction))) return;
     const path = await dialogAdapter.open({
       multiple: false,
-      filters: [{ name: appStrings.app.fileFilterName, extensions: ["lcraft"] }],
+      filters: [{ name: appStrings.app.fileFilterName, extensions: ["kawa"] }],
     });
     if (typeof path !== "string") return;
     const next = await run(
@@ -103,8 +103,8 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
   const saveDocument = useCallback(async () => {
     if (!(await commitPendingDocumentName())) return;
     const path = await dialogAdapter.save({
-      defaultPath: `${documentNameForFileDialog.current ?? state?.snapshot.name ?? appStrings.app.untitled}.lcraft`,
-      filters: [{ name: appStrings.app.fileFilterName, extensions: ["lcraft"] }],
+      defaultPath: `${documentNameForFileDialog.current ?? state?.snapshot.name ?? appStrings.app.untitled}.kawa`,
+      filters: [{ name: appStrings.app.fileFilterName, extensions: ["kawa"] }],
     });
     if (path) await run(() => documentAdapter.command<State>("save_document", { path }), appStrings.app.saved);
   }, [commitPendingDocumentName, documentNameForFileDialog, run, state?.snapshot.name]);

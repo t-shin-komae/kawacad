@@ -7,12 +7,12 @@ import Testing
 func saved_document_window_title_identifies_file_and_project_name() {
   let presentation = DocumentWindowPresentation(
     documentName: "丸型キーホルダー",
-    documentURL: URL(fileURLWithPath: "/tmp/keyholder-round.lcraft"),
+    documentURL: URL(fileURLWithPath: "/tmp/keyholder-round.kawa"),
     isDocumentEdited: false
   )
 
-  #expect(presentation.title == "keyholder-round.lcraft — 丸型キーホルダー")
-  #expect(presentation.accessibilityLabel.contains("keyholder-round.lcraft"))
+  #expect(presentation.title == "keyholder-round.kawa — 丸型キーホルダー")
+  #expect(presentation.accessibilityLabel.contains("keyholder-round.kawa"))
   #expect(presentation.accessibilityLabel.contains("丸型キーホルダー"))
   #expect(presentation.accessibilityLabel.contains(AppStrings.tr("window.accessibility.saved")))
 }
@@ -20,11 +20,11 @@ func saved_document_window_title_identifies_file_and_project_name() {
 func saved_document_window_title_omits_duplicate_project_name() {
   let presentation = DocumentWindowPresentation(
     documentName: "KeyHolder",
-    documentURL: URL(fileURLWithPath: "/tmp/keyholder.lcraft"),
+    documentURL: URL(fileURLWithPath: "/tmp/keyholder.kawa"),
     isDocumentEdited: true
   )
 
-  #expect(presentation.title == "keyholder.lcraft")
+  #expect(presentation.title == "keyholder.kawa")
   #expect(presentation.accessibilityLabel.contains(AppStrings.tr("window.accessibility.edited")))
 }
 
@@ -49,13 +49,13 @@ func app_state_window_presentation_updates_for_project_rename_and_save_as() {
   let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
   store.applyCommandState = renamedState
   let appState = AppCoordinator(documentAdapter: store)
-  store.documentURL = URL(fileURLWithPath: "/tmp/old-file.lcraft")
+  store.documentURL = URL(fileURLWithPath: "/tmp/old-file.kawa")
 
-  #expect(appState.actions.document.documentWindowPresentation.title == "old-file.lcraft — 内部名称")
+  #expect(appState.actions.document.documentWindowPresentation.title == "old-file.kawa — 内部名称")
 
   appState.actions.document.renameDocument(to: "変更後名称")
-  #expect(appState.actions.document.documentWindowPresentation.title == "old-file.lcraft — 変更後名称")
+  #expect(appState.actions.document.documentWindowPresentation.title == "old-file.kawa — 変更後名称")
 
-  store.documentURL = URL(fileURLWithPath: "/tmp/new-file.lcraft")
-  #expect(appState.actions.document.documentWindowPresentation.title == "new-file.lcraft — 変更後名称")
+  store.documentURL = URL(fileURLWithPath: "/tmp/new-file.kawa")
+  #expect(appState.actions.document.documentWindowPresentation.title == "new-file.kawa — 変更後名称")
 }

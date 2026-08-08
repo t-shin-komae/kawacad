@@ -70,7 +70,7 @@ pub enum DocumentValidationError {
     },
 }
 
-/// `.lcraft` JSON の入出力エラー。
+/// `.kawa` JSON の入出力エラー。
 #[derive(Debug, Clone, PartialEq)]
 pub enum DocumentIoError {
     /// JSON シリアライズに失敗した。

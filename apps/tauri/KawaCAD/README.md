@@ -1,6 +1,6 @@
 # KawaCAD
 
-Windows、Linux、macOSで動作するKawaCADのTauri + React UIです。既存のRust Coreを変更せず、Tauri adapterは既存の`DocumentCommand`、preflight、snapshot、`.lcraft`入出力だけを呼び出します。Reactが所有するのは選択、作図途中、viewport、パネル表示などの一時状態です。
+Windows、Linux、macOSで動作するKawaCADのTauri + React UIです。既存のRust Coreを変更せず、Tauri adapterは既存の`DocumentCommand`、preflight、snapshot、`.kawa`入出力だけを呼び出します。Reactが所有するのは選択、作図途中、viewport、パネル表示などの一時状態です。
 
 ## 現在含む操作
 

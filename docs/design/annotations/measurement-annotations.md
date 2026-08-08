@@ -43,7 +43,7 @@ Measure ..> Output : 含めない
 | 図形への影響 | なし |
 | 拘束状態への影響 | なし |
 | 自由度評価への影響 | なし |
-| 保存 | `.lcraft` の補助情報領域に保存 |
+| 保存 | `.kawa` の補助情報領域に保存 |
 | 出力 | V1 では PDF/印刷へ出力しない |
 
 ## 3. データの流れ
@@ -56,7 +56,7 @@ skinparam responseMessageBelowArrow true
 actor "ユーザー" as User
 participant "macOS UI" as UI
 participant "Rust Core" as Core
-participant ".lcraft" as File
+participant ".kawa" as File
 
     User->UI: 計測表示ツールで対象を選択
     UI->Core: addMeasurementAnnotation

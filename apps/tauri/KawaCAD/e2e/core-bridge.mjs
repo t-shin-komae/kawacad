@@ -10,7 +10,6 @@ const repoRoot = path.resolve(appRoot, "../..");
 const coreBinary = process.env.KAWACAD_CORE_PROCESS ?? path.join(repoRoot, "target/debug/kawacad-core-process");
 
 function ensureCoreBinary() {
-  if (existsSync(coreBinary)) return;
   const result = spawnSync("cargo", ["build", "-p", "kawacad-core-process"], {
     cwd: repoRoot,
     encoding: "utf8",
@@ -115,7 +114,7 @@ export class CoreBridge {
         this.#viewMode = "editDisplay";
         return this.#state();
       case "open_document":
-        await this.#restart(["--read-lcraft-file", String(args.path)]);
+        await this.#restart(["--read-kawa-file", String(args.path)]);
         this.#projectPath = String(args.path);
         this.#viewMode = "editDisplay";
         return this.#state();
@@ -129,7 +128,7 @@ export class CoreBridge {
         return this.#state();
       case "reload_document":
         if (!this.#projectPath) throw new Error("No project file path has been selected");
-        await this.#restart(["--read-lcraft-file", this.#projectPath]);
+        await this.#restart(["--read-kawa-file", this.#projectPath]);
         return this.#state();
       case "set_view_mode":
         this.#viewMode = args.viewMode;
@@ -201,9 +200,9 @@ export class CoreBridge {
       case "plugin:dialog|message":
         return Array.isArray(args.buttons?.OkCustom) ? args.buttons.OkCustom[0] : "Ok";
       case "plugin:dialog|save":
-        return path.join(this.#tempDirectory, "e2e-project.lcraft");
+        return path.join(this.#tempDirectory, "e2e-project.kawa");
       case "plugin:dialog|open":
-        return this.#projectPath ?? path.join(this.#tempDirectory, "e2e-project.lcraft");
+        return this.#projectPath ?? path.join(this.#tempDirectory, "e2e-project.kawa");
       default:
         throw new Error(`Unsupported E2E Tauri command: ${command}`);
     }
@@ -237,7 +236,7 @@ export class CoreBridge {
 
   async #writeFile(filePath) {
     await this.#request({
-      kind: "writeLcraftFile",
+      kind: "writeKawaFile",
       payload: { path: filePath, markClean: true },
     });
   }

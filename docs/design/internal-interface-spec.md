@@ -10,7 +10,7 @@
 | --- | --- |
 | 責務、操作の意味、原子性、失敗時挙動 | 本書 |
 | interface 固有 JSON のうち Schema 化済みの形状 | `schemas/interface/0.1.0.schema.json` |
-| `.lcraft` と共通する保存オブジェクトの形状 | `schemas/lcraft/0.1.0.schema.json` |
+| `.kawa` と共通する保存オブジェクトの形状 | `schemas/kawa/0.1.0.schema.json` |
 | Rust / Swift が同じ wire shape を扱うこと | 両側の契約テストと `tests/fixtures/interface/**` |
 
 現行 interface schema は、preflight、共有スタイル、意味コマンド、選択転送、エラー、出力に使う境界オブジェクトを対象とする。Schema に未収録の既存メッセージは本書の一覧を契約とし、今後フィールドを追加・変更する場合は、長いフィールド表を本書へ増やすのではなく interface schema の対象を広げる。
@@ -35,7 +35,7 @@ Core はドキュメントの正本と意味を扱う。
 - 図形、派生要素、型紙要素、拘束、パラメータ、レイヤー、共有スタイル、パーツの変更
 - 参照整合性、閉輪郭、依存閉包、正規図形、計測値の解釈
 - コマンドの検証、原子的適用、Undo/Redo
-- `.lcraft` の読み込みと書き出し
+- `.kawa` の読み込みと書き出し
 - 編集表示、出力プレビュー、出力用中間表現の生成
 
 ### 2.3 共通原則
@@ -69,13 +69,13 @@ Swift/macOS UI は1つの開いているドキュメントに1つの `kawacad-co
 | --- | --- | --- |
 | バージョン取得 | `kawacad-core-process --version-json` | `fileFormatVersion` と `schemaVersion` を1行の JSON で返して終了する |
 | 新規ドキュメント | `kawacad-core-process --new <name>` | 新規セッションを開始する |
-| ファイルから開始 | `kawacad-core-process --read-lcraft-file <path>` | 検証済み `.lcraft` からセッションを開始する |
+| ファイルから開始 | `kawacad-core-process --read-kawa-file <path>` | 検証済み `.kawa` からセッションを開始する |
 | JSON から置換 | 起動済みセッションへ `loadDocument` | 成功時に同じプロセスの現在ドキュメントを置き換える |
 | 終了 | UI が標準入力を閉じる、またはプロセスを終了する | セッションと履歴を終了する |
 
 診断ログは標準エラーへ出力し、標準出力には UI が解釈する JSON だけを出力する。
 
-`loadDocument` で読み込む `.lcraft` は Undo/Redo 履歴を含まない。置換に成功すると読み込み前の履歴も破棄され、読み込んだ状態から新しい履歴を開始する。読み込みに失敗した場合は現在ドキュメントと履歴を維持する。
+`loadDocument` で読み込む `.kawa` は Undo/Redo 履歴を含まない。置換に成功すると読み込み前の履歴も破棄され、読み込んだ状態から新しい履歴を開始する。読み込みに失敗した場合は現在ドキュメントと履歴を維持する。
 
 ### 3.2 要求と応答の対応
 
@@ -87,13 +87,13 @@ Swift/macOS UI は1つの開いているドキュメントに1つの `kawacad-co
 
 標準出力の EOF、非 UTF-8 応答、解釈不能な応答、プロセス終了は transport 失敗として扱う。UI はセッションを利用不能として提示し、最後に確認できた表示状態を破棄しない。
 
-変更 request の書き込み後に transport が失敗した場合、UI は適用の成否を確定できない。同じ変更を自動再送してはならず、利用者に接続失敗を示す。新しいセッションへ切り替える場合、保存済み `.lcraft` または明示的に保持した JSON からドキュメントは復元できるが、終了したセッションの Undo/Redo 履歴は復元されない。
+変更 request の書き込み後に transport が失敗した場合、UI は適用の成否を確定できない。同じ変更を自動再送してはならず、利用者に接続失敗を示す。新しいセッションへ切り替える場合、保存済み `.kawa` または明示的に保持した JSON からドキュメントは復元できるが、終了したセッションの Undo/Redo 履歴は復元されない。
 
 ### 3.3 バージョン
 
 `--version-json` は現行 Core の完全な `fileFormatVersion` と `schemaVersion` を返す。現行 macOS UI は応答を検証し、接続状態には各 major version を表示する。UI/Core の組は同じアプリケーションビルドに同梱されたものを前提とし、pipe envelope 自体には `protocolVersion` を持たない。
 
-`.lcraft` の読み込み可否は Core がファイル内の完全なバージョンで検証する。対応する組み合わせは `docs/spec/file-format-spec.md` を正とする。
+`.kawa` の読み込み可否は Core がファイル内の完全なバージョンで検証する。対応する組み合わせは `docs/spec/file-format-spec.md` を正とする。
 
 ### 3.4 UI ごとの transport
 
@@ -136,7 +136,7 @@ request は次の envelope を持つ。現行 request はすべて object の `p
 
 | `kind` | 成功 response | 意味 |
 | --- | --- | --- |
-| `loadDocument` | `DocumentStateResponse` | `.lcraft` JSON で現在セッションのドキュメントを置き換える |
+| `loadDocument` | `DocumentStateResponse` | `.kawa` JSON で現在セッションのドキュメントを置き換える |
 | `documentState` | `DocumentStateResponse` | 指定表示モードの現在状態を取得する |
 | `previewCommand` | `DocumentStateResponse` | コマンド適用後の候補状態を非破壊で試算する |
 | `preflightConstraint` | `PreflightConstraintResponse` | 拘束対象を解釈し、成立可否と初期値候補を返す |
@@ -148,14 +148,14 @@ request は次の envelope を持つ。現行 request はすべて object の `p
 | `applyCommand` | `DocumentStateResponse` | コマンドを原子的に適用する |
 | `undo` | `DocumentStateResponse` | 直前の成功した変更を取り消す |
 | `redo` | `DocumentStateResponse` | 取り消した変更を再適用する |
-| `writeLcraftFile` | `{ "written": true }` | 現在ドキュメントを指定パスへ書き出す |
+| `writeKawaFile` | `{ "written": true }` | 現在ドキュメントを指定パスへ書き出す |
 | `buildOutputDocumentModel` | `BuildOutputDocumentModelResponse` | 出力用中間表現と警告を生成する |
 | `renderPdf` | `RenderPdfResponse` | 出力用中間表現を PDF byte 列へ変換する |
 | `renderPrint` | `PrintRenderData` | 出力用中間表現を macOS 印刷用描画データへ変換する |
 
 `loadDocument`、`previewCommand`、`applyCommand`、`undo`、`redo` の `viewMode` は省略時 `editDisplay` とする。`documentState` の `viewMode` は必須である。
 
-`writeLcraftFile` の `markClean` は省略時 `true` とする。通常保存は `true` を指定し、成功した内容をセッションの保存済み基準にする。クラッシュ復旧の一時スナップショットは `false` を指定し、dirty 状態を変えない。
+`writeKawaFile` の `markClean` は省略時 `true` とする。通常保存は `true` を指定し、成功した内容をセッションの保存済み基準にする。クラッシュ復旧の一時スナップショットは `false` を指定し、dirty 状態を変えない。
 
 `buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、`0` または `90` 度の回転、macOS が取得した印刷可能領域を受け取る。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
 
@@ -194,7 +194,7 @@ mm 座標と表示可否、および表示対象の自由テキスト ID を返�
 
 ## 6. `DocumentCommand`
 
-payload の機械可読な形状は、対象が保存オブジェクトなら lcraft schema、interface 固有コマンドなら interface schema を優先する。本節は利用可能なコマンドと意味を一覧化する。
+payload の機械可読な形状は、対象が保存オブジェクトなら kawa schema、interface 固有コマンドなら interface schema を優先する。本節は利用可能なコマンドと意味を一覧化する。
 
 ### 6.1 ドキュメント、図形、派生要素
 
@@ -247,7 +247,7 @@ payload の機械可読な形状は、対象が保存オブジェクトなら lc
 | `setParameterValue` | parameter ID、value mm | 参照する拘束と派生要素を含めて値を変更する |
 | `deleteParameter` | parameter ID、replacement value mm | 参照元を固定値へ置き換えてから削除する |
 
-拘束 target の種類、必要数、拘束値の形状は lcraft schema を正とする。UI は追加または変更前に preflight を利用できるが、`applyCommand` でも Core が同じ意味検証を行う。
+拘束 target の種類、必要数、拘束値の形状は kawa schema を正とする。UI は追加または変更前に preflight を利用できるが、`applyCommand` でも Core が同じ意味検証を行う。
 
 ### 6.4 パーツ
 
@@ -351,7 +351,7 @@ PDF と直接印刷は同じ Output Document Model を入力にする。`renderP
 | `renderInvalidPageSize` | ページ寸法が不正 |
 | `renderUnsupportedRotation` | 回転角が `0` / `90` 以外 |
 | `ioError` | 保存、読み込み、出力用ファイル操作に失敗した |
-| `unsupportedVersion` | `.lcraft` の file format または schema version が非対応 |
+| `unsupportedVersion` | `.kawa` の file format または schema version が非対応 |
 | `unknown` | 上記へ分類できない想定外の失敗 |
 
 拘束エラーは、対象不足、参照切れ、対象種別不正、重複、競合の順に分類する。対象不足では実数、必要数、期待 target 種別、対象不正では不正 target、重複・競合では関連する拘束 ID を、可能な範囲で `details` に含める。
@@ -361,7 +361,7 @@ PDF と直接印刷は同じ Output Document Model を入力にする。`renderP
 境界を変更する場合は、意味と形状の両方を同じ変更単位で同期する。
 
 1. 本書で責務、操作の意味、失敗時挙動を更新する。
-2. interface 固有 shape は `schemas/interface/0.1.0.schema.json`、保存オブジェクトは lcraft schema を更新する。
+2. interface 固有 shape は `schemas/interface/0.1.0.schema.json`、保存オブジェクトは kawa schema を更新する。
 3. Rust の serde 型と Swift の Codable 型を更新する。
 4. 共有 fixture と両側の契約テストを更新する。
 
@@ -376,4 +376,4 @@ pipe envelope に破壊的変更が必要な場合は、file format version へ�
 - `docs/design/output/document-model.md`
 - `docs/design/parts/overview.md`
 - `schemas/interface/0.1.0.schema.json`
-- `schemas/lcraft/0.1.0.schema.json`
+- `schemas/kawa/0.1.0.schema.json`

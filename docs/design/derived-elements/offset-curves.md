@@ -64,7 +64,7 @@ skinparam linetype ortho
 UI --> Command
   rectangle "Rust Core\nDerivedElement" as Core
 Command --> Core
-  rectangle ".lcraft\nderivedElements" as Save
+  rectangle ".kawa\nderivedElements" as Save
 Core --> Save
   rectangle "解決済み図形生成" as Resolve
 Core --> Resolve
@@ -115,7 +115,7 @@ Reference --> DeleteSource
 Reference --> Chain
   rectangle "循環拒否" as Cycle
 Reference --> Cycle
-  rectangle ".lcraft JSON Schema" as Schema
+  rectangle ".kawa JSON Schema" as Schema
 Persistence --> Schema
 @enduml
 ```

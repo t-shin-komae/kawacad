@@ -71,7 +71,7 @@ Selection --> UI
 UI --> Core
   rectangle "Part\n名称・配置基準点・固定した所属ID" as Part
 Core --> Part
-  rectangle ".lcraft\n保存・読み込み" as File
+  rectangle ".kawa\n保存・読み込み" as File
 Part --> File
   rectangle "DocumentState\nパーツ一覧" as State
 Part --> State

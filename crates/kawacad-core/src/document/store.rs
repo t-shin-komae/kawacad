@@ -16,7 +16,7 @@ use super::{DocumentMetadata, DocumentWarning, FILE_FORMAT_VERSION, SCHEMA_VERSI
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentStore {
-    /// このドキュメントが表す `.lcraft` ファイル形式のバージョン。
+    /// このドキュメントが表す `.kawa` ファイル形式のバージョン。
     pub(crate) file_format_version: String,
     /// このドキュメントの検証に使う外部 JSON Schema のバージョン。
     pub(crate) schema_version: String,

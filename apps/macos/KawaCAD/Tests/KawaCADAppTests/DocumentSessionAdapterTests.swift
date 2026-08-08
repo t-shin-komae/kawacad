@@ -156,12 +156,12 @@ func uc5_document_session_adapter_save_and_reload_preserves_state() {
   #expect(!adapter.canRedo)
   #expect(adapter.isDocumentDirty)
 
-  let saveURL = uniqueTempURL("round-trip.lcraft")
+  let saveURL = uniqueTempURL("round-trip.kawa")
   requireSuccess(adapter.saveDocument(to: saveURL), context: "saveDocument")
   #expect(adapter.documentURL == saveURL)
   #expect(!adapter.isDocumentDirty)
 
-  let snapshotURL = uniqueTempURL("round-trip-snapshot.lcraft")
+  let snapshotURL = uniqueTempURL("round-trip-snapshot.kawa")
   requireSuccess(adapter.writeSnapshot(to: snapshotURL), context: "writeSnapshot")
   #expect(adapter.documentURL == saveURL)
 
@@ -278,8 +278,8 @@ func document_session_adapter_opens_recovery_snapshot_as_dirty_document() {
     name: "Recovered",
     entities: [lineEntity(id: "entity:recovered", start: .zero, end: .init(xMM: 20.0, yMM: 0.0))]
   )
-  let recoveryURL = uniqueTempURL("recovery-snapshot.lcraft")
-  let originalURL = uniqueTempURL("original-document.lcraft")
+  let recoveryURL = uniqueTempURL("recovery-snapshot.kawa")
+  let originalURL = uniqueTempURL("original-document.kawa")
   let backend = ScriptedDocumentSessionBackend(
     states: [
       recoveryURL.lastPathComponent: recoveredState
@@ -327,7 +327,7 @@ func document_session_adapter_keeps_current_document_when_create_new_fails() {
 
   _ = requireSuccess(adapter.createNewDocument(named: "Current Document", viewMode: .editDisplay))
   _ = requireSuccess(adapter.applyCommand(testCommand(), viewMode: .editDisplay))
-  let currentURL = uniqueTempURL("current-document.lcraft")
+  let currentURL = uniqueTempURL("current-document.kawa")
   requireSuccess(adapter.saveDocument(to: currentURL), context: "saveDocument")
 
   switch adapter.createNewDocument(named: "Replacement", viewMode: .editDisplay) {
@@ -356,7 +356,7 @@ func document_session_adapter_keeps_last_successful_document_when_open_load_fail
       pointEntity(id: "entity:failed", point: .init(xMM: 1.0, yMM: 1.0))
     ]
   )
-  let failedOpenURL = uniqueTempURL("failed-open.lcraft")
+  let failedOpenURL = uniqueTempURL("failed-open.kawa")
   let backend = ScriptedDocumentSessionBackend(
     states: [
       "root": lastAppliedState,
@@ -369,7 +369,7 @@ func document_session_adapter_keeps_last_successful_document_when_open_load_fail
   let adapter = DocumentSessionAdapter(backend: backend)
 
   _ = requireSuccess(adapter.createNewDocument(named: "Current Document", viewMode: .editDisplay))
-  let currentURL = uniqueTempURL("current-document.lcraft")
+  let currentURL = uniqueTempURL("current-document.kawa")
   requireSuccess(adapter.saveDocument(to: currentURL), context: "saveDocument")
 
   switch adapter.openDocument(at: failedOpenURL, viewMode: .editDisplay) {
@@ -407,7 +407,7 @@ func document_session_adapter_keeps_current_document_when_new_document_load_fail
   let adapter = DocumentSessionAdapter(backend: backend)
 
   _ = requireSuccess(adapter.createNewDocument(named: "Current Document", viewMode: .editDisplay))
-  let currentURL = uniqueTempURL("current-document.lcraft")
+  let currentURL = uniqueTempURL("current-document.kawa")
   requireSuccess(adapter.saveDocument(to: currentURL), context: "saveDocument")
 
   switch adapter.createNewDocument(named: "Replacement", viewMode: .editDisplay) {

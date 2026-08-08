@@ -482,13 +482,13 @@ final class ScriptedDocumentSession: LeatherDocumentSessionManaging {
   func writeJSONFile(to url: URL) -> LeatherCoreResult<Void> {
     writtenPaths.append(url)
     cleanKey = currentKey
-    try? Data("{\"fileFormatVersion\":\"0.2.0\"}\n".utf8).write(to: url)
+    try? Data("{\"fileFormatVersion\":\"0.1.0\"}\n".utf8).write(to: url)
     return .success(())
   }
 
   func writeSnapshotFile(to url: URL) -> LeatherCoreResult<Void> {
     writtenPaths.append(url)
-    try? Data("{\"fileFormatVersion\":\"0.2.0\"}\n".utf8).write(to: url)
+    try? Data("{\"fileFormatVersion\":\"0.1.0\"}\n".utf8).write(to: url)
     return .success(())
   }
 
@@ -723,14 +723,14 @@ final class RoundTripDocumentSession: LeatherDocumentSessionManaging {
     storage.savedKeysByPath[url.path] = currentKey
     storage.savedPaths.append(url.path)
     cleanKey = currentKey
-    try? Data("{\"fileFormatVersion\":\"0.2.0\"}\n".utf8).write(to: url)
+    try? Data("{\"fileFormatVersion\":\"0.1.0\"}\n".utf8).write(to: url)
     return .success(())
   }
 
   func writeSnapshotFile(to url: URL) -> LeatherCoreResult<Void> {
     storage.savedKeysByPath[url.path] = currentKey
     storage.savedPaths.append(url.path)
-    try? Data("{\"fileFormatVersion\":\"0.2.0\"}\n".utf8).write(to: url)
+    try? Data("{\"fileFormatVersion\":\"0.1.0\"}\n".utf8).write(to: url)
     return .success(())
   }
 

@@ -109,7 +109,7 @@ func pending_document_name_draft_is_committed_before_save() {
     documentAdapter: store,
     coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
   )
-  let saveURL = uniqueTempURL("pending-name-save.lcraft")
+  let saveURL = uniqueTempURL("pending-name-save.kawa")
   store.documentURL = saveURL
 
   appState.actions.document.updatePendingDocumentNameDraft(" 保存する名称 ")
@@ -132,7 +132,7 @@ func invalid_pending_document_name_draft_blocks_save_and_new_project() {
     documentAdapter: store,
     coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
   )
-  let saveURL = uniqueTempURL("invalid-pending-name-save.lcraft")
+  let saveURL = uniqueTempURL("invalid-pending-name-save.kawa")
   store.documentURL = saveURL
   let createCallsBefore = store.createNewDocumentCalls.count
 
@@ -161,7 +161,7 @@ func pending_document_name_draft_is_not_committed_when_new_project_fails() {
     coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
   )
   store.createNewDocumentFailure = "create failed"
-  let originalURL = uniqueTempURL("existing.lcraft")
+  let originalURL = uniqueTempURL("existing.kawa")
   store.documentURL = originalURL
   store.isDocumentDirty = true
   appState.actions.canvas.selectedEntityID = "entity:existing"
@@ -1889,7 +1889,7 @@ func uc1_app_state_resets_inspector_presentation_on_document_replace() {
   appState.actions.inspector.inspectorLayerSearchQuery = "cut"
   appState.actions.inspector.inspectorLayerSearchVisible = true
 
-  appState.actions.document.openProject(at: uniqueTempURL("reopened.lcraft"))
+  appState.actions.document.openProject(at: uniqueTempURL("reopened.kawa"))
 
   #expect(appState.actions.inspector.inspectorTab == .selection)
   #expect(appState.actions.inspector.inspectorSelectedLayerID == nil)
@@ -2907,14 +2907,14 @@ func uc1_uc5_app_state_open_save_reload_routes_through_the_store() {
     coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) }
   )
 
-  let saveURL = uniqueTempURL("saved-project.lcraft")
+  let saveURL = uniqueTempURL("saved-project.kawa")
   store.documentURL = saveURL
   appState.actions.document.saveProject()
   #expect(store.saveDocumentCalls == [saveURL])
   #expect(appState.actions.document.documentURL == saveURL)
   #expect(appState.actions.document.statusMessage == "\(saveURL.lastPathComponent) に保存しました")
 
-  let openURL = uniqueTempURL("opened-project.lcraft")
+  let openURL = uniqueTempURL("opened-project.kawa")
   appState.actions.canvas.selectedEntityID = "entity:point-a"
   appState.actions.canvas.selectedEntityIDs = ["entity:point-a"]
   appState.actions.canvas.pendingConstraintTargets = [
@@ -3532,7 +3532,7 @@ func uc1_app_state_failed_session_operations_keep_state_safe() {
   appState.actions.canvas.selectedEntityID = "entity:point-a"
   appState.actions.canvas.draftStartPoint = .init(xMM: 1.0, yMM: 1.0)
   appState.actions.canvas.draftCurrentPoint = .init(xMM: 2.0, yMM: 2.0)
-  appState.actions.document.openProject(at: uniqueTempURL("failed-open.lcraft"))
+  appState.actions.document.openProject(at: uniqueTempURL("failed-open.kawa"))
   #expect(appState.actions.document.coreStatus == .unavailable("open failed"))
   #expect(appState.actions.workspace.errorPresentation?.message == "open failed")
   #expect(appState.actions.canvas.selectedEntityID == "entity:point-a")
@@ -3604,10 +3604,10 @@ func uc1_app_state_saves_before_opening_another_project() {
     documentAdapter: store,
     coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) }
   )
-  let saveURL = uniqueTempURL("dirty-document.lcraft")
+  let saveURL = uniqueTempURL("dirty-document.kawa")
   store.documentURL = saveURL
   store.isDocumentDirty = true
-  let openURL = uniqueTempURL("opened-document.lcraft")
+  let openURL = uniqueTempURL("opened-document.kawa")
 
   appState.actions.document.openProject(at: openURL)
   appState.actions.document.confirmDocumentSaveAndContinue()
@@ -5809,7 +5809,7 @@ func uc1_discarded_replacement_keeps_recovery_when_opening_fails() {
   appState.actions.document.cancelDocumentSaveConfirmation()
 
   store.openDocumentFailure = "open failed"
-  appState.actions.document.openProject(at: uniqueTempURL("replacement-failed.lcraft"))
+  appState.actions.document.openProject(at: uniqueTempURL("replacement-failed.kawa"))
   appState.actions.document.discardDocumentChangesAndContinue()
 
   #expect(appState.actions.document.documentName == "Dirty original")
@@ -5970,7 +5970,7 @@ final class StubDocumentSessionAdapter: DocumentSessionAdapting {
     switch writeSnapshotResult {
     case .success:
       try? Data(
-        "{\"fileFormatVersion\":\"0.2.0\",\"schemaVersion\":\"0.1.0\",\"document\":{\"name\":\"Recovery\"}}\n"
+        "{\"fileFormatVersion\":\"0.1.0\",\"schemaVersion\":\"0.1.0\",\"document\":{\"name\":\"Recovery\"}}\n"
           .utf8
       ).write(to: url)
     case .failure:

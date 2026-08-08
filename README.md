@@ -4,11 +4,11 @@
 
 KawaCADは、レザークラフトの型紙制作を目的としたmacOS中心のパラメトリック2D CADです。
 
-現在の製品は、拘束付き自由作図、派生ジオメトリ、レザークラフトの意味情報、複数パーツの型紙管理、`.lcraft`永続化、A4実寸PDF出力およびmacOS直接印刷を提供します。
+現在の製品は、拘束付き自由作図、派生ジオメトリ、レザークラフトの意味情報、複数パーツの型紙管理、`.kawa`永続化、A4実寸PDF出力およびmacOS直接印刷を提供します。
 
 ## ドキュメント
 
-まず[`docs/README.md`](docs/README.md)を読み、そこに記載された順序に従ってください。外部仕様は`docs/spec/`、設計契約は`docs/design/`、機械可読な`.lcraft`およびUI/Core契約は`schemas/`にあります。
+まず[`docs/README.md`](docs/README.md)を読み、そこに記載された順序に従ってください。外部仕様は`docs/spec/`、設計契約は`docs/design/`、機械可読な`.kawa`およびUI/Core契約は`schemas/`にあります。
 
 ## ビルドと実行
 

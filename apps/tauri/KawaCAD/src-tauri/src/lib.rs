@@ -66,7 +66,7 @@ fn application_data_path(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, 
 fn recovery_paths(base_directory: PathBuf) -> (PathBuf, PathBuf) {
     let directory = base_directory.join("Recovery").join("active-document");
     (
-        directory.join("snapshot.lcraft"),
+        directory.join("snapshot.kawa"),
         directory.join("metadata.json"),
     )
 }
@@ -102,7 +102,7 @@ fn save_recovery_snapshot_at(session: &CadSession, base_directory: PathBuf) -> R
     }
     fs::create_dir_all(directory)
         .map_err(|error| format!("Could not create recovery directory: {error}"))?;
-    let temporary_snapshot = snapshot_path.with_extension("lcraft.tmp");
+    let temporary_snapshot = snapshot_path.with_extension("kawa.tmp");
     session
         .document
         .write_json_file(&temporary_snapshot)
@@ -939,7 +939,7 @@ mod tests {
     fn reload_document_restores_the_saved_file_without_changing_adapter_view_mode() {
         let directory = temporary_directory("reload");
         fs::create_dir_all(&directory).expect("reload directory should be created");
-        let path = directory.join("saved.lcraft");
+        let path = directory.join("saved.kawa");
         let mut saved_document = ProjectDocument::new("Saved project".to_owned());
         saved_document
             .apply_command(
@@ -991,7 +991,7 @@ mod tests {
     fn recovery_snapshot_round_trip_preserves_dirty_document_metadata() {
         let directory = temporary_directory("recovery");
         let mut session = CadSession::new("Recovered project".to_owned());
-        session.path = Some("/projects/recovered.lcraft".to_owned());
+        session.path = Some("/projects/recovered.kawa".to_owned());
         session
             .document
             .apply_command(
@@ -1015,7 +1015,7 @@ mod tests {
         assert_eq!(candidate.display_name, "Recovered project");
         assert_eq!(
             candidate.original_document_path.as_deref(),
-            Some("/projects/recovered.lcraft")
+            Some("/projects/recovered.kawa")
         );
 
         let (snapshot_path, _) = recovery_paths(directory.clone());

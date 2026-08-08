@@ -1120,10 +1120,10 @@
         "sourcePart": { "$ref": "#/$defs/part" }
       }
     },
-    "writeLcraftFileRequest": {
+    "writeKawaFileRequest": {
       "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
       "properties": {
-        "kind": { "const": "writeLcraftFile" },
+        "kind": { "const": "writeKawaFile" },
         "payload": {
           "type": "object", "additionalProperties": false, "required": ["path"],
           "properties": {
@@ -1549,7 +1549,7 @@
     { "$ref": "#/$defs/selectionClipboardExport" },
     { "$ref": "#/$defs/exportPartLibraryItemRequest" },
     { "$ref": "#/$defs/partLibraryExport" },
-    { "$ref": "#/$defs/writeLcraftFileRequest" },
+    { "$ref": "#/$defs/writeKawaFileRequest" },
     { "$ref": "#/$defs/persistenceState" },
     { "$ref": "#/$defs/mutationResult" },
     { "$ref": "#/$defs/errorEnvelope" },

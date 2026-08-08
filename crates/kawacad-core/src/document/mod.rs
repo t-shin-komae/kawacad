@@ -82,8 +82,8 @@ use target_resolution::*;
 use validation::*;
 
 /// 現在のプロジェクトファイル形式バージョン。
-pub const FILE_FORMAT_VERSION: &str = "0.2.0";
-/// `.lcraft` ファイル用の現在の JSON Schema バージョン。
+pub const FILE_FORMAT_VERSION: &str = "0.1.0";
+/// `.kawa` ファイル用の現在の JSON Schema バージョン。
 pub const SCHEMA_VERSION: &str = "0.1.0";
 
 /// KawaCAD プロジェクトのトップレベルドキュメント。
@@ -242,7 +242,7 @@ impl ProjectDocument {
         }
     }
 
-    /// このドキュメントが表す `.lcraft` ファイル形式のバージョンを返す。
+    /// このドキュメントが表す `.kawa` ファイル形式のバージョンを返す。
     pub fn file_format_version(&self) -> &str {
         &self.file_format_version
     }
@@ -528,12 +528,12 @@ impl ProjectDocument {
         DocumentIo::from_json_str(json)
     }
 
-    /// ドキュメントを `.lcraft` JSON ファイルへ保存する。
+    /// ドキュメントを `.kawa` JSON ファイルへ保存する。
     pub fn write_json_file(&self, path: impl AsRef<Path>) -> Result<(), DocumentIoError> {
         DocumentIo::write_json_file(self, path)
     }
 
-    /// `.lcraft` JSON ファイルからドキュメントを読み込む。
+    /// `.kawa` JSON ファイルからドキュメントを読み込む。
     pub fn read_json_file(path: impl AsRef<Path>) -> Result<Self, DocumentIoError> {
         DocumentIo::read_json_file(path)
     }

@@ -891,10 +891,10 @@ fn bifold_wallet_pattern_keeps_all_parts_and_outputs_every_piece() {
 }
 
 #[test]
-fn serialized_part_shape_matches_the_lcraft_schema_contract() {
+fn serialized_part_shape_matches_the_kawa_schema_contract() {
     let schema: serde_json::Value =
-        serde_json::from_str(include_str!("../../../schemas/lcraft/0.1.0.schema.json"))
-            .expect("lcraft schema should be valid json");
+        serde_json::from_str(include_str!("../../../schemas/kawa/0.1.0.schema.json"))
+            .expect("kawa schema should be valid json");
     let schema_properties = schema
         .pointer("/$defs/part/properties")
         .and_then(serde_json::Value::as_object)
