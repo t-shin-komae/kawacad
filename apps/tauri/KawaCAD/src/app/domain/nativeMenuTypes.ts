@@ -24,4 +24,5 @@ export type MenuAction =
   | "resetLayout"
   | "reload"
   | "smoothArcTangencies"
-  | "toggleA4Orientation";
+  | "toggleA4Orientation"
+  | "openLicenses";

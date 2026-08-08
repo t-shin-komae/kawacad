@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node ../../../scripts/generate-licenses.mjs",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=lcov --coverage.reporter=html",
     "test:e2e": "playwright test",
+    "licenses:generate": "node ../../../scripts/generate-licenses.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "tauri": "tauri"

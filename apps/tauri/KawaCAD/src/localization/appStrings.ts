@@ -274,6 +274,7 @@ const appStrings = {
     },
     item: {
       about: "KawaCADについて",
+      openSourceLicenses: "OSSライセンス…",
       new: "新規",
       open: "開く…",
       save: "保存",

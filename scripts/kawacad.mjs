@@ -129,6 +129,7 @@ export function releasePlan(platform, variant = platform === "macos" ? "all" : "
           cwd: paths.repositoryRoot,
           env: releaseEnvironment,
         }),
+        command("node", ["scripts/generate-licenses.mjs"], { cwd: paths.repositoryRoot }),
         command("swift", ["build", "--package-path", paths.macosPackage, "--configuration", "release"], {
           cwd: paths.repositoryRoot,
           env: releaseEnvironment,

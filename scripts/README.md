@@ -61,6 +61,22 @@ npm ci --prefix apps/tauri/KawaCAD
 
 ## Release
 
+### OSS license notices
+
+Generate notices from the locked runtime dependency graphs before packaging:
+
+```bash
+npm --prefix apps/tauri/KawaCAD run licenses:generate
+```
+
+The Tauri build runs this step automatically and places the generated JSON in
+the frontend bundle. Tauri output contains Tauri Rust plus Node production
+dependencies. The Swift panel prefers the generated Markdown resource, which
+contains only the Rust dependencies reachable from the bundled Core process
+and Swift executable-target packages; test-only SwiftPM packages are excluded.
+The checked-in resource is only a development fallback. Review any entry whose
+package does not ship a license file before releasing.
+
 macOS can produce both application variants:
 
 ```bash
