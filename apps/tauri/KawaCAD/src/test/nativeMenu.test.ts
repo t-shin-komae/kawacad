@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { productInfo } from "@/app/productInfo";
-import { crossPlatformMenuActions } from "@/adapters/nativeMenuAdapter";
+import { aboutMetadataForPlatform, crossPlatformMenuActions } from "@/adapters/nativeMenuAdapter";
 
 describe("cross-platform native menu", () => {
   it("keeps the desktop menu action set platform neutral", () => {
@@ -18,5 +18,13 @@ describe("cross-platform native menu", () => {
     expect(productInfo.name).toBe("KawaCAD");
     expect(productInfo.displayVersion).toBe("0.1.0-dev");
     expect(productInfo.copyright).toBe("© 2026 t-shin-komae");
+  });
+
+  it("suppresses macOS's bundle build-version fallback", () => {
+    expect(aboutMetadataForPlatform("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)")).toMatchObject({
+      version: "0.1.0-dev",
+      shortVersion: "",
+    });
+    expect(aboutMetadataForPlatform("Mozilla/5.0 (X11; Linux x86_64)")).not.toHaveProperty("shortVersion");
   });
 });
