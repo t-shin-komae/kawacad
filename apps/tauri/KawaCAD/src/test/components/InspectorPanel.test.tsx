@@ -25,6 +25,7 @@ function panel(
   roundHoles: Array<{ id: string; entityId: string; kind: string }> = [],
   selectedEntities: RawEntity[] = [],
   selectedCount = 0,
+  onCreatePart = vi.fn(),
 ) {
   return (
     <InspectorPanel
@@ -60,7 +61,7 @@ function panel(
       roundHoles={roundHoles}
       onCommand={onCommand}
       onDeleteSelection={vi.fn()}
-      onCreatePart={vi.fn()}
+      onCreatePart={onCreatePart}
       onAddParameter={vi.fn()}
       onAddLayer={vi.fn()}
       onActiveLayerChange={vi.fn()}
@@ -137,6 +138,40 @@ describe("InspectorPanel", () => {
       ],
       "選択図形の線種を更新しました。",
     );
+  });
+
+  it("exposes the parts creation path from a selected drawing", () => {
+    const onCreatePart = vi.fn();
+    const line: RawEntity = {
+      id: "entity:line",
+      kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } },
+      layerId: "layer:outline",
+    };
+    render(
+      panel(
+        vi.fn(),
+        [],
+        [],
+        [],
+        line,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        [],
+        [],
+        [line],
+        1,
+        onCreatePart,
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: "選択図形からパーツを作成" }));
+
+    expect(onCreatePart).toHaveBeenCalledOnce();
   });
 
   it("edits a selected round-hole kind and diameter through Core commands", () => {
@@ -446,10 +481,12 @@ describe("InspectorPanel", () => {
       panel(onCommand, [], [], [], undefined, undefined, undefined, {
         id: "constraint:length",
         kind: "segmentLength",
-        status: "satisfied",
+        status: "fullyConstrained",
         value: { fixedMm: 20 },
       }),
     );
+    expect(screen.getByText("線分長", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("完全拘束", { exact: true })).toBeInTheDocument();
     fireEvent.change(screen.getByRole("spinbutton", { name: "拘束値 (mm)" }), { target: { value: "25" } });
     fireEvent.blur(screen.getByRole("spinbutton", { name: "拘束値 (mm)" }));
     expect(onCommand).toHaveBeenCalledWith(
@@ -478,6 +515,7 @@ describe("InspectorPanel", () => {
         onConvertMeasurement,
       ),
     );
+    expect(screen.getByText("距離表示", { exact: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "表示" }));
     fireEvent.click(screen.getByRole("button", { name: "寸法拘束へ変換" }));
     expect(onCommand).toHaveBeenCalledWith(

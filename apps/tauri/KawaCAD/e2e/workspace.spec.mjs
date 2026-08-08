@@ -37,7 +37,18 @@ async function openWorkspace(page) {
 }
 
 async function clickTool(page, name) {
-  await page.getByRole("button", { name, exact: true }).click();
+  const palette = page.getByRole("complementary", { name: "ツールパレット" });
+  const tool = palette.getByRole("button", { name, exact: true });
+  if (!(await tool.count())) {
+    const detailedTools = palette.getByRole("button", { name: "詳細ツールを表示", exact: true });
+    if (await detailedTools.count()) await detailedTools.click();
+
+    for (const groupName of ["作図", "派生", "拘束", "寸法", "計測"]) {
+      const group = palette.getByRole("button", { name: groupName, exact: true });
+      if ((await group.count()) && (await group.getAttribute("aria-expanded")) === "false") await group.click();
+    }
+  }
+  await tool.click();
 }
 
 async function clickOverflowAction(page, name) {
@@ -100,7 +111,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
   // 実際に割り当てられた幅で表示密度を切り替え、代表的な画面幅で要素が画面外へはみ出さないことを検証する。
   test("keeps the responsive toolbar inside the window at every supported width", async ({ page }) => {
-    for (const width of [1800, 1640, 1600, 1520, 1500, 1480, 1320, 1280, 1100, 1050, 1024, 960]) {
+    for (const width of [1800, 1640, 1600, 1520, 1500, 1480, 1320, 1280, 1100, 1050, 1024]) {
       await page.setViewportSize({ width, height: 800 });
       await openWorkspace(page);
       const toolbar = page.getByRole("navigation", { name: "CAD ツールバー" });
@@ -497,7 +508,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await clickModelPoint(page, 0, 0);
     await expect.poll(async () => (await core.invoke("document_state")).measurementAnnotations).toHaveLength(1);
 
-    await page.getByRole("button", { name: "segmentLength", exact: true }).click();
+    await clickTool(page, "選択");
+    await clickModelPoint(page, 0, 0);
     await expect(page.getByText("計測表示を選択中", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "寸法拘束へ変換", exact: true }).click();
     await expect

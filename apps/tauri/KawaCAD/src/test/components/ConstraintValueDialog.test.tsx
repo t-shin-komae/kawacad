@@ -35,4 +35,20 @@ describe("ConstraintValueDialog", () => {
     expect(screen.getByRole("button", { name: "確定" })).toBeDisabled();
     expect(onConfirm).not.toHaveBeenCalled();
   });
+
+  it("marks a floating value editor for the canvas HUD presentation", () => {
+    render(
+      <ConstraintValueDialog
+        label="距離"
+        initialValue={{ fixedMm: 12 }}
+        parameters={[]}
+        degrees={false}
+        floating
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("presentation")).toHaveClass("floating-value-backdrop");
+  });
 });
