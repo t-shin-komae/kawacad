@@ -1,4 +1,5 @@
-import { Menu } from "@tauri-apps/api/menu";
+import { Menu, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
+import { productInfo } from "@/app/productInfo";
 import { appStrings } from "@/localization";
 import type { MenuAction } from "@/app/domain/nativeMenuTypes";
 
@@ -82,8 +83,23 @@ export async function installNativeMenu() {
     accelerator,
     action: () => dispatch(action),
   });
+  const aboutItem = await PredefinedMenuItem.new({
+    text: appStrings.menu.item.about,
+    item: {
+      About: {
+        name: productInfo.name,
+        version: productInfo.displayVersion,
+        copyright: productInfo.copyright,
+      },
+    },
+  });
+  const applicationMenu = await Submenu.new({
+    text: productInfo.name,
+    items: [aboutItem],
+  });
   const menu = await Menu.new({
     items: [
+      applicationMenu,
       {
         text: appStrings.menu.section.file,
         items: [

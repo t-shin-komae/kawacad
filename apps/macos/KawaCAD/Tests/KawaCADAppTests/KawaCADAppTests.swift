@@ -43,3 +43,17 @@ func ui_bootstrap_uc1_application_delegate_can_defer_termination() {
   #expect(appDelegate.applicationShouldTerminate(NSApplication.shared) == .terminateLater)
   appDelegate.documentLifecycleController.replyToApplicationTermination(false)
 }
+
+@Test("Aboutパネルは開発版と正式版の表示バージョンを切り替える")
+func about_panel_uses_the_marketing_version_without_a_build_number() {
+  #expect(
+    KawaCADAboutPanel.displayVersion(from: ["CFBundleShortVersionString": "0.1.0"])
+      == "0.1.0-dev"
+  )
+  #expect(
+    KawaCADAboutPanel.displayVersion(from: [
+      "CFBundleShortVersionString": "0.1.0",
+      "KawaCADBuildChannel": "release",
+    ]) == "0.1.0"
+  )
+}

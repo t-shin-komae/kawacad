@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseArgs, prePushPlan, releaseArtifactPath, releasePlan, testPlan } from "../kawacad.mjs";
+import { infoPlistContents, parseArgs, prePushPlan, releaseArtifactPath, releasePlan, testPlan } from "../kawacad.mjs";
 import { coverageOutputDirectory, coveragePlan } from "../lib/coverage.mjs";
 
 function commandText(spec) {
@@ -13,6 +13,8 @@ test("release plan supports both macOS variants", () => {
   assert.match(swift, /swift build/);
   assert.match(swift, /kawacad-core-process/);
   assert.match(tauri, /build --bundles app --no-sign/);
+  assert.equal(releasePlan("macos", "swift")[0].env.KAWACAD_RELEASE, "1");
+  assert.equal(releasePlan("macos", "tauri")[0].env.KAWACAD_RELEASE, "1");
 });
 
 test("Windows and Linux release plans use the Tauri binary path", () => {
@@ -73,6 +75,18 @@ test("argument parsing defaults macOS release to both variants", () => {
   const options = parseArgs(["release", "--platform", "macos"]);
   assert.equal(options.variant, "all");
   assert.equal(options.platform, "macos");
+});
+
+test("staged Swift metadata contains the shared product information without a build number", () => {
+  const developmentPlist = infoPlistContents();
+  const releasePlist = infoPlistContents({ release: true });
+
+  assert.match(developmentPlist, /<key>CFBundleName<\/key><string>KawaCAD<\/string>/u);
+  assert.match(developmentPlist, /<key>CFBundleShortVersionString<\/key><string>0\.1\.0<\/string>/u);
+  assert.match(developmentPlist, /<key>KawaCADBuildChannel<\/key><string>development<\/string>/u);
+  assert.match(developmentPlist, /<key>NSHumanReadableCopyright<\/key><string>© 2026 t-shin-komae<\/string>/u);
+  assert.match(releasePlist, /<key>KawaCADBuildChannel<\/key><string>release<\/string>/u);
+  assert.match(developmentPlist, /<key>CFBundleVersion<\/key><string>1<\/string>/u);
 });
 
 test("argument parsing accepts explicit live Core and E2E options", () => {

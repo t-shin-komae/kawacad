@@ -18,6 +18,14 @@
 
 アプリアイコンは、茶寄りのオレンジ色の角丸コースターへ、濃色の革で作った `K` を明色の糸で縫い付けた意匠とする。Swift/macOS 版と Tauri/React 版は、対応するデスクトッププラットフォームで同じ意匠を使用する。原画は[アプリアイコン SVG](../../artifacts/icon-candidates/candidate-a-saddle-stitch.svg)を正とする。
 
+### 2.2 About画面
+
+- About画面は、メニューバーの `KawaCAD` > `KawaCADについて` から開く。
+- About画面には、アプリアイコン、アプリ名 `KawaCAD`、バージョン、コピーライト `© 2026 t-shin-komae` を表示する。
+- 開発中のバージョンは `Version 0.1.0-dev`、正式リリース版は `Version 0.1.0` の形式で表示する。
+- Swift/macOS 版は macOS 標準の About パネルを使用する。Tauri/React 版は各デスクトップ環境のネイティブ About 項目を使用する。
+- ビルド番号は表示しない。
+
 ## 3. ワークスペース構成
 
 アプリケーションは、単一ドキュメントを編集するワークスペースとして動作する。

@@ -18,10 +18,12 @@ import {
 import { coverageScopes, runCoverage } from "./lib/coverage.mjs";
 import { paths, distributionPath } from "./lib/paths.mjs";
 import { currentPlatform, isNativePlatform, supportedPlatforms } from "./lib/platform.mjs";
+import { productInfo } from "./lib/product.mjs";
 
 const swiftSourceDirectory = path.join(paths.macosPackage, "Sources");
 const swiftTestDirectory = path.join(paths.macosPackage, "Tests");
 const swiftAppIcon = path.join(paths.macosPackage, "Resources", "KawaCAD.icns");
+const releaseEnvironment = { KAWACAD_RELEASE: "1" };
 const prePushModuleCacheRoot = path.join(paths.repositoryRoot, "target", "pre-push-module-cache");
 const prePushSwiftEnvironment = {
   CLANG_MODULE_CACHE_PATH: path.join(prePushModuleCacheRoot, "clang"),
@@ -123,17 +125,33 @@ export function releasePlan(platform, variant = platform === "macos" ? "all" : "
     const specs = [];
     if (variant === "swift" || variant === "all") {
       specs.push(
-        command("cargo", ["build", "-p", "kawacad-core-process", "--release"], { cwd: paths.repositoryRoot }),
-        command("swift", ["build", "--package-path", paths.macosPackage, "--configuration", "release"], { cwd: paths.repositoryRoot }),
+        command("cargo", ["build", "-p", "kawacad-core-process", "--release"], {
+          cwd: paths.repositoryRoot,
+          env: releaseEnvironment,
+        }),
+        command("swift", ["build", "--package-path", paths.macosPackage, "--configuration", "release"], {
+          cwd: paths.repositoryRoot,
+          env: releaseEnvironment,
+        }),
       );
     }
     if (variant === "tauri" || variant === "all") {
-      specs.push(npmCommand(["run", "tauri", "--", "build", "--bundles", "app", "--no-sign"], { cwd: paths.tauriPackage }));
+      specs.push(
+        npmCommand(["run", "tauri", "--", "build", "--bundles", "app", "--no-sign"], {
+          cwd: paths.tauriPackage,
+          env: releaseEnvironment,
+        }),
+      );
     }
     return specs;
   }
   if (variant !== "tauri") throw new Error(`${platform} release only supports the Tauri variant`);
-  return [npmCommand(["run", "tauri", "--", "build", "--no-bundle"], { cwd: paths.tauriPackage })];
+  return [
+    npmCommand(["run", "tauri", "--", "build", "--no-bundle"], {
+      cwd: paths.tauriPackage,
+      env: releaseEnvironment,
+    }),
+  ];
 }
 
 export function releaseArtifactPath(platform, variant) {
@@ -150,7 +168,16 @@ function assertNative(platform, dryRun) {
   if (!dryRun && !isNativePlatform(platform)) throw new Error(`Native ${platform} builds must run on ${platform}`);
 }
 
-function writeInfoPlist(destination) {
+function xmlEscape(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+export function infoPlistContents({ release = false } = {}) {
   const contents = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
@@ -159,15 +186,21 @@ function writeInfoPlist(destination) {
 <key>CFBundleIdentifier</key><string>com.leathercraft.cad</string>
 <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 <key>CFBundleIconFile</key><string>KawaCAD</string>
-<key>CFBundleName</key><string>KawaCAD</string>
+<key>CFBundleName</key><string>${xmlEscape(productInfo.name)}</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
+<key>CFBundleShortVersionString</key><string>${xmlEscape(productInfo.version)}</string>
 <key>CFBundleVersion</key><string>1</string>
+<key>KawaCADBuildChannel</key><string>${release ? "release" : "development"}</string>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
+<key>NSHumanReadableCopyright</key><string>${xmlEscape(productInfo.copyright)}</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 `;
-  fs.writeFileSync(destination, contents);
+  return contents;
+}
+
+function writeInfoPlist(destination, options) {
+  fs.writeFileSync(destination, infoPlistContents(options));
 }
 
 function stageSwiftApp({ dryRun = false, env = {} } = {}) {
@@ -194,7 +227,9 @@ function stageSwiftApp({ dryRun = false, env = {} } = {}) {
   for (const entry of fs.readdirSync(binDirectory)) {
     if (entry.endsWith(".bundle")) copyDirectory(path.join(binDirectory, entry), path.join(macosDirectory, entry));
   }
-  writeInfoPlist(path.join(destination, "Contents", "Info.plist"));
+  writeInfoPlist(path.join(destination, "Contents", "Info.plist"), {
+    release: env.KAWACAD_RELEASE === "1",
+  });
   runCommand(command("plutil", ["-lint", path.join(destination, "Contents", "Info.plist")]), { cwd: paths.repositoryRoot });
   console.log(`[artifact] ${destination}`);
 }
@@ -237,7 +272,7 @@ function runRelease(options) {
   assertNative(platform, dryRun);
   executeSpecs(releasePlan(platform, variant), { dryRun });
   if (platform === "macos") {
-    if (variant === "swift" || variant === "all") stageSwiftApp({ dryRun });
+    if (variant === "swift" || variant === "all") stageSwiftApp({ dryRun, env: releaseEnvironment });
     if (variant === "tauri" || variant === "all") stageTauriMacApp({ dryRun });
   } else stageTauriBinary(platform, { dryRun });
 }
@@ -258,7 +293,10 @@ function runPrePush(options) {
     ensureDirectory(prePushSwiftEnvironment.SWIFTPM_MODULECACHE_OVERRIDE);
   }
   executeSpecs(prePushPlan(), { dryRun: options.dryRun });
-  stageSwiftApp({ dryRun: options.dryRun, env: prePushSwiftEnvironment });
+  stageSwiftApp({
+    dryRun: options.dryRun,
+    env: { ...prePushSwiftEnvironment, ...releaseEnvironment },
+  });
 }
 
 function printHelp() {
