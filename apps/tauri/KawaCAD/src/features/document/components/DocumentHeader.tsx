@@ -91,7 +91,7 @@ export const DocumentHeader = forwardRef<DocumentHeaderHandle, Props>(function D
           </span>
         )}
       </div>
-      <span className="document-file-info">.lcraft 0.2.0 / mm / {paperLabel}</span>
+      <span className="document-file-info">.kawa 0.1.0 / mm / {paperLabel}</span>
     </header>
   );
 });

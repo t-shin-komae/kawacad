@@ -73,7 +73,7 @@ private enum LeatherRPCRequest {
   case applyCommand(command: CoreDocumentCommand, viewMode: CanvasViewMode)
   case undo(viewMode: CanvasViewMode)
   case redo(viewMode: CanvasViewMode)
-  case writeLcraftFile(path: String, markClean: Bool)
+  case writeKawaFile(path: String, markClean: Bool)
   case buildOutputDocumentModel(options: OutputBuildOptions)
   case renderPDF(outputDocumentModelJSON: String)
   case renderPrint(outputDocumentModelJSON: String)
@@ -103,7 +103,7 @@ private enum LeatherRPCRequest {
     case .applyCommand: return "applyCommand"
     case .undo: return "undo"
     case .redo: return "redo"
-    case .writeLcraftFile: return "writeLcraftFile"
+    case .writeKawaFile: return "writeKawaFile"
     case .buildOutputDocumentModel: return "buildOutputDocumentModel"
     case .renderPDF: return "renderPdf"
     case .renderPrint: return "renderPrint"
@@ -149,7 +149,7 @@ private enum LeatherRPCRequest {
       ])
     case .undo(let viewMode), .redo(let viewMode):
       return .object(["viewMode": .string(viewMode.rawValue)])
-    case .writeLcraftFile(let path, let markClean):
+    case .writeKawaFile(let path, let markClean):
       return .object(["path": .string(path), "markClean": .bool(markClean)])
     case .buildOutputDocumentModel(let options):
       return .object([
@@ -393,7 +393,7 @@ final class LeatherDocumentSession {
   }
 
   private func writeJSONFile(to url: URL, markClean: Bool) -> LeatherCoreResult<Void> {
-    switch call(.writeLcraftFile(path: url.path, markClean: markClean)) {
+    switch call(.writeKawaFile(path: url.path, markClean: markClean)) {
     case .success(let json):
       guard let data = json.data(using: .utf8),
         let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -623,7 +623,7 @@ enum LeatherCoreProcessAdapter {
   }
 
   static func readDocument(from url: URL) -> LeatherCoreResult<LeatherDocumentSession> {
-    startSession(arguments: ["--read-lcraft-file", url.path])
+    startSession(arguments: ["--read-kawa-file", url.path])
   }
 
   private static func startSession(arguments: [String]) -> LeatherCoreResult<LeatherDocumentSession>

@@ -2241,7 +2241,7 @@ func live_core_document_session_save_open_and_reload_round_trip() {
     start: ModelPoint(xMM: -12.0, yMM: 4.0),
     end: ModelPoint(xMM: 18.0, yMM: 4.0)
   )
-  let url = uniqueTempURL("live-core-session-round-trip.lcraft")
+  let url = uniqueTempURL("live-core-session-round-trip.kawa")
   requireSuccess(source.cadSession.saveDocument(to: url), context: "save live core document")
 
   let reopenedAdapter = DocumentSessionAdapter()
@@ -2272,7 +2272,7 @@ func live_core_discarding_unsaved_changes_replaces_with_opened_project() {
     start: ModelPoint(xMM: 0.0, yMM: 0.0),
     end: ModelPoint(xMM: 24.0, yMM: 0.0)
   )
-  let savedURL = uniqueTempURL("live-core-replacement-target.lcraft")
+  let savedURL = uniqueTempURL("live-core-replacement-target.kawa")
   requireSuccess(
     savedProject.cadSession.saveDocument(to: savedURL), context: "save replacement target")
 

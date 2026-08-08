@@ -284,7 +284,7 @@
 "dialog.output_warning_title" = "警告があります";
 
 "header.project_name_placeholder" = "プロジェクト名";
-"header.file_info" = ".lcraft 0.2.0 / %@ / %@";
+"header.file_info" = ".kawa 0.1.0 / %@ / %@";
 
 "workbench.selection" = "選択";
 "workbench.constraint" = "拘束";
@@ -390,7 +390,7 @@
 "core.error.process_start_failed" = "Core プロセスの起動に失敗しました: %@";
 "core.error.process_closed" = "Core プロセスが終了しました: %@";
 "core.panel.open_title" = "KawaCAD プロジェクトを開く";
-"core.panel.open_message" = ".lcraft JSON ファイルを選択してください";
+"core.panel.open_message" = ".kawa JSON ファイルを選択してください";
 "core.panel.save_project_title" = "KawaCAD プロジェクトを保存";
 "core.panel.save_pdf_title" = "PDFを出力";
 "core.error.response_not_utf8" = "レスポンスが UTF-8 ではありません";

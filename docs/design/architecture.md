@@ -20,7 +20,7 @@
 | UI       | 表示、入力解釈、確定前の操作、OS 連携を担当する                               |
 | 境界     | UI は操作の意図をコマンドとして送り、Core は確定済み状態またはエラーを返す    |
 | 変更     | 1回のユーザー操作を原子的に適用し、失敗時は状態と履歴を変えない               |
-| 保存     | 再現に必要なドキュメント状態だけを `.lcraft` に保存する                       |
+| 保存     | 再現に必要なドキュメント状態だけを `.kawa` に保存する                       |
 | 出力     | Core がページ配置を確定し、共通の Output Engine から PDF と直接印刷を生成する |
 | 機能拡張 | CAD 図形を基盤とし、派生要素、型紙の意味情報、パーツを上に重ねる              |
 
@@ -72,7 +72,7 @@ package "共通の OS 非依存 Rust" as Rust {
   OutputModel -down-> Engine
 }
 
-artifact ".lcraft" as Lcraft
+artifact ".kawa" as Kawa
 artifact "PDF" as PDF
 node "macOS 印刷" as Printer
 
@@ -81,7 +81,7 @@ User -down-> ReactUI
 SwiftCoreAdapter <--> CoreProcess : 標準入出力 JSON
 CoreProcess <--> Core : コマンド / 状態
 TauriBackend <--> Core : 同一プロセス内で直接呼び出し
-Core <--> Lcraft : 保存 / 読み込み
+Core <--> Kawa : 保存 / 読み込み
 Engine -down-> SwiftOSAdapter
 SwiftOSAdapter -down-> PDF
 SwiftOSAdapter -down-> Printer
@@ -95,7 +95,7 @@ SwiftOSAdapter -down-> Printer
 | UI ↔ Core | 操作意図、表示方法、確定前状態 | 操作の成立可否、確定済み状態、履歴 |
 | Swift adapter ↔ Core process | プロセスのライフサイクル、要求送信、応答受信 | JSON メッセージの解釈と Core 呼び出し |
 | React UI ↔ Tauri backend | invoke の開始と応答の表示 | セッション保持、Core 呼び出し、OS 連携 |
-| Core ↔ `.lcraft` | 保存・読み込みの意味 | JSON の検証可能な形状は Schema |
+| Core ↔ `.kawa` | 保存・読み込みの意味 | JSON の検証可能な形状は Schema |
 | Core ↔ Output Engine | 出力対象、ページ、位置、警告 | PDF / 印刷用データへの描画 |
 | UI ↔ OS adapter | アプリ上の導線と判断 | ダイアログ、ウィンドウ、端末内データなどの副作用 |
 
@@ -238,7 +238,7 @@ GeometryElement "0..*" --> "0..1" SharedStyle : スタイル適用
 - `StitchStartPoint.targetId` は `Entity` または `DerivedElement` のどちらか1件を参照する。
 - `RoundHole` と `StitchStartPoint` のパーツ所属は参照先から導出し、`Part` 自体にはそれらの ID を保存しない。
 
-関連端は `.lcraft` Schema、Rust の保存モデル、ドキュメント検証を照合している。特に次の非対称な多重度に注意する。
+関連端は `.kawa` Schema、Rust の保存モデル、ドキュメント検証を照合している。特に次の非対称な多重度に注意する。
 
 - `Part` は `Entity` を1件以上持つが、派生要素、自由テキスト、計測表示は0件でもよい。各要素は複数の `Part` に重複所属できないため、逆端は `0..1` となる。
 - `Entity` と `DerivedElement` の `layerId`、`styleId` は任意であり、1要素から見た参照先は `0..1` となる。
@@ -257,7 +257,7 @@ left to right direction
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam linetype ortho
-package ".lcraft に保存する" as Saved {
+package ".kawa に保存する" as Saved {
   rectangle "図形 / 拘束 / パラメータ" as Document
   rectangle "型紙の意味情報・パーツ" as Meaning
   rectangle "レイヤー / 共有スタイル" as Style
@@ -338,7 +338,7 @@ participant "UI" as UI
 participant "OS adapter" as OS
 participant "Core adapter" as Adapter
 participant "Rust Core" as Core
-participant ".lcraft" as File
+participant ".kawa" as File
 
     alt 保存
         User->UI: 保存
@@ -509,7 +509,7 @@ KawaCAD は、OS 依存の UI / adapter と OS 非依存の Rust Core を分離�
 
 ## 8. 保存と主要フロー
 
-`.lcraft` は再読み込み後にプロジェクトの意味を再現する永続状態だけを保存する。選択、ハイライト、ドラッグ中のプレビュー、ズーム、パン、パネル状態、自由度や派生形状の計算結果は必要時に再生成する。形式の外部契約は [`../spec/file-format-spec.md`](../spec/file-format-spec.md)、機械可読な形状は `schemas/lcraft/**` を正とする。
+`.kawa` は再読み込み後にプロジェクトの意味を再現する永続状態だけを保存する。選択、ハイライト、ドラッグ中のプレビュー、ズーム、パン、パネル状態、自由度や派生形状の計算結果は必要時に再生成する。形式の外部契約は [`../spec/file-format-spec.md`](../spec/file-format-spec.md)、機械可読な形状は `schemas/kawa/**` を正とする。
 
 UI/Core の編集フローは、操作意図、必要に応じた preview、Core による検証、原子的な commit、状態再取得の順で進む。保存と出力は編集状態を変更せず、失敗時は現在のドキュメントと履歴を維持する。
 
@@ -518,7 +518,7 @@ sequenceDiagram
     participant User as 利用者
     participant UI as UI
     participant Core as Rust Core
-    participant Store as .lcraft / Output Engine
+    participant Store as .kawa / Output Engine
     User->>UI: 編集・保存・出力を要求
     UI->>Core: 操作意図または設定
     Core->>Core: 検証・意味解釈

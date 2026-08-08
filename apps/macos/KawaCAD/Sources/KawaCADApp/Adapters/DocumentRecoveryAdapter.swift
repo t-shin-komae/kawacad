@@ -89,7 +89,7 @@ enum DocumentRecoveryAdapterError: LocalizedError {
     case .snapshotWriteFailed(let message):
       return message
     case .invalidSnapshotJSON:
-      return "snapshot.lcraft is not valid JSON"
+      return "snapshot.kawa is not valid JSON"
     case .metadataWriteFailed:
       return "metadata.json could not be written"
     }
@@ -173,7 +173,7 @@ final class DocumentRecoveryAdapter {
       ".tmp-\(generationID)", isDirectory: true)
     let finalDirectoryURL = recoveryDirectoryURL.appendingPathComponent(
       generationID, isDirectory: true)
-    let snapshotURL = tempDirectoryURL.appendingPathComponent("snapshot.lcraft")
+    let snapshotURL = tempDirectoryURL.appendingPathComponent("snapshot.kawa")
     let metadataURL = tempDirectoryURL.appendingPathComponent("metadata.json")
     let committedURL = tempDirectoryURL.appendingPathComponent("COMMITTED")
 
@@ -227,7 +227,7 @@ final class DocumentRecoveryAdapter {
       DocumentRecoveryCommitResult(
         recoveryID: recoveryID,
         generationID: generationID,
-        snapshotURL: finalDirectoryURL.appendingPathComponent("snapshot.lcraft"),
+        snapshotURL: finalDirectoryURL.appendingPathComponent("snapshot.kawa"),
         metadata: metadata
       ))
   }
@@ -276,7 +276,7 @@ final class DocumentRecoveryAdapter {
     generationURL: URL
   ) -> DocumentRecoveryCandidate {
     let metadataURL = generationURL.appendingPathComponent("metadata.json")
-    let snapshotURL = generationURL.appendingPathComponent("snapshot.lcraft")
+    let snapshotURL = generationURL.appendingPathComponent("snapshot.kawa")
     let committedURL = generationURL.appendingPathComponent("COMMITTED")
     let modificationDate =
       (try? generationURL.resourceValues(forKeys: [.contentModificationDateKey])
@@ -320,7 +320,7 @@ final class DocumentRecoveryAdapter {
         updatedAt: metadata.updatedAt,
         containerURL: generationURL,
         metadataURL: metadataURL,
-        status: .broken(details: "snapshot.lcraft を検証できません")
+        status: .broken(details: "snapshot.kawa を検証できません")
       )
     }
 

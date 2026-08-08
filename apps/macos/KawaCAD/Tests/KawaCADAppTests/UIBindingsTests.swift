@@ -111,7 +111,7 @@ func ui_bindings_uc5_menu_callbacks_save_and_reload_document() {
     documentAdapter: store,
     coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) }
   )
-  let saveURL = uniqueTempURL("bindings-save.lcraft")
+  let saveURL = uniqueTempURL("bindings-save.kawa")
   store.documentURL = saveURL
 
   appState.actions.uiBindings.menu.saveProject()

@@ -32,7 +32,7 @@ func inspection_uxe_01_postponing_recovery_keeps_candidate_and_work_ui() {
     let snapshot = """
       {
         "fileFormatVersion": "0.1.0",
-        "schemaVersion": "0.2.0",
+        "schemaVersion": "0.1.0",
         "document": { "name": "復旧候補" }
       }
       """
@@ -316,7 +316,7 @@ func inspection_uxe_11_duplicate_names_are_rejected_before_save() {
     colorHex: "#222222")
   let store = StubDocumentSessionAdapter(
     createNewDocumentState: makeDocumentState(layers: [cut, pattern], parameters: [width, height]))
-  let saveURL = uniqueTempURL("inspection-save.lcraft")
+  let saveURL = uniqueTempURL("inspection-save.kawa")
   let appState = AppCoordinator(
     documentAdapter: store,
     coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) }
@@ -499,7 +499,7 @@ func inspection_up_06_save_and_reload_restores_document_contents() {
   let line = lineEntity(id: "entity:line", start: .zero, end: .init(xMM: 40, yMM: 0))
   let document = makeDocumentState(name: "保存点検", parameters: [parameter], entities: [line])
   let store = StubDocumentSessionAdapter(createNewDocumentState: document)
-  let saveURL = uniqueTempURL("inspection-round-trip.lcraft")
+  let saveURL = uniqueTempURL("inspection-round-trip.kawa")
   store.loadStateValue = document
   let appState = AppCoordinator(
     documentAdapter: store,

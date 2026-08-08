@@ -20,7 +20,7 @@
 1. このページ
 2. 製品の振る舞いは[`spec/functional-spec.md`](spec/functional-spec.md)
 3. 操作と表示は[`spec/ui-ux-spec.md`](spec/ui-ux-spec.md)
-4. `.lcraft`は[`spec/file-format-spec.md`](spec/file-format-spec.md)
+4. `.kawa`は[`spec/file-format-spec.md`](spec/file-format-spec.md)
 5. システム概要は[`design/architecture.md`](design/architecture.md)
 6. UI/Core契約は[`design/internal-interface-spec.md`](design/internal-interface-spec.md)
 7. 対象となる機能領域の設計文書
@@ -31,7 +31,7 @@
 
 - 観測可能な製品動作の変更は`spec/functional-spec.md`に記載します。
 - 画面構成、操作、フィードバック、アクセシビリティの変更は`spec/ui-ux-spec.md`に記載します。
-- `.lcraft`の永続化や互換性の変更は`spec/file-format-spec.md`と該当するスキーマに記載します。
+- `.kawa`の永続化や互換性の変更は`spec/file-format-spec.md`と該当するスキーマに記載します。
 - UI/Core境界の変更は`design/internal-interface-spec.md`と該当するスキーマまたはfixtureに記載します。
 - システムの所有関係、技術境界、主要フローの変更は`design/architecture.md`に記載します。
 - 共通用語は`glossary.md`に記載します。

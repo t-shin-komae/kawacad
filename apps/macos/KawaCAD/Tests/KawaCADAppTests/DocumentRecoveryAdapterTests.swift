@@ -28,7 +28,7 @@ func document_recovery_adapter_commits_and_lists_candidates() throws {
     let json = """
       {
         "fileFormatVersion": "0.1.0",
-        "schemaVersion": "0.2.0",
+        "schemaVersion": "0.1.0",
         "document": { "name": "Recovered Project" }
       }
       """
@@ -68,7 +68,7 @@ func document_recovery_adapter_removes_recovery_directory() throws {
     recoveryID: "saved-doc",
     documentID: "document-2",
     displayName: "Saved Project",
-    originalDocumentURL: uniqueTempURL("saved-project.lcraft"),
+    originalDocumentURL: uniqueTempURL("saved-project.kawa"),
     contentFingerprint: Data("fingerprint".utf8),
     versionInfo: nil,
     appVersion: "0.1.0"
@@ -76,7 +76,7 @@ func document_recovery_adapter_removes_recovery_directory() throws {
     let json = """
       {
         "fileFormatVersion": "0.1.0",
-        "schemaVersion": "0.2.0",
+        "schemaVersion": "0.1.0",
         "document": { "name": "Saved Project" }
       }
       """
@@ -121,7 +121,7 @@ func document_recovery_adapter_keeps_broken_entries_during_max_document_cleanup(
           """
           {
             "fileFormatVersion": "0.1.0",
-            "schemaVersion": "0.2.0",
+            "schemaVersion": "0.1.0",
             "document": { "name": "\(displayName)" }
           }
           """.utf8

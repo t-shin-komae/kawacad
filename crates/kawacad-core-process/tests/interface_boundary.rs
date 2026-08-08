@@ -145,10 +145,7 @@ impl TestDocument {
     }
 
     fn from_file(path: &Path) -> Self {
-        Self::start(
-            &["--read-lcraft-file", path.to_string_lossy().as_ref()],
-            None,
-        )
+        Self::start(&["--read-kawa-file", path.to_string_lossy().as_ref()], None)
     }
 
     fn start(args: &[&str], startup_json_file: Option<PathBuf>) -> Self {
@@ -226,7 +223,7 @@ impl TestDocument {
 
     fn write_json_file(&self, path: &Path) {
         let response = self.rpc_value(json!({
-            "kind": "writeLcraftFile",
+            "kind": "writeKawaFile",
             "payload": {
                 "path": path.to_string_lossy()
             }
@@ -902,7 +899,7 @@ fn uc5_save_and_reload_round_trip_preserves_the_boundary_state() {
         LeatherConstraintStatus::UnderConstrained
     );
 
-    let path = unique_temp_path("uc5-round-trip.lcraft");
+    let path = unique_temp_path("uc5-round-trip.kawa");
     doc.write_json_file(&path);
     let original_json =
         std::fs::read_to_string(&path).expect("written document should be readable");
@@ -921,7 +918,7 @@ fn uc5_save_and_reload_round_trip_preserves_the_boundary_state() {
 #[test]
 fn uc5_legacy_write_json_file_alias_is_not_part_of_the_boundary() {
     let doc = TestDocument::new("uc5-no-write-json-alias");
-    let path = unique_temp_path("uc5-no-write-json-alias.lcraft");
+    let path = unique_temp_path("uc5-no-write-json-alias.kawa");
     let error = doc.rpc_error(json!({
         "kind": "writeJsonFile",
         "payload": {

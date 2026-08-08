@@ -16,4 +16,4 @@
 | How is UI responsibility separated? | [`ui-architecture/overview.md`](ui-architecture/overview.md) |
 | How are selection and annotations designed? | [`interaction/selection-targets.md`](interaction/selection-targets.md), [`annotations/measurement-annotations.md`](annotations/measurement-annotations.md) |
 
-The external contracts remain in [`../spec/`](../spec/). The `.lcraft` shape and interface wire shape remain in `schemas/` and are not duplicated here.
+The external contracts remain in [`../spec/`](../spec/). The `.kawa` shape and interface wire shape remain in `schemas/` and are not duplicated here.

@@ -32,7 +32,7 @@ struct DesktopEnvironmentAdapter: DesktopEnvironmentAdapting {
     let panel = NSSavePanel()
     panel.allowedContentTypes = projectContentTypes
     panel.canCreateDirectories = true
-    panel.nameFieldStringValue = "\(documentName).lcraft"
+    panel.nameFieldStringValue = "\(documentName).kawa"
     panel.title = AppStrings.tr("core.panel.save_project_title")
     guard panel.runModal() == .OK else { return nil }
     return panel.url
@@ -53,8 +53,8 @@ struct DesktopEnvironmentAdapter: DesktopEnvironmentAdapting {
   }
 
   private var projectContentTypes: [UTType] {
-    if let lcraft = UTType(filenameExtension: "lcraft") {
-      return [lcraft, .json]
+    if let kawa = UTType(filenameExtension: "kawa") {
+      return [kawa, .json]
     }
     return [.json]
   }

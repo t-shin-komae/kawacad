@@ -31,7 +31,7 @@ use support::*;
 fn new_document_uses_expected_defaults_and_snapshot() {
     let document = ProjectDocument::new("Leather");
 
-    assert_eq!(FILE_FORMAT_VERSION, "0.2.0");
+    assert_eq!(FILE_FORMAT_VERSION, "0.1.0");
     assert_eq!(document.file_format_version(), FILE_FORMAT_VERSION);
     assert_eq!(document.schema_version(), SCHEMA_VERSION);
     assert_eq!(document.metadata().name, "Leather");
@@ -3504,9 +3504,9 @@ fn fillet_trims_connected_line_arc_sources_and_rejects_excessive_radius_atomical
 }
 
 #[test]
-fn lcraft_schema_constraint_kinds_match_public_constraint_kind_json() {
+fn kawa_schema_constraint_kinds_match_public_constraint_kind_json() {
     let schema: serde_json::Value =
-        serde_json::from_str(include_str!("../../../schemas/lcraft/0.1.0.schema.json"))
+        serde_json::from_str(include_str!("../../../schemas/kawa/0.1.0.schema.json"))
             .expect("schema should be valid json");
     let schema_kinds = schema
         .pointer("/$defs/constraintKind/enum")
@@ -3781,7 +3781,7 @@ fn document_apply_command_covers_crud_and_constraint_reapplication() {
     let round_tripped = round_trip_json(&document);
     assert_eq!(round_tripped, document);
 
-    let file_path = temp_path("document-round-trip.lcraft");
+    let file_path = temp_path("document-round-trip.kawa");
     document
         .write_json_file(&file_path)
         .expect("document should write to file");
@@ -7037,13 +7037,13 @@ fn document_validation_and_io_reject_broken_documents() {
         })
     ));
 
-    let invalid_json = "{\"fileFormatVersion\":\"0.2.0\"}";
+    let invalid_json = "{\"fileFormatVersion\":\"0.1.0\"}";
     assert!(matches!(
         ProjectDocument::from_json_str(invalid_json),
         Err(DocumentIoError::ValidationFailed(_)) | Err(DocumentIoError::DeserializeFailed(_))
     ));
 
-    let missing_file = temp_path("missing.lcraft");
+    let missing_file = temp_path("missing.kawa");
     assert!(matches!(
         ProjectDocument::read_json_file(&missing_file),
         Err(DocumentIoError::ReadFailed(_))
@@ -7055,7 +7055,7 @@ fn document_validation_and_io_reject_broken_documents() {
 }
 
 #[test]
-fn project_document_store_facade_keeps_lcraft_top_level_shape() {
+fn project_document_store_facade_keeps_kawa_top_level_shape() {
     let document = ProjectDocument::new("Shape");
     let json = document
         .to_json_pretty_string()

@@ -72,7 +72,7 @@ enum CoreRequest {
     Redo {
         view_mode: Option<CanvasViewMode>,
     },
-    WriteLcraftFile {
+    WriteKawaFile {
         path: String,
         #[serde(default = "default_true")]
         mark_clean: bool,
@@ -352,11 +352,11 @@ fn document_from_args(args: &[String]) -> Result<ProjectDocument, String> {
     match args {
         [] => Ok(ProjectDocument::new("Untitled".to_owned())),
         [flag, name] if flag == "--new" => Ok(ProjectDocument::new(name.clone())),
-        [flag, path] if flag == "--read-lcraft-file" => {
+        [flag, path] if flag == "--read-kawa-file" => {
             ProjectDocument::read_json_file(path).map_err(|error| format_document_io_error(&error))
         }
         _ => Err(
-            "usage: kawacad-core-process [--new name | --read-lcraft-file path | --version-json]"
+            "usage: kawacad-core-process [--new name | --read-kawa-file path | --version-json]"
                 .to_owned(),
         ),
     }
@@ -534,7 +534,7 @@ fn handle_request(session: &mut CoreSession, request: CoreRequest) -> Result<Str
                 })
                 .map_err(|error| core_error_from_command(error, "redo"))
         }
-        CoreRequest::WriteLcraftFile { path, mark_clean } => session
+        CoreRequest::WriteKawaFile { path, mark_clean } => session
             .document
             .write_json_file(path)
             .map(|()| {
@@ -1290,7 +1290,7 @@ mod tests {
     fn version_json_reports_full_versions() {
         assert_eq!(
             version_json(),
-            r#"{"fileFormatVersion":"0.2.0","schemaVersion":"0.1.0"}"#
+            r#"{"fileFormatVersion":"0.1.0","schemaVersion":"0.1.0"}"#
         );
     }
 
@@ -1320,7 +1320,7 @@ mod tests {
         );
 
         let path = std::env::temp_dir().join(format!(
-            "kawacad-core-process-read-{}.lcraft",
+            "kawacad-core-process-read-{}.kawa",
             std::process::id()
         ));
         let source = ProjectDocument::new("Read Pipe".to_owned());
@@ -1328,7 +1328,7 @@ mod tests {
             .write_json_file(&path)
             .expect("source document should be written");
         let loaded_document =
-            document_from_args(&["--read-lcraft-file".to_owned(), path.display().to_string()])
+            document_from_args(&["--read-kawa-file".to_owned(), path.display().to_string()])
                 .expect("document should load from file");
         assert_eq!(loaded_document.metadata().name, "Read Pipe");
         let _ = std::fs::remove_file(path);
@@ -1460,11 +1460,11 @@ mod tests {
         );
 
         let snapshot_path = std::env::temp_dir().join(format!(
-            "kawacad-core-process-snapshot-{}.lcraft",
+            "kawacad-core-process-snapshot-{}.kawa",
             std::process::id()
         ));
         let snapshot_request = serde_json::json!({
-            "kind": "writeLcraftFile",
+            "kind": "writeKawaFile",
             "payload": { "path": snapshot_path, "markClean": false }
         });
         assert_eq!(
@@ -1474,11 +1474,11 @@ mod tests {
         assert!(session.is_dirty());
 
         let save_path = std::env::temp_dir().join(format!(
-            "kawacad-core-process-clean-{}.lcraft",
+            "kawacad-core-process-clean-{}.kawa",
             std::process::id()
         ));
         let save_request = serde_json::json!({
-            "kind": "writeLcraftFile",
+            "kind": "writeKawaFile",
             "payload": { "path": save_path }
         });
         assert_eq!(
@@ -2022,7 +2022,7 @@ mod tests {
         assert_eq!(invalid_print_response["error"]["code"], "invalidJson");
 
         let write_directory = serde_json::json!({
-            "kind": "writeLcraftFile",
+            "kind": "writeKawaFile",
             "payload": {
                 "path": std::env::temp_dir().display().to_string()
             }
@@ -2155,20 +2155,20 @@ mod tests {
     }
 
     #[test]
-    fn write_lcraft_file_writes_current_document() {
+    fn write_kawa_file_writes_current_document() {
         let mut document = ProjectDocument::new("Write Pipe".to_owned());
         let path = std::env::temp_dir().join(format!(
-            "kawacad-core-process-write-{}.lcraft",
+            "kawacad-core-process-write-{}.kawa",
             std::process::id()
         ));
         let request = format!(
-            r#"{{"kind":"writeLcraftFile","payload":{{"path":"{}"}}}}"#,
+            r#"{{"kind":"writeKawaFile","payload":{{"path":"{}"}}}}"#,
             path.display()
         );
         let response = handle_request_json(&mut document, &request);
         assert_eq!(response, r#"{"written":true}"#);
         let written = std::fs::read_to_string(&path).expect("document should be written");
-        assert!(written.contains("\"fileFormatVersion\": \"0.2.0\""));
+        assert!(written.contains("\"fileFormatVersion\": \"0.1.0\""));
         let _ = std::fs::remove_file(path);
     }
 
@@ -2191,7 +2191,7 @@ mod tests {
             "renderPrintRequest",
             "exportPartLibraryItemRequest",
             "partLibraryExport",
-            "writeLcraftFileRequest",
+            "writeKawaFileRequest",
             "persistenceState",
             "mutationResult",
             "drawingEntityMetadata",

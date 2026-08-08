@@ -1318,7 +1318,7 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
     expect(name).toHaveValue("Test project");
-    expect(screen.getByText(".lcraft 0.2.0 / mm / A4 Portrait")).toBeInTheDocument();
+    expect(screen.getByText(".kawa 0.1.0 / mm / A4 Portrait")).toBeInTheDocument();
     fireEvent.change(name, { target: { value: "Renamed project" } });
     fireEvent.blur(name);
     await waitFor(() =>
@@ -1331,7 +1331,7 @@ describe("React workspace shortcuts", () => {
   it("commits an in-progress document name before saving the current project", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state")
-        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/current.lcraft" } };
+        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/current.kawa" } };
       if (command === "recovery_candidate") return null;
       if (command === "load_part_library") return [];
       return state;
@@ -1383,7 +1383,7 @@ describe("React workspace shortcuts", () => {
     fireEvent.change(name, { target: { value: "別名保存する名称" } });
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
-    expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ defaultPath: "別名保存する名称.lcraft" }));
+    expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ defaultPath: "別名保存する名称.kawa" }));
     expect(mocks.invoke).toHaveBeenCalledWith(
       "apply_command",
       expect.objectContaining({
@@ -1430,7 +1430,7 @@ describe("React workspace shortcuts", () => {
     );
   });
   it("keeps the current selection when opening a replacement document fails", async () => {
-    mocks.open.mockResolvedValue("/projects/broken.lcraft");
+    mocks.open.mockResolvedValue("/projects/broken.kawa");
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "open_document") throw new Error("open failed");
       if (command === "recovery_candidate") return null;
@@ -1491,7 +1491,7 @@ describe("React workspace shortcuts", () => {
   it("saves a dirty document before opening the SwiftUI new-project entry", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state")
-        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.lcraft" } };
+        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.kawa" } };
       if (command === "recovery_candidate") return null;
       if (command === "load_part_library") return [];
       return state;
@@ -1500,28 +1500,28 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.lcraft" }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.kawa" }));
     expect(await screen.findByRole("dialog", { name: "新規プロジェクト" })).toBeInTheDocument();
   });
   it("saves a dirty document before opening another project", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state")
-        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.lcraft" } };
+        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.kawa" } };
       if (command === "recovery_candidate") return null;
       if (command === "load_part_library") return [];
       return state;
     });
     mocks.confirm.mockResolvedValue(true);
-    mocks.open.mockResolvedValue("/projects/opened.lcraft");
+    mocks.open.mockResolvedValue("/projects/opened.kawa");
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "open" }));
-    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.lcraft" }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.kawa" }));
     expect(mocks.open).toHaveBeenCalledWith({
       multiple: false,
-      filters: [{ name: "KawaCAD project", extensions: ["lcraft"] }],
+      filters: [{ name: "KawaCAD project", extensions: ["kawa"] }],
     });
-    expect(mocks.invoke).toHaveBeenCalledWith("open_document", { path: "/projects/opened.lcraft" });
+    expect(mocks.invoke).toHaveBeenCalledWith("open_document", { path: "/projects/opened.kawa" });
   });
   it("keeps an unsaved dirty document when the save dialog is cancelled", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
@@ -1575,7 +1575,7 @@ describe("React workspace shortcuts", () => {
     const reloadedState = {
       ...state,
       snapshot: { ...state.snapshot, name: "Reloaded project" },
-      persistence: { isDirty: false, hasPath: true, path: "/projects/reloaded.lcraft" },
+      persistence: { isDirty: false, hasPath: true, path: "/projects/reloaded.kawa" },
       layers: [{ ...state.layers[0], id: "layer:reloaded", name: "Reloaded layer" }],
       sharedStyles: [{ ...state.sharedStyles[0], id: "style:reloaded", name: "Reloaded style" }],
     };
@@ -1885,7 +1885,7 @@ describe("React workspace shortcuts", () => {
       if (command === "document_state") return state;
       if (command === "load_part_library") return [];
       if (command === "recovery_candidate")
-        return { displayName: "復旧する型紙", originalDocumentPath: "/projects/recover.lcraft" };
+        return { displayName: "復旧する型紙", originalDocumentPath: "/projects/recover.kawa" };
       if (command === "restore_recovery_snapshot") return { ...state, persistence: { isDirty: true } };
       return state;
     });
@@ -1959,7 +1959,7 @@ describe("React workspace shortcuts", () => {
   it("saves a dirty document before completing a window close", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state")
-        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.lcraft" } };
+        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.kawa" } };
       if (command === "load_part_library") return [];
       if (command === "recovery_candidate") return null;
       return state;
@@ -1973,7 +1973,7 @@ describe("React workspace shortcuts", () => {
     const handler = calls[calls.length - 1]?.[0] as
       ((event: { preventDefault: () => void }) => Promise<void>) | undefined;
     await handler?.({ preventDefault: vi.fn() });
-    expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.lcraft" });
+    expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.kawa" });
     expect(mocks.invoke).toHaveBeenCalledWith("exit_application");
   });
   it("destroys a clean window when the native close button is requested", async () => {
@@ -2073,11 +2073,11 @@ describe("React workspace shortcuts", () => {
     expect(screen.getByText("線分", { selector: ".toolbar-tool" })).toBeInTheDocument();
   });
   it("matches the SwiftUI window title rules for saved and unsaved projects", () => {
-    expect(documentWindowPresentation("丸型キーホルダー", "/tmp/keyholder-round.lcraft", false)).toMatchObject({
-      title: "keyholder-round.lcraft — 丸型キーホルダー",
+    expect(documentWindowPresentation("丸型キーホルダー", "/tmp/keyholder-round.kawa", false)).toMatchObject({
+      title: "keyholder-round.kawa — 丸型キーホルダー",
     });
-    expect(documentWindowPresentation("KeyHolder", "C:\\projects\\keyholder.lcraft", true)).toMatchObject({
-      title: "keyholder.lcraft",
+    expect(documentWindowPresentation("KeyHolder", "C:\\projects\\keyholder.kawa", true)).toMatchObject({
+      title: "keyholder.kawa",
       accessibilityLabel: expect.stringContaining("未保存の変更あり"),
     });
     expect(documentWindowPresentation("新しい型紙", undefined, true)).toMatchObject({
