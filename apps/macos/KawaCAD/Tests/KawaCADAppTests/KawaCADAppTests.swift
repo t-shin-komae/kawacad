@@ -10,7 +10,9 @@ func ui_bootstrap_uc1_application_delegate_promotes_menu_bar_app() {
   let appDelegate = KawaCADAppDelegate()
   var activationPolicies: [NSApplication.ActivationPolicy] = []
   var activationCallCount = 0
+  var iconCallCount = 0
 
+  appDelegate.setApplicationIcon = { iconCallCount += 1 }
   appDelegate.setActivationPolicy = { activationPolicies.append($0) }
   appDelegate.activateApplication = { activationCallCount += 1 }
 
@@ -21,6 +23,7 @@ func ui_bootstrap_uc1_application_delegate_promotes_menu_bar_app() {
 
   #expect(activationPolicies == [.regular])
   #expect(activationCallCount == 2)
+  #expect(iconCallCount == 1)
 }
 
 @Test("UC1 AppDelegate は最後のウィンドウを閉じるとアプリ終了を要求する")

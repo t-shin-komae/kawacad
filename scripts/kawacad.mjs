@@ -21,6 +21,7 @@ import { currentPlatform, isNativePlatform, supportedPlatforms } from "./lib/pla
 
 const swiftSourceDirectory = path.join(paths.macosPackage, "Sources");
 const swiftTestDirectory = path.join(paths.macosPackage, "Tests");
+const swiftAppIcon = path.join(paths.macosPackage, "Resources", "KawaCAD.icns");
 const prePushModuleCacheRoot = path.join(paths.repositoryRoot, "target", "pre-push-module-cache");
 const prePushSwiftEnvironment = {
   CLANG_MODULE_CACHE_PATH: path.join(prePushModuleCacheRoot, "clang"),
@@ -157,6 +158,7 @@ function writeInfoPlist(destination) {
 <key>CFBundleExecutable</key><string>KawaCAD</string>
 <key>CFBundleIdentifier</key><string>com.leathercraft.cad</string>
 <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+<key>CFBundleIconFile</key><string>KawaCAD</string>
 <key>CFBundleName</key><string>KawaCAD</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>0.1.0</string>
@@ -183,9 +185,12 @@ function stageSwiftApp({ dryRun = false, env = {} } = {}) {
   assertExecutable(coreProcess, "kawacad-core-process");
   removeDirectory(destination);
   const macosDirectory = path.join(destination, "Contents", "MacOS");
+  const resourcesDirectory = path.join(destination, "Contents", "Resources");
   ensureDirectory(macosDirectory);
+  ensureDirectory(resourcesDirectory);
   copyFile(swiftExecutable, path.join(macosDirectory, "KawaCAD"));
   copyFile(coreProcess, path.join(macosDirectory, "kawacad-core-process"));
+  copyFile(swiftAppIcon, path.join(resourcesDirectory, "KawaCAD.icns"));
   for (const entry of fs.readdirSync(binDirectory)) {
     if (entry.endsWith(".bundle")) copyDirectory(path.join(binDirectory, entry), path.join(macosDirectory, entry));
   }
