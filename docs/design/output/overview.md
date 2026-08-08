@@ -150,7 +150,7 @@ participant "Output Engine" as Engine
 @enduml
 ```
 
-PDF出力と直接印刷は、同じ入力ドキュメント、同じ `OutputDocumentModel` 型、同じ Output Engine の描画規則を使う。直接印刷では、準備済み印刷へ最終プレビュー、artifact、出力先、固定設定を結び付け、実行時の再確認に成功した場合だけ送信する。
+PDF出力と直接印刷は、同じ入力ドキュメント、同じ `OutputDocumentModel` 型、同じ Output Engine の描画規則を使う。Tauri/React の直接印刷では、準備済み印刷へ最終プレビュー、artifact、出力先、固定設定を結び付け、実行時の再確認に成功した場合だけ送信する。
 
 Tauri/React の共通 invoke 境界、準備済み印刷、排他制御、Windows/Linux adapter の前提は [Tauri 直接印刷設計](direct-print.md) を正とする。
 
