@@ -1,4 +1,6 @@
-import { Menu } from "@tauri-apps/api/menu";
+import { Menu, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
+import type { AboutMetadata } from "@tauri-apps/api/menu";
+import { productInfo } from "@/app/productInfo";
 import { appStrings } from "@/localization";
 import type { MenuAction } from "@/app/domain/nativeMenuTypes";
 
@@ -72,6 +74,24 @@ function dispatch(action: MenuAction) {
   window.dispatchEvent(new CustomEvent<MenuAction>("kawa-cad-menu", { detail: action }));
 }
 
+/**
+ * macOS uses the bundle's CFBundleVersion when the native About metadata does
+ * not provide a build version.  An empty value explicitly suppresses that
+ * fallback.  Windows and Linux append shortVersion in parentheses, so omit it
+ * there instead of showing an empty pair of parentheses.
+ */
+export function aboutMetadataForPlatform(userAgent: string): AboutMetadata {
+  const metadata: AboutMetadata = {
+    name: productInfo.name,
+    version: productInfo.displayVersion,
+    copyright: productInfo.copyright,
+  };
+  if (/Macintosh|Mac OS X/.test(userAgent)) {
+    metadata.shortVersion = "";
+  }
+  return metadata;
+}
+
 /** Installs the Tauri native menu on every desktop target without bypassing
  * the React/Core command path. Platform-owned About/Window/Quit items are
  * intentionally left to the host OS so the same definition works on
@@ -82,8 +102,17 @@ export async function installNativeMenu() {
     accelerator,
     action: () => dispatch(action),
   });
+  const aboutItem = await PredefinedMenuItem.new({
+    text: appStrings.menu.item.about,
+    item: { About: aboutMetadataForPlatform(navigator.userAgent) },
+  });
+  const applicationMenu = await Submenu.new({
+    text: productInfo.name,
+    items: [aboutItem],
+  });
   const menu = await Menu.new({
     items: [
+      applicationMenu,
       {
         text: appStrings.menu.section.file,
         items: [

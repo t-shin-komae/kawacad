@@ -36,6 +36,12 @@ struct KawaCADCommands: Commands {
   private var uiBindings: KawaCADUIBindings { actions.uiBindings }
 
   var body: some Commands {
+    CommandGroup(replacing: .appInfo) {
+      Button(AppStrings.tr("menu.about")) {
+        KawaCADAboutPanel.present()
+      }
+    }
+
     CommandGroup(replacing: .newItem) {
       Button(AppStrings.tr("menu.new_project")) { uiBindings.menu.createNewProject() }
         .keyboardShortcut("n", modifiers: [.command])

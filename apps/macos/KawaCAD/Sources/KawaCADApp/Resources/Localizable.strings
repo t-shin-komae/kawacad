@@ -172,6 +172,7 @@
 "layer_deletion.message" = "%@ には %@ が紐づいています。削除すると、対象は残りのレイヤーへ移動します。削除しますか？";
 
 "menu.new_project" = "新規プロジェクト";
+"menu.about" = "KawaCADについて";
 "menu.open" = "開く...";
 "menu.save" = "保存";
 "menu.save_as" = "別名で保存...";

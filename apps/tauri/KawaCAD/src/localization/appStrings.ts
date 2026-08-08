@@ -273,6 +273,7 @@ const appStrings = {
       view: "表示",
     },
     item: {
+      about: "KawaCADについて",
       new: "新規",
       open: "開く…",
       save: "保存",
