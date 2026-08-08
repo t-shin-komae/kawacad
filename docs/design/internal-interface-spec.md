@@ -23,7 +23,7 @@ UI は利用者との接点と一時的な表示状態を扱う。
 
 - 入力イベント、選択、ハイライト、ドラッグ中の候補
 - キャンバス描画、パネル、ズーム、パン、表示補助
-- ファイル選択、PDF 保存、macOS のプリンタ列挙と印刷ジョブ開始
+- ファイル選択、PDF 保存、Swift/macOS のプリンタ列挙と印刷ジョブ開始
 - Core へ送る操作意図の組み立てと、応答の利用者向け表示
 
 UI は応答性のためにヒットテスト候補を絞り込んでよい。ただし、閉輪郭、接続順、参照依存、計測値、正規化後の図形など、ドキュメントの意味となる結果を確定しない。
@@ -45,7 +45,7 @@ Core はドキュメントの正本と意味を扱う。
 - 失敗した変更は、直前のドキュメント状態と Undo/Redo 履歴を変えない。
 - UI は Core の最後に確認できた状態を表示し、独自の永続状態を正本にしない。
 
-Swift/macOS UI と Tauri/React UI は同じ意味契約を利用する。Swift/macOS は macOS 13 以降のファイル、PDF、印刷 adapter を持つ。Tauri/React は Windows・Linux・macOS の編集、出力プレビュー、PDF 保存を扱い、直接印刷の adapter は持たない。
+Swift/macOS UI と Tauri/React UI は同じ意味契約を利用する。Swift/macOS は macOS 13 以降のファイル、PDF、印刷 adapter を持つ。Tauri/React は Windows・Linux・macOS の編集、出力プレビュー、PDF 保存を扱い、Windows と CUPS/IPP 対応 Linux では直接印刷 adapter を持つ。
 
 ```mermaid
 flowchart LR
@@ -151,13 +151,13 @@ request は次の envelope を持つ。現行 request はすべて object の `p
 | `writeKawaFile` | `{ "written": true }` | 現在ドキュメントを指定パスへ書き出す |
 | `buildOutputDocumentModel` | `BuildOutputDocumentModelResponse` | 出力用中間表現と警告を生成する |
 | `renderPdf` | `RenderPdfResponse` | 出力用中間表現を PDF byte 列へ変換する |
-| `renderPrint` | `PrintRenderData` | 出力用中間表現を macOS 印刷用描画データへ変換する |
+| `renderPrint` | `PrintRenderData` | 出力用中間表現を Swift/macOS と Tauri/Windows の印刷用描画データへ変換する |
 
 `loadDocument`、`previewCommand`、`applyCommand`、`undo`、`redo` の `viewMode` は省略時 `editDisplay` とする。`documentState` の `viewMode` は必須である。
 
 `writeKawaFile` の `markClean` は省略時 `true` とする。通常保存は `true` を指定し、成功した内容をセッションの保存済み基準にする。クラッシュ復旧の一時スナップショットは `false` を指定し、dirty 状態を変えない。
 
-`buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、固定の `0` 度回転、macOS が取得した印刷可能領域を受け取る。用紙向きはツールバーの A4 基準表示で変更し、出力シートでは変更しない。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
+`buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、固定の `0` 度回転、選択した OS adapter が取得した印刷可能領域を受け取る。用紙向きはツールバーの A4 基準表示で変更し、出力シートでは変更しない。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
 
 ### 5.2 `DocumentStateResponse`
 

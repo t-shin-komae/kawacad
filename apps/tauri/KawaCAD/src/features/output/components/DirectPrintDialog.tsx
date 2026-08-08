@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import {
   PDFPreview,
@@ -13,17 +13,32 @@ type PreparedPrint = { preparedPrintId: string; outputDocumentModel: OutputDocum
 
 type Props = {
   initialOrientation: Orientation;
+  options?: OutputOptions;
+  onOptionsChange?: (options: OutputOptions) => void;
+  onDestinationChange?: (destination: "pdf" | "directPrint") => void;
   onClose: () => void;
   onPrinted: () => void;
 };
+
+// This module is owned by one Webview and survives closing/reopening the sheet.
+// The backend keeps a per-Webview watermark, so a component-local counter is insufficient.
+let nextPreparedPrintGeneration = 0;
 
 function initialOptions(orientation: Orientation): OutputOptions {
   return { orientation, includeDimensionLabels: true, includeScaleGuide: true, rotationDeg: 0 };
 }
 
 /** Direct printing only sends a backend-prepared artifact; the browser never opens a print dialog. */
-export function DirectPrintDialog({ initialOrientation, onClose, onPrinted }: Props) {
-  const [options, setOptions] = useState(() => initialOptions(initialOrientation));
+export function DirectPrintDialog({
+  initialOrientation,
+  options: externalOptions,
+  onOptionsChange,
+  onDestinationChange,
+  onClose,
+  onPrinted,
+}: Props) {
+  const [ownedOptions, setOwnedOptions] = useState(() => initialOptions(initialOrientation));
+  const options = externalOptions ?? ownedOptions;
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [printerId, setPrinterId] = useState("");
   const [prepared, setPrepared] = useState<PreparedPrint>();
@@ -31,7 +46,6 @@ export function DirectPrintDialog({ initialOrientation, onClose, onPrinted }: Pr
   const [printing, setPrinting] = useState(false);
   const [error, setError] = useState<string>();
   const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
-  const generation = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -63,7 +77,7 @@ export function DirectPrintDialog({ initialOrientation, onClose, onPrinted }: Pr
     if (!printerId) return;
     let active = true;
     let preparedPrintId: string | undefined;
-    const requestGeneration = ++generation.current;
+    const requestGeneration = ++nextPreparedPrintGeneration;
     setLoading(true);
     setPrepared(undefined);
     setWarningsAcknowledged(false);
@@ -99,7 +113,11 @@ export function DirectPrintDialog({ initialOrientation, onClose, onPrinted }: Pr
 
   const warnings = prepared?.warnings ?? [];
   const canPrint = Boolean(prepared && !loading && !printing && (warnings.length === 0 || warningsAcknowledged));
-  const changeOptions = (update: Partial<OutputOptions>) => setOptions((current) => ({ ...current, ...update }));
+  const changeOptions = (update: Partial<OutputOptions>) => {
+    const next = { ...options, ...update };
+    onOptionsChange?.(next);
+    if (!externalOptions) setOwnedOptions(next);
+  };
   const print = async () => {
     if (!prepared || !canPrint) return;
     setPrinting(true);
@@ -143,6 +161,17 @@ export function DirectPrintDialog({ initialOrientation, onClose, onPrinted }: Pr
                   {printerId ? printers.find((printer) => printer.id === printerId)?.displayName : "選択してください"}
                 </dd>
               </div>
+              {onDestinationChange ? (
+                <div>
+                  <dt>出力先</dt>
+                  <dd>
+                    <select value="directPrint" onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}>
+                      <option value="pdf">PDF</option>
+                      <option value="directPrint">直接印刷</option>
+                    </select>
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt>用紙</dt>
                 <dd>A4・100%・片面</dd>

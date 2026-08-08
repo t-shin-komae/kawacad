@@ -12,12 +12,13 @@ use std::os::windows::ffi::OsStrExt;
 use std::ptr;
 use winapi::shared::minwindef::LPBYTE;
 use winapi::um::wingdi::{
-    Arc, CreateDCW, CreatePen, DeleteDC, DeleteObject, Ellipse, EndDoc, EndPage, GetDeviceCaps,
-    LineTo, MoveToEx, SelectObject, SetArcDirection, SetBkMode, SetTextColor, StartDocW, StartPage,
-    TextOutW, AD_CLOCKWISE, DMDUP_SIMPLEX, DMORIENT_LANDSCAPE, DMORIENT_PORTRAIT, DMPAPER_A4,
-    DM_DUPLEX, DM_IN_BUFFER, DM_NUP, DM_ORIENTATION, DM_OUT_BUFFER, DM_PAPERSIZE, DM_SCALE,
-    DOCINFOW, HORZRES, LOGPIXELSX, LOGPIXELSY, PHYSICALHEIGHT, PHYSICALOFFSETX, PHYSICALOFFSETY,
-    PHYSICALWIDTH, PS_DASH, PS_SOLID, RGB, TRANSPARENT, VERTRES,
+    AbortDoc, Arc, CreateDCW, CreateFontW, CreatePen, DeleteDC, DeleteObject, Ellipse, EndDoc,
+    EndPage, GetDeviceCaps, LineTo, MoveToEx, SelectObject, SetArcDirection, SetBkMode,
+    SetTextColor, StartDocW, StartPage, TextOutW, AD_CLOCKWISE, AD_COUNTERCLOCKWISE, DMDUP_SIMPLEX,
+    DMNUP_ONEUP, DMORIENT_LANDSCAPE, DMORIENT_PORTRAIT, DMPAPER_A4, DM_DUPLEX, DM_IN_BUFFER,
+    DM_NUP, DM_ORIENTATION, DM_OUT_BUFFER, DM_PAPERSIZE, DM_SCALE, DOCINFOW, HORZRES, LOGPIXELSX,
+    LOGPIXELSY, PHYSICALHEIGHT, PHYSICALOFFSETX, PHYSICALOFFSETY, PHYSICALWIDTH, PS_DASH, PS_SOLID,
+    RGB, TRANSPARENT, VERTRES,
 };
 use winapi::um::winspool::{
     ClosePrinter, DocumentPropertiesW, EnumPrintersW, OpenPrinterW, PRINTER_ENUM_CONNECTIONS,
@@ -182,6 +183,7 @@ fn configured_printer(
                 "The selected printer rejected A4 100% simplex settings",
             ));
         }
+        validate_devmode(devmode_ptr, options)?;
         let dc = unsafe {
             CreateDCW(
                 wide("WINSPOOL").as_ptr(),
@@ -219,7 +221,34 @@ fn normalize_devmode(
         settings.dmPaperSize = DMPAPER_A4 as i16;
         settings.dmScale = 100;
         (*devmode).dmDuplex = DMDUP_SIMPLEX as i16;
-        *(*devmode).u2.dmNup_mut() = 1;
+        *(*devmode).u2.dmNup_mut() = DMNUP_ONEUP;
+    }
+    Ok(())
+}
+
+fn validate_devmode(
+    devmode: *const winapi::um::wingdi::DEVMODEW,
+    options: &DirectPrintOptions,
+) -> Result<(), String> {
+    let expected_orientation = match options.orientation.as_str() {
+        "portrait" => DMORIENT_PORTRAIT,
+        "landscape" => DMORIENT_LANDSCAPE,
+        _ => return Err("Direct printing requires a valid A4 orientation".to_owned()),
+    } as i16;
+    unsafe {
+        let mode = &*devmode;
+        let required = DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE | DM_DUPLEX | DM_NUP;
+        if mode.dmFields & required != required
+            || mode.u1.s1().dmOrientation != expected_orientation
+            || mode.u1.s1().dmPaperSize != DMPAPER_A4 as i16
+            || mode.u1.s1().dmScale != 100
+            || mode.dmDuplex != DMDUP_SIMPLEX as i16
+            || *mode.u2.dmNup() != DMNUP_ONEUP
+        {
+            return Err(
+                "The selected printer did not retain A4 100% simplex 1-up settings".to_owned(),
+            );
+        }
     }
     Ok(())
 }
@@ -287,6 +316,7 @@ fn render_to_printer(
             "Could not create the Windows printer device context",
         ));
     }
+    let mut started = false;
     let result = (|| {
         let document_name = wide("KawaCAD");
         let info = DOCINFOW {
@@ -299,6 +329,7 @@ fn render_to_printer(
         if unsafe { StartDocW(dc, &info) } <= 0 {
             return Err(last_error("Could not start the Windows print job"));
         }
+        started = true;
         for page in &render_data.pages {
             if unsafe { StartPage(dc) } <= 0 {
                 return Err(last_error("Could not start a Windows print page"));
@@ -313,6 +344,9 @@ fn render_to_printer(
         }
         Ok(())
     })();
+    if result.is_err() && started {
+        unsafe { AbortDoc(dc) };
+    }
     unsafe { DeleteDC(dc) };
     result
 }
@@ -322,7 +356,6 @@ fn draw_page(
     configuration: &PrinterConfiguration,
     page: &kawacad_output_engine::PrintRenderPage,
 ) -> Result<(), String> {
-    unsafe { SetArcDirection(dc, AD_CLOCKWISE as i32) };
     for command in &page.commands {
         match command {
             PrintRenderCommand::StrokeLine {
@@ -368,6 +401,14 @@ fn draw_page(
                 let end_angle = start_angle_rad + sweep_angle_rad;
                 let end_x = center_mm.x_mm + radius_mm * end_angle.cos();
                 let end_y = center_mm.y_mm + radius_mm * end_angle.sin();
+                SetArcDirection(
+                    dc,
+                    if *sweep_angle_rad >= 0.0 {
+                        AD_CLOCKWISE as i32
+                    } else {
+                        AD_COUNTERCLOCKWISE as i32
+                    },
+                );
                 Arc(
                     dc,
                     x(configuration, center_mm.x_mm - radius_mm),
@@ -399,19 +440,41 @@ fn draw_page(
             PrintRenderCommand::DrawText {
                 position_mm,
                 content,
-                ..
+                font_size_mm,
             } => unsafe {
                 SetBkMode(dc, TRANSPARENT as i32);
                 SetTextColor(dc, RGB(0, 0, 0));
+                let font = CreateFontW(
+                    -(*font_size_mm * f64::from(configuration.dpi_y) / 25.4).round() as i32,
+                    0,
+                    0,
+                    0,
+                    400,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    ptr::null(),
+                );
+                if font.is_null() {
+                    return Err(last_error("Could not create a Windows print font"));
+                }
+                let previous_font = SelectObject(dc, font as _);
                 let text = wide(content);
-                if TextOutW(
+                let drawn = TextOutW(
                     dc,
                     x(configuration, position_mm.x_mm),
                     y(configuration, position_mm.y_mm),
                     text.as_ptr(),
                     text.len().saturating_sub(1) as i32,
-                ) == 0
-                {
+                );
+                SelectObject(dc, previous_font);
+                DeleteObject(font as _);
+                if drawn == 0 {
                     return Err(last_error("Could not draw text on the Windows printer"));
                 }
             },

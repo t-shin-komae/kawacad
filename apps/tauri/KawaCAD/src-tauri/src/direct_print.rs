@@ -263,6 +263,9 @@ impl<T> PreparedPrintStore<T> {
                     .max_artifact_bytes
                     .saturating_sub(self.total_artifact_bytes)
         {
+            if self.latest_generation_by_window.get(&owner_window) == Some(&generation) {
+                self.latest_generation_by_window.remove(&owner_window);
+            }
             return Err(PreparedPrintStoreError::Busy);
         }
 
@@ -304,6 +307,9 @@ impl<T> PreparedPrintStore<T> {
             .remove(id)
             .map(|entry| {
                 self.total_artifact_bytes -= entry.artifact_bytes;
+                if self.latest_generation_by_window.get(owner_window) == Some(&entry.generation) {
+                    self.latest_generation_by_window.remove(owner_window);
+                }
                 entry.value
             })
             .ok_or(PreparedPrintStoreError::Stale)
@@ -344,6 +350,10 @@ impl<T> PreparedPrintStore<T> {
                 .is_some_and(|current| current == &entry.id)
             {
                 self.prepared_id_by_window.remove(&entry.owner_window);
+            }
+            if self.latest_generation_by_window.get(&entry.owner_window) == Some(&entry.generation)
+            {
+                self.latest_generation_by_window.remove(&entry.owner_window);
             }
         }
     }
@@ -417,6 +427,20 @@ mod tests {
             store.take("main", &id, now + PREPARED_PRINT_TTL),
             Err(PreparedPrintStoreError::Stale)
         );
+    }
+
+    #[test]
+    fn accepts_a_new_sheet_generation_after_the_previous_item_is_consumed() {
+        let now = Instant::now();
+        let mut store = PreparedPrintStore::with_capacity(2, 100);
+        let id = store
+            .register("main".to_owned(), 1, 20, (), now)
+            .expect("first preparation should be stored");
+        store
+            .take("main", &id, now)
+            .expect("first preparation should be consumed");
+
+        assert!(store.register("main".to_owned(), 1, 20, (), now).is_ok());
     }
 
     #[cfg(target_os = "macos")]

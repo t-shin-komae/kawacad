@@ -204,12 +204,37 @@ jobs:
       - name: Verify tracked files are unchanged
         run: git diff --exit-code
 
+  windows-tauri-direct-print:
+    name: windows-tauri-direct-print
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          clean: true
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+          rustup default 1.97.1
+
+      - name: Compile and test Windows direct printing
+        shell: pwsh
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --manifest-path apps/tauri/KawaCAD/src-tauri/Cargo.toml --all-targets -- -D warnings
+          cargo test --manifest-path apps/tauri/KawaCAD/src-tauri/Cargo.toml --all-targets
+
   ci-gate:
     name: ci-gate
     if: always()
     needs:
       - linux-quality-core
       - linux-tauri
+      - windows-tauri-direct-print
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -217,9 +242,11 @@ jobs:
         env:
           LINUX_QUALITY_CORE_RESULT: ${{ needs.linux-quality-core.result }}
           LINUX_TAURI_RESULT: ${{ needs.linux-tauri.result }}
+          WINDOWS_TAURI_DIRECT_PRINT_RESULT: ${{ needs.windows-tauri-direct-print.result }}
         run: |
           if [[ "$LINUX_QUALITY_CORE_RESULT" != "success" || \
-                "$LINUX_TAURI_RESULT" != "success" ]]; then
+                "$LINUX_TAURI_RESULT" != "success" || \
+                "$WINDOWS_TAURI_DIRECT_PRINT_RESULT" != "success" ]]; then
             echo "Required CI job failed or did not run."
             exit 1
           fi

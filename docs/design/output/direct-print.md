@@ -158,7 +158,7 @@ Service --> UI: ジョブ受付 / stale / 失敗
 
 Windows adapter は GDI/DEVMODE を用いる。`DocumentPropertiesW` で A4、`dmScale = 100`、片面、N-up 無効を正規化してから、`CreateDCW` と `GetDeviceCaps` で印刷可能領域を求める。`DC_DUPLEX == 0` は片面専用を表すため拒否理由にしない。実行時は同じ正規化結果を再確認し、`PrintRenderData` を 1 mm = DPI / 25.4 device unit で描画する。
 
-Linux adapter は CUPS/IPP を用いる。対象 endpoint に対し A4、`sides=one-sided`、`print-scaling=none`、`application/pdf` の組合せを確認する。準備時と実行直前の `Validate-Job` には `ipp-attribute-fidelity=true` を指定し、unsupported、conflicting、substituted、要求値との不一致を成功扱いにしない。検証済みの PDF artifact だけを `Print-Job` へ送信する。
+Linux adapter は CUPS/IPP を用いる。対象 endpoint に対し A4、`sides=one-sided`、`print-scaling=none`、`number-up=1`、`orientation-requested`、`application/pdf` の組合せを確認する。準備時と実行直前に CUPS の組合せ競合照会を行い、送信時は同じ属性と `ipp-attribute-fidelity=true` を `Create-Job` に指定する。`IPP_STATUS_OK_SUBST`、unsupported、conflicting、要求値との不一致を成功扱いにしない。検証済みの PDF artifact だけを `Print-Job` へ送信する。
 
 ## 8. 検証
 

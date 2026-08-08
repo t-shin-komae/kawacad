@@ -1,6 +1,7 @@
 use super::{
-    DirectPrintArtifact, DirectPrintAvailability, DirectPrintAvailabilityStatus, DirectPrinter,
-    InspectPrinterRequest, PreparedDirectPrint, PrinterInspection,
+    DirectPrintArtifact, DirectPrintAvailability, DirectPrintAvailabilityStatus,
+    DirectPrintOptions, DirectPrinter, InspectPrinterRequest, PreparedDirectPrint,
+    PrinterInspection,
 };
 use kawacad_core::output::PrintableAreaMm;
 use libloading::Library;
@@ -24,7 +25,7 @@ struct CupsDest {
     name: *mut c_char,
     instance: *mut c_char,
     is_default: c_int,
-    num_options: usize,
+    num_options: c_int,
     options: *mut CupsOption,
 }
 
@@ -66,6 +67,19 @@ type CupsGetDestMediaByName = unsafe extern "C" fn(
 type CupsAddOption =
     unsafe extern "C" fn(*const c_char, *const c_char, c_int, *mut *mut CupsOption) -> c_int;
 type CupsFreeOptions = unsafe extern "C" fn(c_int, *mut CupsOption);
+type CupsCopyDestConflicts = unsafe extern "C" fn(
+    *mut Http,
+    *mut CupsDest,
+    *mut DestInfo,
+    c_int,
+    *mut CupsOption,
+    *const c_char,
+    *const c_char,
+    *mut c_int,
+    *mut *mut CupsOption,
+    *mut c_int,
+    *mut *mut CupsOption,
+) -> c_int;
 type CupsCreateDestJob = unsafe extern "C" fn(
     *mut Http,
     *mut CupsDest,
@@ -89,6 +103,7 @@ type CupsStartDestDocument = unsafe extern "C" fn(
 type CupsWriteRequestData = unsafe extern "C" fn(*mut Http, *const c_char, usize) -> c_int;
 type CupsFinishDestDocument =
     unsafe extern "C" fn(*mut Http, *mut CupsDest, *mut DestInfo) -> c_int;
+type CupsCancelDestJob = unsafe extern "C" fn(*mut Http, *mut CupsDest, c_int) -> c_int;
 
 struct Cups {
     _library: Library,
@@ -101,10 +116,12 @@ struct Cups {
     get_dest_media_by_name: CupsGetDestMediaByName,
     add_option: CupsAddOption,
     free_options: CupsFreeOptions,
+    copy_dest_conflicts: CupsCopyDestConflicts,
     create_dest_job: CupsCreateDestJob,
     start_dest_document: CupsStartDestDocument,
     write_request_data: CupsWriteRequestData,
     finish_dest_document: CupsFinishDestDocument,
+    cancel_dest_job: CupsCancelDestJob,
 }
 
 impl Cups {
@@ -124,10 +141,12 @@ impl Cups {
                 get_dest_media_by_name: symbol(&library, b"cupsGetDestMediaByName\0")?,
                 add_option: symbol(&library, b"cupsAddOption\0")?,
                 free_options: symbol(&library, b"cupsFreeOptions\0")?,
+                copy_dest_conflicts: symbol(&library, b"cupsCopyDestConflicts\0")?,
                 create_dest_job: symbol(&library, b"cupsCreateDestJob\0")?,
                 start_dest_document: symbol(&library, b"cupsStartDestDocument\0")?,
                 write_request_data: symbol(&library, b"cupsWriteRequestData\0")?,
                 finish_dest_document: symbol(&library, b"cupsFinishDestDocument\0")?,
+                cancel_dest_job: symbol(&library, b"cupsCancelDestJob\0")?,
                 _library: library,
             })
         }
@@ -147,10 +166,14 @@ unsafe fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
 }
 
 pub(super) fn availability() -> DirectPrintAvailability {
-    match Cups::load() {
-        Ok(_) => DirectPrintAvailability {
+    match list_printers() {
+        Ok(printers) if !printers.is_empty() => DirectPrintAvailability {
             status: DirectPrintAvailabilityStatus::Available,
             reason: None,
+        },
+        Ok(_) => DirectPrintAvailability {
+            status: DirectPrintAvailabilityStatus::Unavailable,
+            reason: Some("CUPS does not currently provide a printer".to_owned()),
         },
         Err(reason) => DirectPrintAvailability {
             status: DirectPrintAvailabilityStatus::Unavailable,
@@ -198,7 +221,13 @@ pub(super) fn inspect_printer(
         unsafe { (cups.free_dests)(1, destination) };
         return Err("Could not inspect the selected CUPS printer".to_owned());
     }
-    let result = inspect_destination(&cups, destination, info, &request.printer_id);
+    let result = inspect_destination(
+        &cups,
+        destination,
+        info,
+        &request.printer_id,
+        &request.options,
+    );
     unsafe {
         (cups.free_dest_info)(info);
         (cups.free_dests)(1, destination);
@@ -211,6 +240,7 @@ fn inspect_destination(
     destination: *mut CupsDest,
     info: *mut DestInfo,
     printer_id: &str,
+    options: &DirectPrintOptions,
 ) -> Result<PrinterInspection, String> {
     let supported = [
         ("media", A4_MEDIA),
@@ -218,6 +248,7 @@ fn inspect_destination(
         ("print-scaling", "none"),
         ("number-up", "1"),
         ("document-format", "application/pdf"),
+        ("orientation-requested", orientation_requested(options)?),
     ];
     for (name, value) in supported {
         let name = cstring(name)?;
@@ -243,6 +274,12 @@ fn inspect_destination(
             });
         }
     }
+    let (option_count, required_options) = required_options(cups, options)?;
+    let conflicts = validate_combination(cups, destination, info, option_count, required_options);
+    unsafe { (cups.free_options)(option_count, required_options) };
+    if let Err(reason) = conflicts {
+        return Ok(unsupported_printer(printer_id, reason));
+    }
     let mut media = unsafe { std::mem::zeroed::<CupsSize>() };
     let media_name = cstring(A4_MEDIA)?;
     if unsafe {
@@ -264,11 +301,21 @@ fn inspect_destination(
             capability_fingerprint: None,
         });
     }
-    let printable_area_mm = PrintableAreaMm {
+    let portrait_area = PrintableAreaMm {
         left_mm: f64::from(media.left) / 100.0 - f64::from(media.width) / 200.0,
         right_mm: f64::from(media.width - media.right) / 100.0 - f64::from(media.width) / 200.0,
         top_mm: f64::from(media.length - media.top) / 100.0 - f64::from(media.length) / 200.0,
         bottom_mm: f64::from(media.bottom) / 100.0 - f64::from(media.length) / 200.0,
+    };
+    let printable_area_mm = match options.orientation.as_str() {
+        "portrait" => portrait_area,
+        "landscape" => PrintableAreaMm {
+            left_mm: portrait_area.bottom_mm,
+            right_mm: portrait_area.top_mm,
+            top_mm: -portrait_area.left_mm,
+            bottom_mm: -portrait_area.right_mm,
+        },
+        _ => return Err("Direct printing requires a valid A4 orientation".to_owned()),
     };
     Ok(PrinterInspection {
         printer_id: printer_id.to_owned(),
@@ -304,7 +351,7 @@ pub(super) fn send(prepared: &PreparedDirectPrint) -> Result<(), String> {
         unsafe { (cups.free_dests)(1, destination) };
         return Err("Could not open the selected CUPS printer".to_owned());
     }
-    let result = submit_pdf(&cups, destination, info, pdf);
+    let result = submit_pdf(&cups, destination, info, pdf, &prepared.options);
     unsafe {
         (cups.free_dest_info)(info);
         (cups.free_dests)(1, destination);
@@ -317,25 +364,13 @@ fn submit_pdf(
     destination: *mut CupsDest,
     info: *mut DestInfo,
     pdf: &[u8],
+    direct_print_options: &DirectPrintOptions,
 ) -> Result<(), String> {
-    let mut options = ptr::null_mut();
-    let mut option_count = 0;
-    for (name, value) in [
-        ("media", A4_MEDIA),
-        ("sides", "one-sided"),
-        ("print-scaling", "none"),
-        ("number-up", "1"),
-        ("ipp-attribute-fidelity", "true"),
-    ] {
-        let name = cstring(name)?;
-        let value = cstring(value)?;
-        option_count =
-            unsafe { (cups.add_option)(name.as_ptr(), value.as_ptr(), option_count, &mut options) };
-    }
+    let (option_count, options) = required_options(cups, direct_print_options)?;
     let result = (|| {
         let mut job_id = 0;
         let title = cstring("KawaCAD")?;
-        if unsafe {
+        let status = unsafe {
             (cups.create_dest_job)(
                 ptr::null_mut(),
                 destination,
@@ -345,13 +380,13 @@ fn submit_pdf(
                 option_count,
                 options,
             )
-        } == 0
-        {
+        };
+        if status != IPP_STATUS_OK {
             return Err("CUPS rejected the fixed direct-print settings".to_owned());
         }
         let document_name = cstring("KawaCAD.pdf")?;
         let mime_type = cstring("application/pdf")?;
-        if unsafe {
+        let result = unsafe {
             (cups.start_dest_document)(
                 ptr::null_mut(),
                 destination,
@@ -363,24 +398,110 @@ fn submit_pdf(
                 options,
                 1,
             )
-        } != HTTP_STATUS_CONTINUE
-        {
+        };
+        if result != HTTP_STATUS_CONTINUE {
+            unsafe { (cups.cancel_dest_job)(ptr::null_mut(), destination, job_id) };
             return Err("CUPS rejected the direct-print PDF document".to_owned());
         }
         if unsafe { (cups.write_request_data)(ptr::null_mut(), pdf.as_ptr().cast(), pdf.len()) }
             != HTTP_STATUS_CONTINUE
         {
+            unsafe { (cups.cancel_dest_job)(ptr::null_mut(), destination, job_id) };
             return Err("Could not send the direct-print PDF data to CUPS".to_owned());
         }
         if unsafe { (cups.finish_dest_document)(ptr::null_mut(), destination, info) }
             != IPP_STATUS_OK
         {
+            unsafe { (cups.cancel_dest_job)(ptr::null_mut(), destination, job_id) };
             return Err("CUPS did not accept the direct-print job".to_owned());
         }
         Ok(())
     })();
     unsafe { (cups.free_options)(option_count, options) };
     result
+}
+
+fn required_options(
+    cups: &Cups,
+    options: &DirectPrintOptions,
+) -> Result<(c_int, *mut CupsOption), String> {
+    let mut raw_options = ptr::null_mut();
+    let mut option_count = 0;
+    for (name, value) in [
+        ("media", A4_MEDIA),
+        ("sides", "one-sided"),
+        ("print-scaling", "none"),
+        ("number-up", "1"),
+        ("ipp-attribute-fidelity", "true"),
+        ("orientation-requested", orientation_requested(options)?),
+    ] {
+        let name = cstring(name)?;
+        let value = cstring(value)?;
+        option_count = unsafe {
+            (cups.add_option)(
+                name.as_ptr(),
+                value.as_ptr(),
+                option_count,
+                &mut raw_options,
+            )
+        };
+    }
+    Ok((option_count, raw_options))
+}
+
+fn validate_combination(
+    cups: &Cups,
+    destination: *mut CupsDest,
+    info: *mut DestInfo,
+    option_count: c_int,
+    options: *mut CupsOption,
+) -> Result<(), String> {
+    let mut conflicts = ptr::null_mut();
+    let mut resolved = ptr::null_mut();
+    let mut conflict_count = 0;
+    let mut resolved_count = 0;
+    let result = unsafe {
+        (cups.copy_dest_conflicts)(
+            ptr::null_mut(),
+            destination,
+            info,
+            option_count,
+            options,
+            ptr::null(),
+            ptr::null(),
+            &mut conflict_count,
+            &mut conflicts,
+            &mut resolved_count,
+            &mut resolved,
+        )
+    };
+    unsafe {
+        (cups.free_options)(conflict_count, conflicts);
+        (cups.free_options)(resolved_count, resolved);
+    }
+    match result {
+        0 => Ok(()),
+        1 => Err("The required A4, 100%, simplex, 1-up PDF settings conflict".to_owned()),
+        _ => Err("Could not validate the required CUPS print settings".to_owned()),
+    }
+}
+
+fn orientation_requested(options: &DirectPrintOptions) -> Result<&'static str, String> {
+    match options.orientation.as_str() {
+        "portrait" => Ok("3"),
+        "landscape" => Ok("4"),
+        _ => Err("Direct printing requires a valid A4 orientation".to_owned()),
+    }
+}
+
+fn unsupported_printer(printer_id: &str, reason: String) -> PrinterInspection {
+    PrinterInspection {
+        printer_id: printer_id.to_owned(),
+        selectable: false,
+        printable_area_mm: None,
+        reason: Some(reason),
+        capability_fingerprint: None,
+    }
 }
 
 fn named_destination(cups: &Cups, printer_id: &str) -> Result<*mut CupsDest, String> {

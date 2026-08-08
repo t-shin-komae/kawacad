@@ -71,13 +71,11 @@ import { useActiveDrawingOptions } from "@/features/canvas/selectors/useActiveDr
 import { useWindowLifecycle } from "@/features/workspace/effects/useWindowLifecycle";
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
 import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSourceLicensesDialog";
-import { DirectPrintDialog } from "@/features/output/components/DirectPrintDialog";
-import { PDFExportDialog } from "@/features/output/components/PDFExportDialog";
+import { OutputDialog } from "@/features/output/components/OutputDialog";
 
 export function App() {
   const [licensesOpen, setLicensesOpen] = useState(false);
-  const [pdfExportOpen, setPDFExportOpen] = useState(false);
-  const [directPrintOpen, setDirectPrintOpen] = useState(false);
+  const [outputDestination, setOutputDestination] = useState<"pdf" | "directPrint">();
   const canvasPresentation = useCanvasPresentation();
   const {
     tool,
@@ -551,8 +549,8 @@ export function App() {
       else if (action === "open") void openDocument();
       else if (action === "save") saveCurrentDocument();
       else if (action === "saveAs") void saveDocument();
-      else if (action === "exportPDF") setPDFExportOpen(true);
-      else if (action === "directPrint") setDirectPrintOpen(true);
+      else if (action === "exportPDF") setOutputDestination("pdf");
+      else if (action === "directPrint") setOutputDestination("directPrint");
       else if (action === "undo" || action === "redo") restoreHistory(action);
       else if (action === "cut") void cutSelection();
       else if (action === "copy") void copySelection();
@@ -798,18 +796,13 @@ export function App() {
           />
         )}
         {licensesOpen && <OpenSourceLicensesDialog onClose={() => setLicensesOpen(false)} />}
-        {pdfExportOpen && (
-          <PDFExportDialog
+        {outputDestination && (
+          <OutputDialog
             documentName={state?.snapshot.name ?? appStrings.document.untitled}
             initialOrientation={a4Landscape ? "landscape" : "portrait"}
-            onClose={() => setPDFExportOpen(false)}
+            initialDestination={outputDestination}
+            onClose={() => setOutputDestination(undefined)}
             onSaved={(path) => setMessage(`PDFを保存しました: ${path}`)}
-          />
-        )}
-        {directPrintOpen && (
-          <DirectPrintDialog
-            initialOrientation={a4Landscape ? "landscape" : "portrait"}
-            onClose={() => setDirectPrintOpen(false)}
             onPrinted={() => setMessage("印刷ジョブを開始しました。")}
           />
         )}
