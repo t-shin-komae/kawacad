@@ -22,7 +22,7 @@
 
 - About画面は、メニューバーの `KawaCAD` > `KawaCADについて` から開く。
 - About画面には、アプリアイコン、アプリ名 `KawaCAD`、バージョン、コピーライト `© 2026 t-shin-komae` を表示する。
-- 開発中のバージョンは `Version 0.1.0-dev`、正式リリース版は `Version 0.1.0` の形式で表示する。
+- 開発中のバージョンは `Version 0.2.0-dev`、正式リリース版は `Version 0.2.0` の形式で表示する。
 - Swift/macOS 版は macOS 標準の About パネルを使用する。Tauri/React 版は各デスクトップ環境のネイティブ About 項目を使用する。
 - ビルド番号は表示しない。
 
