@@ -1,4 +1,5 @@
 import Foundation
+import KawaCADOutput
 
 struct DocumentCommandRequest {
   let payload: CoreDocumentCommand
@@ -24,6 +25,18 @@ enum DocumentCommandExecutionResult {
 /// `CadSessionState`.
 struct DocumentCommandFactory {
   var uuidProvider: () -> String = { UUID().uuidString.lowercased() }
+
+  func makeSetPrintOrientationCommand(
+    _ orientation: OutputPrintOrientation
+  ) -> DocumentCommandRequest {
+    DocumentCommandRequest(
+      payload: CoreDocumentCommand(
+        kind: .setPrintOrientation,
+        payload: .object(["orientation": .string(orientation.rawValue)])
+      ),
+      successMessage: AppStrings.tr("status.a4_reference_orientation", orientation.displayName)
+    )
+  }
 
   func makeCreatePartCommand(
     name: String,

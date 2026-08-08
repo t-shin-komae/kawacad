@@ -111,6 +111,7 @@ extension DocumentActionHandler {
     {
     case .success(let state):
       prepareForLoadedDocument()
+      actions.workspace.syncPrintOrientation(state.printOrientation)
       recoverySnapshotState.beginDocumentSession()
       statusMessage = AppStrings.tr("app.status.created_new_document")
       handleCadSessionStateChange(state)
@@ -130,6 +131,7 @@ extension DocumentActionHandler {
     switch cadSession.openDocument(at: url, viewMode: canvasPresentation.viewMode) {
     case .success(let state):
       prepareForLoadedDocument()
+      actions.workspace.syncPrintOrientation(state.printOrientation)
       recoverySnapshotState.beginDocumentSession()
       statusMessage = AppStrings.tr("status.opened_project", url.lastPathComponent)
       handleCadSessionStateChange(state)
@@ -243,7 +245,8 @@ extension DocumentActionHandler {
     }
 
     switch cadSession.refresh(viewMode: canvasPresentation.viewMode) {
-    case .success:
+    case .success(let state):
+      actions.workspace.syncPrintOrientation(state.printOrientation)
       if canvasPresentation.viewMode == .outputPreview {
         refreshOutputPreviewBuildResult()
       } else {
@@ -257,6 +260,7 @@ extension DocumentActionHandler {
   }
 
   func prepareForLoadedDocument() {
+    actions.workspace.resetPrintOrientationOverride()
     documentPresentation.setPendingNameDraft(nil)
     canvasPresentation.resetForLoadedDocument()
     resetInspectorPresentationForLoadedDocument()

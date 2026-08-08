@@ -11,6 +11,7 @@ use crate::measurement::{
 };
 use crate::parameters::{Parameter, ParameterId};
 use crate::parts::{Part, PartAlignment, PartDistributionAxis, PartId};
+use crate::print::PrintOrientation;
 use crate::round_holes::{RoundHole, RoundHoleId, RoundHoleKind};
 use crate::shared_styles::{SharedStyle, SharedStyleId};
 use crate::stitch_start_points::{StitchStartPoint, StitchStartPointId};
@@ -163,6 +164,11 @@ pub enum DocumentCommand {
     RenameDocument {
         /// 新しいドキュメント名。
         name: String,
+    },
+    /// 用紙の向きをドキュメント設定へ保存する。
+    SetPrintOrientation {
+        /// 用紙の向き。
+        orientation: PrintOrientation,
     },
     /// 幾何エンティティを追加する。
     AddEntity(Entity),
@@ -638,6 +644,7 @@ impl DocumentCommand {
     pub fn kind_name(&self) -> &'static str {
         match self {
             Self::RenameDocument { .. } => "renameDocument",
+            Self::SetPrintOrientation { .. } => "setPrintOrientation",
             Self::AddEntity(_) => "addEntity",
             Self::CreateEntityFromGesture { .. } => "createEntityFromGesture",
             Self::UpdateEntity(_) => "updateEntity",

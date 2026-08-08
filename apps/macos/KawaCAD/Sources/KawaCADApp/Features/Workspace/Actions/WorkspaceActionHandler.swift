@@ -29,6 +29,13 @@ extension WorkspaceActionHandler {
     guard workspacePreferences.a4ReferenceOrientation != orientation else {
       return
     }
+    guard
+      actions.document.executeDocumentCommand(
+        commandFactory.makeSetPrintOrientationCommand(orientation)
+      )
+    else {
+      return
+    }
     workspacePreferences.setA4ReferenceOrientation(orientation)
     if var draft = outputPresentation.requestDraft {
       draft.options = OutputPresentationOptions(
@@ -44,6 +51,14 @@ extension WorkspaceActionHandler {
       refreshOutputPreviewBuildResult()
     }
     statusMessage = AppStrings.tr("status.a4_reference_orientation", orientation.displayName)
+  }
+
+  func syncPrintOrientation(_ orientation: OutputPrintOrientation) {
+    workspacePreferences.syncLoadedPrintOrientation(orientation)
+  }
+
+  func resetPrintOrientationOverride() {
+    workspacePreferences.resetPrintOrientationOverride()
   }
 
   func setLayerPanelVisible(_ visible: Bool) {

@@ -67,6 +67,9 @@ impl CommandApplier {
     ) -> CommandResult {
         match command {
             DocumentCommand::RenameDocument { name } => document.rename_document(&name),
+            DocumentCommand::SetPrintOrientation { orientation } => {
+                document.set_print_orientation(orientation)
+            }
             DocumentCommand::AddEntity(entity) => document.add_entity(entity),
             DocumentCommand::CreateEntityFromGesture {
                 id,

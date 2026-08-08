@@ -120,6 +120,18 @@
     "derivedElementKind": {
       "oneOf": [
         {
+          "type": "object", "additionalProperties": false, "required": ["kind", "payload"],
+          "properties": {
+            "kind": { "const": "setPrintOrientation" },
+            "payload": {
+              "type": "object", "additionalProperties": false, "required": ["orientation"],
+              "properties": {
+                "orientation": { "type": "string", "enum": ["portrait", "landscape"] }
+              }
+            }
+          }
+        },
+        {
           "type": "object",
           "additionalProperties": false,
           "required": ["offsetCurve"],

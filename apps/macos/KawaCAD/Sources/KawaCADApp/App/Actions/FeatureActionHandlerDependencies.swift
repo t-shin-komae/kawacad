@@ -138,6 +138,7 @@ struct WorkspaceActionHandlerDependencies {
   let workspacePreferences: WorkspacePreferencesState
   let workspaceLayout: WorkspaceLayoutState
   let desktopEnvironment: any DesktopEnvironmentAdapting
+  let commandFactory: DocumentCommandFactory
 }
 
 protocol CanvasActionHandlerDependencyProviding: ActionHandlerStateAccessProviding {
@@ -234,6 +235,7 @@ extension WorkspaceActionHandlerDependencyProviding {
   var workspacePreferences: WorkspacePreferencesState { handlerDependencies.workspacePreferences }
   var workspaceLayout: WorkspaceLayoutState { handlerDependencies.workspaceLayout }
   var desktopEnvironment: any DesktopEnvironmentAdapting { handlerDependencies.desktopEnvironment }
+  var commandFactory: DocumentCommandFactory { handlerDependencies.commandFactory }
 }
 
 extension AppActionHandlerContext {
@@ -309,7 +311,8 @@ extension AppActionHandlerContext {
       recoverySnapshotState: recoverySnapshotState,
       workspacePreferences: workspacePreferences,
       workspaceLayout: workspaceLayout,
-      desktopEnvironment: desktopEnvironment
+      desktopEnvironment: desktopEnvironment,
+      commandFactory: commandFactory
     )
   }
 }

@@ -21,6 +21,7 @@ use kawacad_core::output::{
     BuildOutputDocumentModelOptions, OutputGraphicGeometry, OutputGraphicKind, OutputTextKind,
     PrintableAreaMm,
 };
+use kawacad_core::print::PrintOrientation;
 use kawacad_core::round_holes::{RoundHole, RoundHoleKind};
 use kawacad_core::shared_styles::SharedStyle;
 use kawacad_core::snapshot::CanvasViewMode;
@@ -76,6 +77,21 @@ fn new_document_uses_expected_defaults_and_snapshot() {
             .constraint_status,
         ConstraintStatus::Unknown
     );
+}
+
+#[test]
+fn print_orientation_is_persisted_as_a_document_setting() {
+    let mut document = ProjectDocument::new("Print Settings");
+    assert_eq!(document.settings().orientation, PrintOrientation::Portrait);
+    document
+        .apply_command(DocumentCommand::SetPrintOrientation {
+            orientation: PrintOrientation::Landscape,
+        })
+        .expect("orientation");
+    assert_eq!(document.settings().orientation, PrintOrientation::Landscape);
+
+    let reloaded = round_trip_json(&document);
+    assert_eq!(reloaded.settings().orientation, PrintOrientation::Landscape);
 }
 
 #[test]
