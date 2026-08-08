@@ -310,9 +310,21 @@ Core は `buildOutputDocumentModel` で、A4、100% 実寸、指定向きと印�
 - グリッド、A4 基準表示、拘束マークは含めない。
 - 貼り合わせガイドとページ番号は保存図形ではなく出力時の補助要素である。
 
-PDF と直接印刷は同じ Output Document Model を入力にする。`renderPdf` は `pdfHex` に PDF byte 列の16進表現を返す。`renderPrint` は各ページの寸法、回転、印刷可能領域、clip 領域、描画 command を返し、macOS 側が同じ clip 領域で描画する。
+PDF と直接印刷は同じ `OutputDocumentModel` 型を入力にする。PDF用と選択プリンタ用では印刷可能領域が異なるため、同じ中間表現の個体を共有する必要はない。`renderPdf` は `pdfHex` に PDF byte 列の16進表現を返す。`renderPrint` は各ページの寸法、回転、印刷可能領域、clip 領域、描画 command を返し、Swift/macOS と Tauri/Windows の OS adapter が同じ clip 領域で描画する。
 
 Tauri backend は `prepare_pdf_output` で PDF 用の印刷可能領域を使って中間表現と警告を返す。React は警告確認後、返された同一の中間表現を `save_prepared_pdf` へ渡す。backend は Output Engine で PDF byte 列を生成し、選択済みパスへ保存する。これらの invoke は Tauri 固有の adapter 境界であり、`kawacad-core-process` の request 一覧には含めない。
+
+Tauri の直接印刷には、次の invoke を置く。いずれも Tauri 固有の adapter 境界であり、Core の request 一覧には含めない。
+
+| invoke | 入力 | 出力 | 制約 |
+| --- | --- | --- | --- |
+| `direct_print_availability` | なし | 対応状態と理由 | Windows と CUPS/IPP を利用できる Linux 以外では直接印刷を利用不可とする。 |
+| `list_printers` | なし | 選択可能なプリンタ一覧 | 列挙中に CadSession をロックしない。 |
+| `inspect_printer` | プリンタ ID、出力設定 | 必須設定の可否、印刷可能領域、能力 fingerprint、理由 | A4、片面、N-up 無効、縮小なしを確認できない場合は印刷不可とする。 |
+| `prepare_direct_print` | プリンタ ID、出力設定 | `preparedPrintId`、model、warnings、固定設定、印刷可能領域 | model、artifact、出力先、設定、fingerprint を immutable な準備済み印刷として関連付ける。 |
+| `run_prepared_direct_print` | `preparedPrintId` | ジョブ受付または `stale` を含む失敗 | ID 以外の描画内容・印刷設定を受け取らず、単回使用とする。 |
+
+`prepare_direct_print` は、文書 snapshot と文書/出力設定 fingerprint を短時間だけ CadSession から取得してから、lock 外で model と artifact を生成する。`run_prepared_direct_print` は、準備済み ID を原子的に使用済みにし、文書/出力設定とプリンタ能力を再確認する。期限切れ、使用済み、fingerprint の不一致は `stale` としてジョブを送信しない。プリンタ列挙、能力照会、Windows の GDI ジョブ、CUPS/IPP の検証・送信はすべて lock 外の worker で行う。
 
 ## 9. エラー
 

@@ -10,7 +10,7 @@
 
 1. Core が「何を、どのページの、どこへ出すか」を確定する。
 2. Output Engine は確定済みの中間表現を PDF または印刷用データへ描画する。
-3. Swift/macOS と Tauri/React の UI は設定・警告を扱い、図形配置を再判断しない。Swift/macOS の直接印刷はアプリ内のプリンタ選択を使い、OS の印刷設定ダイアログを表示しない。
+3. Swift/macOS と Tauri/React の UI は設定・警告を扱い、図形配置を再判断しない。直接印刷はアプリ内のプリンタ選択を使い、OS の印刷設定ダイアログを表示しない。Tauri/React の直接印刷は Windows と CUPS/IPP を利用できる Linux に限り、Tauri/macOS は対象外とする。
 
 PDF と直接印刷は、入口と出口だけが異なる。中央のページ配置と描画規則を共有することで、同じレイアウトにする。
 
@@ -52,7 +52,7 @@ Rules --> Print
 - 出力対象はドキュメント全体とする。
 - 用紙サイズは A4 固定、出力倍率は 100% 実寸とする。
 - 用紙向きはツールバーの A4 基準表示に従う。出力時には寸法表示と50mmガイドを指定し、回転は常に `0°` とする。
-- PDF出力と直接印刷は、同じ出力用中間表現を共有する。
+- PDF出力と直接印刷は、同じ `OutputDocumentModel` 型と描画規則を共有する。選択プリンタ用の印刷可能領域で生成する中間表現は、PDF用と別の個体になり得る。
 - 印刷可能領域に収まらない場合でも、自動縮小は行わない。
 - A4一枚に収まらない出力対象は、`docs/design/a4-tile-output/overview.md` に従ってA4単位の複数ページとして扱う。
 - 中心線は出力対象に含める。
@@ -80,14 +80,14 @@ Engine --> PDF
 Engine --> Print
 PDF --> UI
 Print --> UI
-  rectangle "macOS API" as OS
+  rectangle "OS 別印刷 API" as OS
 UI --> OS
 @enduml
 ```
 
 | 領域 | 責務 |
 | --- | --- |
-| UI / OS Adapter | 出力導線、設定入力、保存先選択、アプリ内プリンタ選択、警告表示、macOS API との接続 |
+| UI / OS Adapter | 出力導線、設定入力、保存先選択、アプリ内プリンタ選択、警告表示、OS 別印刷 API との接続 |
 | Core | 出力対象の抽出、配置、警告判定、出力用中間表現の生成 |
 | Output Engine | 中間表現から PDF data と Print render data を生成 |
 
@@ -150,7 +150,9 @@ participant "Output Engine" as Engine
 @enduml
 ```
 
-PDF出力と直接印刷の一致は、同じ入力ドキュメント、同じ出力用中間表現、同じ Output Engine の描画規則を使うことで担保する。
+PDF出力と直接印刷は、同じ入力ドキュメント、同じ `OutputDocumentModel` 型、同じ Output Engine の描画規則を使う。直接印刷では、準備済み印刷へ最終プレビュー、artifact、出力先、固定設定を結び付け、実行時の再確認に成功した場合だけ送信する。
+
+Tauri/React の共通 invoke 境界、準備済み印刷、排他制御、Windows/Linux adapter の前提は [Tauri 直接印刷設計](direct-print.md) を正とする。
 
 ## 8. Undo/Redo と保存対象
 
