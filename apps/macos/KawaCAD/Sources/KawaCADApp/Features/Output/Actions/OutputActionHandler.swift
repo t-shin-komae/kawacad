@@ -51,26 +51,45 @@ extension OutputActionHandler {
       presentAlert(AppStrings.tr("output.direct_print_printer_unavailable"))
       return
     }
-    switch outputPresentation.makeDirectPrintSession(presentation: options, printerName: nil) {
-    case .success(let directPrintSession):
-      outputPresentation.setRequestDraft(
-        OutputRequestDraft(
-          destination: .directPrint,
-          options: OutputPresentationOptions(
-            orientation: directPrintSession.orientation,
-            includeDimensionLabels: options.includeDimensionLabels,
-            includeScaleGuide: options.includeScaleGuide,
-            rotationDeg: options.rotationDeg
-          ),
-          directPrinterNames: printerNames,
-          directPrintSession: directPrintSession
-        ))
-      actions.workspace.setA4ReferenceOrientation(directPrintSession.orientation)
-    case .failure(let error):
-      coreStatus = .unavailable(error.message)
-      presentAlert(error.message)
+    var compatibleSelection: (printerName: String, session: OutputDirectPrintSession)?
+    var firstErrorMessage: String?
+    for printerName in printerNames {
+      switch outputPresentation.makeDirectPrintSession(
+        presentation: options,
+        printerName: printerName
+      ) {
+      case .success(let session):
+        compatibleSelection = (printerName, session)
+      case .failure(let error):
+        firstErrorMessage = firstErrorMessage ?? error.message
+      }
+      if compatibleSelection != nil {
+        break
+      }
+    }
+
+    var draft = OutputRequestDraft(
+      destination: .directPrint,
+      options: options,
+      directPrinterNames: printerNames,
+      selectedDirectPrinterName: compatibleSelection?.printerName ?? printerNames[0],
+      directPrintSession: compatibleSelection?.session
+    )
+    guard let compatibleSelection else {
+      draft.buildState = .failed(
+        firstErrorMessage ?? AppStrings.tr("output.direct_print_printer_unavailable"))
+      outputPresentation.setRequestDraft(draft)
       return
     }
+
+    draft.options = OutputPresentationOptions(
+      orientation: compatibleSelection.session.orientation,
+      includeDimensionLabels: options.includeDimensionLabels,
+      includeScaleGuide: options.includeScaleGuide,
+      rotationDeg: options.rotationDeg
+    )
+    outputPresentation.setRequestDraft(draft)
+    actions.workspace.setA4ReferenceOrientation(compatibleSelection.session.orientation)
     outputPresentation.scheduleBuild(session: cadSession)
   }
 
@@ -169,6 +188,7 @@ extension OutputActionHandler {
     ) {
     case .success(let directPrintSession):
       outputPresentation.updateDraft(session: cadSession) { refreshedDraft in
+        refreshedDraft.selectedDirectPrinterName = printerName
         refreshedDraft.directPrintSession = directPrintSession
         refreshedDraft.options = OutputPresentationOptions(
           orientation: directPrintSession.orientation,
@@ -179,6 +199,7 @@ extension OutputActionHandler {
       }
       actions.workspace.setA4ReferenceOrientation(directPrintSession.orientation)
     case .failure(let error):
+      outputPresentation.failDirectPrintSelection(printerName: printerName, message: error.message)
       coreStatus = .unavailable(error.message)
       presentAlert(error.message)
     }

@@ -3539,6 +3539,85 @@ func output_app_state_direct_print_failure_keeps_controller_idle() {
   #expect(printController.printedRenderData.isEmpty)
 }
 
+@Test("Output AppCoordinator は非対応の既定候補を飛ばして直接印刷シートを開く")
+@MainActor
+func output_app_state_direct_print_panel_selects_a_compatible_printer() {
+  let store = StubDocumentSessionAdapter(createNewDocumentState: makeDocumentState())
+  let printController = StubPrintController()
+  printController.printerNames = ["Default Printer", "Compatible Printer"]
+  printController.directPrintSessionResults = [
+    "Default Printer": .failure(OutputError("A4、100%実寸、片面を設定できません。"))
+  ]
+  let appState = AppCoordinator(
+    documentAdapter: store,
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) },
+    outputService: OutputService(printController: printController)
+  )
+
+  appState.actions.output.printDirectPanel()
+
+  let draft = unwrap(appState.actions.output.outputRequestDraft)
+  #expect(draft.selectedDirectPrinterName == "Compatible Printer")
+  #expect(draft.directPrintSession != nil)
+  #expect(printController.requestedPrinterNames == ["Default Printer", "Compatible Printer"])
+  #expect(appState.actions.document.alertMessage == nil)
+  appState.actions.output.cancelOutputRequest()
+}
+
+@Test("Output AppCoordinator は非対応プリンタの選択を保持して直接印刷を無効化する")
+@MainActor
+func output_app_state_direct_print_selection_failure_disables_printing() {
+  let store = StubDocumentSessionAdapter(createNewDocumentState: makeDocumentState())
+  let printController = StubPrintController()
+  printController.directPrintSessionResults = [
+    "Unsupported Printer": .failure(OutputError("A4、100%実寸、片面を設定できません。"))
+  ]
+  let appState = AppCoordinator(
+    documentAdapter: store,
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) },
+    outputService: OutputService(printController: printController)
+  )
+  let directPrintSession = OutputDirectPrintSession(
+    printInfo: LivePrintController.makePrintInfo(for: .portrait)
+  )
+  let buildOptions = OutputBuildOptions(
+    orientation: .portrait,
+    includeDimensionLabels: true,
+    includeScaleGuide: true,
+    rotationDeg: 0,
+    printableAreaMm: directPrintSession.printableAreaMm
+  )
+  appState.actions.output.outputRequestDraft = OutputRequestDraft(
+    destination: .directPrint,
+    options: OutputPresentationOptions(
+      orientation: .portrait,
+      includeDimensionLabels: true,
+      includeScaleGuide: true,
+      rotationDeg: 0
+    ),
+    directPrinterNames: ["Compatible Printer", "Unsupported Printer"],
+    selectedDirectPrinterName: "Compatible Printer",
+    directPrintSession: directPrintSession,
+    buildState: .ready(
+      OutputRequestPreparedState(
+        buildResult: sampleOutputBuildResult(),
+        buildOptions: buildOptions,
+        directPrintSession: directPrintSession
+      ))
+  )
+
+  appState.actions.output.selectDirectPrintPrinter("Unsupported Printer")
+
+  let draft = unwrap(appState.actions.output.outputRequestDraft)
+  #expect(draft.selectedDirectPrinterName == "Unsupported Printer")
+  #expect(draft.directPrintSession == nil)
+  #expect(
+    appState.actions.output.outputExecutionDisabledReason(for: draft)
+      == "A4、100%実寸、片面を設定できません。")
+  appState.actions.output.confirmOutputRequest()
+  #expect(printController.printedRenderData.isEmpty)
+}
+
 @Test("Output AppCoordinator は直接印刷設定シートで警告を確認して続行できる")
 @MainActor
 func output_app_state_direct_print_sheet_allows_warning_confirmation() {
@@ -6534,10 +6613,13 @@ private func patternLineSharedStyles() -> [ProjectSharedStyle] {
 final class StubPrintController: PrintControlling {
   var outputBuildOptions: OutputBuildOptions?
   var directPrintSessionResult: OutputResult<OutputDirectPrintSession>?
+  var directPrintSessionResults: [String: OutputResult<OutputDirectPrintSession>] = [:]
   var preparedSessionResult: OutputResult<OutputPreparedDirectPrintSession>?
   var runPrintResult: OutputResult<Void> = .success(())
+  var printerNames = ["Test Printer"]
 
   private(set) var requestedPresentations: [OutputPresentationOptions] = []
+  private(set) var requestedPrinterNames: [String?] = []
   private(set) var preparedSessions:
     [(presentation: OutputPresentationOptions, session: OutputDirectPrintSession)] = []
   private(set) var printedRenderData: [OutputPrintRenderData] = []
@@ -6546,7 +6628,7 @@ final class StubPrintController: PrintControlling {
   private(set) var printedDocumentNames: [String] = []
 
   func availablePrinterNames() -> [String] {
-    ["Test Printer"]
+    printerNames
   }
 
   func makeDirectPrintSession(
@@ -6554,6 +6636,10 @@ final class StubPrintController: PrintControlling {
     printerName: String?
   ) -> OutputResult<OutputDirectPrintSession> {
     requestedPresentations.append(presentation)
+    requestedPrinterNames.append(printerName)
+    if let printerName, let result = directPrintSessionResults[printerName] {
+      return result
+    }
     if let directPrintSessionResult {
       return directPrintSessionResult
     }

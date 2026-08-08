@@ -192,7 +192,8 @@ struct OutputRequestSheet: View {
               settingGroupLabel(AppStrings.tr("output.sheet.print_session"))
               summaryRow(
                 AppStrings.tr("output.sheet.printer"),
-                value: draft.directPrintSession?.printerName
+                value: draft.selectedDirectPrinterName
+                  ?? draft.directPrintSession?.printerName
                   ?? AppStrings.tr("output.sheet.print_session_unknown")
               )
               Picker(
@@ -358,7 +359,12 @@ struct OutputRequestSheet: View {
 
   private func directPrinterBinding(for draft: OutputRequestDraft) -> Binding<String> {
     Binding(
-      get: { draft.directPrintSession?.printerName ?? draft.directPrinterNames.first ?? "" },
+      get: {
+        draft.selectedDirectPrinterName
+          ?? draft.directPrintSession?.printerName
+          ?? draft.directPrinterNames.first
+          ?? ""
+      },
       set: actions.selectDirectPrintPrinter
     )
   }

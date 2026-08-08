@@ -32,6 +32,7 @@ struct OutputRequestDraft: Identifiable, Equatable {
   let destination: OutputDestination
   var options: OutputPresentationOptions
   var directPrinterNames: [String] = []
+  var selectedDirectPrinterName: String? = nil
   var directPrintSession: OutputDirectPrintSession?
   var buildRevision: Int = 0
   var buildState: OutputRequestBuildState = .idle
@@ -165,6 +166,19 @@ final class OutputPresentationState: ObservableObject {
     draft.warningAcknowledged = false
     requestDraft = draft
     scheduleBuild(session: session)
+  }
+
+  func failDirectPrintSelection(printerName: String, message: String) {
+    buildTask?.cancel()
+    guard var draft = requestDraft, draft.destination == .directPrint else { return }
+
+    buildSequence += 1
+    draft.buildRevision = buildSequence
+    draft.selectedDirectPrinterName = printerName
+    draft.directPrintSession = nil
+    draft.buildState = .failed(message)
+    draft.warningAcknowledged = false
+    requestDraft = draft
   }
 
   func scheduleBuild(session: any OutputSession) {
