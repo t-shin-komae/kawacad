@@ -45,24 +45,12 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Cache Cargo downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Cache Rust dependencies and build outputs
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-          key: cargo-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            cargo-downloads-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Cache Rust build output
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: target
-          key: cargo-target-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
-          restore-keys: |
-            cargo-target-${{ runner.os }}-${{ runner.arch }}-
+          shared-key: kawacad-rust
+          cache-all-crates: true
+          cache-targets: true
 
       - name: Install Tauri system dependencies
         run: |
@@ -124,24 +112,12 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Cache Cargo downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Cache Rust dependencies and build outputs
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-          key: cargo-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            cargo-downloads-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Cache Rust build output
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: target
-          key: cargo-target-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
-          restore-keys: |
-            cargo-target-${{ runner.os }}-${{ runner.arch }}-
+          shared-key: kawacad-rust
+          cache-all-crates: true
+          cache-targets: true
 
       - name: Install Tauri system dependencies
         run: |
