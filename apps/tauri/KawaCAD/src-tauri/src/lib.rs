@@ -1,3 +1,5 @@
+pub mod direct_print;
+
 use kawacad_core::command::{DocumentCommand, SelectionReference};
 use kawacad_core::constraints::{ConstraintKind, ConstraintTarget};
 use kawacad_core::document::DerivedElementPreflightKind;
@@ -14,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::Manager;
 
 struct CadSession {
@@ -143,7 +145,10 @@ fn discard_recovery_snapshot_at(base_directory: PathBuf) -> Result<(), String> {
     Ok(())
 }
 
-struct AppState(Mutex<CadSession>);
+struct AppState {
+    cad_session: Mutex<CadSession>,
+    prepared_prints: Mutex<direct_print::PreparedPrintStore<()>>,
+}
 
 fn state_for(session: &CadSession) -> serde_json::Value {
     let document = &session.document;
@@ -239,9 +244,15 @@ fn state_for(session: &CadSession) -> serde_json::Value {
 
 fn lock_session(state: &AppState) -> Result<std::sync::MutexGuard<'_, CadSession>, String> {
     state
-        .0
+        .cad_session
         .lock()
         .map_err(|_| "CAD session lock was poisoned".to_owned())
+}
+
+fn direct_print_unavailable_error() -> String {
+    direct_print::current_availability()
+        .reason
+        .unwrap_or_else(|| "Direct printing is unavailable".to_owned())
 }
 
 fn pdf_printable_area(orientation: PrintOrientation) -> PrintableAreaMm {
@@ -315,6 +326,60 @@ fn save_prepared_pdf(
     let pdf = render_pdf(&output_document_model)
         .map_err(|error| format!("Could not render PDF: {error:?}"))?;
     save_pdf_bytes(PathBuf::from(path), &pdf.bytes)
+}
+
+#[tauri::command]
+fn direct_print_availability() -> direct_print::DirectPrintAvailability {
+    direct_print::current_availability()
+}
+
+#[tauri::command]
+fn list_printers() -> Result<Vec<direct_print::DirectPrinter>, String> {
+    Err(direct_print_unavailable_error())
+}
+
+#[tauri::command]
+fn inspect_printer(
+    _request: direct_print::InspectPrinterRequest,
+) -> Result<serde_json::Value, String> {
+    Err(direct_print_unavailable_error())
+}
+
+#[tauri::command]
+fn prepare_direct_print(
+    _request: direct_print::PrepareDirectPrintRequest,
+) -> Result<serde_json::Value, String> {
+    Err(direct_print_unavailable_error())
+}
+
+#[tauri::command]
+fn run_prepared_direct_print(
+    prepared_print_id: String,
+    window: tauri::WebviewWindow,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    let mut prepared_prints = state
+        .prepared_prints
+        .lock()
+        .map_err(|_| "Prepared print store lock was poisoned".to_owned())?;
+    prepared_prints
+        .take(window.label(), &prepared_print_id, Instant::now())
+        .map_err(|_| "Prepared direct print is stale".to_owned())?;
+    Err(direct_print_unavailable_error())
+}
+
+#[tauri::command]
+fn discard_prepared_direct_print(
+    prepared_print_id: String,
+    window: tauri::WebviewWindow,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    let mut prepared_prints = state
+        .prepared_prints
+        .lock()
+        .map_err(|_| "Prepared print store lock was poisoned".to_owned())?;
+    prepared_prints.discard(window.label(), &prepared_print_id, Instant::now());
+    Ok(())
 }
 
 #[tauri::command]
@@ -659,11 +724,20 @@ fn exit_application(app: tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(AppState(Mutex::new(CadSession::new("Untitled".to_owned()))))
+        .manage(AppState {
+            cad_session: Mutex::new(CadSession::new("Untitled".to_owned())),
+            prepared_prints: Mutex::new(direct_print::PreparedPrintStore::new()),
+        })
         .invoke_handler(tauri::generate_handler![
             document_state,
             prepare_pdf_output,
             save_prepared_pdf,
+            direct_print_availability,
+            list_printers,
+            inspect_printer,
+            prepare_direct_print,
+            run_prepared_direct_print,
+            discard_prepared_direct_print,
             new_document,
             open_document,
             save_document,
