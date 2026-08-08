@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FileText } from "lucide-react";
 import { geometryOf, type PointMm, type RawEntity } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
 import { parseDecimal } from "@/shared/state/syncedField";
@@ -35,7 +36,10 @@ export function DocumentOverview({ summary }: { summary: Props["documentSummary"
   ];
   return (
     <section className="document-overview">
-      <h2>{appStrings.inspector.document}</h2>
+      <h2>
+        <FileText aria-hidden="true" />
+        {appStrings.inspector.document}
+      </h2>
       {values.map(([label, value]) => (
         <div className="detail-row" key={label}>
           <span>{label}</span>
@@ -74,8 +78,14 @@ export function SelectedConstraintEditor({
   };
   return (
     <div className="inspector-card constraint-editor">
-      <strong>{constraint.kind}</strong>
-      <small>{constraint.status}</small>
+      <strong>
+        {appStrings.constraintKindNames[constraint.kind as keyof typeof appStrings.constraintKindNames] ??
+          constraint.kind}
+      </strong>
+      <small>
+        {appStrings.constraintStatusNames[constraint.status as keyof typeof appStrings.constraintStatusNames] ??
+          constraint.status}
+      </small>
       {constraint.value && (
         <label>
           {appStrings.inspector.constraintValue(degrees)}
@@ -128,7 +138,10 @@ export function SelectedMeasurementEditor({
 }) {
   return (
     <div className="inspector-card">
-      <strong>{measurement.kind}</strong>
+      <strong>
+        {appStrings.measurementKindNames[measurement.kind as keyof typeof appStrings.measurementKindNames] ??
+          measurement.kind}
+      </strong>
       <label>
         <input
           type="checkbox"

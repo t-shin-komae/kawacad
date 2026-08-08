@@ -37,7 +37,7 @@ export const workspacePreferencesAdapter = {
   },
 
   loadDetailedToolsVisible() {
-    return storedBoolean(detailedToolsPreferenceKey, true);
+    return storedBoolean(detailedToolsPreferenceKey, false);
   },
 
   saveDetailedToolsVisible(value: boolean) {

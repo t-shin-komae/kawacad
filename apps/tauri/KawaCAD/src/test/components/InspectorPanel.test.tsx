@@ -23,11 +23,14 @@ function panel(
   onConvertMeasurement = vi.fn(),
   selectedEntityIds: string[] = [],
   roundHoles: Array<{ id: string; entityId: string; kind: string }> = [],
+  selectedEntities: RawEntity[] = [],
+  selectedCount = 0,
 ) {
   return (
     <InspectorPanel
-      selectedCount={0}
+      selectedCount={selectedCount}
       selectedEntityIds={selectedEntityIds}
+      selectedEntities={selectedEntities}
       documentSummary={{
         viewMode: "編集表示",
         activeLayerName: "Outline",
@@ -85,6 +88,55 @@ describe("InspectorPanel", () => {
     expect(screen.getByText("表示モード")).toBeInTheDocument();
     expect(screen.getByText("Outline")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("summarizes multiple selections and applies a shared style to all selected entities", () => {
+    const onCommand = vi.fn();
+    const line: RawEntity = {
+      id: "entity:line",
+      kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } },
+      layerId: "layer:outline",
+    };
+    const circle: RawEntity = {
+      id: "entity:circle",
+      kind: { circle: { center: { xMm: 20, yMm: 20 }, radiusMm: 4 } },
+      layerId: "layer:stitch",
+    };
+    render(
+      panel(
+        onCommand,
+        [],
+        [{ id: "style:stitch", name: "縫い線", style }],
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        [],
+        [],
+        [line, circle],
+        2,
+      ),
+    );
+
+    expect(screen.getAllByText("2 件を選択中")).toHaveLength(2);
+    expect(screen.getByText("線分、円")).toBeInTheDocument();
+    expect(screen.getByText("Outline、Stitch")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "選択図形の共有線種" }), {
+      target: { value: "style:stitch" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "選択へ適用" }));
+    expect(onCommand).toHaveBeenCalledWith(
+      "compound",
+      [
+        { kind: "setEntitySharedStyle", payload: { entityId: "entity:line", styleId: "style:stitch" } },
+        { kind: "setEntitySharedStyle", payload: { entityId: "entity:circle", styleId: "style:stitch" } },
+      ],
+      "選択図形の線種を更新しました。",
+    );
   });
 
   it("edits a selected round-hole kind and diameter through Core commands", () => {

@@ -3,7 +3,7 @@ import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { ConstraintTarget, PointMm } from "@/features/canvas/domain/cad";
 
-export const toolPaletteWidthRange = { min: 176, max: 220 };
+export const toolPaletteWidthRange = { min: 176, max: 260 };
 
 export { defaultCollapsedToolGroups, toolGroupPreferenceIds };
 

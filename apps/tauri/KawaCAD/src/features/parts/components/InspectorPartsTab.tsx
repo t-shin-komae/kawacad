@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BookOpen, Package } from "lucide-react";
 import { appStrings } from "@/localization";
 import type { Part, PartLibraryEntry, Props } from "@/features/inspector/components/InspectorPanel";
 
@@ -18,7 +19,10 @@ export function InspectorPartsTab({
   return (
     <>
       <section>
-        <h2>{appStrings.inspector.parts}</h2>
+        <h2>
+          <Package aria-hidden="true" />
+          {appStrings.inspector.parts}
+        </h2>
         {props.parts.length ? (
           props.parts.map((part) => <div key={part.id}>{renderPartEditor(part)}</div>)
         ) : (
@@ -54,9 +58,15 @@ export function InspectorPartsTab({
             </div>
           </div>
         )}
+        <button disabled={!props.selectedCount} onClick={props.onCreatePart}>
+          {appStrings.inspector.createPartFromSelection}
+        </button>
       </section>
       <section>
-        <h2>{appStrings.inspector.partLibrary}</h2>
+        <h2>
+          <BookOpen aria-hidden="true" />
+          {appStrings.inspector.partLibrary}
+        </h2>
         {partLibrary.length ? (
           partLibrary.map((item) => (
             <div className="row" key={item.id}>

@@ -35,15 +35,13 @@ struct WindowLayoutPolicy: Equatable {
     storedInspectorWidth: CGFloat,
     previousMode: WindowLayoutMode? = nil
   ) -> WindowLayoutPolicy {
-    let potentialToolDockWidth = clamp(storedToolWidth, within: 176...260, defaultValue: 176)
+    let potentialToolDockWidth = snappedToolWidth(storedToolWidth, for: .wide)
     let workspaceWidthWithToolDock = contentWidth - potentialToolDockWidth - panelResizeHandleWidth
     let mode = resolveMode(
       workspaceWidth: workspaceWidthWithToolDock,
       previousMode: previousMode
     )
-    let toolRange = toolWidthRange(for: mode)
-    let toolDockWidth = clamp(
-      storedToolWidth, within: toolRange, defaultValue: toolRange.lowerBound)
+    let toolDockWidth = snappedToolWidth(storedToolWidth, for: mode)
     let toolDockVisible = mode != .compact
     let workspaceWidth =
       contentWidth - (toolDockVisible ? toolDockWidth + panelResizeHandleWidth : 0)
@@ -83,6 +81,16 @@ struct WindowLayoutPolicy: Equatable {
     case .regular, .compact:
       return 176...240
     }
+  }
+
+  /// Keep the one-column palette at its stable minimum while resizing. The
+  /// second column appears only after the fixed threshold, so SwiftUI does not
+  /// repeatedly remeasure rows around the transition.
+  static func snappedToolWidth(_ proposedWidth: CGFloat, for mode: WindowLayoutMode) -> CGFloat {
+    let range = toolWidthRange(for: mode)
+    let clampedWidth = clamp(proposedWidth, within: range, defaultValue: range.lowerBound)
+    guard clampedWidth >= 220 else { return range.lowerBound }
+    return range.upperBound
   }
 
   static let inspectorDockWidthRange: ClosedRange<CGFloat> =

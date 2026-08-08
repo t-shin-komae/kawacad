@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Paintbrush } from "lucide-react";
 import {
   matchesInspectorSearch,
   setInspectorSharedStyleSearchQuery,
@@ -33,7 +34,10 @@ export function InspectorStylesTab({
 }: InspectorStylesTabProps) {
   return (
     <section>
-      <h2>{appStrings.inspector.sharedStyles}</h2>
+      <h2>
+        <Paintbrush aria-hidden="true" />
+        {appStrings.inspector.sharedStyles}
+      </h2>
       {(props.sharedStyles.length >= 8 || feature.sharedStyleSearchVisible || feature.sharedStyleSearchQuery) && (
         <label className="inspector-search">
           {appStrings.inspector.sharedStyleSearch}

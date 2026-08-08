@@ -1,5 +1,6 @@
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
+import { ClipboardPaste, X } from "lucide-react";
 
 export type PastePlacementMode = "cursor" | "nearSource";
 
@@ -21,7 +22,10 @@ export function PasteOptionsOverlay({ activeMode, canPlaceAtCursor, onSelectMode
       aria-label={appStrings.accessibility.pastePosition}
       role="group"
     >
-      <span>{appStrings.paste.position}</span>
+      <span>
+        <ClipboardPaste size={13} aria-hidden="true" />
+        {appStrings.paste.position}
+      </span>
       <button
         type="button"
         aria-pressed={activeMode === "cursor"}
@@ -34,7 +38,7 @@ export function PasteOptionsOverlay({ activeMode, canPlaceAtCursor, onSelectMode
         {appStrings.paste.nearSource}
       </button>
       <button type="button" aria-label={appStrings.accessibility.dismissPastePosition} onClick={onDismiss}>
-        ×
+        <X size={14} aria-hidden="true" />
       </button>
     </div>
   );

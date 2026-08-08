@@ -30,10 +30,10 @@ export function makeWindowLayout(
   storedInspectorWidth: number,
   previousMode?: WindowLayoutMode,
 ): WindowLayout {
-  const potentialToolWidth = clamp(storedToolWidth, 176, 220, 176);
+  const potentialToolWidth = clamp(storedToolWidth, 176, 260, 176);
   const candidateWidth = contentWidth - potentialToolWidth - windowLayout.panelResizeHandleWidth;
   const mode = resolveWindowLayoutMode(candidateWidth, previousMode);
-  const toolMaximum = 220;
+  const toolMaximum = 260;
   const toolDockWidth = clamp(storedToolWidth, 176, toolMaximum, 176);
   const toolDockVisible = mode !== "compact";
   const workspaceWidth = contentWidth - (toolDockVisible ? toolDockWidth + windowLayout.panelResizeHandleWidth : 0);

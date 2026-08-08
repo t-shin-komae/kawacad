@@ -22,6 +22,17 @@ enum ToolPaletteMetrics {
   static let toolbarLabelWidth: CGFloat = 162
 }
 
+/// Shared dimensions mirrored by the Tauri design tokens in `styles.css`.
+/// Keeping the small set of cross-platform primitives here prevents each
+/// feature view from inventing a new control or card size.
+enum LeatherDesignMetrics {
+  static let controlHeight: CGFloat = 24
+  static let controlRadius: CGFloat = 6
+  static let cardRadius: CGFloat = 8
+  static let panelPadding: CGFloat = 16
+  static let toolbarIconSize: CGFloat = 22
+}
+
 extension Color {
   init(hex: String) {
     let value = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))

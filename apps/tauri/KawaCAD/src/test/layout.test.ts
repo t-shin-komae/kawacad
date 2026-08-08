@@ -20,7 +20,7 @@ describe("Window layout policy parity", () => {
   });
   it("clamps stored panel widths by layout mode", () => {
     const wide = makeWindowLayout(1800, 500, 100);
-    expect(wide.toolDockWidth).toBe(220);
+    expect(wide.toolDockWidth).toBe(260);
     expect(wide.inspectorDockWidth).toBe(windowLayout.minimumInspectorContentWidth);
     const regular = makeWindowLayout(1200, 176, 480);
     expect(regular.mode).toBe("regular");

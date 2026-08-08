@@ -17,13 +17,13 @@ describe("cross-platform native menu", () => {
 
   it("uses the shared product metadata for the About item", () => {
     expect(productInfo.name).toBe("KawaCAD");
-    expect(productInfo.displayVersion).toBe("0.2.0-dev");
+    expect(productInfo.displayVersion).toBe("0.3.0-dev");
     expect(productInfo.copyright).toBe("© 2026 t-shin-komae");
   });
 
   it("suppresses macOS's bundle build-version fallback", () => {
     expect(aboutMetadataForPlatform("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)")).toMatchObject({
-      version: "0.2.0-dev",
+      version: "0.3.0-dev",
       shortVersion: "",
     });
     expect(aboutMetadataForPlatform("Mozilla/5.0 (X11; Linux x86_64)")).not.toHaveProperty("shortVersion");
