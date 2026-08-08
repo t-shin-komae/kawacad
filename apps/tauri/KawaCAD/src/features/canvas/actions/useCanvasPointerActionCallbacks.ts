@@ -154,15 +154,28 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
         const current = move.current;
         move.current = undefined;
         const delta = { xMm: point.xMm - current.start.xMm, yMm: point.yMm - current.start.yMm };
-        if (Math.hypot(delta.xMm, delta.yMm) > 0.01)
-          if (event.altKey)
-            void command(
-              "duplicateSelection",
-              { selection: { entityIds: current.ids }, idNamespace: crypto.randomUUID(), delta },
-              appStrings.app.geometryDuplicated,
-            );
-          else {
-            const part = current.partId ? state?.parts.find((item) => item.id === current.partId) : undefined;
+        if (Math.hypot(delta.xMm, delta.yMm) > 0.01) {
+          const part = current.partId ? state?.parts.find((item) => item.id === current.partId) : undefined;
+          if (event.altKey) {
+            if (part)
+              void command(
+                "duplicatePart",
+                {
+                  partId: part.id,
+                  newPartId: `part:${crypto.randomUUID()}`,
+                  newName: `${part.name} のコピー`,
+                  idNamespace: crypto.randomUUID(),
+                  delta,
+                },
+                appStrings.app.geometryDuplicated,
+              );
+            else
+              void command(
+                "duplicateSelection",
+                { selection: { entityIds: current.ids }, idNamespace: crypto.randomUUID(), delta },
+                appStrings.app.geometryDuplicated,
+              );
+          } else {
             if (part) void command("movePart", { partId: part.id, delta }, appStrings.app.geometryMoved);
             else
               void command(
@@ -171,6 +184,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
                 appStrings.app.geometryMoved,
               );
           }
+        }
       }
       if (controlMove.current) {
         const current = controlMove.current;
