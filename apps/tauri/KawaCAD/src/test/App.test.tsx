@@ -1103,6 +1103,71 @@ describe("React workspace shortcuts", () => {
       ),
     );
   });
+  it("duplicates the whole part when an Option drag starts from a part member", async () => {
+    const part = {
+      id: "part:dragged",
+      name: "Dragged part",
+      quantity: 1,
+      visible: true,
+      printable: true,
+      originMm: { xMm: 0, yMm: 0 },
+      entityIds: ["point-1"],
+      outlineEntityIds: ["point-1"],
+      holeEntityIdGroups: [],
+      derivedElementIds: [],
+      freeTextIds: [],
+      measurementAnnotationIds: [],
+    };
+    const partState = {
+      ...state,
+      parts: [part],
+      canvasProjection: {
+        stitchStartPoints: [],
+        measurementAnnotations: [],
+        dimensionConstraints: [],
+        constraintMarkers: [],
+      },
+    };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return partState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return partState;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
+    Object.defineProperty(canvas, "getBoundingClientRect", {
+      value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+    });
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
+    fireEvent.pointerUp(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 2 });
+    fireEvent.pointerUp(canvas, {
+      ...canvasClientPoint({ xMm: 10, yMm: 0 }),
+      button: 0,
+      altKey: true,
+      pointerId: 2,
+    });
+
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith(
+        "apply_command",
+        expect.objectContaining({
+          command: {
+            kind: "duplicatePart",
+            payload: expect.objectContaining({
+              partId: "part:dragged",
+              newPartId: expect.stringMatching(/^part:/),
+              newName: "Dragged part のコピー",
+              idNamespace: expect.any(String),
+              delta: expect.objectContaining({ xMm: expect.closeTo(10) }),
+            }),
+          },
+        }),
+      ),
+    );
+  });
   it("uses a non-destructive Core preview while dragging and discards it on Escape", async () => {
     const canvasState = {
       ...state,

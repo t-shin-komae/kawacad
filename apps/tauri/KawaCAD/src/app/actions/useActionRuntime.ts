@@ -92,7 +92,7 @@ export type AppActionContext = {
   settingPartOriginId: string | undefined;
   pan: React.MutableRefObject<{ screen: { x: number; y: number }; viewport: Viewport } | undefined>;
   marquee: React.MutableRefObject<PointMm | undefined>;
-  move: React.MutableRefObject<{ start: PointMm; ids: string[] } | undefined>;
+  move: React.MutableRefObject<{ start: PointMm; ids: string[]; partId?: string } | undefined>;
   controlMove: React.MutableRefObject<{ target: EditControlTarget } | undefined>;
   measurementMove: React.MutableRefObject<{ id: string; start: PointMm; labelOnly: boolean } | undefined>;
   dimensionMove: React.MutableRefObject<{ constraintId: string; start: PointMm; labelOnly: boolean } | undefined>;

@@ -594,6 +594,52 @@ func uc15_app_state_moves_selected_entities_as_one_compound_command() {
   #expect(appState.actions.document.statusMessage == "2 個のエンティティを移動しました")
 }
 
+@Test("UC15 パーツ内の単一図形ドラッグはパーツ移動として確定する")
+@MainActor
+func uc15_app_state_moves_part_when_dragging_one_member_entity() {
+  let part = ProjectPart(
+    id: "part:wallet",
+    name: "Wallet",
+    originMM: .zero,
+    outlineEntityIDs: ["entity:line"],
+    holeEntityIDGroups: [],
+    entityIDs: ["entity:line"],
+    derivedElementIDs: [],
+    freeTextIDs: [],
+    measurementAnnotationIDs: []
+  )
+  let initialState = makeDocumentState(
+    name: "Part Drag",
+    parts: [part],
+    entities: [lineEntity(id: "entity:line", start: .zero, end: ModelPoint(xMM: 10, yMM: 0))]
+  )
+  let movedPart = part.withMetadata(name: part.name, originMM: ModelPoint(xMM: 5, yMM: 7))
+  let movedState = makeDocumentState(
+    name: "Part Drag",
+    parts: [movedPart],
+    entities: [
+      lineEntity(
+        id: "entity:line", start: ModelPoint(xMM: 5, yMM: 7), end: ModelPoint(xMM: 15, yMM: 7))
+    ]
+  )
+  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
+  store.previewCommandState = movedState
+  store.applyCommandState = movedState
+  let appState = AppCoordinator(
+    documentAdapter: store,
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) }
+  )
+
+  appState.actions.document.previewMoveEntities(
+    ["entity:line"], delta: ModelPoint(xMM: 5, yMM: 7), duplicating: false)
+  #expect((store.previewedPayloads.first?["kind"] as? String) == "movePart")
+
+  appState.actions.document.moveEntities(
+    ["entity:line"], delta: ModelPoint(xMM: 5, yMM: 7), duplicating: false)
+  #expect((store.appliedPayloads.first?["kind"] as? String) == "movePart")
+  #expect(appState.actions.document.parts.first?.originMM == movedPart.originMM)
+}
+
 @Test("UC15 AppCoordinator は Option+Drag 相当の複製後に新規複製を選択する")
 @MainActor
 func uc15_app_state_option_drag_duplicates_and_selects_new_entities() {

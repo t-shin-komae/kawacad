@@ -237,18 +237,7 @@ extension DocumentActionHandler {
       cancelMovePreview()
       return
     }
-    let selectedPart = WorkspaceViewStateFactory.selectedInspectorPart(
-      selectedPartID: inspectorPresentation.selectedPartID,
-      parts: parts
-    )
-    let selectedPartEntityIDs = PartFeature.canvasEntityIDs(
-      for: selectedPart,
-      entities: entities
-    )
-    if let part = selectedPart,
-      !selectedPartEntityIDs.isEmpty,
-      entityIDs == selectedPartEntityIDs
-    {
+    if let part = partContainingDraggedEntities(entityIDs) {
       cancelMovePreview()
       if duplicating {
         duplicatePart(part, delta: delta)
@@ -315,18 +304,7 @@ extension DocumentActionHandler {
       cancelMovePreview()
       return
     }
-    let selectedPart = WorkspaceViewStateFactory.selectedInspectorPart(
-      selectedPartID: inspectorPresentation.selectedPartID,
-      parts: parts
-    )
-    let selectedPartEntityIDs = PartFeature.canvasEntityIDs(
-      for: selectedPart,
-      entities: entities
-    )
-    if let part = selectedPart,
-      !selectedPartEntityIDs.isEmpty,
-      entityIDs == selectedPartEntityIDs
-    {
+    if let part = partContainingDraggedEntities(entityIDs) {
       let request =
         duplicating
         ? commandFactory.makeDuplicatePartCommand(
@@ -388,6 +366,15 @@ extension DocumentActionHandler {
       statusMessage = message.localizedDescription
       presentInvalidDragError(message.localizedDescription)
     }
+  }
+
+  private func partContainingDraggedEntities(_ entityIDs: Set<String>) -> ProjectPart? {
+    let candidates = parts.filter { part in
+      let partEntityIDs = PartFeature.canvasEntityIDs(for: part, entities: entities)
+      return !entityIDs.isEmpty && entityIDs.isSubset(of: partEntityIDs)
+    }
+    guard candidates.count == 1 else { return nil }
+    return candidates[0]
   }
 
   private func executeDocumentCommand(

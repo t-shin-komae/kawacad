@@ -39,6 +39,17 @@ import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresenta
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { CanvasActionContext } from "@/app/actions/useActionRuntime";
 
+function partIDForDraggedEntities(state: State, entityIDs: string[]): string | undefined {
+  const candidates = state.parts.filter((part) =>
+    entityIDs.every((entityID) => {
+      if (part.entityIds.includes(entityID)) return true;
+      const metadata = state.drawingEntityMetadata.find((item) => item.entityId === entityID);
+      return metadata?.derivedElementId ? part.derivedElementIds.includes(metadata.derivedElementId) : false;
+    }),
+  );
+  return candidates.length === 1 ? candidates[0].id : undefined;
+}
+
 type CanvasPointActionDependencies = CanvasActionContext & {
   activeStyleId: string | null;
   snapWithTarget: (point: PointMm, enabled: boolean) => { point: PointMm; target?: ConstraintTarget };
@@ -255,7 +266,8 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           return;
         }
         if (selectionHit && selected.has(selectionHit) && !event.shiftKey) {
-          move.current = { start: point, ids: [...selected] };
+          const ids = [...selected];
+          move.current = { start: point, ids, partId: partIDForDraggedEntities(state, ids) };
           event.currentTarget.setPointerCapture(event.pointerId);
           return;
         }
