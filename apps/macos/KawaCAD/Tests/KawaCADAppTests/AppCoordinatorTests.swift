@@ -3510,7 +3510,7 @@ func output_app_state_routes_direct_print_through_render_print_and_controller() 
   #expect(printController.printedRenderData.count == 1)
   #expect(printController.printedOrientations == [.landscape])
   #expect(printController.printedDocumentNames == ["Direct Print"])
-  #expect(appState.actions.document.statusMessage == "直接印刷ダイアログを開きました")
+  #expect(appState.actions.document.statusMessage == "直接印刷を開始しました")
 }
 
 @Test("Output AppCoordinator は renderPrint 失敗時に直接印刷を開始しない")
@@ -6533,13 +6533,11 @@ private func patternLineSharedStyles() -> [ProjectSharedStyle] {
 
 final class StubPrintController: PrintControlling {
   var outputBuildOptions: OutputBuildOptions?
-  var makeOptionsResult: OutputResult<OutputBuildOptions>?
-  var captureSessionResult: OutputResult<OutputDirectPrintCaptureResult>?
+  var directPrintSessionResult: OutputResult<OutputDirectPrintSession>?
   var preparedSessionResult: OutputResult<OutputPreparedDirectPrintSession>?
   var runPrintResult: OutputResult<Void> = .success(())
 
   private(set) var requestedPresentations: [OutputPresentationOptions] = []
-  private(set) var capturedPresentations: [OutputPresentationOptions] = []
   private(set) var preparedSessions:
     [(presentation: OutputPresentationOptions, session: OutputDirectPrintSession)] = []
   private(set) var printedRenderData: [OutputPrintRenderData] = []
@@ -6547,42 +6545,22 @@ final class StubPrintController: PrintControlling {
   private(set) var printedOrientations: [OutputPrintOrientation] = []
   private(set) var printedDocumentNames: [String] = []
 
-  func makeOutputBuildOptions(presentation: OutputPresentationOptions) -> OutputResult<
-    OutputBuildOptions
-  > {
-    requestedPresentations.append(presentation)
-    if let makeOptionsResult {
-      return makeOptionsResult
-    }
-    return .success(
-      outputBuildOptions
-        ?? OutputBuildOptions(
-          orientation: presentation.orientation,
-          includeDimensionLabels: presentation.includeDimensionLabels,
-          includeScaleGuide: presentation.includeScaleGuide,
-          rotationDeg: presentation.rotationDeg,
-          printableAreaMm: OutputPrintableAreaMm(
-            leftMm: -100.0,
-            rightMm: 100.0,
-            topMm: 143.5,
-            bottomMm: -143.5
-          )
-        )
-    )
+  func availablePrinterNames() -> [String] {
+    ["Test Printer"]
   }
 
-  func captureDirectPrintSession(
-    presentation: OutputPresentationOptions
-  ) -> OutputResult<OutputDirectPrintCaptureResult> {
-    capturedPresentations.append(presentation)
-    if let captureSessionResult {
-      return captureSessionResult
+  func makeDirectPrintSession(
+    presentation: OutputPresentationOptions,
+    printerName: String?
+  ) -> OutputResult<OutputDirectPrintSession> {
+    requestedPresentations.append(presentation)
+    if let directPrintSessionResult {
+      return directPrintSessionResult
     }
     return .success(
-      .ready(
-        OutputDirectPrintSession(
-          printInfo: LivePrintController.makePrintInfo(for: presentation.orientation)
-        )))
+      OutputDirectPrintSession(
+        printInfo: LivePrintController.makePrintInfo(for: presentation.orientation)
+      ))
   }
 
   func prepareDirectPrintSession(

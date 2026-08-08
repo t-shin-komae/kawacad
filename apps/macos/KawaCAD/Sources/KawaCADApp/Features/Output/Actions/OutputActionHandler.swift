@@ -25,6 +25,7 @@ extension OutputActionHandler {
     var draft = OutputRequestDraft(
       destination: .pdf,
       options: options,
+      directPrinterNames: [],
       directPrintSession: nil
     )
     draft.buildState = buildState
@@ -45,10 +46,13 @@ extension OutputActionHandler {
     let options = OutputFeature.presentationOptions(
       orientation: workspacePreferences.a4ReferenceOrientation
     )
-    switch outputPresentation.captureDirectPrintSession(presentation: options) {
-    case .success(.cancelled):
+    let printerNames = outputPresentation.availablePrinterNames()
+    guard !printerNames.isEmpty else {
+      presentAlert(AppStrings.tr("output.direct_print_printer_unavailable"))
       return
-    case .success(.ready(let directPrintSession)):
+    }
+    switch outputPresentation.makeDirectPrintSession(presentation: options, printerName: nil) {
+    case .success(let directPrintSession):
       outputPresentation.setRequestDraft(
         OutputRequestDraft(
           destination: .directPrint,
@@ -58,6 +62,7 @@ extension OutputActionHandler {
             includeScaleGuide: options.includeScaleGuide,
             rotationDeg: options.rotationDeg
           ),
+          directPrinterNames: printerNames,
           directPrintSession: directPrintSession
         ))
       actions.workspace.setA4ReferenceOrientation(directPrintSession.orientation)
@@ -67,13 +72,6 @@ extension OutputActionHandler {
       return
     }
     outputPresentation.scheduleBuild(session: cadSession)
-  }
-
-  func printDirect() {
-    printDirect(
-      presentation: OutputFeature.presentationOptions(
-        orientation: workspacePreferences.a4ReferenceOrientation
-      ))
   }
 
   func printDirect(presentation: OutputPresentationOptions) {
@@ -161,15 +159,15 @@ extension OutputActionHandler {
     outputPresentation.setRequestDraft(draft)
   }
 
-  func refreshDirectPrintSession() {
+  func selectDirectPrintPrinter(_ printerName: String) {
     guard let draft = outputPresentation.requestDraft else {
       return
     }
-    let currentOptions = draft.options
-    switch outputPresentation.captureDirectPrintSession(presentation: currentOptions) {
-    case .success(.cancelled):
-      return
-    case .success(.ready(let directPrintSession)):
+    switch outputPresentation.makeDirectPrintSession(
+      presentation: draft.options,
+      printerName: printerName
+    ) {
+    case .success(let directPrintSession):
       outputPresentation.updateDraft(session: cadSession) { refreshedDraft in
         refreshedDraft.directPrintSession = directPrintSession
         refreshedDraft.options = OutputPresentationOptions(

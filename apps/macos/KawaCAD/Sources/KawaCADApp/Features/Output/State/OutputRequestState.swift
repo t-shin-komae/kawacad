@@ -31,6 +31,7 @@ struct OutputRequestDraft: Identifiable, Equatable {
   let id = UUID()
   let destination: OutputDestination
   var options: OutputPresentationOptions
+  var directPrinterNames: [String] = []
   var directPrintSession: OutputDirectPrintSession?
   var buildRevision: Int = 0
   var buildState: OutputRequestBuildState = .idle
@@ -88,10 +89,15 @@ final class OutputPresentationState: ObservableObject {
     service.makePDFBuildOptions(presentation: presentation)
   }
 
-  func captureDirectPrintSession(
-    presentation: OutputPresentationOptions
-  ) -> OutputResult<OutputDirectPrintCaptureResult> {
-    service.captureDirectPrintSession(presentation: presentation)
+  func availablePrinterNames() -> [String] {
+    service.availablePrinterNames()
+  }
+
+  func makeDirectPrintSession(
+    presentation: OutputPresentationOptions,
+    printerName: String?
+  ) -> OutputResult<OutputDirectPrintSession> {
+    service.makeDirectPrintSession(presentation: presentation, printerName: printerName)
   }
 
   func prepareDirectPrintSession(

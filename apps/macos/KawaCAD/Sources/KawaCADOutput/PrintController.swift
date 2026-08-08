@@ -1,46 +1,55 @@
 import AppKit
+import ApplicationServices
 import Foundation
 
 public struct LivePrintController: PrintControlling {
   private let runPrintOperation: (PrintView, NSPrintInfo, String) -> Bool
-  private let runPrintPanel: (NSPrintInfo) -> NSApplication.ModalResponse
+  private let printerNames: () -> [String]
+  private let makePrintInfoForPrinter:
+    (String?, OutputPrintOrientation) -> OutputResult<NSPrintInfo>
 
   public init() {
     self.runPrintOperation = Self.runAppKitPrintOperation
-    self.runPrintPanel = Self.runAppKitPrintPanel
+    self.printerNames = { NSPrinter.printerNames }
+    self.makePrintInfoForPrinter = Self.makePrintInfoForPrinter
   }
 
   init(
     runPrintOperation: @escaping (PrintView, NSPrintInfo, String) -> Bool,
-    runPrintPanel: @escaping (NSPrintInfo) -> NSApplication.ModalResponse = Self.runAppKitPrintPanel
+    printerNames: @escaping () -> [String] = { NSPrinter.printerNames },
+    makePrintInfoForPrinter:
+      @escaping (String?, OutputPrintOrientation) -> OutputResult<NSPrintInfo> = Self
+      .makePrintInfoForPrinter
   ) {
     self.runPrintOperation = runPrintOperation
-    self.runPrintPanel = runPrintPanel
+    self.printerNames = printerNames
+    self.makePrintInfoForPrinter = makePrintInfoForPrinter
   }
 
-  public func makeOutputBuildOptions(presentation: OutputPresentationOptions) -> OutputResult<
-    OutputBuildOptions
-  > {
-    let printInfo = Self.makePrintInfo(for: presentation.orientation)
-    let options = OutputBuildOptions(
-      orientation: presentation.orientation,
-      includeDimensionLabels: presentation.includeDimensionLabels,
-      includeScaleGuide: presentation.includeScaleGuide,
-      rotationDeg: presentation.rotationDeg,
-      printableAreaMm: Self.printableAreaMM(from: printInfo, orientation: presentation.orientation)
-    )
-    return .success(options)
+  public func availablePrinterNames() -> [String] {
+    printerNames().sorted()
   }
 
-  public func captureDirectPrintSession(
-    presentation: OutputPresentationOptions
-  ) -> OutputResult<OutputDirectPrintCaptureResult> {
-    let printInfo = Self.makePrintInfo(for: presentation.orientation)
-    let response = runPrintPanel(printInfo)
-    guard response == .OK else {
-      return .success(.cancelled)
+  public func makeDirectPrintSession(
+    presentation: OutputPresentationOptions,
+    printerName: String?
+  ) -> OutputResult<OutputDirectPrintSession> {
+    switch makePrintInfoForPrinter(printerName, presentation.orientation) {
+    case .success(let printInfo):
+      let session = OutputDirectPrintSession(printInfo: printInfo)
+      guard session.isA4Paper else {
+        return .failure(OutputError(OutputStrings.tr("output.direct_print_requires_a4")))
+      }
+      guard session.isActualScale else {
+        return .failure(OutputError(OutputStrings.tr("output.direct_print_requires_actual_scale")))
+      }
+      guard session.isSingleSided else {
+        return .failure(OutputError(OutputStrings.tr("output.direct_print_requires_single_sided")))
+      }
+      return .success(session)
+    case .failure(let error):
+      return .failure(error)
     }
-    return .success(.ready(OutputDirectPrintSession(printInfo: printInfo)))
   }
 
   public func prepareDirectPrintSession(
@@ -48,18 +57,18 @@ public struct LivePrintController: PrintControlling {
     session: OutputDirectPrintSession
   ) -> OutputResult<OutputPreparedDirectPrintSession> {
     let printInfo = (session.printInfo.copy() as? NSPrintInfo) ?? session.printInfo
-    let capturedSession = OutputDirectPrintSession(printInfo: printInfo)
+    Self.configure(printInfo, orientation: presentation.orientation)
+    let preparedSession = OutputDirectPrintSession(printInfo: printInfo)
 
-    guard capturedSession.isA4Paper else {
+    guard preparedSession.isA4Paper else {
       return .failure(OutputError(OutputStrings.tr("output.direct_print_requires_a4")))
     }
-    guard capturedSession.isActualScale else {
+    guard preparedSession.isActualScale else {
       return .failure(OutputError(OutputStrings.tr("output.direct_print_requires_actual_scale")))
     }
-
-    printInfo.orientation = presentation.orientation == .portrait ? .portrait : .landscape
-    printInfo.paperSize = Self.paperSizePoints(for: presentation.orientation)
-    let preparedSession = OutputDirectPrintSession(printInfo: printInfo)
+    guard preparedSession.isSingleSided else {
+      return .failure(OutputError(OutputStrings.tr("output.direct_print_requires_single_sided")))
+    }
 
     return .success(
       OutputPreparedDirectPrintSession(
@@ -95,10 +104,6 @@ public struct LivePrintController: PrintControlling {
     return .success(())
   }
 
-  private static func runAppKitPrintPanel(printInfo: NSPrintInfo) -> NSApplication.ModalResponse {
-    NSApplication.ModalResponse(rawValue: NSPrintPanel().runModal(with: printInfo))
-  }
-
   private static func runAppKitPrintOperation(
     printView: PrintView,
     printInfo: NSPrintInfo,
@@ -113,13 +118,41 @@ public struct LivePrintController: PrintControlling {
 
   public static func makePrintInfo(for orientation: OutputPrintOrientation) -> NSPrintInfo {
     let printInfo = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo.shared
+    configure(printInfo, orientation: orientation)
+    return printInfo
+  }
+
+  private static func makePrintInfoForPrinter(
+    _ printerName: String?,
+    orientation: OutputPrintOrientation
+  ) -> OutputResult<NSPrintInfo> {
+    let selectedName =
+      printerName
+      ?? NSPrintInfo.defaultPrinter?.name
+      ?? NSPrinter.printerNames.first
+    guard let selectedName, let printer = NSPrinter(name: selectedName) else {
+      return .failure(OutputError(OutputStrings.tr("output.direct_print_printer_unavailable")))
+    }
+    let printInfo = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo.shared
+    printInfo.printer = printer
+    configure(printInfo, orientation: orientation)
+    return .success(printInfo)
+  }
+
+  private static func configure(_ printInfo: NSPrintInfo, orientation: OutputPrintOrientation) {
     printInfo.orientation = orientation == .portrait ? .portrait : .landscape
     printInfo.paperSize = paperSizePoints(for: orientation)
+    printInfo.setUpPrintOperationDefaultValues()
+    printInfo.scalingFactor = 1.0
     printInfo.horizontalPagination = .clip
     printInfo.verticalPagination = .clip
     printInfo.isHorizontallyCentered = false
     printInfo.isVerticallyCentered = false
-    return printInfo
+    PMSetDuplex(
+      OpaquePointer(printInfo.pmPrintSettings()),
+      PMDuplexMode(kPMDuplexNone)
+    )
+    printInfo.updateFromPMPrintSettings()
   }
 
   static func printableAreaMM(
