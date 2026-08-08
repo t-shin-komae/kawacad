@@ -45,6 +45,21 @@ final class KawaCADAppDelegate: NSObject, NSApplicationDelegate {
   let documentLifecycleController = DocumentLifecycleController()
   var didResignActive: () -> Void = {}
 
+  var setApplicationIcon: () -> Void = {
+    let packagedIconURL = Bundle.main.url(forResource: "KawaCAD", withExtension: "icns")
+    let resourceBundleURL = Bundle.main.executableURL?
+      .deletingLastPathComponent()
+      .appendingPathComponent("KawaCAD_KawaCADApp.bundle", isDirectory: true)
+    let developmentIconURL =
+      resourceBundleURL
+      .flatMap(Bundle.init(url:))?
+      .url(forResource: "AppIcon", withExtension: "png")
+    guard let iconURL = packagedIconURL ?? developmentIconURL,
+      let icon = NSImage(contentsOf: iconURL)
+    else { return }
+    NSApp.applicationIconImage = icon
+  }
+
   var setActivationPolicy: (NSApplication.ActivationPolicy) -> Void = {
     _ = NSApp.setActivationPolicy($0)
   }
@@ -56,6 +71,7 @@ final class KawaCADAppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    setApplicationIcon()
     setActivationPolicy(.regular)
     activateApplication()
   }

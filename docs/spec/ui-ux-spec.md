@@ -14,6 +14,10 @@
 
 共通の編集画面と出力プレビューは Swift/macOS と Tauri/React で提供する。Swift/macOS は macOS 13 以降を対象とし、PDF 出力と直接印刷へ進める。Tauri/React は Windows・Linux・macOS を対象とし、編集機能と出力プレビューを提供するが、PDF 生成と直接印刷の導線は表示しない。
 
+### 2.1 アプリアイコン
+
+アプリアイコンは、茶寄りのオレンジ色の角丸コースターへ、濃色の革で作った `K` を明色の糸で縫い付けた意匠とする。Swift/macOS 版と Tauri/React 版は、対応するデスクトッププラットフォームで同じ意匠を使用する。原画は[アプリアイコン SVG](../../artifacts/icon-candidates/candidate-a-saddle-stitch.svg)を正とする。
+
 ## 3. ワークスペース構成
 
 アプリケーションは、単一ドキュメントを編集するワークスペースとして動作する。

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">KawaCAD icon — Saddle Stitch</title>
+  <desc id="desc">A warm orange leather coaster with a raised dark-leather K appliqué, sewn with evenly inset ivory stitching.</desc>
+
+  <defs>
+    <linearGradient id="coasterLeather" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E58A43"/>
+      <stop offset="0.5" stop-color="#CB632A"/>
+      <stop offset="1" stop-color="#A8441E"/>
+    </linearGradient>
+    <linearGradient id="kLeather" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#955039"/>
+      <stop offset="0.44" stop-color="#713522"/>
+      <stop offset="1" stop-color="#4A1E14"/>
+    </linearGradient>
+    <filter id="coasterShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#491D0F" flood-opacity=".34"/>
+    </filter>
+    <filter id="kShadow" x="-20%" y="-20%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="17" stdDeviation="11" flood-color="#2D1009" flood-opacity=".62"/>
+    </filter>
+    <path id="kContour" d="M326 258H432V457L618 258H750L524 488L760 766H626L447 548L432 563V766H326Z"/>
+  </defs>
+
+  <rect x="84" y="70" width="856" height="856" rx="176" fill="url(#coasterLeather)" stroke="#71301A" stroke-width="14" filter="url(#coasterShadow)"/>
+
+  <rect x="128" y="114" width="768" height="768" rx="134" fill="none" stroke="#7E351B" stroke-width="20" stroke-dasharray="28 22" stroke-linecap="round"/>
+  <rect x="128" y="114" width="768" height="768" rx="134" fill="none" stroke="#F7D59E" stroke-width="10" stroke-dasharray="28 22" stroke-linecap="round"/>
+
+  <!-- The same contour drives every K layer. Concentric stroke widths keep the stitch inset uniform. -->
+  <use href="#kContour" fill="#43190F" stroke="#43190F" stroke-width="72" stroke-linejoin="round" filter="url(#kShadow)"/>
+  <use href="#kContour" fill="url(#kLeather)" stroke="url(#kLeather)" stroke-width="60" stroke-linejoin="round"/>
+  <use href="#kContour" fill="none" stroke="#B66A49" stroke-width="5" stroke-linejoin="round" opacity=".55" transform="translate(-4 -5)"/>
+
+  <use href="#kContour" fill="none" stroke="#321109" stroke-width="24" stroke-dasharray="34 24" stroke-linecap="round" stroke-linejoin="round"/>
+  <use href="#kContour" fill="none" stroke="#F7D59E" stroke-width="13" stroke-dasharray="34 24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
