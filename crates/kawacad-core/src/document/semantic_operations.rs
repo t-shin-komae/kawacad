@@ -655,13 +655,13 @@ impl ProjectDocument {
         let mut result = self
             .entities
             .iter()
-            .filter(|entity| entity.style_id.as_deref() == Some("style:stitch-line"))
+            .filter(|entity| super::command_applier::ensure_stitch_target_entity(entity).is_ok())
             .filter(|entity| allows(&entity.id))
             .cloned()
             .map(|entity| (entity.id.clone(), None, entity))
             .collect::<Vec<_>>();
         for derived in &self.derived_elements {
-            if derived.style_id.as_deref() != Some("style:stitch-line") || !allows(&derived.id) {
+            if !allows(&derived.id) {
                 continue;
             }
             if let Ok(entities) = self.resolve_derived_element(derived) {
@@ -669,6 +669,9 @@ impl ProjectDocument {
                     entities
                         .into_iter()
                         .enumerate()
+                        .filter(|(_, entity)| {
+                            super::command_applier::ensure_stitch_target_entity(entity).is_ok()
+                        })
                         .map(|(index, entity)| (derived.id.clone(), Some(index), entity)),
                 );
             }

@@ -1600,7 +1600,7 @@ fn stitch_start_target_entity(
     stitch_start_point: &StitchStartPoint,
 ) -> CommandResult<Entity> {
     if let Some(entity) = document.entity(&stitch_start_point.target_id) {
-        ensure_stitch_style(entity.style_id.as_deref(), "stitch start point target")?;
+        ensure_stitch_target_entity(entity)?;
         return Ok(entity.clone());
     }
 
@@ -1613,28 +1613,29 @@ fn stitch_start_target_entity(
                 &stitch_start_point.target_id,
             )
         })?;
-    ensure_stitch_style(
-        derived_element.style_id.as_deref(),
-        "stitch start point target",
-    )?;
     let resolved = document.resolve_derived_element(derived_element)?;
     let index = stitch_start_point.resolved_index.unwrap_or(0);
-    resolved
+    let entity = resolved
         .get(index)
         .cloned()
         .ok_or(CommandError::InvalidValue {
             field: "stitch start point resolvedIndex",
-            reason: "must reference an existing resolved stitch line",
-        })
+            reason: "must reference an existing resolved line, center line, or arc",
+        })?;
+    ensure_stitch_target_entity(&entity)?;
+    Ok(entity)
 }
 
-fn ensure_stitch_style(style_id: Option<&str>, field: &'static str) -> CommandResult {
-    if style_id == Some("style:stitch-line") {
+pub(in crate::document) fn ensure_stitch_target_entity(entity: &Entity) -> CommandResult {
+    if matches!(
+        entity.kind,
+        EntityKind::LineSegment(_) | EntityKind::CenterLine(_) | EntityKind::Arc(_)
+    ) {
         return Ok(());
     }
     Err(CommandError::InvalidValue {
-        field,
-        reason: "must reference an element with stitch-line shared style",
+        field: "stitch start point target",
+        reason: "must reference a line, center line, or arc",
     })
 }
 

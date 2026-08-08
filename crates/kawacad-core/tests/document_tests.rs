@@ -486,8 +486,7 @@ fn stitch_start_points_support_line_arc_offset_save_load_and_output() {
     for (name, entity, ratio, expected_position) in [
         (
             "line",
-            line_entity("entity:line", point(0.0, 0.0), point(100.0, 0.0))
-                .with_style("style:stitch-line"),
+            line_entity("entity:line", point(0.0, 0.0), point(100.0, 0.0)),
             0.25,
             point(25.0, 0.0),
         ),
@@ -499,8 +498,7 @@ fn stitch_start_points_support_line_arc_offset_save_load_and_output() {
                 10.0,
                 0.0,
                 std::f64::consts::PI,
-            )
-            .with_style("style:stitch-line"),
+            ),
             0.5,
             point(0.0, 10.0),
         ),
@@ -593,10 +591,9 @@ fn stitch_start_points_reject_invalid_targets_without_state_change() {
         ))
         .expect("stitch line");
     document
-        .apply_command(DocumentCommand::AddEntity(line_entity(
+        .apply_command(DocumentCommand::AddEntity(point_entity(
             "entity:cut",
             point(0.0, 10.0),
-            point(10.0, 10.0),
         )))
         .expect("cut line");
     document
