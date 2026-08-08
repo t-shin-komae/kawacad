@@ -44,6 +44,7 @@ function adaptState(coreState, { path: projectPath, viewMode, orientation }) {
       hasPath: Boolean(projectPath),
       path: projectPath,
     },
+    settings: coreState.settings,
     viewMode,
     entities,
     drawingEntityMetadata: entities
@@ -132,25 +133,23 @@ export class CoreBridge {
         return this.#state();
       case "set_view_mode":
         this.#viewMode = args.viewMode;
-        if (typeof args.outputLandscape === "boolean")
-          this.#orientation = args.outputLandscape ? "landscape" : "portrait";
         return this.#state();
       case "apply_command":
         return this.#request({
           kind: "applyCommand",
           payload: { command: args.command, viewMode: this.#viewMode },
-        }).then((state) => adaptState(state, this.#context()));
+        }).then((state) => this.#adaptState(state));
       case "preview_command":
         return this.#request({
           kind: "previewCommand",
           payload: { command: args.command, viewMode: this.#viewMode },
-        }).then((state) => adaptState(state, this.#context()));
+        }).then((state) => this.#adaptState(state));
       case "undo":
       case "redo":
         return this.#request({
           kind: command,
           payload: { viewMode: this.#viewMode },
-        }).then((state) => adaptState(state, this.#context()));
+        }).then((state) => this.#adaptState(state));
       case "preflight_constraint":
         return this.#request({ kind: "preflightConstraint", payload: { kind: args.kind, targets: args.targets } });
       case "preflight_derived_element":
@@ -210,16 +209,17 @@ export class CoreBridge {
 
   async #state() {
     const state = await this.#request({ kind: "documentState", payload: { viewMode: this.#viewMode } });
-    const adapted = adaptState(state, this.#context());
+    const adapted = this.#adaptState(state);
     if (this.#viewMode === "outputPreview") {
+      const orientation = adapted.settings.orientation;
       const model = await this.#request({
         kind: "buildOutputDocumentModel",
         payload: {
-          orientation: this.#orientation,
+          orientation,
           includeDimensionLabels: true,
           includeScaleGuide: true,
           rotationDeg: 0,
-          printableAreaMm: printableArea(this.#orientation),
+          printableAreaMm: printableArea(orientation),
         },
       });
       adapted.outputPreview = {
@@ -228,6 +228,11 @@ export class CoreBridge {
       };
     }
     return adapted;
+  }
+
+  #adaptState(state) {
+    this.#orientation = state.settings.orientation;
+    return adaptState(state, this.#context());
   }
 
   #context() {

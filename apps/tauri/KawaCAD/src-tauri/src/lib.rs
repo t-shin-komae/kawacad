@@ -16,7 +16,6 @@ struct CadSession {
     document: ProjectDocument,
     clean_document: ProjectDocument,
     view_mode: CanvasViewMode,
-    output_orientation: PrintOrientation,
     path: Option<String>,
     recovered_dirty: bool,
 }
@@ -28,7 +27,6 @@ impl CadSession {
             clean_document: document.clone(),
             document,
             view_mode: CanvasViewMode::EditDisplay,
-            output_orientation: PrintOrientation::Portrait,
             path: None,
             recovered_dirty: false,
         }
@@ -154,12 +152,13 @@ fn state_for(session: &CadSession) -> serde_json::Value {
         })
         .collect::<Vec<_>>();
     let output_preview = matches!(session.view_mode, CanvasViewMode::OutputPreview).then(|| {
-        let (width_mm, height_mm) = match session.output_orientation {
+        let orientation = document.settings().orientation;
+        let (width_mm, height_mm) = match orientation {
             PrintOrientation::Portrait => (210.0, 297.0),
             PrintOrientation::Landscape => (297.0, 210.0),
         };
         match document.build_output_document_model(BuildOutputDocumentModelOptions {
-            orientation: session.output_orientation,
+            orientation,
             include_dimension_labels: true,
             include_scale_guide: true,
             rotation_deg: 0,
@@ -202,6 +201,7 @@ fn state_for(session: &CadSession) -> serde_json::Value {
             "hasPath": session.path.is_some(),
             "path": session.path,
         },
+        "settings": document.settings(),
         "layers": document.layers(),
         "sharedStyles": document.shared_styles(),
         "parameters": document.parameters(),
@@ -289,20 +289,13 @@ fn reload_document(state: tauri::State<'_, AppState>) -> Result<serde_json::Valu
 #[tauri::command]
 fn set_view_mode(
     view_mode: String,
-    output_landscape: Option<bool>,
+    _output_landscape: Option<bool>,
     state: tauri::State<'_, AppState>,
 ) -> Result<serde_json::Value, String> {
     let view_mode: CanvasViewMode = serde_json::from_value(serde_json::Value::String(view_mode))
         .map_err(|error| format!("Invalid canvas view mode: {error}"))?;
     let mut session = lock_session(&state)?;
     session.view_mode = view_mode;
-    if let Some(output_landscape) = output_landscape {
-        session.output_orientation = if output_landscape {
-            PrintOrientation::Landscape
-        } else {
-            PrintOrientation::Portrait
-        };
-    }
     Ok(state_for(&session))
 }
 
@@ -369,7 +362,6 @@ fn preview_command(
         clean_document: session.clean_document.clone(),
         document: preview,
         view_mode: session.view_mode,
-        output_orientation: session.output_orientation,
         path: session.path.clone(),
         recovered_dirty: session.recovered_dirty,
     };
@@ -894,7 +886,6 @@ mod tests {
             clean_document: session.clean_document.clone(),
             document: preview,
             view_mode: session.view_mode,
-            output_orientation: session.output_orientation,
             path: session.path.clone(),
             recovered_dirty: session.recovered_dirty,
         };
@@ -933,6 +924,49 @@ mod tests {
         assert_eq!(preview["pages"].as_array().map(Vec::len), Some(1));
         assert_eq!(preview["pages"][0]["gridColumn"], 0);
         assert_eq!(preview["pages"][0]["gridRow"], 0);
+    }
+
+    #[test]
+    fn landscape_orientation_is_exposed_by_the_tauri_state_and_survives_file_round_trip() {
+        let directory = temporary_directory("landscape-orientation");
+        fs::create_dir_all(&directory).expect("orientation directory should be created");
+        let path = directory.join("landscape.kawa");
+        let mut session = CadSession::new("Landscape".to_owned());
+        session
+            .document
+            .apply_command(
+                serde_json::from_value(json!({
+                    "kind": "createEntityFromGesture",
+                    "payload": {
+                        "id": "point-1",
+                        "layerId": null,
+                        "gesture": { "kind": "point", "position": { "xMm": 0.0, "yMm": 0.0 } }
+                    }
+                }))
+                .expect("point creation command should deserialize"),
+            )
+            .expect("point should be created");
+        session
+            .document
+            .apply_command(DocumentCommand::SetPrintOrientation {
+                orientation: PrintOrientation::Landscape,
+            })
+            .expect("landscape orientation should apply");
+        session
+            .document
+            .write_json_file(&path)
+            .expect("landscape document should be written");
+
+        let reopened =
+            ProjectDocument::read_json_file(&path).expect("landscape document should be reopened");
+        session.document = reopened;
+        session.view_mode = CanvasViewMode::OutputPreview;
+        let state = state_for(&session);
+
+        assert_eq!(state["settings"]["orientation"], "landscape");
+        assert_eq!(state["outputPreview"]["pages"][0]["widthMm"], 297.0);
+        assert_eq!(state["outputPreview"]["pages"][0]["heightMm"], 210.0);
+        let _ = fs::remove_dir_all(directory);
     }
 
     #[test]

@@ -140,8 +140,6 @@ export function App() {
     setGridVisible,
     a4Visible,
     setA4Visible,
-    a4Landscape,
-    setA4Landscape,
     snapEnabled,
     setSnapEnabled,
     pointSnapEnabled,
@@ -176,6 +174,7 @@ export function App() {
     onDocumentState: normalizeActiveDrawingOptions,
     reportError: presentOperationFailure,
   });
+  const a4Landscape = state?.settings.orientation === "landscape";
   const { partLibrary, updatePartLibrary } = usePartLibrary({ report: setMessage });
   const {
     layerDeletionConfirmation,
@@ -569,7 +568,6 @@ export function App() {
       else if (action === "editDisplay" || action === "outputPreview") setDocumentViewMode(action);
       else if (action === "toggleA4Orientation") {
         const next = !a4Landscape;
-        setA4Landscape(next);
         setOutputOrientation(next);
       } else if (action === "addLayer") addLayer();
       else if (action === "openLicenses") setLicensesOpen(true);
@@ -821,7 +819,6 @@ export function App() {
           onGridChange={setGridVisible}
           onA4Change={setA4Visible}
           onA4LandscapeChange={(value) => {
-            setA4Landscape(value);
             setOutputOrientation(value);
           }}
           onSnapChange={setSnapEnabled}

@@ -21,6 +21,7 @@ const state = {
   snapshot: { name: "Test project", statistics: {} },
   history: { canUndo: false, canRedo: false },
   persistence: { isDirty: false },
+  settings: { orientation: "portrait" },
   entities: [{ id: "point-1", kind: { point: { xMm: 0, yMm: 0 } } }],
   layers: [
     {
@@ -99,7 +100,10 @@ describe("React workspace shortcuts", () => {
     mocks.save.mockResolvedValue(undefined);
     window.localStorage.clear();
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
   it("applies Core-persisted annotation offsets to canvas projection geometry", () => {
     const projection = canvasProjectionFor({
       canvasProjection: {
@@ -270,7 +274,6 @@ describe("React workspace shortcuts", () => {
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith("set_view_mode", {
         viewMode: "outputPreview",
-        outputLandscape: false,
       }),
     );
     expect(screen.queryByText(/1 選択/)).not.toBeInTheDocument();
@@ -1457,6 +1460,21 @@ describe("React workspace shortcuts", () => {
     );
     expect(mocks.invoke).not.toHaveBeenCalledWith("save_document", expect.anything());
   });
+  it("normalizes an extensionless Save As path and only offers .kawa files", async () => {
+    mocks.save.mockResolvedValue("/projects/wallet-pattern");
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
+
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/wallet-pattern.kawa" }),
+    );
+    expect(mocks.save).toHaveBeenCalledWith({
+      defaultPath: "Test project.kawa",
+      filters: [{ name: "KawaCAD project", extensions: ["kawa"] }],
+    });
+  });
   it("keeps the current selection when creating a replacement document fails", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "new_document") throw new Error("create failed");
@@ -1636,6 +1654,29 @@ describe("React workspace shortcuts", () => {
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "circle" }));
     await waitFor(() => expect(screen.getByText("円", { selector: ".toolbar-tool" })).toBeInTheDocument());
   });
+  it("opens, closes, and reopens bundled OSS notices from the native menu action", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          components: [
+            { name: "first", version: "1", license: "MIT", text: "first notice" },
+            { name: "last", version: "2", license: "Apache-2.0", text: "last notice" },
+          ],
+        }),
+      }),
+    );
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
+    expect(await screen.findByText("last notice", { exact: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+    expect(screen.queryByRole("dialog", { name: "OSSライセンス" })).not.toBeInTheDocument();
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
+    expect(await screen.findByText("last notice", { exact: true })).toBeInTheDocument();
+  });
   it("reloads the saved document through the adapter command", async () => {
     const reloadedState = {
       ...state,
@@ -1797,11 +1838,25 @@ describe("React workspace shortcuts", () => {
     expect(screen.getByRole("textbox", { name: "テキストを編集" })).toHaveValue("Note");
   });
   it("keeps Cut and the A4 orientation control available in the React workspace", async () => {
+    const landscapeState = { ...state, settings: { orientation: "landscape" as const } };
+    mocks.invoke.mockImplementation(async (command: string, payload?: unknown) => {
+      if (
+        command === "apply_command" &&
+        (payload as { command?: { kind?: string } } | undefined)?.command?.kind === "setPrintOrientation"
+      )
+        return landscapeState;
+      return defaultInvoke(command);
+    });
     render(<App />);
     await screen.findByDisplayValue("Test project");
     const orientation = screen.getByRole("button", { name: "A4横向き" });
     fireEvent.click(orientation);
-    expect(orientation).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => expect(orientation).toHaveAttribute("aria-pressed", "true"));
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith("apply_command", {
+        command: { kind: "setPrintOrientation", payload: { orientation: "landscape" } },
+      }),
+    );
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
     fireEvent.keyDown(window, { key: "x", metaKey: true });
@@ -1811,6 +1866,20 @@ describe("React workspace shortcuts", () => {
         expect.objectContaining({ command: expect.objectContaining({ kind: "compound" }) }),
       ),
     );
+  });
+  it("restores the A4 orientation from the loaded Core document state", async () => {
+    const landscapeState = { ...state, settings: { orientation: "landscape" as const } };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return landscapeState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return landscapeState;
+    });
+
+    render(<App />);
+
+    await screen.findByDisplayValue("Test project");
+    expect(screen.getByRole("button", { name: "A4横向き" })).toHaveAttribute("aria-pressed", "true");
   });
   it("orders the wide toolbar controls and Japanese labels like the SwiftUI toolbar", async () => {
     render(<App />);
@@ -2132,7 +2201,6 @@ describe("React workspace shortcuts", () => {
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith("set_view_mode", {
         viewMode: "editDisplay",
-        outputLandscape: false,
       }),
     );
     expect(screen.getByText("線分", { selector: ".toolbar-tool" })).toBeInTheDocument();

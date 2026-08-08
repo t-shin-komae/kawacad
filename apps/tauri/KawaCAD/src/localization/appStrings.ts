@@ -542,6 +542,7 @@ const appStrings = {
     paperPortrait: "A4 Portrait",
     paperLandscape: "A4 Landscape",
     viewModeChanged: (output: boolean) => (output ? "出力プレビューに切り替えました。" : "編集表示に切り替えました。"),
+    a4OrientationChanged: (landscape: boolean) => (landscape ? "A4横向きに変更しました。" : "A4縦向きに変更しました。"),
     documentNameUpdated: "プロジェクト名を更新しました。",
     selectGeometry: "図形を選択してください。",
     clickTarget: (tool: string) => `${tool}: 対象をクリックしてください。`,

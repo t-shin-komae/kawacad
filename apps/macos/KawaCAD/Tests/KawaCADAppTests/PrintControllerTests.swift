@@ -95,6 +95,42 @@ func live_print_controller_accepts_multi_page_render_data() {
   #expect(capturedOrientation == .portrait)
 }
 
+@Test("LivePrintController はA4横向きの印刷設定を渡し、印刷パネルのキャンセルを正常終了にする")
+func live_print_controller_handles_landscape_print_panel_cancellation() {
+  var capturedOrientation: NSPrintInfo.PaperOrientation?
+  var capturedPaperSize: NSSize?
+  let controller = LivePrintController(
+    runPrintOperation: { _, _, _ in
+      Issue.record("cancelled print panel must not start a print operation")
+      return true
+    },
+    runPrintPanel: { printInfo in
+      capturedOrientation = printInfo.orientation
+      capturedPaperSize = printInfo.paperSize
+      return .cancel
+    }
+  )
+
+  let result = controller.captureDirectPrintSession(
+    presentation: OutputPresentationOptions(
+      orientation: .landscape,
+      includeDimensionLabels: true,
+      includeScaleGuide: true,
+      rotationDeg: 0
+    )
+  )
+
+  switch result {
+  case .success(.cancelled):
+    break
+  default:
+    Issue.record("print panel cancellation should return a successful cancellation")
+  }
+  #expect(capturedOrientation == .landscape)
+  #expect(abs((capturedPaperSize?.width ?? 0) - points(297.0)) < 0.001)
+  #expect(abs((capturedPaperSize?.height ?? 0) - points(210.0)) < 0.001)
+}
+
 @Test("LivePrintController は空の PrintRenderData では直接印刷を開始しない")
 func live_print_controller_rejects_empty_render_data() {
   var didStartPrintOperation = false

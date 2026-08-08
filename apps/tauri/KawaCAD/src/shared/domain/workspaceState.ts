@@ -63,6 +63,7 @@ export type State = {
   snapshot: { name: string; constraintStatus?: string; statistics: Record<string, number> };
   history: { canUndo: boolean; canRedo: boolean };
   persistence: { isDirty: boolean; hasPath?: boolean; path?: string };
+  settings: { orientation: "portrait" | "landscape" };
   viewMode: CanvasViewMode;
   outputPreview?: { pages: OutputPreviewPage[]; warnings: Array<{ message: string }> } | null;
   entities: RawEntity[];

@@ -26,6 +26,7 @@
   },
   "bundle": {
     "active": true,
+    "copyright": "© 2026 t-shin-komae",
     "icon": [
       "icons/32x32.png",
       "icons/64x64.png",

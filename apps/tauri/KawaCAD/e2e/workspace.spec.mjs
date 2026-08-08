@@ -33,6 +33,7 @@ async function openWorkspace(page) {
   await page.goto("/");
   await expect(page.getByTestId("leather.workspace.canvas")).toBeVisible();
   await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("0 図形");
+  await expect(page.getByRole("status")).toContainText("ツールを選択して作図してください。");
 }
 
 async function clickTool(page, name) {
@@ -65,10 +66,13 @@ async function dragModelPoint(page, start, end) {
 }
 
 async function drawLine(page, start, end) {
+  const statusBar = page.getByTestId("leather.workspace.status-bar");
+  const beforeText = await statusBar.textContent();
+  const beforeCount = Number(beforeText?.match(/(\d+) 図形/u)?.[1] ?? 0);
   await clickTool(page, "線分");
   await clickModelPoint(page, ...start);
   await clickModelPoint(page, ...end);
-  await expect(page.getByRole("status")).toContainText("線分を作成しました。");
+  await expect(statusBar).toContainText(`${beforeCount + 1} 図形`);
 }
 
 async function acceptTextDialog(page, value) {
@@ -210,14 +214,25 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await openWorkspace(page);
     await clickTool(page, "点");
     await clickModelPoint(page, 10, 10);
+    await page.getByTestId("leather.toolbar.overflow").click();
+    await page.getByRole("menuitem", { name: "A4横向き", exact: true }).click();
+    await expect.poll(() => core.orientation).toBe("landscape");
     await page.keyboard.press(`${primary}+s`);
     await expect(page.getByRole("status")).toContainText("プロジェクトを保存しました。");
 
+    await clickTool(page, "点");
     await clickModelPoint(page, 35, 35);
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "toggleA4Orientation" }));
+    });
+    await expect.poll(() => core.orientation).toBe("portrait");
     await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("2 図形");
     await page.keyboard.press(`${primary}+r`);
     await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("1 図形");
-    await expect((await core.invoke("document_state")).persistence.hasPath).toBe(true);
+    await expect(page.getByTestId("leather.toolbar.orientation.landscape")).toHaveAttribute("aria-pressed", "true");
+    const reloaded = await core.invoke("document_state");
+    expect(reloaded.persistence.hasPath).toBe(true);
+    expect(reloaded.settings.orientation).toBe("landscape");
 
     await page.keyboard.press(`${primary}+n`);
     await acceptTextDialog(page, "New E2E project");
@@ -493,8 +508,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     expect(state.measurementAnnotations).toHaveLength(0);
   });
 
-  // 選択図形をパーツ化し、名称・数量変更と複製がCoreのパーツ状態へ反映されることを検証する。
-  test("creates, edits, and duplicates a part", async ({ page, core }) => {
+  // 選択図形をパーツ化し、実Coreの非破壊プレビューを経てパーツ全体を移動・Option複製できることを検証する。
+  test("creates, edits, drags, and Option-duplicates a part", async ({ page, core }) => {
     await openWorkspace(page);
     await drawLine(page, [-40, -20], [40, -20]);
     await drawLine(page, [40, -20], [0, 40]);
@@ -511,6 +526,64 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await dialog.getByRole("button", { name: "適用", exact: true }).click();
     await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(1);
 
+    const beforeDrag = await core.invoke("document_state");
+    const beforeOrigin = beforeDrag.parts[0].originMm;
+    const beforeEntities = beforeDrag.entities;
+    await clickTool(page, "選択");
+
+    await page.keyboard.down("Alt");
+    await dragModelPoint(page, [20, 10], [30, 10]);
+    await expect(page.getByRole("status")).toContainText("複製プレビュー中");
+    expect((await core.invoke("document_state")).parts).toHaveLength(1);
+    await page.mouse.up();
+    await page.keyboard.up("Alt");
+    await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(2);
+    let duplicatedState = await core.invoke("document_state");
+    const copiedPart = duplicatedState.parts.find((part) => part.id !== beforeDrag.parts[0].id);
+    expect(copiedPart.entityIds).toHaveLength(beforeDrag.parts[0].entityIds.length);
+    const copyDelta = {
+      xMm: copiedPart.originMm.xMm - beforeOrigin.xMm,
+      yMm: copiedPart.originMm.yMm - beforeOrigin.yMm,
+    };
+    expect(Math.hypot(copyDelta.xMm, copyDelta.yMm)).toBeGreaterThan(0);
+    for (let index = 0; index < beforeDrag.parts[0].entityIds.length; index += 1) {
+      const source = duplicatedState.entities.find((entity) => entity.id === beforeDrag.parts[0].entityIds[index]);
+      const copy = duplicatedState.entities.find((entity) => entity.id === copiedPart.entityIds[index]);
+      expect(copy.kind.lineSegment.start.xMm - source.kind.lineSegment.start.xMm).toBeCloseTo(copyDelta.xMm);
+      expect(copy.kind.lineSegment.start.yMm - source.kind.lineSegment.start.yMm).toBeCloseTo(copyDelta.yMm);
+      expect(copy.kind.lineSegment.end.xMm - source.kind.lineSegment.end.xMm).toBeCloseTo(copyDelta.xMm);
+      expect(copy.kind.lineSegment.end.yMm - source.kind.lineSegment.end.yMm).toBeCloseTo(copyDelta.yMm);
+    }
+    expect(copiedPart.name).toBe("本体 のコピー");
+    await page.keyboard.press(`${primary}+z`);
+    await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(1);
+    await page.keyboard.press(`${primary}+Shift+z`);
+    await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(2);
+    await page.keyboard.press(`${primary}+z`);
+    await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(1);
+
+    await page.getByRole("tab", { name: "パーツ", exact: true }).click();
+    await page.getByRole("button", { name: "内容を選択", exact: true }).click();
+    await dragModelPoint(page, [20, 10], [30, 20]);
+    await expect(page.getByRole("status")).toContainText("移動プレビュー中");
+    expect((await core.invoke("document_state")).entities).toEqual(beforeEntities);
+    await page.mouse.up();
+    await expect.poll(async () => (await core.invoke("document_state")).parts[0].originMm).not.toEqual(beforeOrigin);
+    const afterDrag = await core.invoke("document_state");
+    const dragDelta = {
+      xMm: afterDrag.parts[0].originMm.xMm - beforeOrigin.xMm,
+      yMm: afterDrag.parts[0].originMm.yMm - beforeOrigin.yMm,
+    };
+    expect(Math.hypot(dragDelta.xMm, dragDelta.yMm)).toBeGreaterThan(0);
+    for (let index = 0; index < beforeEntities.length; index += 1) {
+      const beforeLine = beforeEntities[index].kind.lineSegment;
+      const afterLine = afterDrag.entities[index].kind.lineSegment;
+      expect(afterLine.start.xMm - beforeLine.start.xMm).toBeCloseTo(dragDelta.xMm);
+      expect(afterLine.start.yMm - beforeLine.start.yMm).toBeCloseTo(dragDelta.yMm);
+      expect(afterLine.end.xMm - beforeLine.end.xMm).toBeCloseTo(dragDelta.xMm);
+      expect(afterLine.end.yMm - beforeLine.end.yMm).toBeCloseTo(dragDelta.yMm);
+    }
+
     await page.getByRole("tab", { name: "パーツ", exact: true }).click();
     let partCard = page.locator(".inspector-card").filter({ hasText: "本体" }).first();
     const nameInput = page.getByLabel("本体 の名前");
@@ -525,9 +598,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await quantityDialog.getByRole("button", { name: "適用", exact: true }).click();
     await expect.poll(async () => (await core.invoke("document_state")).parts[0].quantity).toBe(2);
 
-    await page.getByRole("button", { name: "複製", exact: true }).click();
-    await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(2);
-    expect((await core.invoke("document_state")).parts.map((part) => part.name)).toContain("本体改名のコピー");
+    duplicatedState = await core.invoke("document_state");
+    expect(duplicatedState.parts[0].name).toBe("本体改名");
   });
 
   // 作図したテキストを選択して内容を編集し、Coreの自由テキストに変更が保存されることを検証する。
@@ -550,16 +622,27 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect.poll(async () => (await core.invoke("document_state")).freeTexts[0].content).toBe("更新後注記");
   });
 
-  // 線分上へ縫い始め点を配置し、対象図形との関連をCoreへ保存できることを検証する。
-  test("places a stitch start point on a line", async ({ page, core }) => {
+  // 縫い線以外のスタイルでも、線分・中心線・円弧へ縫い始め点を配置できることを検証する。
+  test("places stitch start points on supported shapes regardless of style", async ({ page, core }) => {
     await openWorkspace(page);
-    await page.getByLabel("型紙線種").selectOption("style:stitch-line");
     await drawLine(page, [-40, 0], [40, 0]);
+    await clickTool(page, "中心線");
+    await clickModelPoint(page, -40, 25);
+    await clickModelPoint(page, 40, 25);
+    await clickTool(page, "円弧");
+    await clickModelPoint(page, 0, -25);
+    await clickModelPoint(page, 15, -25);
+    await clickModelPoint(page, 0, -10);
+
     await clickTool(page, "縫い始め点");
     await clickModelPoint(page, -25, 0);
-    await expect.poll(async () => (await core.invoke("document_state")).stitchStartPoints).toHaveLength(1);
+    await clickModelPoint(page, -25, 25);
+    await clickModelPoint(page, 0, -10);
+    await expect.poll(async () => (await core.invoke("document_state")).stitchStartPoints).toHaveLength(3);
     const state = await core.invoke("document_state");
-    expect(state.stitchStartPoints[0].targetId).toBe(state.entities[0].id);
+    expect(new Set(state.stitchStartPoints.map((point) => point.targetId))).toEqual(
+      new Set(state.entities.map((entity) => entity.id)),
+    );
   });
 
   // 3本の線分を端点スナップで接続し、三角形の3頂点それぞれに一致拘束が自動追加されることを検証する。
