@@ -173,6 +173,7 @@
 
 "menu.new_project" = "新規プロジェクト";
 "menu.about" = "KawaCADについて";
+"menu.open_source_licenses" = "OSSライセンス…";
 "menu.open" = "開く...";
 "menu.save" = "保存";
 "menu.save_as" = "別名で保存...";
@@ -188,6 +189,7 @@
 "menu.drawing" = "作図";
 "menu.constraint" = "拘束";
 "menu.view" = "表示";
+"licenses.unavailable" = "ライセンス情報を読み込めませんでした。";
 "menu.reset_layout" = "レイアウトを初期状態に戻す";
 "menu.find_in_inspector" = "インスペクタ内を検索";
 "menu.layer" = "レイヤー";

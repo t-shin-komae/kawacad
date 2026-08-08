@@ -40,6 +40,10 @@ struct KawaCADCommands: Commands {
       Button(AppStrings.tr("menu.about")) {
         KawaCADAboutPanel.present()
       }
+      Divider()
+      Button(AppStrings.tr("menu.open_source_licenses")) {
+        KawaCADLicensesPanel.present()
+      }
     }
 
     CommandGroup(replacing: .newItem) {

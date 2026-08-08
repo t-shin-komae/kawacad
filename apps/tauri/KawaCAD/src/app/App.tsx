@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ComponentProps } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { angleArcCounterclockwise, CadCanvas } from "@/features/canvas/components/CadCanvas";
 import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { InspectorPanel, type Part, type PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
@@ -70,8 +70,10 @@ import { useRecoveryActions } from "@/features/recovery/actions/useRecoveryActio
 import { useActiveDrawingOptions } from "@/features/canvas/selectors/useActiveDrawingOptions";
 import { useWindowLifecycle } from "@/features/workspace/effects/useWindowLifecycle";
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
+import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSourceLicensesDialog";
 
 export function App() {
+  const [licensesOpen, setLicensesOpen] = useState(false);
   const canvasPresentation = useCanvasPresentation();
   const {
     tool,
@@ -570,6 +572,7 @@ export function App() {
         setA4Landscape(next);
         setOutputOrientation(next);
       } else if (action === "addLayer") addLayer();
+      else if (action === "openLicenses") setLicensesOpen(true);
       else selectTool(action);
     };
     window.addEventListener("kawa-cad-menu", onMenu);
@@ -790,6 +793,7 @@ export function App() {
             onCancel={cancelDeleteLayer}
           />
         )}
+        {licensesOpen && <OpenSourceLicensesDialog onClose={() => setLicensesOpen(false)} />}
         <CadToolbar
           tool={tool}
           layers={state?.layers ?? []}

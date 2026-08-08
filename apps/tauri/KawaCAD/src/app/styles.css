@@ -922,6 +922,71 @@ input[type="checkbox"] {
   place-items: center;
   background: rgba(0, 0, 0, 0.2);
 }
+.modal-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.28);
+}
+.licenses-dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(760px, 100%);
+  max-height: min(720px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--panel-stroke);
+  border-radius: 12px;
+  background: var(--window);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+.licenses-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--panel-stroke);
+}
+.licenses-dialog-header h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.licenses-dialog-body {
+  overflow: auto;
+  padding: 18px;
+}
+.license-entry {
+  padding: 0 0 18px;
+}
+.license-entry + .license-entry {
+  padding-top: 18px;
+  border-top: 1px solid var(--panel-stroke);
+}
+.license-entry h3,
+.license-entry p {
+  margin: 0 0 5px;
+}
+.license-entry h3 {
+  font-size: 13px;
+}
+.license-entry p {
+  color: var(--secondary-ink);
+  font-size: 11px;
+}
+.license-entry pre {
+  margin: 10px 0 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  color: var(--secondary-ink);
+  font:
+    11px/1.45 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
 .derived-value-floating {
   pointer-events: none;
   background: transparent;

@@ -68,6 +68,7 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "toggleBottomWorkbench",
   "resetLayout",
   "reload",
+  "openLicenses",
 ];
 
 function dispatch(action: MenuAction) {
@@ -108,7 +109,7 @@ export async function installNativeMenu() {
   });
   const applicationMenu = await Submenu.new({
     text: productInfo.name,
-    items: [aboutItem],
+    items: [aboutItem, item(appStrings.menu.item.openSourceLicenses, "openLicenses")],
   });
   const menu = await Menu.new({
     items: [
