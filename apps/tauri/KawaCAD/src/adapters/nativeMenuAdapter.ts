@@ -13,6 +13,7 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "save",
   "saveAs",
   "exportPDF",
+  "directPrint",
   "undo",
   "redo",
   "cut",
@@ -108,6 +109,9 @@ export async function installNativeMenu() {
     text: appStrings.menu.item.about,
     item: { About: aboutMetadataForPlatform(navigator.userAgent) },
   });
+  const directPrintItems = /Macintosh|Mac OS X/.test(navigator.userAgent)
+    ? []
+    : [item(appStrings.menu.item.directPrint, "directPrint")];
   const applicationMenu = await Submenu.new({
     text: productInfo.name,
     items: [aboutItem, item(appStrings.menu.item.openSourceLicenses, "openLicenses")],
@@ -124,6 +128,7 @@ export async function installNativeMenu() {
           item(appStrings.menu.item.saveAs, "saveAs", "CmdOrCtrl+Shift+S"),
           { item: "Separator" },
           item(appStrings.menu.item.exportPDF, "exportPDF"),
+          ...directPrintItems,
         ],
       },
       {

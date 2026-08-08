@@ -2,6 +2,16 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
+use kawacad_core::output::{OutputDocumentModel, PrintableAreaMm};
+use kawacad_output_engine::PrintRenderData;
+
+#[cfg(target_os = "windows")]
+#[path = "direct_print/windows.rs"]
+mod platform;
+#[cfg(target_os = "linux")]
+#[path = "direct_print/linux.rs"]
+mod platform;
+
 pub const PREPARED_PRINT_TTL: Duration = Duration::from_secs(60);
 pub const MAX_PREPARED_PRINTS: usize = 8;
 pub const MAX_PREPARED_ARTIFACT_BYTES: usize = 64 * 1024 * 1024;
@@ -32,18 +42,12 @@ pub fn current_availability() -> DirectPrintAvailability {
 
     #[cfg(target_os = "windows")]
     {
-        DirectPrintAvailability {
-            status: DirectPrintAvailabilityStatus::Unavailable,
-            reason: Some("The Windows direct print adapter is not installed".to_owned()),
-        }
+        platform::availability()
     }
 
     #[cfg(target_os = "linux")]
     {
-        DirectPrintAvailability {
-            status: DirectPrintAvailabilityStatus::Unavailable,
-            reason: Some("The Linux CUPS/IPP direct print adapter is not installed".to_owned()),
-        }
+        platform::availability()
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
@@ -84,6 +88,107 @@ pub struct DirectPrinter {
     pub id: String,
     pub display_name: String,
     pub selectable: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PrinterInspection {
+    pub printer_id: String,
+    pub selectable: bool,
+    pub printable_area_mm: Option<PrintableAreaMm>,
+    pub reason: Option<String>,
+    pub capability_fingerprint: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PreparedDirectPrint {
+    pub printer_id: String,
+    pub options: DirectPrintOptions,
+    pub document_fingerprint: String,
+    pub capability_fingerprint: String,
+    pub output: kawacad_core::output::BuildOutputDocumentModelResult,
+    pub artifact: DirectPrintArtifact,
+}
+
+#[derive(Debug, Clone)]
+pub enum DirectPrintArtifact {
+    Windows(PrintRenderData),
+    LinuxPdf(Vec<u8>),
+}
+
+impl DirectPrintArtifact {
+    pub fn byte_len(&self) -> usize {
+        match self {
+            Self::Windows(data) => serde_json::to_vec(data).map_or(usize::MAX, |bytes| bytes.len()),
+            Self::LinuxPdf(bytes) => bytes.len(),
+        }
+    }
+}
+
+pub fn list_printers() -> Result<Vec<DirectPrinter>, String> {
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    {
+        platform::list_printers()
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Err(unavailable_error())
+    }
+}
+
+pub fn inspect_printer(request: &InspectPrinterRequest) -> Result<PrinterInspection, String> {
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    {
+        platform::inspect_printer(request)
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        let _ = request;
+        Err(unavailable_error())
+    }
+}
+
+pub fn create_artifact(model: &OutputDocumentModel) -> Result<DirectPrintArtifact, String> {
+    #[cfg(target_os = "windows")]
+    {
+        kawacad_output_engine::render_print(model)
+            .map(DirectPrintArtifact::Windows)
+            .map_err(|error| format!("Could not render direct print data: {error:?}"))
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        kawacad_output_engine::render_pdf(model)
+            .map(|pdf| DirectPrintArtifact::LinuxPdf(pdf.bytes))
+            .map_err(|error| format!("Could not render direct print PDF: {error:?}"))
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        let _ = model;
+        Err(unavailable_error())
+    }
+}
+
+pub fn send(prepared: &PreparedDirectPrint) -> Result<(), String> {
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    {
+        platform::send(prepared)
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        let _ = prepared;
+        Err(unavailable_error())
+    }
+}
+
+fn unavailable_error() -> String {
+    current_availability()
+        .reason
+        .unwrap_or_else(|| "Direct printing is unavailable".to_owned())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

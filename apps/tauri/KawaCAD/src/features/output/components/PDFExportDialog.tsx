@@ -3,9 +3,9 @@ import { dialogAdapter } from "@/adapters/dialogAdapter";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
-type Orientation = "portrait" | "landscape";
+export type Orientation = "portrait" | "landscape";
 
-type OutputOptions = {
+export type OutputOptions = {
   orientation: Orientation;
   includeDimensionLabels: boolean;
   includeScaleGuide: boolean;
@@ -29,7 +29,7 @@ type OutputGeometry =
 type OutputGraphic = { geometry: OutputGeometry; style: OutputStyle };
 type OutputText = { content: string; positionMm: PointMm; fontSizeMm: number };
 type OutputGuide = { startMm: PointMm; endMm: PointMm; label: string; labelPositionMm: PointMm };
-type OutputPage = {
+export type OutputPage = {
   gridColumn: number;
   gridRow: number;
   widthMm: number;
@@ -40,8 +40,8 @@ type OutputPage = {
   texts: OutputText[];
   guide?: OutputGuide | null;
 };
-type OutputDocumentModel = { pageCount: number; pages: OutputPage[] } & Record<string, unknown>;
-type OutputWarning = { message: string };
+export type OutputDocumentModel = { pageCount: number; pages: OutputPage[] } & Record<string, unknown>;
+export type OutputWarning = { message: string };
 type PreparedPDF = { outputDocumentModel: OutputDocumentModel; warnings: OutputWarning[] };
 
 type Props = {
@@ -229,7 +229,7 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onS
   );
 }
 
-function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
+export function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
   return (
     <section className="pdf-export-preview" aria-live="polite" aria-busy={loading}>
       <h3>最終プレビュー</h3>

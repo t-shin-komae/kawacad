@@ -147,7 +147,7 @@ fn discard_recovery_snapshot_at(base_directory: PathBuf) -> Result<(), String> {
 
 struct AppState {
     cad_session: Mutex<CadSession>,
-    prepared_prints: Mutex<direct_print::PreparedPrintStore<()>>,
+    prepared_prints: Mutex<direct_print::PreparedPrintStore<direct_print::PreparedDirectPrint>>,
 }
 
 fn state_for(session: &CadSession) -> serde_json::Value {
@@ -249,12 +249,6 @@ fn lock_session(state: &AppState) -> Result<std::sync::MutexGuard<'_, CadSession
         .map_err(|_| "CAD session lock was poisoned".to_owned())
 }
 
-fn direct_print_unavailable_error() -> String {
-    direct_print::current_availability()
-        .reason
-        .unwrap_or_else(|| "Direct printing is unavailable".to_owned())
-}
-
 fn pdf_printable_area(orientation: PrintOrientation) -> PrintableAreaMm {
     let (width_mm, height_mm) = match orientation {
         PrintOrientation::Portrait => (210.0, 297.0),
@@ -334,38 +328,132 @@ fn direct_print_availability() -> direct_print::DirectPrintAvailability {
 }
 
 #[tauri::command]
-fn list_printers() -> Result<Vec<direct_print::DirectPrinter>, String> {
-    Err(direct_print_unavailable_error())
+async fn list_printers() -> Result<Vec<direct_print::DirectPrinter>, String> {
+    tauri::async_runtime::spawn_blocking(direct_print::list_printers)
+        .await
+        .map_err(|error| format!("Direct printer enumeration worker failed: {error}"))?
 }
 
 #[tauri::command]
-fn inspect_printer(
-    _request: direct_print::InspectPrinterRequest,
+async fn inspect_printer(
+    request: direct_print::InspectPrinterRequest,
+) -> Result<direct_print::PrinterInspection, String> {
+    tauri::async_runtime::spawn_blocking(move || direct_print::inspect_printer(&request))
+        .await
+        .map_err(|error| format!("Direct printer inspection worker failed: {error}"))?
+}
+
+#[tauri::command]
+async fn prepare_direct_print(
+    request: direct_print::PrepareDirectPrintRequest,
+    window: tauri::WebviewWindow,
+    state: tauri::State<'_, AppState>,
 ) -> Result<serde_json::Value, String> {
-    Err(direct_print_unavailable_error())
+    let (document, document_fingerprint) = {
+        let session = lock_session(&state)?;
+        (
+            session.document.clone(),
+            serde_json::to_string(&session.document)
+                .map_err(|error| format!("Could not fingerprint the current document: {error}"))?,
+        )
+    };
+    let request_for_worker = request.clone();
+    let prepared = tauri::async_runtime::spawn_blocking(move || {
+        let inspection = direct_print::inspect_printer(&direct_print::InspectPrinterRequest {
+            printer_id: request_for_worker.printer_id.clone(),
+            options: request_for_worker.options.clone(),
+        })?;
+        if !inspection.selectable {
+            return Err(inspection
+                .reason
+                .unwrap_or_else(|| "The selected printer cannot use direct printing".to_owned()));
+        }
+        let printable_area_mm = inspection
+            .printable_area_mm
+            .ok_or_else(|| "The selected printer did not provide a printable area".to_owned())?;
+        let orientation = match request_for_worker.options.orientation.as_str() {
+            "portrait" => PrintOrientation::Portrait,
+            "landscape" => PrintOrientation::Landscape,
+            _ => return Err("Direct printing requires a valid A4 orientation".to_owned()),
+        };
+        let output = document
+            .build_output_document_model(BuildOutputDocumentModelOptions {
+                orientation,
+                include_dimension_labels: request_for_worker.options.include_dimension_labels,
+                include_scale_guide: request_for_worker.options.include_scale_guide,
+                rotation_deg: 0,
+                printable_area_mm,
+            })
+            .map_err(|error| format!("Could not prepare direct print output: {error}"))?;
+        let artifact = direct_print::create_artifact(&output.output_document_model)?;
+        Ok(direct_print::PreparedDirectPrint {
+            printer_id: request_for_worker.printer_id,
+            options: request_for_worker.options,
+            document_fingerprint,
+            capability_fingerprint: inspection.capability_fingerprint.ok_or_else(|| {
+                "The selected printer did not provide a capability fingerprint".to_owned()
+            })?,
+            output,
+            artifact,
+        })
+    })
+    .await
+    .map_err(|error| format!("Direct print preparation worker failed: {error}"))??;
+
+    let response_output = prepared.output.clone();
+    let artifact_bytes = prepared.artifact.byte_len();
+    let prepared_print_id = state
+        .prepared_prints
+        .lock()
+        .map_err(|_| "Prepared print store lock was poisoned".to_owned())?
+        .register(
+            window.label().to_owned(),
+            request.generation,
+            artifact_bytes,
+            prepared,
+            Instant::now(),
+        )
+        .map_err(|error| match error {
+            direct_print::PreparedPrintStoreError::Superseded => {
+                "Prepared direct print was superseded".to_owned()
+            }
+            direct_print::PreparedPrintStoreError::Busy => {
+                "Too many direct print preparations are active".to_owned()
+            }
+            direct_print::PreparedPrintStoreError::Stale => {
+                "Prepared direct print is stale".to_owned()
+            }
+        })?;
+    Ok(serde_json::json!({
+        "preparedPrintId": prepared_print_id,
+        "outputDocumentModel": response_output.output_document_model,
+        "warnings": response_output.warnings,
+    }))
 }
 
 #[tauri::command]
-fn prepare_direct_print(
-    _request: direct_print::PrepareDirectPrintRequest,
-) -> Result<serde_json::Value, String> {
-    Err(direct_print_unavailable_error())
-}
-
-#[tauri::command]
-fn run_prepared_direct_print(
+async fn run_prepared_direct_print(
     prepared_print_id: String,
     window: tauri::WebviewWindow,
     state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut prepared_prints = state
+    let prepared = state
         .prepared_prints
         .lock()
-        .map_err(|_| "Prepared print store lock was poisoned".to_owned())?;
-    prepared_prints
+        .map_err(|_| "Prepared print store lock was poisoned".to_owned())?
         .take(window.label(), &prepared_print_id, Instant::now())
         .map_err(|_| "Prepared direct print is stale".to_owned())?;
-    Err(direct_print_unavailable_error())
+    let document_fingerprint = {
+        let session = lock_session(&state)?;
+        serde_json::to_string(&session.document)
+            .map_err(|error| format!("Could not fingerprint the current document: {error}"))?
+    };
+    if document_fingerprint != prepared.document_fingerprint {
+        return Err("Prepared direct print is stale because the document changed".to_owned());
+    }
+    tauri::async_runtime::spawn_blocking(move || direct_print::send(&prepared))
+        .await
+        .map_err(|error| format!("Direct print submission worker failed: {error}"))?
 }
 
 #[tauri::command]
