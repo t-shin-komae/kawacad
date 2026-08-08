@@ -296,19 +296,6 @@ test("desktop package metadata and required offline resources match the shared p
     "icons/icon.icns",
   ]);
   assert.match(packageManifest, /\.process\("Resources"\)/u);
-  assert.ok(
-    readFileSync(
-      join(repositoryRoot, "apps/tauri/KawaCAD/public/ThirdPartyNotices.json"),
-    ).length > 1_000,
-  );
-  assert.ok(
-    readFileSync(
-      join(
-        repositoryRoot,
-        "apps/macos/KawaCAD/Sources/KawaCADApp/Resources/ThirdPartyNotices.generated.md",
-      ),
-    ).length > 1_000,
-  );
 });
 
 test("generated license notices keep runtime dependencies separated by frontend", () => {
@@ -339,6 +326,8 @@ test("generated license notices keep runtime dependencies separated by frontend"
 
   const tauriNotice = JSON.parse(readFileSync(result.tauriOutputPath, "utf8"));
   const swiftNotice = readFileSync(result.swiftOutputPath, "utf8");
+  assert.ok(readFileSync(result.tauriOutputPath).length > 1_000);
+  assert.ok(readFileSync(result.swiftOutputPath).length > 1_000);
   assert.equal(tauriNotice.schemaVersion, 1);
   assert.equal(tauriNotice.components.length, result.tauriPackages.length);
   assert.match(swiftNotice, /^# Third-party notices/u);

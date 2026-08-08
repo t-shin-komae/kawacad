@@ -147,6 +147,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await openWorkspace(page);
     await clickTool(page, "点");
     await clickModelPoint(page, -40, 30);
+    await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("1 図形");
     await drawLine(page, [-50, -30], [50, -30]);
 
     await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("2 図形");
