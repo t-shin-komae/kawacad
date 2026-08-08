@@ -956,6 +956,68 @@ fn stitch_placement_accepts_shape_targets_without_shared_stitch_style() {
 }
 
 #[test]
+fn stitch_placement_filters_unstyled_derived_targets_by_resolved_shape() {
+    let mut document = ProjectDocument::new("stitch-derived-shapes");
+    document
+        .apply_command(DocumentCommand::AddEntity(line_entity(
+            "entity:line",
+            point(0.0, 0.0),
+            point(100.0, 0.0),
+        )))
+        .unwrap();
+    document
+        .apply_command(DocumentCommand::AddEntity(circle_entity(
+            "entity:circle",
+            point(200.0, 0.0),
+            10.0,
+        )))
+        .unwrap();
+    for (id, source) in [
+        ("derived:line-offset", "entity:line"),
+        ("derived:circle-offset", "entity:circle"),
+    ] {
+        document
+            .apply_command(DocumentCommand::AddDerivedElement(
+                DerivedElement::offset_curve(
+                    id,
+                    None,
+                    OffsetCurve {
+                        source_entity_ids: vec![source.into()],
+                        source_resolved_entity_ids: Vec::new(),
+                        distance: ConstraintValue::FixedMm(5.0),
+                        direction: OffsetDirection::Left,
+                    },
+                ),
+            ))
+            .unwrap();
+    }
+
+    document
+        .apply_command(DocumentCommand::PlaceStitchStartPoint {
+            id: "stitch:derived-line".into(),
+            position: point(40.0, 6.0),
+            candidate_target_ids: vec!["derived:line-offset".into()],
+            max_distance_mm: 2.0,
+        })
+        .unwrap();
+    let stitch = &document.stitch_start_points()[0];
+    assert_eq!(stitch.target_id, "derived:line-offset");
+    assert_eq!(stitch.resolved_index, Some(0));
+    assert_approx_eq(stitch.position_ratio, 0.4);
+
+    let before = document.stitch_start_points().to_vec();
+    assert!(document
+        .apply_command(DocumentCommand::PlaceStitchStartPoint {
+            id: "stitch:derived-circle".into(),
+            position: point(215.0, 0.0),
+            candidate_target_ids: vec!["derived:circle-offset".into()],
+            max_distance_mm: 2.0,
+        })
+        .is_err());
+    assert_eq!(document.stitch_start_points(), before.as_slice());
+}
+
+#[test]
 fn selection_export_and_paste_keep_derived_measurement_and_constraint_references_internal() {
     let mut document = ProjectDocument::new("clipboard");
     document
