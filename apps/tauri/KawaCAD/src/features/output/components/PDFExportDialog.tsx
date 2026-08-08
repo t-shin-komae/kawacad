@@ -169,7 +169,10 @@ export function PDFExportDialog({
                 <dt>出力先</dt>
                 <dd>
                   {onDestinationChange ? (
-                    <select value="pdf" onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}>
+                    <select
+                      value="pdf"
+                      onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}
+                    >
                       <option value="pdf">PDF</option>
                       {directPrintAvailable ? <option value="directPrint">直接印刷</option> : null}
                     </select>

@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { documentAdapter } from "@/adapters/documentAdapter";
-import {
-  PDFExportDialog,
-  type Orientation,
-  type OutputOptions,
-} from "@/features/output/components/PDFExportDialog";
+import { PDFExportDialog, type Orientation, type OutputOptions } from "@/features/output/components/PDFExportDialog";
 import { DirectPrintDialog } from "@/features/output/components/DirectPrintDialog";
 
 type Destination = "pdf" | "directPrint";

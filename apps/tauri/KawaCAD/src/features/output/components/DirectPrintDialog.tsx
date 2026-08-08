@@ -165,7 +165,10 @@ export function DirectPrintDialog({
                 <div>
                   <dt>出力先</dt>
                   <dd>
-                    <select value="directPrint" onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}>
+                    <select
+                      value="directPrint"
+                      onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}
+                    >
                       <option value="pdf">PDF</option>
                       <option value="directPrint">直接印刷</option>
                     </select>
