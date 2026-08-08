@@ -272,9 +272,9 @@ func inspection_uxe_09_empty_document_pdf_request_has_immediate_zero_page_warnin
       == true)
 }
 
-@Test("点検 UI UXE-10: 1 ページ出力で向きを切り替え、キャンセルできる")
+@Test("点検 UI UXE-10: A4ガイドの向きで1ページ出力を開き、キャンセルできる")
 @MainActor
-func inspection_uxe_10_single_page_output_orientation_and_cancel() {
+func inspection_uxe_10_single_page_output_uses_a4_orientation_and_cancel() {
   let store = StubDocumentSessionAdapter(createNewDocumentState: makeDocumentState(name: "レザータグ"))
   store.outputBuildResult = sampleOutputBuildResult(
     model: sampleOutputDocumentModel(orientation: .portrait))
@@ -283,6 +283,7 @@ func inspection_uxe_10_single_page_output_orientation_and_cancel() {
     coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) }
   )
 
+  appState.actions.workspace.setA4ReferenceOrientation(.landscape)
   appState.actions.output.exportPDFPanel()
   let draft = unwrap(appState.actions.output.outputRequestDraft)
   guard case .ready(let prepared) = draft.buildState else {
@@ -291,7 +292,6 @@ func inspection_uxe_10_single_page_output_orientation_and_cancel() {
   }
   #expect(prepared.buildResult.outputDocumentModel.pageCount == 1)
 
-  appState.actions.output.setOutputRequestOrientation(.landscape)
   #expect(appState.actions.output.outputRequestDraft?.options.orientation == .landscape)
   #expect(appState.actions.workspace.a4ReferenceOrientation == .landscape)
 

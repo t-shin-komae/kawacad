@@ -157,7 +157,7 @@ request は次の envelope を持つ。現行 request はすべて object の `p
 
 `writeKawaFile` の `markClean` は省略時 `true` とする。通常保存は `true` を指定し、成功した内容をセッションの保存済み基準にする。クラッシュ復旧の一時スナップショットは `false` を指定し、dirty 状態を変えない。
 
-`buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、`0` または `90` 度の回転、macOS が取得した印刷可能領域を受け取る。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
+`buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、固定の `0` 度回転、macOS が取得した印刷可能領域を受け取る。用紙向きはツールバーの A4 基準表示で変更し、出力シートでは変更しない。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
 
 ### 5.2 `DocumentStateResponse`
 

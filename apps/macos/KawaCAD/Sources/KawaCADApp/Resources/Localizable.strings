@@ -269,10 +269,8 @@
 "common.on" = "オン";
 "common.off" = "オフ";
 
-"sheet.paper_orientation" = "用紙向き";
 "sheet.orientation.portrait" = "縦";
 "sheet.orientation.landscape" = "横";
-"sheet.rotation" = "回転";
 "sheet.include_dimension_labels" = "寸法数値を出力に含める";
 "sheet.include_scale_guide" = "50mmガイドを出力に含める";
 "sheet.input_method" = "入力方法";

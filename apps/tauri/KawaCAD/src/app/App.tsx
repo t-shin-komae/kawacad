@@ -800,7 +800,6 @@ export function App() {
             documentName={state?.snapshot.name ?? appStrings.document.untitled}
             initialOrientation={a4Landscape ? "landscape" : "portrait"}
             onClose={() => setPDFExportOpen(false)}
-            onOrientationChange={(orientation) => setOutputOrientation(orientation === "landscape")}
             onSaved={(path) => setMessage(`PDFを保存しました: ${path}`)}
           />
         )}

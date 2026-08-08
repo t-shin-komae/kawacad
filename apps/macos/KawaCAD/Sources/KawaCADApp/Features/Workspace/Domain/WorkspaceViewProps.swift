@@ -131,8 +131,6 @@ struct OutputRequestSheetState {
   let disabledReason: String?
 }
 struct OutputRequestSheetActions {
-  let setOrientation: (OutputPrintOrientation) -> Void
-  let setRotation: (Int) -> Void
   let setIncludeDimensionLabels: (Bool) -> Void
   let setIncludeScaleGuide: (Bool) -> Void
   let setWarningsAcknowledged: (Bool) -> Void
