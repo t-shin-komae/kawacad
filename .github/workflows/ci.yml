@@ -45,10 +45,11 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Cache Rust dependencies and build outputs
+      - name: Restore and share Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: kawacad-rust
+          shared-key: kawacad-rust-${{ runner.os }}-${{ runner.arch }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
           cache-all-crates: true
           cache-targets: true
 
@@ -112,10 +113,11 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup show active-toolchain
 
-      - name: Cache Rust dependencies and build outputs
+      - name: Restore and share Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: kawacad-rust
+          shared-key: kawacad-rust-${{ runner.os }}-${{ runner.arch }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
           cache-all-crates: true
           cache-targets: true
 
