@@ -52,4 +52,9 @@ node scripts/kawacad.mjs pre-commit
 git config core.hooksPath .githooks
 ```
 
-Pull Request、GitHub Actions CI、pre-push検証の運用は[`CONTRIBUTING.md`](CONTRIBUTING.md)を参照してください。
+pre-push検証はmacOS上でSwiftのformat、実Core processを使うテスト、署名なしrelease buildとアプリbundleの組み立てを確認します。各hookは次のコマンドで手動再現できます。
+
+```sh
+node scripts/kawacad.mjs pre-commit
+node scripts/kawacad.mjs pre-push
+```
