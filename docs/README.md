@@ -12,6 +12,7 @@
 | [`design/`](design/) | アーキテクチャ、内部境界、機能領域の設計 |
 | [`glossary.md`](glossary.md) | プロジェクト共通の用語 |
 | [`backlog/`](backlog/) | 未解決の論点と将来の対象 |
+| [`development-process.md`](development-process.md) | Issue、ブランチ、Pull Request、リリースの進め方 |
 
 外部仕様書は、ユーザーが観測できる内容を定義します。設計文書は、所有関係、境界、データフロー、設計上の不変条件を説明します。用語集は、複数の文書で使われる用語を定義します。バックログ文書は、現在の製品契約ではありません。
 
@@ -26,6 +27,7 @@
 7. 対象となる機能領域の設計文書
 8. 共通用語を確認する場合は[`glossary.md`](glossary.md)
 9. 未決定事項や将来の対象を調査する場合のみ[`backlog/`](backlog/)
+10. 開発の進め方は[`development-process.md`](development-process.md)
 
 ## 更新先の責務
 
@@ -36,5 +38,6 @@
 - システムの所有関係、技術境界、主要フローの変更は`design/architecture.md`に記載します。
 - 共通用語は`glossary.md`に記載します。
 - 未決定事項や将来候補は`backlog/`に記載します。
+- Issue、ブランチ、Pull Request、Milestone、手動テストの運用は`development-process.md`に記載します。
 
 文書には、現在の契約または継続的に有効な設計を記載します。一時的な作業計画、移行台帳、検証マトリクス、日付付きの調査記録は、現在のドキュメント体系には含めません。
