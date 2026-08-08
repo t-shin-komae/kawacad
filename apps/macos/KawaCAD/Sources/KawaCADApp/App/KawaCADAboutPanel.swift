@@ -2,7 +2,7 @@ import AppKit
 
 enum KawaCADAboutPanel {
   private static let defaultApplicationName = "KawaCAD"
-  private static let defaultMarketingVersion = "0.1.0"
+  private static let defaultMarketingVersion = "0.2.0"
   private static let defaultCopyright = "© 2026 t-shin-komae"
 
   static func present(
