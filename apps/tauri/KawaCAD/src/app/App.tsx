@@ -404,8 +404,8 @@ export function App() {
     if (warning) setDocumentWarning(warning);
   }, [state?.warnings]);
   useEffect(() => {
-    if (layout.mode === "compact" && selected.size) setCompactDrawer("inspector");
-  }, [layout.mode, selected]);
+    if (layout.mode === "compact" && inspectorOpen && selected.size) setCompactDrawer("inspector");
+  }, [inspectorOpen, layout.mode, selected]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -647,6 +647,7 @@ export function App() {
     partLibrary,
     roundHoles: state?.roundHoles ?? [],
     onCommand: executeCommand,
+    onApplyStyle: applyActiveStyle,
     onDeleteSelection: deleteSelection,
     onCreatePart: createPart,
     onAddParameter: addParameter,
@@ -750,6 +751,7 @@ export function App() {
             parameters={state?.parameters ?? []}
             degrees={pendingConstraintValue.candidate === "angle"}
             floating
+            floatingPosition={pendingConstraintValue.hudPosition}
             onConfirm={(value) =>
               void commitConstraint(pendingConstraintValue.candidate, pendingConstraintValue.preflight, value)
             }
@@ -966,14 +968,15 @@ export function App() {
               />
             </aside>
           )}
-          {layout.mode === "compact" && compactDrawer && (
-            <button
-              type="button"
-              className="compact-drawer-backdrop"
-              aria-label={appStrings.accessibility.dismissDrawer}
-              onClick={() => setCompactDrawer(undefined)}
-            />
-          )}
+          {layout.mode === "compact" &&
+            (compactDrawer === "tools" || (compactDrawer === "inspector" && inspectorOpen)) && (
+              <button
+                type="button"
+                className="compact-drawer-backdrop"
+                aria-label={appStrings.accessibility.dismissDrawer}
+                onClick={() => setCompactDrawer(undefined)}
+              />
+            )}
           {layout.mode === "compact" && compactDrawer === "inspector" && inspectorOpen && (
             <WorkspaceInspector
               mode="compact"

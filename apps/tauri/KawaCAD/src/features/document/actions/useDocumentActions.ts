@@ -216,27 +216,31 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     [command, openTextEntry],
   );
   const activeStyleId = activeStyle || null;
-  const applyActiveStyle = useCallback(() => {
-    if (!selected.size || !activeStyleId) return;
-    const derivedOwners = new Set<string>();
-    const commands: Array<{ kind: string; payload: unknown }> = [];
-    [...selected].forEach((entityId) => {
-      const derivedElementId = state?.drawingEntityMetadata.find(
-        (item) => item.entityId === entityId,
-      )?.derivedElementId;
-      if (derivedElementId) {
-        if (derivedOwners.has(derivedElementId)) return;
-        derivedOwners.add(derivedElementId);
-        commands.push({
-          kind: "setDerivedSharedStyle",
-          payload: { derivedElementId, styleId: activeStyleId },
-        });
-        return;
-      }
-      commands.push({ kind: "setEntitySharedStyle", payload: { entityId, styleId: activeStyleId } });
-    });
-    if (commands.length) void command("compound", commands, appStrings.app.styleUpdated);
-  }, [activeStyleId, command, selected, state?.drawingEntityMetadata]);
+  const applyActiveStyle = useCallback(
+    (requestedStyleId?: string) => {
+      const styleId = requestedStyleId || activeStyleId;
+      if (!selected.size || !styleId) return;
+      const derivedOwners = new Set<string>();
+      const commands: Array<{ kind: string; payload: unknown }> = [];
+      [...selected].forEach((entityId) => {
+        const derivedElementId = state?.drawingEntityMetadata.find(
+          (item) => item.entityId === entityId,
+        )?.derivedElementId;
+        if (derivedElementId) {
+          if (derivedOwners.has(derivedElementId)) return;
+          derivedOwners.add(derivedElementId);
+          commands.push({
+            kind: "setDerivedSharedStyle",
+            payload: { derivedElementId, styleId },
+          });
+          return;
+        }
+        commands.push({ kind: "setEntitySharedStyle", payload: { entityId, styleId } });
+      });
+      if (commands.length) void command("compound", commands, appStrings.app.styleUpdated);
+    },
+    [activeStyleId, command, selected, state?.drawingEntityMetadata],
+  );
   const deleteSelection = useCallback(() => {
     if (selectedMeasurementId) {
       void command("deleteMeasurementAnnotation", selectedMeasurementId, appStrings.app.measurementDeleted);

@@ -100,6 +100,7 @@ export type Props = {
   partLibrary: PartLibraryEntry[];
   roundHoles: Array<{ id: string; entityId: string; kind: string }>;
   onCommand: (kind: string, payload: unknown, success: string) => void;
+  onApplyStyle: (styleId?: string) => void;
   onDeleteSelection: () => void;
   onCreatePart: () => void;
   onAddParameter: () => void;
@@ -275,19 +276,7 @@ export function InspectorPanel(props: Props) {
                     ))}
                   </select>
                 </label>
-                <button
-                  disabled={!bulkStyleID}
-                  onClick={() =>
-                    onCommand(
-                      "compound",
-                      selectedEntities.map((entity) => ({
-                        kind: "setEntitySharedStyle",
-                        payload: { entityId: entity.id, styleId: bulkStyleID },
-                      })),
-                      appStrings.app.styleUpdated,
-                    )
-                  }
-                >
+                <button disabled={!bulkStyleID} onClick={() => props.onApplyStyle(bulkStyleID)}>
                   {appStrings.inspector.applyBulkStyle}
                 </button>
               </div>

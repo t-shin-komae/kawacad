@@ -51,4 +51,21 @@ describe("ConstraintValueDialog", () => {
 
     expect(screen.getByRole("presentation")).toHaveClass("floating-value-backdrop");
   });
+
+  it("places a floating value editor near the recorded work position", () => {
+    render(
+      <ConstraintValueDialog
+        label="距離"
+        initialValue={{ fixedMm: 12 }}
+        parameters={[]}
+        degrees={false}
+        floating
+        floatingPosition={{ x: 120, y: 80 }}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("presentation")).toHaveStyle({ left: "136px", top: "96px", right: "auto", bottom: "auto" });
+  });
 });

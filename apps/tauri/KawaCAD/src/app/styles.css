@@ -891,7 +891,7 @@ input[type="checkbox"] {
 .tool-grid button.active svg {
   color: var(--accent);
 }
-@container palette (min-width: 200px) {
+@container palette (min-width: 210px) {
   .tool-grid {
     grid-template-columns: repeat(2, minmax(92px, 120px));
   }

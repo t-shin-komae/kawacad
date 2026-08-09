@@ -57,6 +57,7 @@ type CanvasPointActionDependencies = CanvasActionContext & {
   applyConstraint: (
     candidate: import("@/features/canvas/domain/canvasDomainModels").Tool,
     targets: ConstraintTarget[],
+    hudPosition?: { x: number; y: number },
   ) => Promise<void>;
   applyMeasurement: (
     candidate: import("@/features/canvas/domain/canvasDomainModels").Tool,
@@ -309,7 +310,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
             setMessage(appStrings.status.remainingTargets(names[tool], required - next.length));
             return;
           }
-          if (constraintTools.has(tool)) void applyConstraint(tool, next);
+          if (constraintTools.has(tool)) void applyConstraint(tool, next, { x: event.clientX, y: event.clientY });
           else void applyMeasurement(tool, next);
           return;
         }

@@ -26,6 +26,7 @@ function panel(
   selectedEntities: RawEntity[] = [],
   selectedCount = 0,
   onCreatePart = vi.fn(),
+  onApplyStyle = vi.fn(),
 ) {
   return (
     <InspectorPanel
@@ -60,6 +61,7 @@ function panel(
       partLibrary={[]}
       roundHoles={roundHoles}
       onCommand={onCommand}
+      onApplyStyle={onApplyStyle}
       onDeleteSelection={vi.fn()}
       onCreatePart={onCreatePart}
       onAddParameter={vi.fn()}
@@ -93,6 +95,7 @@ describe("InspectorPanel", () => {
 
   it("summarizes multiple selections and applies a shared style to all selected entities", () => {
     const onCommand = vi.fn();
+    const onApplyStyle = vi.fn();
     const line: RawEntity = {
       id: "entity:line",
       kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } },
@@ -120,6 +123,8 @@ describe("InspectorPanel", () => {
         [],
         [line, circle],
         2,
+        vi.fn(),
+        onApplyStyle,
       ),
     );
 
@@ -130,14 +135,8 @@ describe("InspectorPanel", () => {
       target: { value: "style:stitch" },
     });
     fireEvent.click(screen.getByRole("button", { name: "選択へ適用" }));
-    expect(onCommand).toHaveBeenCalledWith(
-      "compound",
-      [
-        { kind: "setEntitySharedStyle", payload: { entityId: "entity:line", styleId: "style:stitch" } },
-        { kind: "setEntitySharedStyle", payload: { entityId: "entity:circle", styleId: "style:stitch" } },
-      ],
-      "選択図形の線種を更新しました。",
-    );
+    expect(onCommand).not.toHaveBeenCalled();
+    expect(onApplyStyle).toHaveBeenCalledOnce();
   });
 
   it("exposes the parts creation path from a selected drawing", () => {

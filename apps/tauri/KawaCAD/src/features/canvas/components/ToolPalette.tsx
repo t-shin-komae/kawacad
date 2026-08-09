@@ -186,7 +186,7 @@ export function ToolPalette({
               aria-hidden="true"
             />
           </div>
-          <button className="wide-button" disabled={!selectedCount || !activeStyle} onClick={onApplyStyle}>
+          <button className="wide-button" disabled={!selectedCount || !activeStyle} onClick={() => onApplyStyle()}>
             <PaletteActionIcon kind="brush" />
             {appStrings.palette.applyToSelection}
           </button>

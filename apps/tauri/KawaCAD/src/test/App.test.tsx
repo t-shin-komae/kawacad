@@ -1556,6 +1556,54 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(screen.getByRole("button", { name: "基本ツールだけを表示" }));
     expect(screen.queryByTitle("一致")).not.toBeInTheDocument();
   });
+  it("applies a bulk style through owner commands for resolved derived entities", async () => {
+    const styleState = {
+      ...state,
+      entities: [
+        { id: "entity:base", kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } } },
+        { id: "entity:derived", kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } } },
+      ],
+      sharedStyles: [
+        ...state.sharedStyles,
+        { id: "style:stitch", name: "縫い線", style: { ...state.sharedStyles[0].style, pattern: "dashed" } },
+      ],
+      drawingEntityMetadata: [
+        { entityId: "entity:base" },
+        { entityId: "entity:derived", derivedElementId: "derived:offset" },
+      ],
+    };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return styleState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return styleState;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    fireEvent.keyDown(window, { key: "a", metaKey: true });
+    const stylePicker = await screen.findByRole("combobox", { name: "選択図形の共有線種" });
+    fireEvent.change(stylePicker, { target: { value: "style:stitch" } });
+    const bulkStyleButtons = screen.getAllByRole("button", { name: "選択へ適用" });
+    fireEvent.click(bulkStyleButtons[bulkStyleButtons.length - 1]);
+
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith(
+        "apply_command",
+        expect.objectContaining({
+          command: {
+            kind: "compound",
+            payload: [
+              { kind: "setEntitySharedStyle", payload: { entityId: "entity:base", styleId: "style:stitch" } },
+              {
+                kind: "setDerivedSharedStyle",
+                payload: { derivedElementId: "derived:offset", styleId: "style:stitch" },
+              },
+            ],
+          },
+        }),
+      ),
+    );
+  });
   it("resets inspector tabs and search state when a new document replaces the current one", async () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
@@ -2182,6 +2230,18 @@ describe("React workspace shortcuts", () => {
     fireEvent(window, new Event("resize"));
     await waitFor(() => expect(document.querySelector(".layout-wide")).toBeInTheDocument());
     expect(screen.queryByRole("complementary", { name: "インスペクタ" })).toBeInTheDocument();
+  });
+  it("does not leave an empty compact backdrop when the inspector preference is hidden", async () => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 800 });
+    window.localStorage.setItem("leather.layout.inspectorPanelVisible", "false");
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    fireEvent(window, new Event("resize"));
+    await waitFor(() => expect(document.querySelector(".layout-compact")).toBeInTheDocument());
+    fireEvent.keyDown(window, { key: "a", metaKey: true });
+    await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
+    expect(screen.queryByRole("button", { name: "ドロワーを閉じる" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary", { name: "インスペクタ" })).not.toBeInTheDocument();
   });
   it("toggles the SwiftUI bottom workbench from the status bar", async () => {
     render(<App />);

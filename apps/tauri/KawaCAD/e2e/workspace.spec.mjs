@@ -168,7 +168,17 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect.poll(columnCount).toBe(1);
     await expect(palette.locator(".line-style-swatch")).toHaveClass(/solid/u);
 
-    await page.getByRole("separator", { name: "ツールパレットの幅" }).press("End");
+    const resizeHandle = page.getByRole("separator", { name: "ツールパレットの幅" });
+    await resizeHandle.press("Home");
+    for (let index = 0; index < 3; index += 1) await resizeHandle.press("ArrowRight");
+    await expect(resizeHandle).toHaveAttribute("aria-valuenow", "200");
+    await expect.poll(columnCount).toBe(1);
+    await expect.poll(() => grid.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+
+    for (let index = 0; index < 2; index += 1) await resizeHandle.press("ArrowRight");
+    await expect.poll(columnCount).toBe(2);
+
+    await resizeHandle.press("End");
     await expect.poll(columnCount).toBe(2);
   });
 
@@ -331,6 +341,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.locator(".floating-value-backdrop")).toBeVisible();
     await expect(page.locator(".floating-value-backdrop")).toHaveCSS("position", "absolute");
+    await expect(page.locator(".floating-value-backdrop")).toHaveAttribute("style", /inset:/u);
     const before = await core.invoke("document_state");
     const value = page.getByRole("dialog").locator("input").first();
     await value.fill("0");
