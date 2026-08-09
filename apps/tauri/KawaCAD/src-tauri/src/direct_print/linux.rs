@@ -8,6 +8,7 @@ use libloading::Library;
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_uint};
 use std::ptr;
+use std::sync::OnceLock;
 
 const A4_MEDIA: &str = "iso_a4_210x297mm";
 const HTTP_STATUS_CONTINUE: c_int = 100;
@@ -106,7 +107,6 @@ type CupsFinishDestDocument =
 type CupsCancelDestJob = unsafe extern "C" fn(*mut Http, *mut CupsDest, c_int) -> c_int;
 
 struct Cups {
-    _library: Library,
     get_dests2: CupsGetDests2,
     free_dests: CupsFreeDests,
     get_named_dest: CupsGetNamedDest,
@@ -124,32 +124,44 @@ struct Cups {
     cancel_dest_job: CupsCancelDestJob,
 }
 
+static CUPS_LIBRARY: OnceLock<Result<&'static Library, String>> = OnceLock::new();
+
 impl Cups {
     fn load() -> Result<Self, String> {
-        // libloading keeps the system dependency optional: PDF output still starts without CUPS.
-        let library = unsafe { Library::new("libcups.so.2") }
-            .or_else(|_| unsafe { Library::new("libcups.so") })
-            .map_err(|error| format!("CUPS is not available: {error}"))?;
+        let library = cups_library()?;
         unsafe {
             Ok(Self {
-                get_dests2: symbol(&library, b"cupsGetDests2\0")?,
-                free_dests: symbol(&library, b"cupsFreeDests\0")?,
-                get_named_dest: symbol(&library, b"cupsGetNamedDest\0")?,
-                copy_dest_info: symbol(&library, b"cupsCopyDestInfo\0")?,
-                free_dest_info: symbol(&library, b"cupsFreeDestInfo\0")?,
-                check_dest_supported: symbol(&library, b"cupsCheckDestSupported\0")?,
-                get_dest_media_by_name: symbol(&library, b"cupsGetDestMediaByName\0")?,
-                add_option: symbol(&library, b"cupsAddOption\0")?,
-                free_options: symbol(&library, b"cupsFreeOptions\0")?,
-                copy_dest_conflicts: symbol(&library, b"cupsCopyDestConflicts\0")?,
-                create_dest_job: symbol(&library, b"cupsCreateDestJob\0")?,
-                start_dest_document: symbol(&library, b"cupsStartDestDocument\0")?,
-                write_request_data: symbol(&library, b"cupsWriteRequestData\0")?,
-                finish_dest_document: symbol(&library, b"cupsFinishDestDocument\0")?,
-                cancel_dest_job: symbol(&library, b"cupsCancelDestJob\0")?,
-                _library: library,
+                get_dests2: symbol(library, b"cupsGetDests2\0")?,
+                free_dests: symbol(library, b"cupsFreeDests\0")?,
+                get_named_dest: symbol(library, b"cupsGetNamedDest\0")?,
+                copy_dest_info: symbol(library, b"cupsCopyDestInfo\0")?,
+                free_dest_info: symbol(library, b"cupsFreeDestInfo\0")?,
+                check_dest_supported: symbol(library, b"cupsCheckDestSupported\0")?,
+                get_dest_media_by_name: symbol(library, b"cupsGetDestMediaByName\0")?,
+                add_option: symbol(library, b"cupsAddOption\0")?,
+                free_options: symbol(library, b"cupsFreeOptions\0")?,
+                copy_dest_conflicts: symbol(library, b"cupsCopyDestConflicts\0")?,
+                create_dest_job: symbol(library, b"cupsCreateDestJob\0")?,
+                start_dest_document: symbol(library, b"cupsStartDestDocument\0")?,
+                write_request_data: symbol(library, b"cupsWriteRequestData\0")?,
+                finish_dest_document: symbol(library, b"cupsFinishDestDocument\0")?,
+                cancel_dest_job: symbol(library, b"cupsCancelDestJob\0")?,
             })
         }
+    }
+}
+
+fn cups_library() -> Result<&'static Library, String> {
+    match CUPS_LIBRARY.get_or_init(|| {
+        // libloading keeps CUPS optional. Keep a successful load alive until process exit: CUPS
+        // retains process-global state that is not safe to tear down after each adapter call.
+        unsafe { Library::new("libcups.so.2") }
+            .or_else(|_| unsafe { Library::new("libcups.so") })
+            .map(|library| -> &'static Library { Box::leak(Box::new(library)) })
+            .map_err(|error| format!("CUPS is not available: {error}"))
+    }) {
+        Ok(library) => Ok(*library),
+        Err(error) => Err(error.clone()),
     }
 }
 

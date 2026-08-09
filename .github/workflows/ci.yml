@@ -150,6 +150,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends \
             build-essential \
+            avahi-daemon \
+            cups \
+            cups-client \
+            cups-ipp-utils \
+            dbus \
             curl \
             file \
             libayatana-appindicator3-dev \
@@ -188,6 +193,43 @@ jobs:
 
       - name: Test Tauri application
         run: node scripts/kawacad.mjs test --scope tauri --e2e
+
+      - name: Start virtual CUPS printer
+        run: |
+          sudo systemctl start cups.service
+          sudo systemctl start avahi-daemon.service
+          for attempt in {1..20}; do
+            if lpstat -r | grep -q 'scheduler is running'; then
+              break
+            fi
+            sleep 0.25
+          done
+          lpstat -r | grep -q 'scheduler is running'
+
+          ippeveprinter -p 8631 KawaCAD-IPP > "$RUNNER_TEMP/ippeveprinter.log" 2>&1 &
+          for attempt in {1..20}; do
+            if (echo > /dev/tcp/127.0.0.1/8631) >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.25
+          done
+          if ! (echo > /dev/tcp/127.0.0.1/8631) >/dev/null 2>&1; then
+            cat "$RUNNER_TEMP/ippeveprinter.log" >&2
+            exit 1
+          fi
+
+          sudo lpadmin -x kawacad-virtual >/dev/null 2>&1 || true
+          sudo lpadmin -p kawacad-virtual -E -v ipp://127.0.0.1:8631/ipp/print -m everywhere
+          sudo cupsaccept kawacad-virtual
+          sudo cupsenable kawacad-virtual
+          lpstat -v kawacad-virtual
+
+      - name: Test Linux direct printing through CUPS
+        env:
+          KAWACAD_CUPS_E2E_PRINTER: kawacad-virtual
+        run: |
+          cargo test --manifest-path apps/tauri/KawaCAD/src-tauri/Cargo.toml --lib \
+            submits_a4_pdf_to_the_configured_cups_printer
 
       - name: Upload Playwright traces
         if: failure()

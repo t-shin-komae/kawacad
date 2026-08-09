@@ -443,6 +443,74 @@ mod tests {
         assert!(store.register("main".to_owned(), 1, 20, (), now).is_ok());
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn submits_a4_pdf_to_the_configured_cups_printer() {
+        let Ok(printer_id) = std::env::var("KAWACAD_CUPS_E2E_PRINTER") else {
+            return;
+        };
+        let options = DirectPrintOptions {
+            orientation: "portrait".to_owned(),
+            include_dimension_labels: true,
+            include_scale_guide: true,
+        };
+        let printers = list_printers().expect("CUPS printers should be listed");
+        assert!(
+            printers.iter().any(|printer| printer.id == printer_id),
+            "configured CUPS printer should be listed"
+        );
+        let inspection = inspect_printer(&InspectPrinterRequest {
+            printer_id: printer_id.clone(),
+            options: options.clone(),
+        })
+        .expect("CUPS printer should be inspected");
+        assert!(
+            inspection.selectable,
+            "configured CUPS printer must accept A4, 100%, simplex, 1-up PDF output: {:?}",
+            inspection.reason
+        );
+        let printable_area_mm = inspection
+            .printable_area_mm
+            .expect("selectable printer should provide its printable area");
+        let mut document = kawacad_core::document::ProjectDocument::new("CUPS E2E");
+        document
+            .apply_command(kawacad_core::command::DocumentCommand::AddEntity(
+                kawacad_core::geometry::Entity::new(
+                    "cups-e2e-line",
+                    kawacad_core::geometry::EntityKind::LineSegment(
+                        kawacad_core::geometry::LineSegment::new(
+                            kawacad_core::geometry::Point2::new(-10.0, 0.0),
+                            kawacad_core::geometry::Point2::new(10.0, 0.0),
+                        ),
+                    ),
+                ),
+            ))
+            .expect("test line should be added");
+        let output = document
+            .build_output_document_model(kawacad_core::output::BuildOutputDocumentModelOptions {
+                orientation: kawacad_core::print::PrintOrientation::Portrait,
+                include_dimension_labels: options.include_dimension_labels,
+                include_scale_guide: options.include_scale_guide,
+                rotation_deg: 0,
+                printable_area_mm,
+            })
+            .expect("output document model should be built");
+        let artifact = create_artifact(&output.output_document_model)
+            .expect("direct-print PDF should be rendered");
+        let prepared = PreparedDirectPrint {
+            printer_id,
+            options,
+            document_fingerprint: "cups-e2e".to_owned(),
+            capability_fingerprint: inspection
+                .capability_fingerprint
+                .expect("selectable printer should provide a capability fingerprint"),
+            output,
+            artifact,
+        };
+
+        send(&prepared).expect("CUPS should accept the direct-print PDF");
+    }
+
     #[cfg(target_os = "macos")]
     #[test]
     fn macos_reports_direct_printing_as_unsupported() {
