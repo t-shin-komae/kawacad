@@ -12,17 +12,18 @@ use std::os::windows::ffi::OsStrExt;
 use std::ptr;
 use winapi::shared::minwindef::LPBYTE;
 use winapi::um::wingdi::{
-    AbortDoc, Arc, CreateDCW, CreateFontW, CreatePen, DeleteDC, DeleteObject, Ellipse, EndDoc,
-    EndPage, GetDeviceCaps, LineTo, MoveToEx, SelectObject, SetArcDirection, SetBkMode,
-    SetTextColor, StartDocW, StartPage, TextOutW, AD_CLOCKWISE, AD_COUNTERCLOCKWISE, DMDUP_SIMPLEX,
-    DMNUP_ONEUP, DMORIENT_LANDSCAPE, DMORIENT_PORTRAIT, DMPAPER_A4, DM_DUPLEX, DM_IN_BUFFER,
-    DM_NUP, DM_ORIENTATION, DM_OUT_BUFFER, DM_PAPERSIZE, DM_SCALE, DOCINFOW, HORZRES, LOGPIXELSX,
+    AbortDoc, Arc, CreateDCW, CreateFontW, CreatePen, DeleteDC, DeleteObject, DeviceCapabilitiesW,
+    Ellipse, EndDoc, EndPage, GetDeviceCaps, LineTo, MoveToEx, SelectObject, SetArcDirection,
+    SetBkMode, SetTextColor, StartDocW, StartPage, TextOutW, AD_CLOCKWISE, AD_COUNTERCLOCKWISE,
+    DC_DUPLEX, DC_FIELDS, DC_ORIENTATION, DC_PAPERS, DMDUP_SIMPLEX, DMNUP_ONEUP,
+    DMORIENT_LANDSCAPE, DMORIENT_PORTRAIT, DMPAPER_A4, DM_DUPLEX, DM_IN_BUFFER, DM_NUP,
+    DM_ORIENTATION, DM_OUT_BUFFER, DM_PAPERSIZE, DM_SCALE, DOCINFOW, HORZRES, LOGPIXELSX,
     LOGPIXELSY, PHYSICALHEIGHT, PHYSICALOFFSETX, PHYSICALOFFSETY, PHYSICALWIDTH, PS_DASH, PS_SOLID,
     RGB, TRANSPARENT, VERTRES,
 };
 use winapi::um::winspool::{
-    ClosePrinter, DocumentPropertiesW, EnumPrintersW, OpenPrinterW, PRINTER_ENUM_CONNECTIONS,
-    PRINTER_ENUM_LOCAL, PRINTER_INFO_2W,
+    ClosePrinter, DocumentPropertiesW, EnumPrintersW, GetPrinterW, OpenPrinterW,
+    PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL, PRINTER_INFO_2W,
 };
 
 const IDOK: i32 = 1;
@@ -53,7 +54,8 @@ pub(super) fn list_printers() -> Result<Vec<DirectPrinter>, String> {
         return Ok(Vec::new());
     }
 
-    let mut buffer = vec![0u8; bytes_needed as usize];
+    let word_count = (bytes_needed as usize).div_ceil(mem::size_of::<usize>());
+    let mut buffer = vec![0usize; word_count];
     let succeeded = unsafe {
         EnumPrintersW(
             PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
@@ -128,6 +130,11 @@ struct PrinterConfiguration {
     fingerprint: String,
 }
 
+struct PrinterCapabilities {
+    fields: u32,
+    supports_duplex: bool,
+}
+
 fn configured_printer(
     printer_name: &str,
     options: &DirectPrintOptions,
@@ -138,6 +145,7 @@ fn configured_printer(
         return Err(last_error("Could not open the selected Windows printer"));
     }
     let result = (|| {
+        let port_name = printer_port_name(printer)?;
         let byte_count = unsafe {
             DocumentPropertiesW(
                 ptr::null_mut(),
@@ -167,7 +175,9 @@ fn configured_printer(
         {
             return Err(last_error("Could not obtain the printer DEVMODE"));
         }
-        normalize_devmode(devmode_ptr, options)?;
+        let capabilities =
+            printer_capabilities(wide_name.as_ptr(), port_name.as_ptr(), devmode_ptr, options)?;
+        normalize_devmode(devmode_ptr, options, &capabilities)?;
         if unsafe {
             DocumentPropertiesW(
                 ptr::null_mut(),
@@ -183,7 +193,7 @@ fn configured_printer(
                 "The selected printer rejected A4 100% simplex settings",
             ));
         }
-        validate_devmode(devmode_ptr, options)?;
+        validate_devmode(devmode_ptr, options, &capabilities)?;
         let dc = unsafe {
             CreateDCW(
                 wide("WINSPOOL").as_ptr(),
@@ -205,9 +215,91 @@ fn configured_printer(
     result
 }
 
+fn printer_port_name(printer: winapi::shared::ntdef::HANDLE) -> Result<Vec<u16>, String> {
+    let mut bytes_needed = 0;
+    unsafe { GetPrinterW(printer, 2, ptr::null_mut(), 0, &mut bytes_needed) };
+    if bytes_needed == 0 {
+        return Err(last_error("Could not query the Windows printer port"));
+    }
+    let mut buffer = vec![0u8; bytes_needed as usize];
+    if unsafe {
+        GetPrinterW(
+            printer,
+            2,
+            buffer.as_mut_ptr().cast(),
+            bytes_needed,
+            &mut bytes_needed,
+        )
+    } == 0
+    {
+        return Err(last_error("Could not read the Windows printer port"));
+    }
+    let info = unsafe { &*(buffer.as_ptr() as *const PRINTER_INFO_2W) };
+    if info.pPortName.is_null() {
+        return Err("The selected printer did not provide a Windows port name".to_owned());
+    }
+    Ok(wide(&wide_ptr_to_string(info.pPortName)))
+}
+
+fn printer_capabilities(
+    printer_name: *const u16,
+    port_name: *const u16,
+    devmode: *const winapi::um::wingdi::DEVMODEW,
+    options: &DirectPrintOptions,
+) -> Result<PrinterCapabilities, String> {
+    let fields = unsafe {
+        DeviceCapabilitiesW(printer_name, port_name, DC_FIELDS, ptr::null_mut(), devmode)
+    };
+    if fields == -1 {
+        return Err(last_error("Could not query Windows printer fields"));
+    }
+
+    let paper_count = unsafe {
+        DeviceCapabilitiesW(printer_name, port_name, DC_PAPERS, ptr::null_mut(), devmode)
+    };
+    if paper_count <= 0 {
+        return Err(last_error("Could not query Windows printer paper sizes"));
+    }
+    let mut papers = vec![0u16; paper_count as usize];
+    let returned_papers = unsafe {
+        DeviceCapabilitiesW(
+            printer_name,
+            port_name,
+            DC_PAPERS,
+            papers.as_mut_ptr(),
+            devmode,
+        )
+    };
+    if returned_papers != paper_count || !papers.iter().any(|paper| *paper == DMPAPER_A4 as u16) {
+        return Err("The selected printer does not support A4 paper".to_owned());
+    }
+
+    let orientation = unsafe {
+        DeviceCapabilitiesW(
+            printer_name,
+            port_name,
+            DC_ORIENTATION,
+            ptr::null_mut(),
+            devmode,
+        )
+    };
+    if options.orientation == "landscape" && orientation != 90 && orientation != 270 {
+        return Err("The selected printer does not support landscape orientation".to_owned());
+    }
+
+    let duplex = unsafe {
+        DeviceCapabilitiesW(printer_name, port_name, DC_DUPLEX, ptr::null_mut(), devmode)
+    };
+    Ok(PrinterCapabilities {
+        fields: fields as u32,
+        supports_duplex: duplex == 1,
+    })
+}
+
 fn normalize_devmode(
     devmode: *mut winapi::um::wingdi::DEVMODEW,
     options: &DirectPrintOptions,
+    capabilities: &PrinterCapabilities,
 ) -> Result<(), String> {
     let orientation = match options.orientation.as_str() {
         "portrait" => DMORIENT_PORTRAIT,
@@ -215,13 +307,30 @@ fn normalize_devmode(
         _ => return Err("Direct printing requires a valid A4 orientation".to_owned()),
     } as i16;
     unsafe {
-        (*devmode).dmFields |= DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE | DM_DUPLEX | DM_NUP;
+        let requested_fields = (capabilities.fields & DM_ORIENTATION)
+            | DM_PAPERSIZE
+            | (capabilities.fields & DM_SCALE)
+            | if capabilities.supports_duplex {
+                DM_DUPLEX
+            } else {
+                0
+            }
+            | (capabilities.fields & DM_NUP);
+        (*devmode).dmFields |= requested_fields;
         let settings = (*devmode).u1.s1_mut();
-        settings.dmOrientation = orientation;
+        if capabilities.fields & DM_ORIENTATION != 0 {
+            settings.dmOrientation = orientation;
+        }
         settings.dmPaperSize = DMPAPER_A4 as i16;
-        settings.dmScale = 100;
-        (*devmode).dmDuplex = DMDUP_SIMPLEX as i16;
-        *(*devmode).u2.dmNup_mut() = DMNUP_ONEUP;
+        if capabilities.fields & DM_SCALE != 0 {
+            settings.dmScale = 100;
+        }
+        if capabilities.supports_duplex {
+            (*devmode).dmDuplex = DMDUP_SIMPLEX as i16;
+        }
+        if capabilities.fields & DM_NUP != 0 {
+            *(*devmode).u2.dmNup_mut() = DMNUP_ONEUP;
+        }
     }
     Ok(())
 }
@@ -229,6 +338,7 @@ fn normalize_devmode(
 fn validate_devmode(
     devmode: *const winapi::um::wingdi::DEVMODEW,
     options: &DirectPrintOptions,
+    capabilities: &PrinterCapabilities,
 ) -> Result<(), String> {
     let expected_orientation = match options.orientation.as_str() {
         "portrait" => DMORIENT_PORTRAIT,
@@ -237,17 +347,28 @@ fn validate_devmode(
     } as i16;
     unsafe {
         let mode = &*devmode;
-        let required = DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE | DM_DUPLEX | DM_NUP;
+        let required = DM_PAPERSIZE | (capabilities.fields & DM_ORIENTATION);
         if mode.dmFields & required != required
-            || mode.u1.s1().dmOrientation != expected_orientation
+            || (capabilities.fields & DM_ORIENTATION != 0
+                && mode.u1.s1().dmOrientation != expected_orientation)
             || mode.u1.s1().dmPaperSize != DMPAPER_A4 as i16
-            || mode.u1.s1().dmScale != 100
-            || mode.dmDuplex != DMDUP_SIMPLEX as i16
-            || *mode.u2.dmNup() != DMNUP_ONEUP
         {
-            return Err(
-                "The selected printer did not retain A4 100% simplex 1-up settings".to_owned(),
-            );
+            return Err("The selected printer did not retain A4 orientation settings".to_owned());
+        }
+        if capabilities.fields & DM_SCALE != 0
+            && (mode.dmFields & DM_SCALE == 0 || mode.u1.s1().dmScale != 100)
+        {
+            return Err("The selected printer did not retain 100% scale".to_owned());
+        }
+        if capabilities.supports_duplex
+            && (mode.dmFields & DM_DUPLEX == 0 || mode.dmDuplex != DMDUP_SIMPLEX as i16)
+        {
+            return Err("The selected printer did not retain simplex printing".to_owned());
+        }
+        if capabilities.fields & DM_NUP != 0
+            && (mode.dmFields & DM_NUP == 0 || *mode.u2.dmNup() != DMNUP_ONEUP)
+        {
+            return Err("The selected printer did not retain 1-up printing".to_owned());
         }
     }
     Ok(())

@@ -120,7 +120,12 @@ pub enum OutputGraphicKind {
 
 /// 出力対象図形の幾何情報。
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase", tag = "kind", content = "payload")]
+#[serde(
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    tag = "kind",
+    content = "payload"
+)]
 pub enum OutputGraphicGeometry {
     /// 点。
     Point {
