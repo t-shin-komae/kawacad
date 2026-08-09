@@ -153,6 +153,51 @@ test.describe("Tauri React workspace through the real Core process", () => {
     }
   });
 
+  // 初期の折り畳み状態、パレット幅に応じた1列/2列表示、線種見本の表示を検証する。
+  test("keeps the tool palette progression and responsive grid contract", async ({ page }) => {
+    await openWorkspace(page);
+    const palette = page.getByRole("complementary", { name: "ツールパレット" });
+    const grid = palette.locator(".tool-grid").first();
+    const columnCount = () =>
+      grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/u).length);
+
+    await palette.getByRole("button", { name: "詳細ツールを表示", exact: true }).click();
+    await expect(palette.getByRole("button", { name: "派生", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect(palette.getByRole("button", { name: "拘束", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect(palette.getByRole("button", { name: "計測", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect.poll(columnCount).toBe(1);
+    await expect(palette.locator(".line-style-swatch")).toHaveClass(/solid/u);
+
+    await page.getByRole("separator", { name: "ツールパレットの幅" }).press("End");
+    await expect.poll(columnCount).toBe(2);
+  });
+
+  // 下部サマリーの開閉とOSSライセンス画面の実配置可能なサイズを検証する。
+  test("keeps the status summary and license dialog reachable", async ({ page }) => {
+    await openWorkspace(page);
+
+    await page.getByRole("button", { name: "サマリーを表示", exact: true }).click();
+    const summary = page.getByRole("region", { name: "サマリー" });
+    await expect(summary).toBeVisible();
+    await expect(summary).toContainText("選択なし");
+    await expect(summary).toContainText("拘束なし");
+    await expect(summary).toContainText("未使用 0 件");
+    await page.getByRole("button", { name: "サマリーを隠す", exact: true }).click();
+    await expect(summary).toBeHidden();
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
+    });
+    const licenses = page.getByRole("dialog", { name: "OSSライセンス" });
+    await expect(licenses).toBeVisible();
+    const box = await licenses.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box?.width).toBeGreaterThanOrEqual(620);
+    expect(box?.height).toBeGreaterThanOrEqual(460);
+    await licenses.getByRole("button", { name: "閉じる", exact: true }).click();
+    await expect(licenses).toBeHidden();
+  });
+
   // 点と線分の作図、全選択、複製、Undo/RedoがCoreの履歴状態と一貫して動作することを検証する。
   test("creates basic geometry, selects it, duplicates it, and keeps undo/redo coherent", async ({ page, core }) => {
     await openWorkspace(page);
@@ -284,6 +329,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await clickTool(page, "線分長");
     await clickModelPoint(page, 0, 0);
     await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.locator(".floating-value-backdrop")).toBeVisible();
+    await expect(page.locator(".floating-value-backdrop")).toHaveCSS("position", "absolute");
     const before = await core.invoke("document_state");
     const value = page.getByRole("dialog").locator("input").first();
     await value.fill("0");

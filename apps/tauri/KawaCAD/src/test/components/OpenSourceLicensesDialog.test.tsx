@@ -81,4 +81,35 @@ describe("OpenSourceLicensesDialog", () => {
     expect(await screen.findByText("serde_json", { exact: true })).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+
+  it("renders duplicate package notices without collapsing entries", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          components: [
+            {
+              name: "shared-package",
+              version: "1.0.0",
+              license: "MIT",
+              text: "first notice",
+            },
+            {
+              name: "shared-package",
+              version: "1.0.0",
+              license: "MIT",
+              text: "second notice",
+            },
+          ],
+        }),
+      }),
+    );
+
+    render(<OpenSourceLicensesDialog onClose={vi.fn()} />);
+
+    expect(await screen.findByText("first notice", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("second notice", { exact: true })).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
 });

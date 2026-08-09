@@ -43,8 +43,8 @@ export function OpenSourceLicensesDialog({ onClose }: OpenSourceLicensesDialogPr
           {licenses === null ? (
             <p>読み込み中…</p>
           ) : (
-            licenses.map((license) => (
-              <article className="license-entry" key={`${license.name}-${license.license}`}>
+            licenses.map((license, index) => (
+              <article className="license-entry" key={`${license.name}-${license.version}-${license.license}-${index}`}>
                 <h3>{license.name}</h3>
                 <p>
                   {license.version} · {license.license}
