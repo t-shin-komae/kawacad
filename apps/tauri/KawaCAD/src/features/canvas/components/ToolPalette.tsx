@@ -1,5 +1,5 @@
 import { ToolIcon } from "@/features/canvas/components/ToolIcon";
-import { ChevronDown, ChevronRight, Maximize2, Minimize2, Paintbrush, PanelLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Paintbrush, PanelLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
@@ -103,16 +103,13 @@ export const toolGroupPreferenceIds: Record<string, string> = {
   measurement: "measurement",
 };
 export const defaultCollapsedToolGroups = new Set<string>(["derived", "constraint", "measurement"]);
-function lineStyleClass(pattern?: string) {
-  return pattern === "dashed" || pattern === "dotted" || pattern === "dashDot" ? pattern : "solid";
-}
 function DisclosureIcon({ expanded }: { expanded: boolean }) {
   const Icon = expanded ? ChevronDown : ChevronRight;
   return <Icon className="palette-disclosure" size={10} strokeWidth={2} aria-hidden="true" />;
 }
 
-function PaletteActionIcon({ kind }: { kind: "expand" | "brush" }) {
-  const Icon = kind === "brush" ? Paintbrush : Maximize2;
+function PaletteActionIcon({ kind }: { kind: "expand" | "compress" | "brush" }) {
+  const Icon = kind === "brush" ? Paintbrush : kind === "expand" ? ChevronsUpDown : ChevronsDownUp;
   return <Icon className="palette-action-icon" size={12} strokeWidth={1.7} aria-hidden="true" />;
 }
 
@@ -148,7 +145,7 @@ export function ToolPalette({
   return (
     <aside className="tool-palette" aria-label={appStrings.palette.ariaLabel}>
       <header className="palette-header">
-        <PanelLeft className="palette-header-icon" size={16} strokeWidth={2} aria-hidden="true" />
+        <PanelLeft className="palette-header-icon" size={13} strokeWidth={2} aria-hidden="true" />
         <span>
           <strong>{appStrings.palette.title}</strong>
           <small>{appStrings.palette.subtitle}</small>
@@ -158,34 +155,24 @@ export function ToolPalette({
         <section className="palette-options">
           <h2>{appStrings.palette.display}</h2>
           <button className="wide-button" onClick={() => onBasicOnlyChange(!basicOnly)}>
-            {basicOnly ? (
-              <Minimize2 className="palette-action-icon" size={12} strokeWidth={1.7} aria-hidden="true" />
-            ) : (
-              <PaletteActionIcon kind="expand" />
-            )}
+            <PaletteActionIcon kind={basicOnly ? "expand" : "compress"} />
             {basicOnly ? appStrings.palette.showDetailed : appStrings.palette.showBasicOnly}
           </button>
         </section>
         <section className="palette-options">
           <h2>{appStrings.palette.lineStyle}</h2>
-          <div className="palette-style-picker">
-            <select
-              className="palette-select"
-              aria-label={appStrings.palette.lineStyleAria}
-              value={activeStyle}
-              onChange={(event) => onActiveStyleChange(event.target.value)}
-            >
-              {sharedStyles.map((style) => (
-                <option key={style.id} value={style.id}>
-                  {style.name}
-                </option>
-              ))}
-            </select>
-            <span
-              className={`line-style-swatch ${lineStyleClass(sharedStyles.find((style) => style.id === activeStyle)?.style?.pattern)}`}
-              aria-hidden="true"
-            />
-          </div>
+          <select
+            className="palette-select"
+            aria-label={appStrings.palette.lineStyleAria}
+            value={activeStyle}
+            onChange={(event) => onActiveStyleChange(event.target.value)}
+          >
+            {sharedStyles.map((style) => (
+              <option key={style.id} value={style.id}>
+                {style.name}
+              </option>
+            ))}
+          </select>
           <button className="wide-button" disabled={!selectedCount || !activeStyle} onClick={() => onApplyStyle()}>
             <PaletteActionIcon kind="brush" />
             {appStrings.palette.applyToSelection}

@@ -5,6 +5,7 @@ import {
   defaultCollapsedToolGroups,
   detailedTools,
 } from "@/features/canvas/components/ToolPalette";
+import { appStrings } from "@/localization";
 
 describe("ToolPalette progression", () => {
   it("classifies every Canvas tool once between basic and detailed", () => {
@@ -18,5 +19,9 @@ describe("ToolPalette progression", () => {
     expect(defaultCollapsedToolGroups).toEqual(new Set(["derived", "constraint", "measurement"]));
     expect(defaultCollapsedToolGroups.has("drawing")).toBe(false);
     expect(defaultCollapsedToolGroups.has("dimension")).toBe(false);
+  });
+
+  it("uses the SwiftUI palette subtitle", () => {
+    expect(appStrings.palette.subtitle).toBe("補助パレット");
   });
 });
