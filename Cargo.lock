@@ -1584,11 +1584,13 @@ version = "0.3.0"
 dependencies = [
  "kawacad-core",
  "kawacad-output-engine",
+ "libloading",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+ "winapi",
 ]
 
 [[package]]

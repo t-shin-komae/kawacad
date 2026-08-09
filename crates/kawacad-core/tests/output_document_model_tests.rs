@@ -10,6 +10,7 @@ use kawacad_core::output::{
     PrintWarningKind, PrintableAreaMm,
 };
 use kawacad_core::print::PrintOrientation;
+use serde_json::json;
 use support::{
     arc_entity, assert_approx_eq, center_line_entity, circle_entity, constraint, document,
     entity_target, line_entity, point, point_entity,
@@ -30,6 +31,25 @@ fn build_output_document_model(
 ) -> BuildOutputDocumentModelResult {
     doc.build_output_document_model(options)
         .expect("output document model should build")
+}
+
+#[test]
+fn output_graphic_geometry_serializes_variant_fields_for_the_react_wire_shape() {
+    let geometry = OutputGraphicGeometry::LineSegment {
+        start_mm: point(1.0, 2.0),
+        end_mm: point(3.0, 4.0),
+    };
+
+    assert_eq!(
+        serde_json::to_value(geometry).expect("output geometry should serialize"),
+        json!({
+            "kind": "lineSegment",
+            "payload": {
+                "startMm": { "xMm": 1.0, "yMm": 2.0 },
+                "endMm": { "xMm": 3.0, "yMm": 4.0 }
+            }
+        })
+    );
 }
 
 #[test]

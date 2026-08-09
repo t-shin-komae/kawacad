@@ -1214,9 +1214,9 @@
             "payload": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["position_mm"],
+              "required": ["positionMm"],
               "properties": {
-                "position_mm": { "$ref": "#/$defs/pointMm" }
+                "positionMm": { "$ref": "#/$defs/pointMm" }
               }
             }
           }
@@ -1230,10 +1230,10 @@
             "payload": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["start_mm", "end_mm"],
+              "required": ["startMm", "endMm"],
               "properties": {
-                "start_mm": { "$ref": "#/$defs/pointMm" },
-                "end_mm": { "$ref": "#/$defs/pointMm" }
+                "startMm": { "$ref": "#/$defs/pointMm" },
+                "endMm": { "$ref": "#/$defs/pointMm" }
               }
             }
           }
@@ -1247,10 +1247,10 @@
             "payload": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["center_mm", "radius_mm"],
+              "required": ["centerMm", "radiusMm"],
               "properties": {
-                "center_mm": { "$ref": "#/$defs/pointMm" },
-                "radius_mm": { "type": "number" }
+                "centerMm": { "$ref": "#/$defs/pointMm" },
+                "radiusMm": { "type": "number" }
               }
             }
           }
@@ -1264,12 +1264,12 @@
             "payload": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["center_mm", "radius_mm", "start_angle_rad", "sweep_angle_rad"],
+              "required": ["centerMm", "radiusMm", "startAngleRad", "sweepAngleRad"],
               "properties": {
-                "center_mm": { "$ref": "#/$defs/pointMm" },
-                "radius_mm": { "type": "number" },
-                "start_angle_rad": { "type": "number" },
-                "sweep_angle_rad": { "type": "number" }
+                "centerMm": { "$ref": "#/$defs/pointMm" },
+                "radiusMm": { "type": "number" },
+                "startAngleRad": { "type": "number" },
+                "sweepAngleRad": { "type": "number" }
               }
             }
           }

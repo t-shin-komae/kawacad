@@ -57,7 +57,7 @@ package "別プロセス" as ProcessBoundary {
 package "Tauri/React アプリ" as TauriApp {
   component "React UI\n表示・入力・操作中状態" as ReactUI
   component "invoke adapter\n要求応答" as InvokeAdapter
-  component "Tauri backend\nCore セッション・OS 連携" as TauriBackend
+  component "Tauri backend\nCore セッション・OS 連携・直接印刷" as TauriBackend
 
   ReactUI -down- InvokeAdapter
   InvokeAdapter -down- TauriBackend
@@ -74,7 +74,8 @@ package "共通の OS 非依存 Rust" as Rust {
 
 artifact ".kawa" as Kawa
 artifact "PDF" as PDF
-node "macOS 印刷" as Printer
+node "macOS 印刷" as MacPrinter
+node "Windows / Linux 印刷" as TauriPrinter
 
 User -down-> SwiftUI
 User -down-> ReactUI
@@ -84,9 +85,10 @@ TauriBackend <--> Core : 同一プロセス内で直接呼び出し
 Core <--> Kawa : 保存 / 読み込み
 Engine -down-> SwiftOSAdapter
 SwiftOSAdapter -down-> PDF
-SwiftOSAdapter -down-> Printer
+SwiftOSAdapter -down-> MacPrinter
 TauriBackend -up-> Engine : PDF 生成
 TauriBackend -down-> PDF : 保存
+TauriBackend -down-> TauriPrinter : Windows / Linux 直接印刷
 @enduml
 ```
 
@@ -375,7 +377,7 @@ participant ".kawa" as File
 
 ### 4.3 PDF 出力・直接印刷
 
-Swift/macOS と Tauri/React は、Output Document Model から PDF を生成する。直接印刷は Swift/macOS にだけ適用する。
+Swift/macOS と Tauri/React は、Output Document Model から PDF を生成する。直接印刷は Swift/macOS と、Tauri/React の Windows・CUPS/IPP 対応 Linux に適用する。Tauri/macOS は直接印刷の対象外である。
 
 ```plantuml
 @startuml
@@ -387,7 +389,7 @@ participant "UI / OS Adapter" as UI
 participant "Rust Core" as Core
 participant "Output Document Model" as Model
 participant "Output Engine" as Engine
-participant "macOS" as OS
+participant "OS adapter" as OS
 
     User->UI: 出力設定を確定
     UI->Core: buildOutputDocumentModel(options)
@@ -404,7 +406,7 @@ participant "macOS" as OS
         UI->Engine: renderPdf(model)
         Engine-->UI: PDF データ
         UI->OS: 保存
-    else 直接印刷（Swift/macOS）
+    else 直接印刷（対応環境）
         UI->Engine: renderPrint(model)
         Engine-->UI: 印刷用描画データ
         UI->OS: 印刷
@@ -501,10 +503,10 @@ KawaCAD は、OS 依存の UI / adapter と OS 非依存の Rust Core を分離�
 | 領域 | 方針 |
 | --- | --- |
 | Swift/macOS | SwiftUI、AppKit、Core Graphics。macOS 13 以降の UI、ファイルダイアログ、PDF 保存、直接印刷を担当 |
-| Tauri/React | Tauri、React、TypeScript。Windows・Linux・macOS の編集 UI、出力プレビュー、PDF 保存を担当し、直接印刷は含めない |
+| Tauri/React | Tauri、React、TypeScript。Windows・Linux・macOS の編集 UI、出力プレビュー、PDF 保存を担当する。直接印刷は Windows と CUPS/IPP 対応 Linux だけで提供し、Tauri/macOS には導線を出さない |
 | Rust Core | 図形、拘束、派生要素、パラメータ、パーツ、履歴、保存、表示状態、出力中間表現を担当 |
 | `kawacad-core-process` | macOS UI と Core の標準入出力 JSON 境界を担当 |
-| Tauri adapter | React UI の invoke を受け、同じプロセス内の Core を直接呼び出す。UI から OS や Core の内部実装を直接参照させない |
+| Tauri adapter | React UI の invoke を受け、同じプロセス内の Core を直接呼び出す。直接印刷では、CadSession と分離した準備済み印刷を所有し、OS 固有処理を lock 外の worker へ委譲する。UI から OS や Core の内部実装を直接参照させない |
 | Output Engine | Core が確定した出力中間表現を PDF または印刷用描画データへ変換 |
 
 両 UI は feature-first の責務分割を採用する。macOS は `Features/<Feature>/<Layer>`、Tauri/React は `features/<feature>/<layer>` を基本とし、entry point、adapter、共有語彙、UI 文言の責務を別に保つ。UI は選択、ドラッグ中の候補、viewport、パネル表示などの一時状態を所有し、ドキュメントの確定状態は Core が所有する。

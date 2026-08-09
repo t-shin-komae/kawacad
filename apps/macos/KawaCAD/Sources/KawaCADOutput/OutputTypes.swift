@@ -275,7 +275,7 @@ extension OutputGraphicGeometry: Codable {
     let positionMm: OutputPointMm
 
     private enum CodingKeys: String, CodingKey {
-      case positionMm = "position_mm"
+      case positionMm
     }
 
     init(positionMm: OutputPointMm) {
@@ -298,8 +298,8 @@ extension OutputGraphicGeometry: Codable {
     let endMm: OutputPointMm
 
     private enum CodingKeys: String, CodingKey {
-      case startMm = "start_mm"
-      case endMm = "end_mm"
+      case startMm
+      case endMm
     }
 
     init(startMm: OutputPointMm, endMm: OutputPointMm) {
@@ -325,8 +325,8 @@ extension OutputGraphicGeometry: Codable {
     let radiusMm: Double
 
     private enum CodingKeys: String, CodingKey {
-      case centerMm = "center_mm"
-      case radiusMm = "radius_mm"
+      case centerMm
+      case radiusMm
     }
 
     init(centerMm: OutputPointMm, radiusMm: Double) {
@@ -354,10 +354,10 @@ extension OutputGraphicGeometry: Codable {
     let sweepAngleRad: Double
 
     private enum CodingKeys: String, CodingKey {
-      case centerMm = "center_mm"
-      case radiusMm = "radius_mm"
-      case startAngleRad = "start_angle_rad"
-      case sweepAngleRad = "sweep_angle_rad"
+      case centerMm
+      case radiusMm
+      case startAngleRad
+      case sweepAngleRad
     }
 
     init(centerMm: OutputPointMm, radiusMm: Double, startAngleRad: Double, sweepAngleRad: Double) {
