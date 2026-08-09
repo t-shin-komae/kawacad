@@ -99,9 +99,7 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
             <strong>
               {parameter.name} {parameter.valueMm.toFixed(2)} {parameter.unit === "millimeter" ? "mm" : parameter.unit}
             </strong>
-            <small>
-              使用 {usedParameterCount} 件 / 未使用 {unusedParameterCount} 件
-            </small>
+            <small>{appStrings.workbench.parameterUsage(usedParameterCount, unusedParameterCount)}</small>
           </>
         ) : (
           <>

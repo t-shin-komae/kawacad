@@ -340,8 +340,17 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await clickModelPoint(page, 0, 0);
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.locator(".floating-value-backdrop")).toBeVisible();
-    await expect(page.locator(".floating-value-backdrop")).toHaveCSS("position", "absolute");
-    await expect(page.locator(".floating-value-backdrop")).toHaveAttribute("style", /inset:/u);
+    await expect(page.locator(".floating-value-backdrop")).toHaveCSS("position", "fixed");
+    const hudStyle = await page.locator(".floating-value-backdrop").evaluate((element) => ({
+      left: element.style.left,
+      top: element.style.top,
+      right: element.style.right,
+      bottom: element.style.bottom,
+    }));
+    expect(hudStyle.left).toMatch(/px$/u);
+    expect(hudStyle.top).toMatch(/px$/u);
+    expect(hudStyle.right).toBe("auto");
+    expect(hudStyle.bottom).toBe("auto");
     const before = await core.invoke("document_state");
     const value = page.getByRole("dialog").locator("input").first();
     await value.fill("0");

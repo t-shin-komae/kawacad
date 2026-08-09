@@ -260,6 +260,7 @@ const appStrings = {
     evaluated: "評価済み",
     noParameters: "パラメータなし",
     unusedParameters: "未使用 0 件",
+    parameterUsage: (used: number, unused: number) => `使用 ${used} 件 / 未使用 ${unused} 件`,
     itemCount: (count: number) => `${count} 件`,
     layer: (name: string) => `レイヤー: ${name}`,
     shape: "図形",
