@@ -6,6 +6,7 @@ export type MenuAction =
   | "save"
   | "saveAs"
   | "exportPDF"
+  | "directPrint"
   | "undo"
   | "redo"
   | "cut"

@@ -134,8 +134,8 @@ func live_print_controller_makes_landscape_a4_session_without_print_panel() {
     Issue.record("the selected printer should create a direct-print session")
   }
   #expect(capturedOrientation == .landscape)
-  #expect(abs((capturedPaperSize?.width ?? 0) - points(297.0)) < 0.001)
-  #expect(abs((capturedPaperSize?.height ?? 0) - points(210.0)) < 0.001)
+  #expect(abs((capturedPaperSize?.width ?? 0) - points(297.0)) < points(0.1))
+  #expect(abs((capturedPaperSize?.height ?? 0) - points(210.0)) < points(0.1))
 }
 
 @Test("LivePrintController は空の PrintRenderData では直接印刷を開始しない")

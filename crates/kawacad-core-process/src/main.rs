@@ -2493,8 +2493,8 @@ mod tests {
                             "geometry": {
                                 "kind": "lineSegment",
                                 "payload": {
-                                    "start_mm": { "xMm": 80.0, "yMm": 0.0 },
-                                    "end_mm": { "xMm": 220.0, "yMm": 0.0 }
+                                    "startMm": { "xMm": 80.0, "yMm": 0.0 },
+                                    "endMm": { "xMm": 220.0, "yMm": 0.0 }
                                 }
                             },
                             "style": {
@@ -2531,8 +2531,8 @@ mod tests {
                             "geometry": {
                                 "kind": "lineSegment",
                                 "payload": {
-                                    "start_mm": { "xMm": -220.0, "yMm": 0.0 },
-                                    "end_mm": { "xMm": -80.0, "yMm": 0.0 }
+                                    "startMm": { "xMm": -220.0, "yMm": 0.0 },
+                                    "endMm": { "xMm": -80.0, "yMm": 0.0 }
                                 }
                             },
                             "style": {

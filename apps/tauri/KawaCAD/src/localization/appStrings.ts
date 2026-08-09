@@ -281,6 +281,7 @@ const appStrings = {
       save: "保存",
       saveAs: "別名で保存…",
       exportPDF: "PDF出力…",
+      directPrint: "直接印刷…",
       undo: "元に戻す",
       redo: "やり直す",
       cut: "切り取り",

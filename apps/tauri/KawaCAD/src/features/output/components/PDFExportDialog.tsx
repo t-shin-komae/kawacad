@@ -3,9 +3,9 @@ import { dialogAdapter } from "@/adapters/dialogAdapter";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
-type Orientation = "portrait" | "landscape";
+export type Orientation = "portrait" | "landscape";
 
-type OutputOptions = {
+export type OutputOptions = {
   orientation: Orientation;
   includeDimensionLabels: boolean;
   includeScaleGuide: boolean;
@@ -29,7 +29,7 @@ type OutputGeometry =
 type OutputGraphic = { geometry: OutputGeometry; style: OutputStyle };
 type OutputText = { content: string; positionMm: PointMm; fontSizeMm: number };
 type OutputGuide = { startMm: PointMm; endMm: PointMm; label: string; labelPositionMm: PointMm };
-type OutputPage = {
+export type OutputPage = {
   gridColumn: number;
   gridRow: number;
   widthMm: number;
@@ -40,13 +40,17 @@ type OutputPage = {
   texts: OutputText[];
   guide?: OutputGuide | null;
 };
-type OutputDocumentModel = { pageCount: number; pages: OutputPage[] } & Record<string, unknown>;
-type OutputWarning = { message: string };
+export type OutputDocumentModel = { pageCount: number; pages: OutputPage[] } & Record<string, unknown>;
+export type OutputWarning = { message: string };
 type PreparedPDF = { outputDocumentModel: OutputDocumentModel; warnings: OutputWarning[] };
 
 type Props = {
   documentName: string;
   initialOrientation: Orientation;
+  options?: OutputOptions;
+  onOptionsChange?: (options: OutputOptions) => void;
+  onDestinationChange?: (destination: "pdf" | "directPrint") => void;
+  directPrintAvailable?: boolean;
   onClose: () => void;
   onSaved: (path: string) => void;
 };
@@ -66,8 +70,18 @@ function pdfFileName(documentName: string) {
 }
 
 /** PDF output settings. The prepared model remains stable while the OS save panel is open. */
-export function PDFExportDialog({ documentName, initialOrientation, onClose, onSaved }: Props) {
-  const [options, setOptions] = useState(() => initialOptions(initialOrientation));
+export function PDFExportDialog({
+  documentName,
+  initialOrientation,
+  options: externalOptions,
+  onOptionsChange,
+  onDestinationChange,
+  directPrintAvailable = false,
+  onClose,
+  onSaved,
+}: Props) {
+  const [ownedOptions, setOwnedOptions] = useState(() => initialOptions(initialOrientation));
+  const options = externalOptions ?? ownedOptions;
   const [prepared, setPrepared] = useState<PreparedPDF>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -104,7 +118,11 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onS
   const canSave = Boolean(
     outputDocumentModel && pageCount > 0 && !loading && !saving && (warnings.length === 0 || warningsAcknowledged),
   );
-  const changeOptions = (update: Partial<OutputOptions>) => setOptions((current) => ({ ...current, ...update }));
+  const changeOptions = (update: Partial<OutputOptions>) => {
+    const next = { ...options, ...update };
+    onOptionsChange?.(next);
+    if (!externalOptions) setOwnedOptions(next);
+  };
   const save = async () => {
     if (!outputDocumentModel || !canSave) return;
     const path = await dialogAdapter.save({
@@ -149,7 +167,19 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onS
             <dl className="pdf-export-summary">
               <div>
                 <dt>出力先</dt>
-                <dd>PDF</dd>
+                <dd>
+                  {onDestinationChange ? (
+                    <select
+                      value="pdf"
+                      onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}
+                    >
+                      <option value="pdf">PDF</option>
+                      {directPrintAvailable ? <option value="directPrint">直接印刷</option> : null}
+                    </select>
+                  ) : (
+                    "PDF"
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>用紙</dt>
@@ -229,7 +259,7 @@ export function PDFExportDialog({ documentName, initialOrientation, onClose, onS
   );
 }
 
-function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
+export function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
   return (
     <section className="pdf-export-preview" aria-live="polite" aria-busy={loading}>
       <h3>最終プレビュー</h3>

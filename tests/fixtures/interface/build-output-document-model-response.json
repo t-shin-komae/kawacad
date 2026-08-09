@@ -24,11 +24,11 @@
             "geometry": {
               "kind": "lineSegment",
               "payload": {
-                "start_mm": {
+                "startMm": {
                   "xMm": 0.0,
                   "yMm": 0.0
                 },
-                "end_mm": {
+                "endMm": {
                   "xMm": 20.0,
                   "yMm": 0.0
                 }

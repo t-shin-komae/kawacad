@@ -23,7 +23,7 @@ UI は利用者との接点と一時的な表示状態を扱う。
 
 - 入力イベント、選択、ハイライト、ドラッグ中の候補
 - キャンバス描画、パネル、ズーム、パン、表示補助
-- ファイル選択、PDF 保存、macOS のプリンタ列挙と印刷ジョブ開始
+- ファイル選択、PDF 保存、Swift/macOS のプリンタ列挙と印刷ジョブ開始
 - Core へ送る操作意図の組み立てと、応答の利用者向け表示
 
 UI は応答性のためにヒットテスト候補を絞り込んでよい。ただし、閉輪郭、接続順、参照依存、計測値、正規化後の図形など、ドキュメントの意味となる結果を確定しない。
@@ -45,7 +45,7 @@ Core はドキュメントの正本と意味を扱う。
 - 失敗した変更は、直前のドキュメント状態と Undo/Redo 履歴を変えない。
 - UI は Core の最後に確認できた状態を表示し、独自の永続状態を正本にしない。
 
-Swift/macOS UI と Tauri/React UI は同じ意味契約を利用する。Swift/macOS は macOS 13 以降のファイル、PDF、印刷 adapter を持つ。Tauri/React は Windows・Linux・macOS の編集、出力プレビュー、PDF 保存を扱い、直接印刷の adapter は持たない。
+Swift/macOS UI と Tauri/React UI は同じ意味契約を利用する。Swift/macOS は macOS 13 以降のファイル、PDF、印刷 adapter を持つ。Tauri/React は Windows・Linux・macOS の編集、出力プレビュー、PDF 保存を扱い、Windows と CUPS/IPP 対応 Linux では直接印刷 adapter を持つ。
 
 ```mermaid
 flowchart LR
@@ -151,13 +151,13 @@ request は次の envelope を持つ。現行 request はすべて object の `p
 | `writeKawaFile` | `{ "written": true }` | 現在ドキュメントを指定パスへ書き出す |
 | `buildOutputDocumentModel` | `BuildOutputDocumentModelResponse` | 出力用中間表現と警告を生成する |
 | `renderPdf` | `RenderPdfResponse` | 出力用中間表現を PDF byte 列へ変換する |
-| `renderPrint` | `PrintRenderData` | 出力用中間表現を macOS 印刷用描画データへ変換する |
+| `renderPrint` | `PrintRenderData` | 出力用中間表現を Swift/macOS と Tauri/Windows の印刷用描画データへ変換する |
 
 `loadDocument`、`previewCommand`、`applyCommand`、`undo`、`redo` の `viewMode` は省略時 `editDisplay` とする。`documentState` の `viewMode` は必須である。
 
 `writeKawaFile` の `markClean` は省略時 `true` とする。通常保存は `true` を指定し、成功した内容をセッションの保存済み基準にする。クラッシュ復旧の一時スナップショットは `false` を指定し、dirty 状態を変えない。
 
-`buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、固定の `0` 度回転、macOS が取得した印刷可能領域を受け取る。用紙向きはツールバーの A4 基準表示で変更し、出力シートでは変更しない。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
+`buildOutputDocumentModel` は、用紙向き、寸法拘束ラベルの有無、50mm ガイドの有無、固定の `0` 度回転、選択した OS adapter が取得した印刷可能領域を受け取る。用紙向きはツールバーの A4 基準表示で変更し、出力シートでは変更しない。`renderPdf` と `renderPrint` は、直前に生成した Output Document Model の JSON 文字列を受け取る。
 
 ### 5.2 `DocumentStateResponse`
 
@@ -310,9 +310,22 @@ Core は `buildOutputDocumentModel` で、A4、100% 実寸、指定向きと印�
 - グリッド、A4 基準表示、拘束マークは含めない。
 - 貼り合わせガイドとページ番号は保存図形ではなく出力時の補助要素である。
 
-PDF と直接印刷は同じ Output Document Model を入力にする。`renderPdf` は `pdfHex` に PDF byte 列の16進表現を返す。`renderPrint` は各ページの寸法、回転、印刷可能領域、clip 領域、描画 command を返し、macOS 側が同じ clip 領域で描画する。
+PDF と直接印刷は同じ `OutputDocumentModel` 型を入力にする。PDF用と選択プリンタ用では印刷可能領域が異なるため、同じ中間表現の個体を共有する必要はない。`renderPdf` は `pdfHex` に PDF byte 列の16進表現を返す。`renderPrint` は各ページの寸法、回転、印刷可能領域、clip 領域、描画 command を返し、Swift/macOS と Tauri/Windows の OS adapter が同じ clip 領域で描画する。
 
 Tauri backend は `prepare_pdf_output` で PDF 用の印刷可能領域を使って中間表現と警告を返す。React は警告確認後、返された同一の中間表現を `save_prepared_pdf` へ渡す。backend は Output Engine で PDF byte 列を生成し、選択済みパスへ保存する。これらの invoke は Tauri 固有の adapter 境界であり、`kawacad-core-process` の request 一覧には含めない。
+
+Tauri の直接印刷には、次の invoke を置く。いずれも Tauri 固有の adapter 境界であり、Core の request 一覧には含めない。
+
+| invoke | 入力 | 出力 | 制約 |
+| --- | --- | --- | --- |
+| `direct_print_availability` | なし | 対応状態と理由 | Windows と CUPS/IPP を利用できる Linux 以外では直接印刷を利用不可とする。 |
+| `list_printers` | なし | 選択可能なプリンタ一覧 | 列挙中に CadSession をロックしない。 |
+| `inspect_printer` | プリンタ ID、出力設定 | 必須設定の可否、印刷可能領域、能力 fingerprint、理由 | A4、片面、N-up 無効、縮小なしを確認できない場合は印刷不可とする。 |
+| `prepare_direct_print` | プリンタ ID、出力設定、window 内で単調増加する generation | `preparedPrintId`、model、warnings、固定設定、印刷可能領域 | model、artifact、出力先、設定、fingerprint を immutable な準備済み印刷として関連付ける。古い generation の完了結果は保管しない。 |
+| `run_prepared_direct_print` | `preparedPrintId` | ジョブ受付または `stale` を含む失敗 | ID 以外の描画内容・印刷設定を受け取らず、単回使用とする。 |
+| `discard_prepared_direct_print` | `preparedPrintId` | なし | 設定変更または出力シート終了時に未使用artifactを破棄する。 |
+
+`prepare_direct_print` は、文書 snapshot と文書/出力設定 fingerprint を短時間だけ CadSession から取得してから、lock 外で model と artifact を生成する。保管時には作成元 Webview window ごとに最新 generation の1件だけを残し、遅延した古い generation は artifact を破棄して `superseded` とする。件数とartifact総量の固定上限を超える新規準備は `busy` とする。`run_prepared_direct_print` と `discard_prepared_direct_print` は作成元と同じ Webview window の ID だけを受け付ける。実行は、準備済み ID を原子的に使用済みにし、文書/出力設定とプリンタ能力を再確認する。期限切れ、使用済み、fingerprint の不一致は `stale` としてジョブを送信しない。プリンタ列挙、能力照会、Windows の GDI ジョブ、CUPS/IPP の検証・送信はすべて lock 外の worker で行う。
 
 ## 9. エラー
 

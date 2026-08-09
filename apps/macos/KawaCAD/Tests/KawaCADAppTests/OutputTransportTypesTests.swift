@@ -36,7 +36,7 @@ func output_build_result_decodes_from_core_response_json() throws {
   #expect(result.outputDocumentModel.pages[0].graphics.count == 1)
 }
 
-@Test("OutputDocumentModel encode は Rust core 互換の snake_case geometry payload を使う")
+@Test("OutputDocumentModel encode は Rust core 互換の camelCase geometry payload を使う")
 func output_document_model_encodes_geometry_payloads_for_rust_core() throws {
   let model = OutputDocumentModel(
     paperSize: .a4,
@@ -74,8 +74,8 @@ func output_document_model_encodes_geometry_payloads_for_rust_core() throws {
   let encoded = try JSONEncoder().encode(model)
   let json = try #require(String(data: encoded, encoding: .utf8))
 
-  #expect(json.contains("\"start_mm\""))
-  #expect(json.contains("\"end_mm\""))
+  #expect(json.contains("\"startMm\""))
+  #expect(json.contains("\"endMm\""))
 }
 
 @Test("OutputText は自由テキスト kind と文字サイズを decode できる")
