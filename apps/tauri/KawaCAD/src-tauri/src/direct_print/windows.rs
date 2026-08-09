@@ -132,7 +132,7 @@ fn configured_printer(
     printer_name: &str,
     options: &DirectPrintOptions,
 ) -> Result<PrinterConfiguration, String> {
-    let wide_name = wide(printer_name);
+    let mut wide_name = wide(printer_name);
     let mut printer = ptr::null_mut();
     if unsafe { OpenPrinterW(wide_name.as_ptr() as *mut _, &mut printer, ptr::null_mut()) } == 0 {
         return Err(last_error("Could not open the selected Windows printer"));
@@ -142,7 +142,7 @@ fn configured_printer(
             DocumentPropertiesW(
                 ptr::null_mut(),
                 printer,
-                wide_name.as_ptr(),
+                wide_name.as_mut_ptr(),
                 ptr::null_mut(),
                 ptr::null_mut(),
                 0,
@@ -158,7 +158,7 @@ fn configured_printer(
             DocumentPropertiesW(
                 ptr::null_mut(),
                 printer,
-                wide_name.as_ptr(),
+                wide_name.as_mut_ptr(),
                 devmode_ptr,
                 ptr::null_mut(),
                 DM_OUT_BUFFER,
@@ -172,7 +172,7 @@ fn configured_printer(
             DocumentPropertiesW(
                 ptr::null_mut(),
                 printer,
-                wide_name.as_ptr(),
+                wide_name.as_mut_ptr(),
                 devmode_ptr,
                 devmode_ptr,
                 DM_IN_BUFFER | DM_OUT_BUFFER,
@@ -441,6 +441,7 @@ fn draw_page(
                 position_mm,
                 content,
                 font_size_mm,
+                ..
             } => unsafe {
                 SetBkMode(dc, TRANSPARENT as i32);
                 SetTextColor(dc, RGB(0, 0, 0));
