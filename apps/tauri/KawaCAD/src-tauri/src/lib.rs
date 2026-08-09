@@ -323,8 +323,10 @@ fn save_prepared_pdf(
 }
 
 #[tauri::command]
-fn direct_print_availability() -> direct_print::DirectPrintAvailability {
-    direct_print::current_availability()
+async fn direct_print_availability() -> Result<direct_print::DirectPrintAvailability, String> {
+    tauri::async_runtime::spawn_blocking(direct_print::current_availability)
+        .await
+        .map_err(|error| format!("Direct print availability worker failed: {error}"))
 }
 
 #[tauri::command]

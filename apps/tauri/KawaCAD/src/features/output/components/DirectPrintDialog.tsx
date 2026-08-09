@@ -42,6 +42,7 @@ export function DirectPrintDialog({
   const [printers, setPrinters] = useState<Printer[]>([]);
   const [printerId, setPrinterId] = useState("");
   const [prepared, setPrepared] = useState<PreparedPrint>();
+  const [preparationRevision, setPreparationRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
   const [error, setError] = useState<string>();
@@ -109,7 +110,7 @@ export function DirectPrintDialog({
       active = false;
       if (preparedPrintId) void documentAdapter.command("discard_prepared_direct_print", { preparedPrintId });
     };
-  }, [options, printerId]);
+  }, [options, preparationRevision, printerId]);
 
   const warnings = prepared?.warnings ?? [];
   const canPrint = Boolean(prepared && !loading && !printing && (warnings.length === 0 || warningsAcknowledged));
@@ -128,6 +129,7 @@ export function DirectPrintDialog({
       onClose();
     } catch (reason) {
       setPrepared(undefined);
+      setPreparationRevision((revision) => revision + 1);
       setError(`印刷ジョブを開始できません: ${String(reason)}`);
     } finally {
       setPrinting(false);

@@ -14,12 +14,12 @@ use winapi::shared::minwindef::LPBYTE;
 use winapi::um::wingdi::{
     AbortDoc, Arc, CreateDCW, CreateFontW, CreatePen, DeleteDC, DeleteObject, DeviceCapabilitiesW,
     Ellipse, EndDoc, EndPage, GetDeviceCaps, LineTo, MoveToEx, SelectObject, SetArcDirection,
-    SetBkMode, SetTextColor, StartDocW, StartPage, TextOutW, AD_CLOCKWISE, AD_COUNTERCLOCKWISE,
-    DC_DUPLEX, DC_FIELDS, DC_ORIENTATION, DC_PAPERS, DMDUP_SIMPLEX, DMNUP_ONEUP,
-    DMORIENT_LANDSCAPE, DMORIENT_PORTRAIT, DMPAPER_A4, DM_DUPLEX, DM_IN_BUFFER, DM_NUP,
-    DM_ORIENTATION, DM_OUT_BUFFER, DM_PAPERSIZE, DM_SCALE, DOCINFOW, HORZRES, LOGPIXELSX,
-    LOGPIXELSY, PHYSICALHEIGHT, PHYSICALOFFSETX, PHYSICALOFFSETY, PHYSICALWIDTH, PS_DASH, PS_SOLID,
-    RGB, TRANSPARENT, VERTRES,
+    SetBkMode, SetTextAlign, SetTextColor, StartDocW, StartPage, TextOutW, AD_CLOCKWISE,
+    AD_COUNTERCLOCKWISE, DC_DUPLEX, DC_FIELDS, DC_ORIENTATION, DC_PAPERS, DMDUP_SIMPLEX,
+    DMNUP_ONEUP, DMORIENT_LANDSCAPE, DMORIENT_PORTRAIT, DMPAPER_A4, DM_DUPLEX, DM_IN_BUFFER,
+    DM_NUP, DM_ORIENTATION, DM_OUT_BUFFER, DM_PAPERSIZE, DM_SCALE, DOCINFOW, GDI_ERROR, HORZRES,
+    LOGPIXELSX, LOGPIXELSY, PHYSICALHEIGHT, PHYSICALOFFSETX, PHYSICALOFFSETY, PHYSICALWIDTH,
+    PS_DASH, PS_SOLID, RGB, TA_BASELINE, TRANSPARENT, VERTRES,
 };
 use winapi::um::winspool::{
     ClosePrinter, DocumentPropertiesW, EnumPrintersW, GetPrinterW, OpenPrinterW,
@@ -566,6 +566,10 @@ fn draw_page(
             } => unsafe {
                 SetBkMode(dc, TRANSPARENT as i32);
                 SetTextColor(dc, RGB(0, 0, 0));
+                let previous_text_alignment = SetTextAlign(dc, TA_BASELINE);
+                if previous_text_alignment == GDI_ERROR {
+                    return Err(last_error("Could not align text to the print baseline"));
+                }
                 let font = CreateFontW(
                     -(*font_size_mm * f64::from(configuration.dpi_y) / 25.4).round() as i32,
                     0,
@@ -583,6 +587,7 @@ fn draw_page(
                     ptr::null(),
                 );
                 if font.is_null() {
+                    SetTextAlign(dc, previous_text_alignment);
                     return Err(last_error("Could not create a Windows print font"));
                 }
                 let previous_font = SelectObject(dc, font as _);
@@ -596,6 +601,7 @@ fn draw_page(
                 );
                 SelectObject(dc, previous_font);
                 DeleteObject(font as _);
+                SetTextAlign(dc, previous_text_alignment);
                 if drawn == 0 {
                     return Err(last_error("Could not draw text on the Windows printer"));
                 }
