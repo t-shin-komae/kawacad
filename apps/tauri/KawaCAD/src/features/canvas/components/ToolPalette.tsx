@@ -5,7 +5,7 @@ import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { parseDecimal } from "@/shared/state/syncedField";
 
-type SharedStyle = { id: string; name: string };
+type SharedStyle = { id: string; name: string; style?: { pattern?: string } };
 type Props = {
   activeStyle: string;
   sharedStyles: SharedStyle[];
@@ -102,7 +102,10 @@ export const toolGroupPreferenceIds: Record<string, string> = {
   dimension: "dimension",
   measurement: "measurement",
 };
-export const defaultCollapsedToolGroups = new Set<string>();
+export const defaultCollapsedToolGroups = new Set<string>(["derived", "constraint", "measurement"]);
+function lineStyleClass(pattern?: string) {
+  return pattern === "dashed" || pattern === "dotted" || pattern === "dashDot" ? pattern : "solid";
+}
 function DisclosureIcon({ expanded }: { expanded: boolean }) {
   const Icon = expanded ? ChevronDown : ChevronRight;
   return <Icon className="palette-disclosure" size={10} strokeWidth={2} aria-hidden="true" />;
@@ -165,19 +168,25 @@ export function ToolPalette({
         </section>
         <section className="palette-options">
           <h2>{appStrings.palette.lineStyle}</h2>
-          <select
-            className="palette-select"
-            aria-label={appStrings.palette.lineStyleAria}
-            value={activeStyle}
-            onChange={(event) => onActiveStyleChange(event.target.value)}
-          >
-            {sharedStyles.map((style) => (
-              <option key={style.id} value={style.id}>
-                {style.name}
-              </option>
-            ))}
-          </select>
-          <button className="wide-button" disabled={!selectedCount || !activeStyle} onClick={onApplyStyle}>
+          <div className="palette-style-picker">
+            <select
+              className="palette-select"
+              aria-label={appStrings.palette.lineStyleAria}
+              value={activeStyle}
+              onChange={(event) => onActiveStyleChange(event.target.value)}
+            >
+              {sharedStyles.map((style) => (
+                <option key={style.id} value={style.id}>
+                  {style.name}
+                </option>
+              ))}
+            </select>
+            <span
+              className={`line-style-swatch ${lineStyleClass(sharedStyles.find((style) => style.id === activeStyle)?.style?.pattern)}`}
+              aria-hidden="true"
+            />
+          </div>
+          <button className="wide-button" disabled={!selectedCount || !activeStyle} onClick={() => onApplyStyle()}>
             <PaletteActionIcon kind="brush" />
             {appStrings.palette.applyToSelection}
           </button>

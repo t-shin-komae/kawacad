@@ -146,6 +146,7 @@ struct KawaCADCommands: Commands {
         .keyboardShortcut("4", modifiers: [.command])
       Button(AppStrings.tr("tool.round_hole")) { uiBindings.menu.activateTool(.roundHole) }
       Button(AppStrings.tr("tool.arc")) { uiBindings.menu.activateTool(.arc) }
+      Button(AppStrings.tr("tool.free_text")) { uiBindings.menu.activateTool(.freeText) }
       Button(AppStrings.tr("tool.stitch_start_point")) {
         uiBindings.menu.activateTool(.stitchStartPoint)
       }
@@ -160,6 +161,9 @@ struct KawaCADCommands: Commands {
       Button(AppStrings.tr("tool.vertical_center_line")) {
         uiBindings.menu.activateTool(.verticalCenterLine)
       }
+      Divider()
+      Button(AppStrings.tr("tool.offset")) { uiBindings.menu.activateTool(.offset) }
+      Button(AppStrings.tr("tool.fillet")) { uiBindings.menu.activateTool(.fillet) }
     }
 
     CommandMenu(AppStrings.tr("menu.constraint")) {
@@ -178,6 +182,7 @@ struct KawaCADCommands: Commands {
       }
       Button(AppStrings.tr("tool.angle")) { uiBindings.menu.activateTool(.angle) }
       Button(AppStrings.tr("tool.symmetric")) { uiBindings.menu.activateTool(.symmetric) }
+      Button(AppStrings.tr("tool.point_on_line")) { uiBindings.menu.activateTool(.pointOnLine) }
       Button(AppStrings.tr("tool.fixed")) { uiBindings.menu.activateTool(.fixed) }
       Divider()
       Button(AppStrings.tr("menu.smooth_arc_tangencies_prototype")) {
@@ -192,11 +197,35 @@ struct KawaCADCommands: Commands {
       )
       Divider()
       Button(AppStrings.tr("tool.distance")) { uiBindings.menu.activateTool(.distance) }
+      Button(AppStrings.tr("tool.horizontal_distance")) {
+        uiBindings.menu.activateTool(.horizontalDistance)
+      }
+      Button(AppStrings.tr("tool.vertical_distance")) {
+        uiBindings.menu.activateTool(.verticalDistance)
+      }
+      Button(AppStrings.tr("tool.line_line_distance")) {
+        uiBindings.menu.activateTool(.lineLineDistance)
+      }
       Button(AppStrings.tr("tool.segment_length")) {
         uiBindings.menu.activateTool(.segmentLength)
       }
       Button(AppStrings.tr("tool.diameter")) { uiBindings.menu.activateTool(.diameter) }
       Button(AppStrings.tr("tool.radius")) { uiBindings.menu.activateTool(.radius) }
+      Divider()
+      Button(AppStrings.tr("tool.measure_distance")) {
+        uiBindings.menu.activateTool(.measureDistance)
+      }
+      Button(AppStrings.tr("tool.measure_segment_length")) {
+        uiBindings.menu.activateTool(.measureSegmentLength)
+      }
+      Button(AppStrings.tr("tool.measure_angle")) { uiBindings.menu.activateTool(.measureAngle) }
+      Button(AppStrings.tr("tool.measure_radius")) { uiBindings.menu.activateTool(.measureRadius) }
+      Button(AppStrings.tr("tool.measure_diameter")) {
+        uiBindings.menu.activateTool(.measureDiameter)
+      }
+      Button(AppStrings.tr("tool.measure_arc_sweep_angle")) {
+        uiBindings.menu.activateTool(.measureArcSweepAngle)
+      }
     }
 
     CommandMenu(AppStrings.tr("menu.view")) {

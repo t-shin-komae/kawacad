@@ -9,13 +9,24 @@ type Props = {
   initialValue?: Record<string, number | string | undefined>;
   parameters: Array<{ id: string; name: string }>;
   degrees: boolean;
+  floating?: boolean;
+  floatingPosition?: { x: number; y: number };
   onConfirm: (value: Value) => void;
   onCancel: () => void;
 };
 
 /** SwiftUI-equivalent value entry keeps parameter references available at the
  * same moment a dimensional constraint is created. */
-export function ConstraintValueDialog({ label, initialValue, parameters, degrees, onConfirm, onCancel }: Props) {
+export function ConstraintValueDialog({
+  label,
+  initialValue,
+  parameters,
+  degrees,
+  floating = false,
+  floatingPosition,
+  onConfirm,
+  onCancel,
+}: Props) {
   const initialFixed = degrees ? initialValue?.fixedDegrees : initialValue?.fixedMm;
   const initialParameter = typeof initialValue?.parameter === "string" ? initialValue.parameter : undefined;
   const [mode, setMode] = useState<"fixed" | "parameter">(initialParameter ? "parameter" : "fixed");
@@ -25,9 +36,22 @@ export function ConstraintValueDialog({ label, initialValue, parameters, degrees
   const numericValue = parsedValue.ok ? parsedValue.value : undefined;
   const canConfirm =
     mode === "parameter" ? Boolean(parameter) : Boolean(parsedValue.ok && (degrees || parsedValue.value > 0));
+  const positionStyle =
+    floating && floatingPosition
+      ? {
+          left: `${Math.max(16, Math.min(floatingPosition.x + 16, window.innerWidth - 296))}px`,
+          top: `${Math.max(16, Math.min(floatingPosition.y + 16, window.innerHeight - 196))}px`,
+          right: "auto",
+          bottom: "auto",
+        }
+      : undefined;
 
   return (
-    <div className="constraint-value-backdrop" role="presentation">
+    <div
+      className={`constraint-value-backdrop${floating ? " floating-value-backdrop" : ""}`}
+      role="presentation"
+      style={positionStyle}
+    >
       <section
         className="constraint-value-dialog"
         role="dialog"

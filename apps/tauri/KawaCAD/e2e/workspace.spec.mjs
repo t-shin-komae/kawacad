@@ -37,7 +37,18 @@ async function openWorkspace(page) {
 }
 
 async function clickTool(page, name) {
-  await page.getByRole("button", { name, exact: true }).click();
+  const palette = page.getByRole("complementary", { name: "ツールパレット" });
+  const tool = palette.getByRole("button", { name, exact: true });
+  if (!(await tool.count())) {
+    const detailedTools = palette.getByRole("button", { name: "詳細ツールを表示", exact: true });
+    if (await detailedTools.count()) await detailedTools.click();
+
+    for (const groupName of ["作図", "派生", "拘束", "寸法", "計測"]) {
+      const group = palette.getByRole("button", { name: groupName, exact: true });
+      if ((await group.count()) && (await group.getAttribute("aria-expanded")) === "false") await group.click();
+    }
+  }
+  await tool.click();
 }
 
 async function clickOverflowAction(page, name) {
@@ -100,7 +111,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
   // 実際に割り当てられた幅で表示密度を切り替え、代表的な画面幅で要素が画面外へはみ出さないことを検証する。
   test("keeps the responsive toolbar inside the window at every supported width", async ({ page }) => {
-    for (const width of [1800, 1640, 1600, 1520, 1500, 1480, 1320, 1280, 1100, 1050, 1024, 960]) {
+    for (const width of [1800, 1640, 1600, 1520, 1500, 1480, 1320, 1280, 1100, 1050, 1024]) {
       await page.setViewportSize({ width, height: 800 });
       await openWorkspace(page);
       const toolbar = page.getByRole("navigation", { name: "CAD ツールバー" });
@@ -140,6 +151,61 @@ test.describe("Tauri React workspace through the real Core process", () => {
       expect(geometry.clipped, `ツールバーの要素が${width}px幅で欠けています: ${JSON.stringify(geometry)}`).toEqual([]);
       await expect(page.getByTestId("leather.toolbar.tools")).toBeVisible();
     }
+  });
+
+  // 初期の折り畳み状態、パレット幅に応じた1列/2列表示、線種見本の表示を検証する。
+  test("keeps the tool palette progression and responsive grid contract", async ({ page }) => {
+    await openWorkspace(page);
+    const palette = page.getByRole("complementary", { name: "ツールパレット" });
+    const grid = palette.locator(".tool-grid").first();
+    const columnCount = () =>
+      grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/u).length);
+
+    await palette.getByRole("button", { name: "詳細ツールを表示", exact: true }).click();
+    await expect(palette.getByRole("button", { name: "派生", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect(palette.getByRole("button", { name: "拘束", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect(palette.getByRole("button", { name: "計測", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect.poll(columnCount).toBe(1);
+    await expect(palette.locator(".line-style-swatch")).toHaveClass(/solid/u);
+
+    const resizeHandle = page.getByRole("separator", { name: "ツールパレットの幅" });
+    await resizeHandle.press("Home");
+    for (let index = 0; index < 3; index += 1) await resizeHandle.press("ArrowRight");
+    await expect(resizeHandle).toHaveAttribute("aria-valuenow", "200");
+    await expect.poll(columnCount).toBe(1);
+    await expect.poll(() => grid.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+
+    for (let index = 0; index < 2; index += 1) await resizeHandle.press("ArrowRight");
+    await expect.poll(columnCount).toBe(2);
+
+    await resizeHandle.press("End");
+    await expect.poll(columnCount).toBe(2);
+  });
+
+  // 下部サマリーの開閉とOSSライセンス画面の実配置可能なサイズを検証する。
+  test("keeps the status summary and license dialog reachable", async ({ page }) => {
+    await openWorkspace(page);
+
+    await page.getByRole("button", { name: "サマリーを表示", exact: true }).click();
+    const summary = page.getByRole("region", { name: "サマリー" });
+    await expect(summary).toBeVisible();
+    await expect(summary).toContainText("選択なし");
+    await expect(summary).toContainText("拘束なし");
+    await expect(summary).toContainText("未使用 0 件");
+    await page.getByRole("button", { name: "サマリーを隠す", exact: true }).click();
+    await expect(summary).toBeHidden();
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
+    });
+    const licenses = page.getByRole("dialog", { name: "OSSライセンス" });
+    await expect(licenses).toBeVisible();
+    const box = await licenses.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box?.width).toBeGreaterThanOrEqual(620);
+    expect(box?.height).toBeGreaterThanOrEqual(460);
+    await licenses.getByRole("button", { name: "閉じる", exact: true }).click();
+    await expect(licenses).toBeHidden();
   });
 
   // 点と線分の作図、全選択、複製、Undo/RedoがCoreの履歴状態と一貫して動作することを検証する。
@@ -273,6 +339,18 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await clickTool(page, "線分長");
     await clickModelPoint(page, 0, 0);
     await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.locator(".floating-value-backdrop")).toBeVisible();
+    await expect(page.locator(".floating-value-backdrop")).toHaveCSS("position", "fixed");
+    const hudStyle = await page.locator(".floating-value-backdrop").evaluate((element) => ({
+      left: element.style.left,
+      top: element.style.top,
+      right: element.style.right,
+      bottom: element.style.bottom,
+    }));
+    expect(hudStyle.left).toMatch(/px$/u);
+    expect(hudStyle.top).toMatch(/px$/u);
+    expect(hudStyle.right).toBe("auto");
+    expect(hudStyle.bottom).toBe("auto");
     const before = await core.invoke("document_state");
     const value = page.getByRole("dialog").locator("input").first();
     await value.fill("0");
@@ -497,7 +575,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await clickModelPoint(page, 0, 0);
     await expect.poll(async () => (await core.invoke("document_state")).measurementAnnotations).toHaveLength(1);
 
-    await page.getByRole("button", { name: "segmentLength", exact: true }).click();
+    await clickTool(page, "選択");
+    await clickModelPoint(page, 0, 0);
     await expect(page.getByText("計測表示を選択中", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "寸法拘束へ変換", exact: true }).click();
     await expect

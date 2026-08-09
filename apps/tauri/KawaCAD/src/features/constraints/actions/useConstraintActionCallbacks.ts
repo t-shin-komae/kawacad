@@ -13,6 +13,7 @@ import {
 import type {
   ConstraintPreflight,
   DerivedPreflight,
+  HudPosition,
   PendingConstraintValue,
   PendingDerivedValue,
 } from "@/features/canvas/state/useCanvasPresentation";
@@ -105,7 +106,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
     [applyState, command, selectTool],
   );
   const applyConstraint = useCallback(
-    async (candidate: Tool, targets: ConstraintTarget[]) => {
+    async (candidate: Tool, targets: ConstraintTarget[], hudPosition?: HudPosition) => {
       const rawKind = constraintKinds[candidate] ?? candidate;
       try {
         const preflight = await documentAdapter.command<ConstraintPreflight>("preflight_constraint", {
@@ -113,7 +114,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
           targets: targets.map(coreConstraintTarget),
         });
         if (needsConstraintValue(candidate)) {
-          setPendingConstraintValue({ candidate, preflight });
+          setPendingConstraintValue({ candidate, preflight, hudPosition });
           setMessage(appStrings.status.specifyConstraintValue(names[candidate]));
           return;
         }

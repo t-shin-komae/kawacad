@@ -72,6 +72,7 @@ import { useWindowLifecycle } from "@/features/workspace/effects/useWindowLifecy
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
 import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSourceLicensesDialog";
 import { OutputDialog } from "@/features/output/components/OutputDialog";
+import { CircleDot, FileOutput, Info, MapPin, MousePointer2 } from "lucide-react";
 
 export function App() {
   const [licensesOpen, setLicensesOpen] = useState(false);
@@ -403,8 +404,8 @@ export function App() {
     if (warning) setDocumentWarning(warning);
   }, [state?.warnings]);
   useEffect(() => {
-    if (layout.mode === "compact" && selected.size) setCompactDrawer("inspector");
-  }, [layout.mode, selected]);
+    if (layout.mode === "compact" && inspectorOpen && selected.size) setCompactDrawer("inspector");
+  }, [inspectorOpen, layout.mode, selected]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -629,6 +630,7 @@ export function App() {
     },
     selectedEntityIds: [...selected],
     selectedEntity,
+    selectedEntities: (state?.entities ?? []).filter((entity) => selected.has(entity.id)),
     selectedDerivedElement,
     selectedFreeText: state?.freeTexts.find((item) => item.id === selectedFreeTextId),
     selectedConstraint: state?.constraints.find((item) => item.id === selectedConstraintId),
@@ -646,6 +648,7 @@ export function App() {
     partLibrary,
     roundHoles: state?.roundHoles ?? [],
     onCommand: executeCommand,
+    onApplyStyle: applyActiveStyle,
     onDeleteSelection: deleteSelection,
     onCreatePart: createPart,
     onAddParameter: addParameter,
@@ -748,6 +751,8 @@ export function App() {
             initialValue={pendingConstraintValue.preflight.value}
             parameters={state?.parameters ?? []}
             degrees={pendingConstraintValue.candidate === "angle"}
+            floating
+            floatingPosition={pendingConstraintValue.hudPosition}
             onConfirm={(value) =>
               void commitConstraint(pendingConstraintValue.candidate, pendingConstraintValue.preflight, value)
             }
@@ -966,6 +971,15 @@ export function App() {
               />
             </aside>
           )}
+          {layout.mode === "compact" &&
+            (compactDrawer === "tools" || (compactDrawer === "inspector" && inspectorOpen)) && (
+              <button
+                type="button"
+                className="compact-drawer-backdrop"
+                aria-label={appStrings.accessibility.dismissDrawer}
+                onClick={() => setCompactDrawer(undefined)}
+              />
+            )}
           {layout.mode === "compact" && compactDrawer === "inspector" && inspectorOpen && (
             <WorkspaceInspector
               mode="compact"
@@ -993,20 +1007,40 @@ export function App() {
             {message}
           </span>
           <span>
-            {appStrings.app.statusGeometry(visibleEntities.length)} ·{" "}
-            {selected.size ? appStrings.app.statusSelection(selected.size) : appStrings.app.statusNoSelection} ·{" "}
-            {cursorPoint
-              ? appStrings.app.statusCoordinates(cursorPoint.xMm, cursorPoint.yMm)
-              : appStrings.app.statusNoCoordinates}{" "}
+            <span className="statusbar-item">
+              <CircleDot size={12} strokeWidth={1.8} aria-hidden="true" />
+              {appStrings.app.statusGeometry(visibleEntities.length)}
+            </span>{" "}
+            ·{" "}
+            <span className="statusbar-item">
+              <MousePointer2 size={12} strokeWidth={1.8} aria-hidden="true" />
+              {selected.size ? appStrings.app.statusSelection(selected.size) : appStrings.app.statusNoSelection}
+            </span>{" "}
+            ·{" "}
+            {cursorPoint ? (
+              <span className="statusbar-item">
+                <MapPin size={12} strokeWidth={1.8} aria-hidden="true" />
+                {appStrings.app.statusCoordinates(cursorPoint.xMm, cursorPoint.yMm)}
+              </span>
+            ) : (
+              <span className="statusbar-item">
+                <MapPin size={12} strokeWidth={1.8} aria-hidden="true" />
+                {appStrings.app.statusNoCoordinates}
+              </span>
+            )}{" "}
             · {Math.round(viewport.zoom * 100)}%
           </span>
           {state?.viewMode === "outputPreview" && (
             <span>
+              <FileOutput size={12} strokeWidth={1.8} aria-hidden="true" />{" "}
               {state.outputPreview?.warnings.length
                 ? appStrings.app.outputWarnings(state.outputPreview.warnings.length)
                 : appStrings.app.outputPages(state.outputPreview?.pages.length ?? 0)}
             </span>
           )}
+          <span className="statusbar-item">
+            <Info size={12} strokeWidth={1.8} aria-hidden="true" />
+          </span>
           <button
             type="button"
             className="statusbar-summary-toggle"

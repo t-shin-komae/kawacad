@@ -147,8 +147,8 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
         measurementLabels[item.id],
         measurementLabelOffsets[item.id],
         item.id === selectedMeasurementAnnotationId || highlightedMeasurementAnnotationIds.has(item.id)
-          ? "#007aff"
-          : "#9333ea",
+          ? "#dd5615"
+          : "#0c6058",
         width,
         height,
         viewport,
@@ -161,7 +161,7 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
         item,
         dimensionLabels[item.id],
         dimensionLabelOffsets[item.id],
-        "#7c3aed",
+        "#2e426b",
         width,
         height,
         viewport,
@@ -536,12 +536,12 @@ function drawConstraintMarker(
   const x = point.x + 10 + stackIndex * 5;
   const y = point.y - 20 - stackIndex * 5;
   context.save();
-  context.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
+  context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
   const markerText = marker.icon ? `${marker.icon} ${label}` : label;
   const markerWidth = Math.max(22, context.measureText(markerText).width + 10);
-  context.fillStyle = hovered ? "#007aff" : "rgba(0, 122, 255, .86)";
-  context.strokeStyle = hovered ? "#005ecb" : "rgba(0, 88, 185, .8)";
-  context.lineWidth = 1;
+  context.fillStyle = hovered ? "rgba(32, 74, 179, .95)" : "rgba(4, 129, 116, .92)";
+  context.strokeStyle = hovered ? "#204ab3" : "rgba(4, 129, 116, .72)";
+  context.lineWidth = hovered ? 1.5 : 1;
   context.beginPath();
   context.roundRect(x, y, markerWidth, 16, 4);
   context.fill();
@@ -659,14 +659,14 @@ function drawArcArrowhead(
 
 function drawAnnotationLabel(context: CanvasRenderingContext2D, label: string, x: number, y: number, color: string) {
   context.save();
-  context.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+  context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
   context.textBaseline = "middle";
   const metrics = context.measureText(label);
   const paddingX = 4;
   const paddingY = 3;
-  context.fillStyle = "rgba(255,255,255,.88)";
+  context.fillStyle = "rgba(255,255,255,.82)";
   context.strokeStyle = color;
-  context.lineWidth = 0.8;
+  context.lineWidth = 1;
   context.beginPath();
   context.roundRect(
     x - paddingX,

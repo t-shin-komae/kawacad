@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import {
   matchesInspectorSearch,
   setInspectorParameterSearchQuery,
@@ -22,7 +23,10 @@ export function InspectorParametersTab({
 }: InspectorParametersTabProps) {
   return (
     <section>
-      <h2>{appStrings.inspector.parameters}</h2>
+      <h2>
+        <SlidersHorizontal aria-hidden="true" />
+        {appStrings.inspector.parameters}
+      </h2>
       <button onClick={props.onAddParameter}>{appStrings.inspector.add}</button>
       {(props.parameters.length >= 8 || feature.parameterSearchVisible || feature.parameterSearchQuery) && (
         <label className="inspector-search">

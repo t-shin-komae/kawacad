@@ -19,7 +19,12 @@ export type ConstraintPreflight = {
   normalizedTargets: unknown[];
   value?: Record<string, number | string | undefined>;
 };
-export type PendingConstraintValue = { candidate: Tool; preflight: ConstraintPreflight };
+export type HudPosition = { x: number; y: number };
+export type PendingConstraintValue = {
+  candidate: Tool;
+  preflight: ConstraintPreflight;
+  hudPosition?: HudPosition;
+};
 export type DerivedPreflight = {
   offsetOptions: OffsetSourceOption[];
   sourceEntityIds: string[];

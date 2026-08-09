@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Layers3 } from "lucide-react";
 import {
   matchesInspectorLayerSearch,
   setInspectorLayerSearchQuery,
@@ -17,7 +18,10 @@ type InspectorLayerTabProps = {
 export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFields }: InspectorLayerTabProps) {
   return (
     <section>
-      <h2>{appStrings.inspector.layers}</h2>
+      <h2>
+        <Layers3 aria-hidden="true" />
+        {appStrings.inspector.layers}
+      </h2>
       <label>
         {appStrings.inspector.drawingLayer}
         <select value={props.activeLayerId} onChange={(event) => props.onActiveLayerChange(event.target.value)}>

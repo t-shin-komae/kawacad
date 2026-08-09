@@ -77,6 +77,14 @@ func window_layout_policy_clamps_stored_panel_widths() {
   #expect(compact.compactInspectorDrawerWidth == WindowLayoutPolicy.minimumInspectorContentWidth)
 }
 
+@Test("WindowLayoutPolicy はツール幅を1列または2列の安定した幅へスナップする")
+func window_layout_policy_snaps_tool_width_for_stable_palette_layout() {
+  #expect(WindowLayoutPolicy.snappedToolWidth(200, for: .wide) == 176)
+  #expect(WindowLayoutPolicy.snappedToolWidth(220, for: .wide) == 260)
+  #expect(WindowLayoutPolicy.snappedToolWidth(200, for: .regular) == 176)
+  #expect(WindowLayoutPolicy.snappedToolWidth(220, for: .regular) == 240)
+}
+
 @Test("WindowLayoutPolicy は画面より広いウィンドウを画面幅へ収める")
 func window_layout_policy_constrains_window_width_to_visible_screen() {
   #expect(WindowLayoutPolicy.constrainedWindowWidth(1280, visibleScreenWidth: 1352) == 1280)

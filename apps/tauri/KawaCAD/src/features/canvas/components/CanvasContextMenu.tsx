@@ -54,6 +54,7 @@ export function CanvasContextMenu({
           {appStrings.contextMenu.convertMeasurement}
         </button>
         <button
+          className="destructive-action"
           role="menuitem"
           onClick={() => {
             onDelete();
@@ -84,6 +85,7 @@ export function CanvasContextMenu({
           </button>
         )}
         <button
+          className="destructive-action"
           role="menuitem"
           onClick={() => {
             onDelete();
@@ -134,6 +136,7 @@ export function CanvasContextMenu({
           </button>
         )}
         <button
+          className="destructive-action"
           role="menuitem"
           disabled={!hasSelection}
           onClick={() => {

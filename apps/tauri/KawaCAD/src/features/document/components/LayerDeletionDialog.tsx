@@ -17,7 +17,7 @@ export function LayerDeletionDialog({ layerName, affectedCount, onConfirm, onCan
           <button type="button" onClick={onCancel}>
             {appStrings.dialog.layerDeletion.cancel}
           </button>
-          <button type="button" onClick={onConfirm}>
+          <button className="destructive-action" type="button" onClick={onConfirm}>
             {appStrings.dialog.layerDeletion.delete}
           </button>
         </div>

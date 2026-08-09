@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link2, MousePointer2, Ruler } from "lucide-react";
 import { geometryOf, type PointMm, type RawEntity } from "@/features/canvas/domain/cad";
 import { TextEntryDialog, type TextEntryField } from "@/shared/components/TextEntryDialog";
 import {
@@ -80,6 +81,7 @@ export type Props = {
     parameterCount: number;
   };
   selectedEntityIds?: string[];
+  selectedEntities?: RawEntity[];
   selectedEntity?: RawEntity;
   selectedDerivedElement?: DerivedElement;
   selectedFreeText?: { id: string; content: string; positionMm: PointMm; fontSizeMm: number };
@@ -98,6 +100,7 @@ export type Props = {
   partLibrary: PartLibraryEntry[];
   roundHoles: Array<{ id: string; entityId: string; kind: string }>;
   onCommand: (kind: string, payload: unknown, success: string) => void;
+  onApplyStyle: (styleId?: string) => void;
   onDeleteSelection: () => void;
   onCreatePart: () => void;
   onAddParameter: () => void;
@@ -131,6 +134,31 @@ function valueLabel(value?: Record<string, number | string>) {
   return typeof value?.parameter === "string" ? value.parameter : "";
 }
 
+function geometryLabel(entity: RawEntity) {
+  switch (geometryOf(entity)?.tag) {
+    case "point":
+      return appStrings.toolNames.point;
+    case "lineSegment":
+      return appStrings.toolNames.line;
+    case "centerLine":
+      return appStrings.toolNames.centerLine;
+    case "circle":
+      return appStrings.toolNames.circle;
+    case "arc":
+      return appStrings.toolNames.arc;
+    default:
+      return appStrings.inspector.geometry;
+  }
+}
+
+function constraintLabel(kind: string) {
+  return appStrings.constraintKindNames[kind as keyof typeof appStrings.constraintKindNames] ?? kind;
+}
+
+function measurementLabel(kind: string) {
+  return appStrings.measurementKindNames[kind as keyof typeof appStrings.measurementKindNames] ?? kind;
+}
+
 export function InspectorPanel(props: Props) {
   const [feature, setFeature] = useState(initialInspectorFeatureState);
   const [pendingTextEntry, setPendingTextEntry] = useState<PendingTextEntry>();
@@ -149,6 +177,15 @@ export function InspectorPanel(props: Props) {
     roundHoles,
     onCommand,
   } = props;
+  const selectedEntities = props.selectedEntities ?? (selectedEntity ? [selectedEntity] : []);
+  const selectedGeometryLabels = [...new Set(selectedEntities.map(geometryLabel))];
+  const selectedLayerIDs = [
+    ...new Set(selectedEntities.map((entity) => ("layerId" in entity ? entity.layerId : null))),
+  ];
+  const selectedLayerLabels = selectedLayerIDs.map((id) =>
+    id ? (layers.find((layer) => layer.id === id)?.name ?? id) : appStrings.inspector.noValue,
+  );
+  const [bulkStyleID, setBulkStyleID] = useState("");
   const hasSelection = Boolean(
     selectedCount ||
     props.selectedConstraint ||
@@ -197,7 +234,10 @@ export function InspectorPanel(props: Props) {
       {feature.inspectorTab === "selection" && (
         <>
           <section>
-            <h2>{appStrings.inspector.selection}</h2>
+            <h2>
+              <MousePointer2 aria-hidden="true" />
+              {appStrings.inspector.selection}
+            </h2>
             {props.selectedConstraint ? (
               <SelectedConstraintEditor
                 constraint={props.selectedConstraint}
@@ -214,6 +254,32 @@ export function InspectorPanel(props: Props) {
               <SelectedStitchStartPointEditor stitchStartPoint={props.selectedStitchStartPoint} />
             ) : props.selectedFreeText ? (
               <FreeTextEditor freeText={props.selectedFreeText} onCommand={onCommand} />
+            ) : selectedCount > 1 ? (
+              <div className="inspector-card multi-selection-summary">
+                <strong>{appStrings.inspector.selectionSummary(selectedCount)}</strong>
+                <div className="detail-row">
+                  <span>{appStrings.inspector.selectedGeometry}</span>
+                  <strong>{selectedGeometryLabels.join("、")}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>{appStrings.inspector.selectedLayer}</span>
+                  <strong>{selectedLayerLabels.join("、")}</strong>
+                </div>
+                <label>
+                  {appStrings.inspector.bulkStyle}
+                  <select value={bulkStyleID} onChange={(event) => setBulkStyleID(event.target.value)}>
+                    <option value="">{appStrings.inspector.noValue}</option>
+                    {sharedStyles.map((style) => (
+                      <option key={style.id} value={style.id}>
+                        {style.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button disabled={!bulkStyleID} onClick={() => props.onApplyStyle(bulkStyleID)}>
+                  {appStrings.inspector.applyBulkStyle}
+                </button>
+              </div>
             ) : selectedEntity ? (
               <EntityEditor
                 entity={selectedEntity}
@@ -238,14 +304,19 @@ export function InspectorPanel(props: Props) {
             </div>
           </section>
           <section>
-            <h2>{appStrings.inspector.constraint}</h2>
+            <h2>
+              <Link2 aria-hidden="true" />
+              {appStrings.inspector.constraint}
+            </h2>
             {constraints.length ? (
               constraints.map((item) => (
                 <div className="row" key={item.id}>
                   <span>
-                    {item.kind}
+                    {constraintLabel(item.kind)}
                     <small>
-                      {item.status} {valueLabel(item.value)}
+                      {appStrings.constraintStatusNames[item.status as keyof typeof appStrings.constraintStatusNames] ??
+                        item.status}{" "}
+                      {valueLabel(item.value)}
                     </small>
                   </span>
                   <div className="button-row">
@@ -269,11 +340,14 @@ export function InspectorPanel(props: Props) {
             )}
           </section>
           <section>
-            <h2>{appStrings.inspector.measurementAndNotes}</h2>
+            <h2>
+              <Ruler aria-hidden="true" />
+              {appStrings.inspector.measurementAndNotes}
+            </h2>
             {measurements.map((item) => (
               <div className="row" key={item.id}>
                 <button className="inspector-row-action" onClick={() => props.onSelectMeasurement?.(item.id)}>
-                  {item.kind}
+                  {measurementLabel(item.kind)}
                 </button>
                 <label>
                   <input
