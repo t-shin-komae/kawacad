@@ -271,7 +271,7 @@ fn interface_schema_accepts_canvas_projection() {
 }
 
 #[test]
-fn interface_schema_rejects_camel_case_tagged_payload_fields() {
+fn interface_schema_rejects_snake_case_geometry_payload_fields() {
     let schema: Value =
         serde_json::from_str(INTERFACE_SCHEMA).expect("interface schema should be valid json");
     let fixture: Value = serde_json::json!({
@@ -297,8 +297,8 @@ fn interface_schema_rejects_camel_case_tagged_payload_fields() {
                 "geometry": {
                     "kind": "lineSegment",
                     "payload": {
-                        "startMm": { "xMm": 0.0, "yMm": 0.0 },
-                        "endMm": { "xMm": 20.0, "yMm": 0.0 }
+                        "start_mm": { "xMm": 0.0, "yMm": 0.0 },
+                        "end_mm": { "xMm": 20.0, "yMm": 0.0 }
                     }
                 },
                 "style": {
