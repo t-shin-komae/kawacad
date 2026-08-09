@@ -185,6 +185,7 @@ pub fn send(prepared: &PreparedDirectPrint) -> Result<(), String> {
     }
 }
 
+#[cfg(not(any(target_os = "windows", target_os = "linux")))]
 fn unavailable_error() -> String {
     current_availability()
         .reason

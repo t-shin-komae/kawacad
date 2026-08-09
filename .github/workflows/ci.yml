@@ -263,6 +263,26 @@ jobs:
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup default 1.97.1
 
+      - name: Cache Cargo registry and git dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-
+          save-always: true
+
+      - name: Cache Rust target for windows-tauri-direct-print
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-windows-tauri-direct-print-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-windows-tauri-direct-print-kawacad-rust-
+          save-always: true
+
       - name: Compile and test Windows direct printing
         shell: pwsh
         run: |
@@ -290,6 +310,9 @@ jobs:
         run: |
           rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
           rustup default 1.97.1
+
+      - name: Install Swift format
+        run: brew install swift-format
 
       - name: Cache Cargo registry and git dependencies
         uses: actions/cache@v4
