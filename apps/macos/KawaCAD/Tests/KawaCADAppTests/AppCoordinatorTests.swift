@@ -6304,9 +6304,9 @@ final class StubDocumentSessionAdapter: DocumentSessionAdapting {
       return nil
     }
     switch (target, entity.geometry) {
-    case (.entity, let .point(point)):
+    case (.entity, .point(let point)):
       return point
-    case (.entity, let .circle(center, _)), (.entity, let .arc(center, _, _, _)):
+    case (.entity, .circle(let center, _)), (.entity, .arc(let center, _, _, _)):
       return center
     case (.controlPoint(_, .start), .line(let start, _, _)):
       return start
