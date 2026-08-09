@@ -26,7 +26,9 @@ node scripts/kawacad.mjs pre-push
 The pre-push check requires macOS. It validates Swift formatting, builds the
 real Core process, runs the regular and live-Core Swift tests, and builds and
 stages the unsigned Swift release application. This is the Swift validation
-boundary that complements the Linux-only GitHub Actions workflow.
+boundary that GitHub Actions runs on its macOS runner. GitHub Actions also
+runs the Tauri checks on Linux and Windows; Linux includes a virtual CUPS
+direct-print E2E test.
 
 ## Tests
 

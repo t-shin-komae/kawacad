@@ -270,6 +270,58 @@ jobs:
           cargo clippy --manifest-path apps/tauri/KawaCAD/src-tauri/Cargo.toml --all-targets -- -D warnings
           cargo test --manifest-path apps/tauri/KawaCAD/src-tauri/Cargo.toml --all-targets
 
+  macos-swift-and-tauri:
+    name: macos-swift-and-tauri
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          clean: true
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+          rustup default 1.97.1
+
+      - name: Cache Cargo registry and git dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-deps-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-kawacad-rust-
+          save-always: true
+
+      - name: Cache Rust target for macos-swift-and-tauri
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-macos-swift-and-tauri-kawacad-rust-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml', '**/Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ runner.os }}-${{ runner.arch == 'X64' && 'x64' || runner.arch }}-macos-swift-and-tauri-kawacad-rust-
+          save-always: true
+
+      - name: Test Swift application with the live Core process
+        run: node scripts/kawacad.mjs pre-push
+
+      - name: Test Tauri macOS direct-print boundary
+        run: |
+          cargo test --manifest-path apps/tauri/KawaCAD/src-tauri/Cargo.toml --lib \
+            macos_reports_direct_printing_as_unsupported
+
+      - name: Verify tracked files are unchanged
+        run: git diff --exit-code
+
   ci-gate:
     name: ci-gate
     if: always()
@@ -277,6 +329,7 @@ jobs:
       - linux-quality-core
       - linux-tauri
       - windows-tauri-direct-print
+      - macos-swift-and-tauri
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -285,10 +338,12 @@ jobs:
           LINUX_QUALITY_CORE_RESULT: ${{ needs.linux-quality-core.result }}
           LINUX_TAURI_RESULT: ${{ needs.linux-tauri.result }}
           WINDOWS_TAURI_DIRECT_PRINT_RESULT: ${{ needs.windows-tauri-direct-print.result }}
+          MACOS_SWIFT_AND_TAURI_RESULT: ${{ needs.macos-swift-and-tauri.result }}
         run: |
           if [[ "$LINUX_QUALITY_CORE_RESULT" != "success" || \
                 "$LINUX_TAURI_RESULT" != "success" || \
-                "$WINDOWS_TAURI_DIRECT_PRINT_RESULT" != "success" ]]; then
+                "$WINDOWS_TAURI_DIRECT_PRINT_RESULT" != "success" || \
+                "$MACOS_SWIFT_AND_TAURI_RESULT" != "success" ]]; then
             echo "Required CI job failed or did not run."
             exit 1
           fi
