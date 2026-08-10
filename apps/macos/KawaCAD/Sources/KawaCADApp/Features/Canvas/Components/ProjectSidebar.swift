@@ -237,6 +237,7 @@ struct ProjectSidebar: View {
       .buttonStyle(.bordered)
       .controlSize(.small)
       .accessibilityLabel(AppStrings.tr("sidebar.pattern_line_style"))
+      .frame(width: contentWidth, alignment: .leading)
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -278,6 +279,7 @@ struct ProjectSidebar: View {
       .buttonStyle(.bordered)
       .controlSize(.small)
       .accessibilityLabel(AppStrings.tr("sidebar.round_hole_kind"))
+      .frame(width: contentWidth, alignment: .leading)
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
