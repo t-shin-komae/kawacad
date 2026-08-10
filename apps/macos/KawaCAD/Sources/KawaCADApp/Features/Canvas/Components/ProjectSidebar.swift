@@ -234,10 +234,10 @@ struct ProjectSidebar: View {
         }
         .frame(width: contentWidth, height: 22, alignment: .leading)
       }
-      .buttonStyle(.bordered)
+      .buttonStyle(.plain)
       .controlSize(.small)
       .accessibilityLabel(AppStrings.tr("sidebar.pattern_line_style"))
-      .frame(width: contentWidth, alignment: .leading)
+      .modifier(PaletteMenuChrome(width: contentWidth))
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -276,10 +276,10 @@ struct ProjectSidebar: View {
         }
         .frame(width: contentWidth, height: 22, alignment: .leading)
       }
-      .buttonStyle(.bordered)
+      .buttonStyle(.plain)
       .controlSize(.small)
       .accessibilityLabel(AppStrings.tr("sidebar.round_hole_kind"))
-      .frame(width: contentWidth, alignment: .leading)
+      .modifier(PaletteMenuChrome(width: contentWidth))
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
@@ -357,6 +357,26 @@ struct ProjectSidebar: View {
     } else {
       actions.setGroupCollapsed(false, group.id)
     }
+  }
+}
+
+private struct PaletteMenuChrome: ViewModifier {
+  let width: CGFloat
+
+  func body(content: Content) -> some View {
+    content
+      .frame(width: width, height: 22, alignment: .leading)
+      .background {
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.controlRadius, style: .continuous)
+          .fill(Color(nsColor: .controlBackgroundColor))
+      }
+      .overlay {
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.controlRadius, style: .continuous)
+          .strokeBorder(LeatherColors.panelStroke.opacity(0.8))
+      }
+      .contentShape(
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.controlRadius, style: .continuous)
+      )
   }
 }
 
