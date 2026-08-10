@@ -134,6 +134,7 @@ struct ProjectSidebar: View {
 
           Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
       .padding(.horizontal, 9)
       .padding(.vertical, 8)
