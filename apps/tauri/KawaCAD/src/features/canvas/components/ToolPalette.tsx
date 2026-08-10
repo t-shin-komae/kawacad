@@ -5,7 +5,7 @@ import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { parseDecimal } from "@/shared/state/syncedField";
 
-type SharedStyle = { id: string; name: string; style?: { pattern?: string } };
+type SharedStyle = { id: string; name: string };
 type Props = {
   activeStyle: string;
   sharedStyles: SharedStyle[];

@@ -11,8 +11,8 @@ func palette_popup_button_uses_the_proposed_width() throws {
   let hostingView = NSHostingView(
     rootView: PalettePopUpButton(
       items: [
-        PalettePopUpItem(key: "outer", title: "外形カット線", value: "outer"),
-        PalettePopUpItem(key: "fold", title: "折り線", value: "fold"),
+        PalettePopUpItem(title: "外形カット線", value: "outer"),
+        PalettePopUpItem(title: "折り線", value: "fold"),
       ],
       selection: selectedValue,
       accessibilityLabel: "型紙線種",

@@ -135,7 +135,6 @@ struct ProjectSidebar: View {
 
           Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
       }
       .padding(.horizontal, 9)
       .padding(.vertical, 8)
@@ -215,7 +214,6 @@ struct ProjectSidebar: View {
       PalettePopUpButton(
         items: state.sharedStyles.map { style in
           PalettePopUpItem(
-            key: "\(style.id)|\(style.name)",
             title: style.name,
             value: style.id
           )
@@ -251,7 +249,6 @@ struct ProjectSidebar: View {
       PalettePopUpButton(
         items: ProjectRoundHoleKind.allCases.map { kind in
           PalettePopUpItem(
-            key: "\(kind.rawValue)|\(kind.displayName)",
             title: kind.displayName,
             value: kind
           )
@@ -337,8 +334,7 @@ struct ProjectSidebar: View {
   }
 }
 
-struct PalettePopUpItem<Value: Hashable> {
-  let key: String
+struct PalettePopUpItem<Value: Hashable>: Equatable {
   let title: String
   let value: Value
 }
@@ -366,13 +362,12 @@ struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
 
   func updateNSView(_ button: NSPopUpButton, context: Context) {
     context.coordinator.parent = self
-    let itemKeys = items.map(\.key)
-    if context.coordinator.itemKeys != itemKeys {
+    if context.coordinator.items != items {
       button.removeAllItems()
       for item in items {
         button.addItem(withTitle: item.title)
       }
-      context.coordinator.itemKeys = itemKeys
+      context.coordinator.items = items
     }
 
     if let selectedIndex = items.firstIndex(where: { $0.value == selection }),
@@ -386,7 +381,7 @@ struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
 
   final class Coordinator: NSObject {
     var parent: PalettePopUpButton
-    var itemKeys: [String] = []
+    var items: [PalettePopUpItem<Value>] = []
 
     init(parent: PalettePopUpButton) {
       self.parent = parent
