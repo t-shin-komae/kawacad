@@ -605,7 +605,8 @@ input[type="checkbox"] {
   overflow: auto;
   border: 1px solid var(--panel-stroke);
   border-radius: 0 8px 8px 0;
-  background: var(--panel);
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+  backdrop-filter: blur(14px);
   box-shadow: 5px 0 18px rgba(0, 0, 0, 0.18);
 }
 .compact-drawer-backdrop {
@@ -769,8 +770,7 @@ input[type="checkbox"] {
   font-weight: 500;
 }
 .palette-select {
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
   appearance: auto;
   padding: 1px 4px;
 }
@@ -1581,7 +1581,7 @@ input[type="checkbox"] {
     background: #2a2a2d;
   }
   .tool-palette {
-    background: var(--panel);
+    background: color-mix(in srgb, var(--panel) 86%, transparent);
   }
   .cad-canvas {
     background: #fff;

@@ -138,7 +138,9 @@ struct ProjectSidebar: View {
       .padding(.horizontal, 9)
       .padding(.vertical, 8)
     }
-    .background(LeatherColors.panel)
+    .background {
+      MacVisualEffectBackground(style: .sidebar)
+    }
     .overlay(alignment: .trailing) {
       Rectangle()
         .fill(LeatherColors.panelStroke.opacity(0.65))
@@ -224,6 +226,7 @@ struct ProjectSidebar: View {
         }
       }
       .labelsHidden()
+      .frame(maxWidth: .infinity, alignment: .leading)
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -259,6 +262,7 @@ struct ProjectSidebar: View {
         }
       }
       .labelsHidden()
+      .frame(maxWidth: .infinity, alignment: .leading)
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),

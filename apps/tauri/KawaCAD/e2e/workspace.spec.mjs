@@ -175,8 +175,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
       })),
     );
     expect(pickerWidths).toHaveLength(2);
-    expect(pickerWidths[0].width).toBeLessThan(pickerWidths[0].parentWidth);
-    expect(pickerWidths[1].width).toBeLessThan(pickerWidths[1].parentWidth);
+    expect(pickerWidths[0].width).toBeCloseTo(pickerWidths[0].parentWidth, 0);
+    expect(pickerWidths[1].width).toBeCloseTo(pickerWidths[1].parentWidth, 0);
 
     const resizeHandle = page.getByRole("separator", { name: "ツールパレットの幅" });
     await resizeHandle.press("Home");
