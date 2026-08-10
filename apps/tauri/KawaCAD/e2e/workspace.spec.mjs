@@ -160,6 +160,26 @@ test.describe("Tauri React workspace through the real Core process", () => {
     const grid = palette.locator(".tool-grid").first();
     const columnCount = () =>
       grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/u).length);
+    const toolContentOffsets = () =>
+      palette.locator(".tool-grid button").evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const buttonRect = button.getBoundingClientRect();
+          const iconRect = button.querySelector("svg")?.getBoundingClientRect();
+          const labelRect = button.querySelector("span")?.getBoundingClientRect();
+          const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+          return {
+            icon: iconRect ? Math.abs(iconRect.top + iconRect.height / 2 - buttonCenterY) : Number.POSITIVE_INFINITY,
+            label: labelRect
+              ? Math.abs(labelRect.top + labelRect.height / 2 - buttonCenterY)
+              : Number.POSITIVE_INFINITY,
+          };
+        }),
+      );
+    const expectToolContentCentered = async () => {
+      const offsets = await toolContentOffsets();
+      expect(offsets.length).toBeGreaterThan(0);
+      expect(offsets.every(({ icon, label }) => icon <= 1 && label <= 1)).toBe(true);
+    };
 
     await palette.getByRole("button", { name: "詳細ツールを表示", exact: true }).click();
     await expect(palette.getByRole("button", { name: "派生", exact: true })).toHaveAttribute("aria-expanded", "false");
@@ -168,6 +188,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(palette).toContainText("補助パレット");
     await expect.poll(columnCount).toBe(1);
     await expect(palette.locator(".line-style-swatch")).toHaveCount(0);
+    await expectToolContentCentered();
     const pickerWidths = await palette.locator("select.palette-select").evaluateAll((elements) =>
       elements.map((element) => ({
         width: element.getBoundingClientRect().width,
@@ -196,6 +217,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await resizeHandle.press("ArrowRight");
     await expect(resizeHandle).toHaveAttribute("aria-valuenow", "224");
     await expect.poll(columnCount).toBe(2);
+    await expectToolContentCentered();
 
     await resizeHandle.press("End");
     await expect.poll(columnCount).toBe(2);

@@ -834,7 +834,7 @@ input[type="checkbox"] {
 }
 .tool-grid button {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
   min-height: var(--palette-tool-height);
   padding: 6px;
@@ -854,7 +854,6 @@ input[type="checkbox"] {
   flex: 0 0 16px;
   width: 15px;
   height: 15px;
-  margin-top: 1px;
   color: var(--ink);
 }
 .tool-grid button.active {
