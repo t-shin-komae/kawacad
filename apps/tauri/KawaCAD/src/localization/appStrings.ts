@@ -228,7 +228,7 @@ const appStrings = {
     groupNames: { drawing: "作図", derived: "派生", constraint: "拘束", dimension: "寸法", measurement: "計測" },
     ariaLabel: "ツールパレット",
     title: "ツール",
-    subtitle: "ユーティリティパレット",
+    subtitle: "補助パレット",
     display: "ツール表示",
     showDetailed: "詳細ツールを表示",
     showBasicOnly: "基本ツールだけを表示",

@@ -153,20 +153,51 @@ test.describe("Tauri React workspace through the real Core process", () => {
     }
   });
 
-  // 初期の折り畳み状態、パレット幅に応じた1列/2列表示、線種見本の表示を検証する。
+  // 初期の折り畳み状態、パレット幅に応じた1列/2列表示、Swift版と同じパレット表示を検証する。
   test("keeps the tool palette progression and responsive grid contract", async ({ page }) => {
     await openWorkspace(page);
     const palette = page.getByRole("complementary", { name: "ツールパレット" });
     const grid = palette.locator(".tool-grid").first();
     const columnCount = () =>
       grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/u).length);
+    const toolContentOffsets = () =>
+      palette.locator(".tool-grid button").evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const buttonRect = button.getBoundingClientRect();
+          const iconRect = button.querySelector("svg")?.getBoundingClientRect();
+          const labelRect = button.querySelector("span")?.getBoundingClientRect();
+          const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+          return {
+            icon: iconRect ? Math.abs(iconRect.top + iconRect.height / 2 - buttonCenterY) : Number.POSITIVE_INFINITY,
+            label: labelRect
+              ? Math.abs(labelRect.top + labelRect.height / 2 - buttonCenterY)
+              : Number.POSITIVE_INFINITY,
+          };
+        }),
+      );
+    const expectToolContentCentered = async () => {
+      const offsets = await toolContentOffsets();
+      expect(offsets.length).toBeGreaterThan(0);
+      expect(offsets.every(({ icon, label }) => icon <= 1 && label <= 1)).toBe(true);
+    };
 
     await palette.getByRole("button", { name: "詳細ツールを表示", exact: true }).click();
     await expect(palette.getByRole("button", { name: "派生", exact: true })).toHaveAttribute("aria-expanded", "false");
     await expect(palette.getByRole("button", { name: "拘束", exact: true })).toHaveAttribute("aria-expanded", "false");
     await expect(palette.getByRole("button", { name: "計測", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect(palette).toContainText("補助パレット");
     await expect.poll(columnCount).toBe(1);
-    await expect(palette.locator(".line-style-swatch")).toHaveClass(/solid/u);
+    await expect(palette.locator(".line-style-swatch")).toHaveCount(0);
+    await expectToolContentCentered();
+    const pickerWidths = await palette.locator("select.palette-select").evaluateAll((elements) =>
+      elements.map((element) => ({
+        width: element.getBoundingClientRect().width,
+        parentWidth: element.parentElement?.clientWidth,
+      })),
+    );
+    expect(pickerWidths).toHaveLength(2);
+    expect(pickerWidths[0].width).toBeCloseTo(pickerWidths[0].parentWidth, 0);
+    expect(pickerWidths[1].width).toBeCloseTo(pickerWidths[1].parentWidth, 0);
 
     const resizeHandle = page.getByRole("separator", { name: "ツールパレットの幅" });
     await resizeHandle.press("Home");
@@ -175,8 +206,18 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect.poll(columnCount).toBe(1);
     await expect.poll(() => grid.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
 
-    for (let index = 0; index < 2; index += 1) await resizeHandle.press("ArrowRight");
+    await resizeHandle.press("ArrowRight");
+    await expect(resizeHandle).toHaveAttribute("aria-valuenow", "208");
+    await expect.poll(columnCount).toBe(1);
+
+    await resizeHandle.press("ArrowRight");
+    await expect(resizeHandle).toHaveAttribute("aria-valuenow", "216");
+    await expect.poll(columnCount).toBe(1);
+
+    await resizeHandle.press("ArrowRight");
+    await expect(resizeHandle).toHaveAttribute("aria-valuenow", "224");
     await expect.poll(columnCount).toBe(2);
+    await expectToolContentCentered();
 
     await resizeHandle.press("End");
     await expect.poll(columnCount).toBe(2);

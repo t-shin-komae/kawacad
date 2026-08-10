@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ProjectSidebar: View {
@@ -210,22 +211,18 @@ struct ProjectSidebar: View {
         .lineLimit(1)
         .padding(.horizontal, 2)
 
-      Picker(
-        AppStrings.tr("sidebar.pattern_line_style"),
-        selection: Binding(
-          get: { state.activePatternLineStyleID },
-          set: actions.setActivePatternLineStyle
-        )
-      ) {
-        ForEach(state.sharedStyles) { style in
-          HStack(spacing: 6) {
-            PatternLineStyleSwatch(style: style)
-            Text(style.name)
-          }
-          .tag(style.id)
-        }
-      }
-      .labelsHidden()
+      PalettePopUpButton(
+        items: state.sharedStyles.map { style in
+          PalettePopUpItem(
+            title: style.name,
+            value: style.id
+          )
+        },
+        selection: state.activePatternLineStyleID,
+        width: contentWidth,
+        accessibilityLabel: AppStrings.tr("sidebar.pattern_line_style"),
+        onSelect: actions.setActivePatternLineStyle
+      )
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -249,18 +246,18 @@ struct ProjectSidebar: View {
         .lineLimit(1)
         .padding(.horizontal, 2)
 
-      Picker(
-        AppStrings.tr("sidebar.round_hole_kind"),
-        selection: Binding(
-          get: { state.activeRoundHoleKind },
-          set: actions.setActiveRoundHoleKind
-        )
-      ) {
-        ForEach(ProjectRoundHoleKind.allCases) { kind in
-          Text(kind.displayName).tag(kind)
-        }
-      }
-      .labelsHidden()
+      PalettePopUpButton(
+        items: ProjectRoundHoleKind.allCases.map { kind in
+          PalettePopUpItem(
+            title: kind.displayName,
+            value: kind
+          )
+        },
+        selection: state.activeRoundHoleKind,
+        width: contentWidth,
+        accessibilityLabel: AppStrings.tr("sidebar.round_hole_kind"),
+        onSelect: actions.setActiveRoundHoleKind
+      )
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
@@ -316,6 +313,10 @@ struct ProjectSidebar: View {
     .padding(.bottom, 3)
   }
 
+  private var contentWidth: CGFloat {
+    max(0, width - 18)
+  }
+
   private func isGroupExpanded(_ group: ToolGroup) -> Bool {
     if group.tools.contains(state.selectedTool) {
       return true
@@ -333,24 +334,106 @@ struct ProjectSidebar: View {
   }
 }
 
-private struct PatternLineStyleSwatch: View {
-  let style: ProjectSharedStyle
+struct PalettePopUpItem<Value: Hashable>: Equatable {
+  let title: String
+  let value: Value
+}
 
-  var body: some View {
-    Rectangle()
-      .fill(Color(hex: style.colorHex))
-      .frame(width: 18, height: 3)
-      .overlay {
-        if style.linePattern != .solid {
-          HStack(spacing: 2) {
-            ForEach(0..<3, id: \.self) { _ in
-              Rectangle()
-                .fill(Color.white.opacity(0.85))
-                .frame(width: 2)
-            }
-          }
-        }
+final class PalettePopUpContainer: NSView {
+  let button = NSPopUpButton(frame: .zero, pullsDown: false)
+  var buttonWidthConstraint: NSLayoutConstraint?
+  var preferredWidth: CGFloat = 0
+
+  override var intrinsicContentSize: NSSize {
+    NSSize(width: preferredWidth, height: button.intrinsicContentSize.height)
+  }
+}
+
+struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
+  let items: [PalettePopUpItem<Value>]
+  let selection: Value
+  let width: CGFloat
+  let accessibilityLabel: String
+  let onSelect: (Value) -> Void
+
+  @Environment(\.isEnabled) private var isEnabled
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(parent: self)
+  }
+
+  func makeNSView(context: Context) -> PalettePopUpContainer {
+    let container = PalettePopUpContainer()
+    let button = container.button
+    button.target = context.coordinator
+    button.action = #selector(Coordinator.selectionChanged(_:))
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    container.addSubview(button)
+    let widthConstraint = button.widthAnchor.constraint(equalToConstant: width)
+    container.buttonWidthConstraint = widthConstraint
+    container.preferredWidth = width
+    NSLayoutConstraint.activate([
+      button.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+      widthConstraint,
+      button.topAnchor.constraint(equalTo: container.topAnchor),
+      button.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+    ])
+    return container
+  }
+
+  func updateNSView(_ container: PalettePopUpContainer, context: Context) {
+    context.coordinator.parent = self
+    let button = container.button
+    if container.preferredWidth != width {
+      container.preferredWidth = width
+      container.buttonWidthConstraint?.constant = width
+      container.invalidateIntrinsicContentSize()
+    }
+    if context.coordinator.items != items {
+      button.removeAllItems()
+      for item in items {
+        button.addItem(withTitle: item.title)
       }
-      .clipShape(RoundedRectangle(cornerRadius: 1))
+      context.coordinator.items = items
+      container.invalidateIntrinsicContentSize()
+    }
+
+    if let selectedIndex = items.firstIndex(where: { $0.value == selection }),
+      button.indexOfSelectedItem != selectedIndex
+    {
+      button.selectItem(at: selectedIndex)
+    }
+    button.isEnabled = isEnabled
+    button.setAccessibilityLabel(accessibilityLabel)
+  }
+
+  func sizeThatFits(
+    _ proposal: ProposedViewSize,
+    nsView container: PalettePopUpContainer,
+    context _: Context
+  ) -> CGSize? {
+    CGSize(
+      width: width,
+      height: proposal.height ?? container.button.fittingSize.height
+    )
+  }
+
+  final class Coordinator: NSObject {
+    var parent: PalettePopUpButton
+    var items: [PalettePopUpItem<Value>] = []
+
+    init(parent: PalettePopUpButton) {
+      self.parent = parent
+    }
+
+    @objc func selectionChanged(_ sender: NSPopUpButton) {
+      let index = sender.indexOfSelectedItem
+      guard parent.items.indices.contains(index) else {
+        return
+      }
+      parent.onSelect(parent.items[index].value)
+    }
   }
 }

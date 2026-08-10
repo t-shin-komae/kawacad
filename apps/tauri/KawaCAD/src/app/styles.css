@@ -720,9 +720,9 @@ input[type="checkbox"] {
   border-bottom: 1px solid var(--panel-stroke);
 }
 .palette-header-icon {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
   color: var(--accent);
 }
 .palette-header > span {
@@ -767,31 +767,6 @@ input[type="checkbox"] {
   height: 22px;
   font-size: 12px;
   font-weight: 500;
-}
-.palette-style-picker {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.palette-style-picker .palette-select {
-  padding-right: 30px;
-}
-.line-style-swatch {
-  position: absolute;
-  right: 8px;
-  width: 18px;
-  border-top: 2px solid currentColor;
-  color: var(--ink);
-  pointer-events: none;
-}
-.line-style-swatch.dashed {
-  border-top-style: dashed;
-}
-.line-style-swatch.dotted {
-  border-top-style: dotted;
-}
-.line-style-swatch.dashDot {
-  border-top-style: dashed;
 }
 .palette-select {
   appearance: auto;
@@ -863,9 +838,9 @@ input[type="checkbox"] {
   gap: 6px;
   min-height: var(--palette-tool-height);
   padding: 6px;
-  border-color: rgba(60, 60, 67, 0.12);
+  border-color: color-mix(in srgb, var(--panel-stroke) 26%, transparent);
   border-radius: var(--palette-tool-radius);
-  background: rgba(255, 255, 255, 0.28);
+  background: color-mix(in srgb, var(--panel) 28%, transparent);
   color: var(--ink);
   font-size: 11px;
   font-weight: 500;
@@ -877,9 +852,8 @@ input[type="checkbox"] {
 }
 .tool-grid button svg {
   flex: 0 0 16px;
-  width: 12px;
-  height: 12px;
-  margin-top: 0;
+  width: 15px;
+  height: 15px;
   color: var(--ink);
 }
 .tool-grid button.active {
@@ -891,7 +865,7 @@ input[type="checkbox"] {
 .tool-grid button.active svg {
   color: var(--accent);
 }
-@container palette (min-width: 210px) {
+@container palette (min-width: 220px) {
   .tool-grid {
     grid-template-columns: repeat(2, minmax(92px, 120px));
   }
