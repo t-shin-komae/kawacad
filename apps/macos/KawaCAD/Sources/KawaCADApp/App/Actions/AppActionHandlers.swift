@@ -13,7 +13,6 @@ class AppActionHandler: AppActionHandlerRouting {
   init() {}
 
   let unitLabel = "mm"
-  let paperLabel = AppStrings.tr("app.paper.a4_portrait")
 
   var actions: AppActionHandlers {
     guard let aggregate else {

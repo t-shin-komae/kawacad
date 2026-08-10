@@ -44,6 +44,7 @@ type Props = {
   onA4LandscapeChange: (value: boolean) => void;
   onSnapChange: (value: boolean) => void;
   onPointSnapChange: (value: boolean) => void;
+  showToolPaletteButton: boolean;
   onToggleInspector: () => void;
   onToggleTools: () => void;
 };
@@ -126,6 +127,7 @@ export function CadToolbar({
   onA4LandscapeChange,
   onSnapChange,
   onPointSnapChange,
+  showToolPaletteButton,
   onToggleInspector,
   onToggleTools,
 }: Props) {
@@ -138,6 +140,19 @@ export function CadToolbar({
 
   return (
     <nav className="cad-toolbar" aria-label={appStrings.accessibility.cadToolbar}>
+      {showToolPaletteButton && (
+        <button
+          className="toolbar-icon-button toolbar-tools-button"
+          type="button"
+          data-testid={accessibilityIdentifiers.toolbarTools}
+          onClick={onToggleTools}
+          aria-label={appStrings.accessibility.showTools}
+          title={appStrings.accessibility.showTools}
+        >
+          <PanelLeft />
+        </button>
+      )}
+      {showToolPaletteButton && <span className="toolbar-divider toolbar-tool-palette-divider" aria-hidden="true" />}
       <div className="toolbar-tool-cluster">
         <span className="toolbar-tool">
           <span className="toolbar-tool-icon">
@@ -273,16 +288,6 @@ export function CadToolbar({
         </ToggleButton>
       </div>
       <span className="toolbar-spacer" />
-      <button
-        className="toolbar-icon-button toolbar-tools-button"
-        type="button"
-        data-testid={accessibilityIdentifiers.toolbarTools}
-        onClick={onToggleTools}
-        aria-label={appStrings.accessibility.showTools}
-        title={appStrings.accessibility.showTools}
-      >
-        <PanelLeft />
-      </button>
       <button
         className="toolbar-icon-button toolbar-inspector-button"
         type="button"

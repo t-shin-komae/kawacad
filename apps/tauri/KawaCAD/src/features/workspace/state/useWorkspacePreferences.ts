@@ -8,7 +8,6 @@ export function useWorkspacePreferences() {
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [pointSnapEnabled, setPointSnapEnabled] = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(workspacePreferencesAdapter.loadInspectorOpen);
-  const [paletteOpen, setPaletteOpen] = useState(true);
   const [bottomWorkbenchVisible, setBottomWorkbenchVisible] = useState(false);
   const [basicToolsOnly, setBasicToolsOnly] = useState(() => !workspacePreferencesAdapter.loadDetailedToolsVisible());
   const [collapsedToolGroups, setCollapsedToolGroups] = useState<Set<string>>(
@@ -31,7 +30,6 @@ export function useWorkspacePreferences() {
     setA4Visible(true);
     setSnapEnabled(true);
     setPointSnapEnabled(true);
-    setPaletteOpen(true);
     setBasicToolsOnly(true);
     setCollapsedToolGroups(new Set(defaultCollapsedToolGroups));
     setInspectorOpen(true);
@@ -48,8 +46,6 @@ export function useWorkspacePreferences() {
     setPointSnapEnabled,
     inspectorOpen,
     setInspectorOpen,
-    paletteOpen,
-    setPaletteOpen,
     bottomWorkbenchVisible,
     setBottomWorkbenchVisible,
     basicToolsOnly,

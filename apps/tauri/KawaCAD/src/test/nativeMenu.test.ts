@@ -15,6 +15,10 @@ describe("cross-platform native menu", () => {
     expect(crossPlatformMenuActions).not.toContain("print");
   });
 
+  it("does not expose a tool palette toggle in the native menu", () => {
+    expect(crossPlatformMenuActions as readonly string[]).not.toContain("toggleTools");
+  });
+
   it("uses the shared product metadata for the About item", () => {
     expect(productInfo.name).toBe("KawaCAD");
     expect(productInfo.displayVersion).toBe("0.3.0-dev");
