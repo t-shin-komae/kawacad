@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ProjectSidebar: View {
@@ -211,33 +212,23 @@ struct ProjectSidebar: View {
         .lineLimit(1)
         .padding(.horizontal, 2)
 
-      Menu {
-        ForEach(state.sharedStyles) { style in
-          Button {
-            actions.setActivePatternLineStyle(style.id)
-          } label: {
-            HStack(spacing: 6) {
-              PatternLineStyleSwatch(style: style)
-              Text(style.name)
-            }
-          }
-        }
-      } label: {
-        HStack(spacing: 6) {
-          if let style = activePatternLineStyle {
-            PatternLineStyleSwatch(style: style)
-            Text(style.name)
-          }
-          Spacer(minLength: 0)
-          Image(systemName: "chevron.up.chevron.down")
-            .font(.system(size: 9, weight: .semibold))
-        }
-        .frame(width: contentWidth, height: 22, alignment: .leading)
-      }
-      .buttonStyle(.plain)
-      .controlSize(.small)
-      .accessibilityLabel(AppStrings.tr("sidebar.pattern_line_style"))
-      .modifier(PaletteMenuChrome(width: contentWidth))
+      PalettePopUpButton(
+        items: state.sharedStyles.map { style in
+          PalettePopUpItem(
+            key: [
+              style.id, style.name, style.colorHex, String(style.strokeWidthMM),
+              style.linePattern.rawValue,
+            ].joined(separator: "|"),
+            title: style.name,
+            value: style.id,
+            image: { Self.patternLineStyleImage(for: style) }
+          )
+        },
+        selection: state.activePatternLineStyleID,
+        accessibilityLabel: AppStrings.tr("sidebar.pattern_line_style"),
+        onSelect: actions.setActivePatternLineStyle
+      )
+      .frame(width: contentWidth)
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -261,25 +252,19 @@ struct ProjectSidebar: View {
         .lineLimit(1)
         .padding(.horizontal, 2)
 
-      Menu {
-        ForEach(ProjectRoundHoleKind.allCases) { kind in
-          Button(kind.displayName) {
-            actions.setActiveRoundHoleKind(kind)
-          }
-        }
-      } label: {
-        HStack(spacing: 6) {
-          Text(state.activeRoundHoleKind.displayName)
-          Spacer(minLength: 0)
-          Image(systemName: "chevron.up.chevron.down")
-            .font(.system(size: 9, weight: .semibold))
-        }
-        .frame(width: contentWidth, height: 22, alignment: .leading)
-      }
-      .buttonStyle(.plain)
-      .controlSize(.small)
-      .accessibilityLabel(AppStrings.tr("sidebar.round_hole_kind"))
-      .modifier(PaletteMenuChrome(width: contentWidth))
+      PalettePopUpButton(
+        items: ProjectRoundHoleKind.allCases.map { kind in
+          PalettePopUpItem(
+            key: "\(kind.rawValue)|\(kind.displayName)",
+            title: kind.displayName,
+            value: kind
+          )
+        },
+        selection: state.activeRoundHoleKind,
+        accessibilityLabel: AppStrings.tr("sidebar.round_hole_kind"),
+        onSelect: actions.setActiveRoundHoleKind
+      )
+      .frame(width: contentWidth)
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
@@ -339,8 +324,20 @@ struct ProjectSidebar: View {
     max(0, width - 18)
   }
 
-  private var activePatternLineStyle: ProjectSharedStyle? {
-    state.sharedStyles.first { $0.id == state.activePatternLineStyleID }
+  private static func patternLineStyleImage(for style: ProjectSharedStyle) -> NSImage {
+    NSImage(size: NSSize(width: 18, height: 8), flipped: false) { rect in
+      let lineRect = NSRect(x: 0, y: (rect.height - 3) / 2, width: rect.width, height: 3)
+      NSColor(Color(hex: style.colorHex)).setFill()
+      NSBezierPath(roundedRect: lineRect, xRadius: 1, yRadius: 1).fill()
+
+      if style.linePattern != .solid {
+        NSColor.white.withAlphaComponent(0.85).setFill()
+        for x in stride(from: CGFloat(3), through: CGFloat(13), by: CGFloat(5)) {
+          NSRect(x: x, y: lineRect.minY, width: 2, height: lineRect.height).fill()
+        }
+      }
+      return true
+    }
   }
 
   private func isGroupExpanded(_ group: ToolGroup) -> Bool {
@@ -360,44 +357,81 @@ struct ProjectSidebar: View {
   }
 }
 
-private struct PaletteMenuChrome: ViewModifier {
-  let width: CGFloat
+struct PalettePopUpItem<Value: Hashable> {
+  let key: String
+  let title: String
+  let value: Value
+  let image: (() -> NSImage?)?
 
-  func body(content: Content) -> some View {
-    content
-      .frame(width: width, height: 22, alignment: .leading)
-      .background {
-        RoundedRectangle(cornerRadius: LeatherDesignMetrics.controlRadius, style: .continuous)
-          .fill(Color(nsColor: .controlBackgroundColor))
-      }
-      .overlay {
-        RoundedRectangle(cornerRadius: LeatherDesignMetrics.controlRadius, style: .continuous)
-          .strokeBorder(LeatherColors.panelStroke.opacity(0.8))
-      }
-      .contentShape(
-        RoundedRectangle(cornerRadius: LeatherDesignMetrics.controlRadius, style: .continuous)
-      )
+  init(
+    key: String,
+    title: String,
+    value: Value,
+    image: (() -> NSImage?)? = nil
+  ) {
+    self.key = key
+    self.title = title
+    self.value = value
+    self.image = image
   }
 }
 
-private struct PatternLineStyleSwatch: View {
-  let style: ProjectSharedStyle
+struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
+  let items: [PalettePopUpItem<Value>]
+  let selection: Value
+  let accessibilityLabel: String
+  let onSelect: (Value) -> Void
 
-  var body: some View {
-    Rectangle()
-      .fill(Color(hex: style.colorHex))
-      .frame(width: 18, height: 3)
-      .overlay {
-        if style.linePattern != .solid {
-          HStack(spacing: 2) {
-            ForEach(0..<3, id: \.self) { _ in
-              Rectangle()
-                .fill(Color.white.opacity(0.85))
-                .frame(width: 2)
-            }
-          }
-        }
+  @Environment(\.isEnabled) private var isEnabled
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator(parent: self)
+  }
+
+  func makeNSView(context: Context) -> NSPopUpButton {
+    let button = NSPopUpButton(frame: .zero, pullsDown: false)
+    button.target = context.coordinator
+    button.action = #selector(Coordinator.selectionChanged(_:))
+    button.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    return button
+  }
+
+  func updateNSView(_ button: NSPopUpButton, context: Context) {
+    context.coordinator.parent = self
+    let itemKeys = items.map(\.key)
+    if context.coordinator.itemKeys != itemKeys {
+      button.removeAllItems()
+      for item in items {
+        button.addItem(withTitle: item.title)
+        button.lastItem?.image = item.image?()
       }
-      .clipShape(RoundedRectangle(cornerRadius: 1))
+      context.coordinator.itemKeys = itemKeys
+    }
+
+    if let selectedIndex = items.firstIndex(where: { $0.value == selection }),
+      button.indexOfSelectedItem != selectedIndex
+    {
+      button.selectItem(at: selectedIndex)
+    }
+    button.isEnabled = isEnabled
+    button.setAccessibilityLabel(accessibilityLabel)
+  }
+
+  final class Coordinator: NSObject {
+    var parent: PalettePopUpButton
+    var itemKeys: [String] = []
+
+    init(parent: PalettePopUpButton) {
+      self.parent = parent
+    }
+
+    @objc func selectionChanged(_ sender: NSPopUpButton) {
+      let index = sender.indexOfSelectedItem
+      guard parent.items.indices.contains(index) else {
+        return
+      }
+      parent.onSelect(parent.items[index].value)
+    }
   }
 }
