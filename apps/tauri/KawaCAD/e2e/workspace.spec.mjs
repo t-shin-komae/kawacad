@@ -168,15 +168,6 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(palette).toContainText("補助パレット");
     await expect.poll(columnCount).toBe(1);
     await expect(palette.locator(".line-style-swatch")).toHaveCount(0);
-    const paletteSurface = await palette.evaluate((element) => {
-      const style = window.getComputedStyle(element);
-      return {
-        backgroundColor: style.backgroundColor,
-        backdropFilter: style.backdropFilter,
-      };
-    });
-    expect(paletteSurface.backgroundColor).toMatch(/0\.78/u);
-    expect(paletteSurface.backdropFilter).toContain("blur(18px)");
     const pickerWidths = await palette.locator("select.palette-select").evaluateAll((elements) =>
       elements.map((element) => ({
         width: element.getBoundingClientRect().width,

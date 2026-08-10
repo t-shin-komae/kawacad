@@ -26,8 +26,6 @@
   --palette-scroll-y: 8px;
   --palette-tool-radius: 6px;
   --palette-tool-height: 38px;
-  --tool-palette-material-alpha: 78%;
-  --tool-palette-material-blur: 18px;
   color: var(--ink);
   background: var(--window);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
@@ -607,8 +605,8 @@ input[type="checkbox"] {
   overflow: auto;
   border: 1px solid var(--panel-stroke);
   border-radius: 0 8px 8px 0;
-  background: color-mix(in srgb, var(--panel) var(--tool-palette-material-alpha), transparent);
-  backdrop-filter: blur(var(--tool-palette-material-blur)) saturate(1.15);
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+  backdrop-filter: blur(14px);
   box-shadow: 5px 0 18px rgba(0, 0, 0, 0.18);
 }
 .compact-drawer-backdrop {
@@ -648,8 +646,7 @@ input[type="checkbox"] {
   overflow: hidden;
   border-right: 1px solid var(--panel-stroke);
   padding: 0;
-  background: color-mix(in srgb, var(--panel) var(--tool-palette-material-alpha), transparent);
-  backdrop-filter: blur(var(--tool-palette-material-blur)) saturate(1.15);
+  background: var(--panel);
 }
 .palette-resize-handle {
   position: relative;
@@ -1584,7 +1581,7 @@ input[type="checkbox"] {
     background: #2a2a2d;
   }
   .tool-palette {
-    background: color-mix(in srgb, var(--panel) var(--tool-palette-material-alpha), transparent);
+    background: color-mix(in srgb, var(--panel) 86%, transparent);
   }
   .cad-canvas {
     background: #fff;
