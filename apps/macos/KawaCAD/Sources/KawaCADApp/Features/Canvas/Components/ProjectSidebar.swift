@@ -138,9 +138,7 @@ struct ProjectSidebar: View {
       .padding(.horizontal, 9)
       .padding(.vertical, 8)
     }
-    .background {
-      MacVisualEffectBackground(style: .sidebar)
-    }
+    .background(LeatherColors.panel)
     .overlay(alignment: .trailing) {
       Rectangle()
         .fill(LeatherColors.panelStroke.opacity(0.65))

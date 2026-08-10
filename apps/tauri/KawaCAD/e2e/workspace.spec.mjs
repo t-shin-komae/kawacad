@@ -168,6 +168,15 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(palette).toContainText("補助パレット");
     await expect.poll(columnCount).toBe(1);
     await expect(palette.locator(".line-style-swatch")).toHaveCount(0);
+    const pickerWidths = await palette.locator("select.palette-select").evaluateAll((elements) =>
+      elements.map((element) => ({
+        width: element.getBoundingClientRect().width,
+        parentWidth: element.parentElement?.clientWidth,
+      })),
+    );
+    expect(pickerWidths).toHaveLength(2);
+    expect(pickerWidths[0].width).toBeLessThan(pickerWidths[0].parentWidth);
+    expect(pickerWidths[1].width).toBeLessThan(pickerWidths[1].parentWidth);
 
     const resizeHandle = page.getByRole("separator", { name: "ツールパレットの幅" });
     await resizeHandle.press("Home");
