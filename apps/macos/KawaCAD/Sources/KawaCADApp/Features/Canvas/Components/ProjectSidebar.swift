@@ -379,6 +379,17 @@ struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
     button.setAccessibilityLabel(accessibilityLabel)
   }
 
+  func sizeThatFits(
+    _ proposal: ProposedViewSize,
+    nsView button: NSPopUpButton,
+    context _: Context
+  ) -> CGSize? {
+    guard let width = proposal.width else {
+      return nil
+    }
+    return CGSize(width: width, height: button.fittingSize.height)
+  }
+
   final class Coordinator: NSObject {
     var parent: PalettePopUpButton
     var items: [PalettePopUpItem<Value>] = []

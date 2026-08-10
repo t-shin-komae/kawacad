@@ -7,12 +7,12 @@ import Testing
 @Test("ツールパレットのポップアップボタンは指定幅で描画される")
 @MainActor
 func palette_popup_button_uses_the_proposed_width() throws {
-  var selectedValue = "outer"
+  var selectedValue = "snapFastener"
   let hostingView = NSHostingView(
     rootView: PalettePopUpButton(
       items: [
         PalettePopUpItem(title: "外形カット線", value: "outer"),
-        PalettePopUpItem(title: "折り線", value: "fold"),
+        PalettePopUpItem(title: "ジャンパーホック穴", value: "snapFastener"),
       ],
       selection: selectedValue,
       accessibilityLabel: "型紙線種",
@@ -25,11 +25,11 @@ func palette_popup_button_uses_the_proposed_width() throws {
 
   let popUpButton = try #require(findSubview(of: NSPopUpButton.self, in: hostingView))
   #expect(popUpButton.frame.width == 158)
-  #expect(popUpButton.titleOfSelectedItem == "外形カット線")
+  #expect(popUpButton.titleOfSelectedItem == "ジャンパーホック穴")
 
-  popUpButton.selectItem(at: 1)
+  popUpButton.selectItem(at: 0)
   _ = popUpButton.sendAction(popUpButton.action, to: popUpButton.target)
-  #expect(selectedValue == "fold")
+  #expect(selectedValue == "outer")
 }
 
 @MainActor
