@@ -128,7 +128,7 @@ describe("InspectorPanel", () => {
       ),
     );
 
-    expect(screen.getAllByText("2 件を選択中")).toHaveLength(2);
+    expect(screen.getByText("2 件を選択中")).toBeInTheDocument();
     expect(screen.getByText("線分、円")).toBeInTheDocument();
     expect(screen.getByText("Outline、Stitch")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("combobox", { name: "選択図形の共有線種" }), {

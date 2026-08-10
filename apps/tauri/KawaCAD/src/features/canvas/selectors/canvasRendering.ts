@@ -4,6 +4,9 @@ import {
   controlPointsOf,
   displayScale,
   geometryOf,
+  a4GridBounds,
+  selectionInRect,
+  normalizedScreenRect,
   screenPoint,
   type PointMm,
   type RawEntity,
@@ -65,6 +68,14 @@ export type CanvasRenderOptions = {
   cursorPoint?: PointMm;
   arcSweepAngleRad?: number;
   hoveredConstraintId?: string;
+  pendingTargetEntityIds?: Set<string>;
+  marqueeStart?: PointMm;
+  marqueeCurrent?: PointMm;
+  dragDuplicating: boolean;
+  dragging: boolean;
+  snapEnabled: boolean;
+  pointSnapEnabled: boolean;
+  snapSuppressed: boolean;
 };
 
 type CanvasLayer = { id: string; style: DisplayStyle; visible?: boolean };
@@ -120,11 +131,20 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
     cursorPoint,
     arcSweepAngleRad,
     hoveredConstraintId,
+    pendingTargetEntityIds = new Set(),
+    marqueeStart,
+    marqueeCurrent,
+    dragDuplicating,
+    dragging,
+    snapEnabled,
+    pointSnapEnabled,
+    snapSuppressed,
   } = options;
-  if (!outputPreview && gridVisible) drawGrid(context, width, height, viewport);
+  if (!outputPreview && gridVisible) drawGrid(context, width, height, viewport, a4Landscape);
   if (!outputPreview && a4Visible) drawA4(context, width, height, viewport, a4Landscape);
   if (outputPreview) drawOutputPreviewPages(context, outputPages, width, height, viewport);
   const visibleEntities = entities.filter((entity) => entityIsVisible(entity, layers));
+  if (!outputPreview && visibleEntities.length === 0 && freeTexts.length === 0) drawEmptyState(context, width, height);
   visibleEntities.forEach((entity) =>
     drawEntity(
       context,
@@ -134,6 +154,7 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
       height,
       viewport,
       !outputPreview && selectedIds.has(entity.id),
+      !outputPreview && pendingTargetEntityIds.has(entity.id),
     ),
   );
   freeTexts
@@ -202,7 +223,17 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
         height,
         viewport,
       );
+    if (marqueeStart && marqueeCurrent)
+      drawSelectionMarquee(context, visibleEntities, marqueeStart, marqueeCurrent, width, height, viewport);
+    drawPendingTargetFeedback(context, pendingTargetEntityIds, cursorPoint, tool, width, height, viewport);
+    if (dragging && moveFeedbackVisible(selectedIds, cursorPoint))
+      drawDragFeedback(context, selectedIds.size, dragDuplicating, cursorPoint, width, height, viewport);
+    drawSnapFeedback(context, cursorPoint, snapEnabled || pointSnapEnabled, snapSuppressed, width, height, viewport);
   }
+}
+
+function moveFeedbackVisible(selectedIds: Set<string>, cursorPoint: PointMm | undefined) {
+  return selectedIds.size > 0 && Boolean(cursorPoint);
 }
 
 export function entityIsVisible(entity: RawEntity, layers: CanvasLayer[]) {
@@ -287,40 +318,78 @@ function drawOutputPreviewPages(
   viewport: Viewport,
 ) {
   context.save();
-  for (const page of outputPreviewPageRects(pages, width, height, viewport)) {
-    context.fillStyle = "#ffffff";
+  for (const [index, page] of outputPreviewPageRects(pages, width, height, viewport).entries()) {
+    context.fillStyle = "rgba(10, 132, 255, .045)";
     context.fillRect(page.x, page.y, page.width, page.height);
-    context.strokeStyle = "#777780";
+    context.strokeStyle = "rgba(10, 132, 255, .75)";
     context.lineWidth = 1;
+    context.setLineDash([5, 4]);
     context.strokeRect(page.x, page.y, page.width, page.height);
+    context.setLineDash([]);
+    const label = `${index + 1}`;
+    context.font = "600 11px -apple-system, BlinkMacSystemFont, sans-serif";
+    const badgeWidth = context.measureText(label).width + 12;
+    context.fillStyle = "#0a84ff";
+    context.beginPath();
+    context.roundRect(page.x + 8, page.y + 8, badgeWidth, 18, 5);
+    context.fill();
+    context.fillStyle = "#fff";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(label, page.x + 8 + badgeWidth / 2, page.y + 17);
   }
   context.restore();
 }
 
-function drawGrid(context: CanvasRenderingContext2D, width: number, height: number, viewport: Viewport) {
+function a4GridScreenRect(width: number, height: number, viewport: Viewport, landscape: boolean) {
+  const bounds = a4GridBounds(landscape ? "landscape" : "portrait");
+  const topLeft = screenPoint({ xMm: bounds.minXmm, yMm: bounds.maxYmm }, width, height, viewport);
+  const bottomRight = screenPoint({ xMm: bounds.maxXmm, yMm: bounds.minYmm }, width, height, viewport);
+  return {
+    x: topLeft.x,
+    y: topLeft.y,
+    width: bottomRight.x - topLeft.x,
+    height: bottomRight.y - topLeft.y,
+  };
+}
+
+export function a4GridScreenBounds(width: number, height: number, viewport: Viewport, landscape: boolean) {
+  return a4GridScreenRect(width, height, viewport, landscape);
+}
+
+function drawGrid(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  viewport: Viewport,
+  landscape: boolean,
+) {
   const step = 5 * displayScale(viewport),
-    origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport);
+    origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport),
+    bounds = a4GridScreenRect(width, height, viewport, landscape);
   context.save();
   context.strokeStyle = "#ececef";
   context.lineWidth = 1;
-  for (let x = ((origin.x % step) + step) % step; x < width; x += step) {
+  const firstX = origin.x + Math.ceil((bounds.x - origin.x) / step) * step;
+  const firstY = origin.y + Math.ceil((bounds.y - origin.y) / step) * step;
+  for (let x = firstX; x <= bounds.x + bounds.width; x += step) {
     context.beginPath();
-    context.moveTo(x, 0);
-    context.lineTo(x, height);
+    context.moveTo(x, bounds.y);
+    context.lineTo(x, bounds.y + bounds.height);
     context.stroke();
   }
-  for (let y = ((origin.y % step) + step) % step; y < height; y += step) {
+  for (let y = firstY; y <= bounds.y + bounds.height; y += step) {
     context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(width, y);
+    context.moveTo(bounds.x, y);
+    context.lineTo(bounds.x + bounds.width, y);
     context.stroke();
   }
   context.strokeStyle = "#b6b6ba";
   context.beginPath();
-  context.moveTo(origin.x, 0);
-  context.lineTo(origin.x, height);
-  context.moveTo(0, origin.y);
-  context.lineTo(width, origin.y);
+  context.moveTo(origin.x, bounds.y);
+  context.lineTo(origin.x, bounds.y + bounds.height);
+  context.moveTo(bounds.x, origin.y);
+  context.lineTo(bounds.x + bounds.width, origin.y);
   context.stroke();
   context.restore();
 }
@@ -334,8 +403,11 @@ function drawA4(
   const pageWidth = landscape ? 297 : 210,
     pageHeight = landscape ? 210 : 297,
     center = 2,
-    scale = displayScale(viewport);
+    scale = displayScale(viewport),
+    gridBounds = a4GridScreenRect(width, height, viewport, landscape);
   context.save();
+  context.fillStyle = "rgba(255,255,255,.38)";
+  context.fillRect(gridBounds.x, gridBounds.y, gridBounds.width, gridBounds.height);
   context.setLineDash([4, 4]);
   for (let row = 0; row < 5; row += 1)
     for (let column = 0; column < 5; column += 1) {
@@ -356,11 +428,234 @@ function drawA4(
   context.lineWidth = 0.8;
   context.strokeRect(centralTopLeft.x, centralTopLeft.y, pageWidth * scale, pageHeight * scale);
   context.setLineDash([]);
+  drawCoordinateReference(context, width, height, viewport);
   context.fillStyle = "#6e6e73";
   context.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
-  context.fillText("A4 5×5 · 100%", 14, height - 14);
+  context.fillText(`A4 5×5 · ${landscape ? "横" : "縦"}`, 14, height - 14);
   context.restore();
 }
+
+function drawCoordinateReference(context: CanvasRenderingContext2D, width: number, height: number, viewport: Viewport) {
+  const origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport);
+  context.save();
+  context.strokeStyle = "rgba(90,90,96,.75)";
+  context.fillStyle = "rgba(90,90,96,.85)";
+  context.lineWidth = 1;
+  context.beginPath();
+  context.moveTo(origin.x, origin.y);
+  context.lineTo(origin.x + 34, origin.y);
+  context.moveTo(origin.x, origin.y);
+  context.lineTo(origin.x, origin.y - 34);
+  context.stroke();
+  context.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
+  context.fillText("X", origin.x + 38, origin.y + 4);
+  context.fillText("Y", origin.x + 4, origin.y - 38);
+  context.fillText(appStrings.canvas.origin, origin.x + 6, origin.y + 14);
+  const scale = Math.max(10, 50 * displayScale(viewport));
+  context.strokeStyle = "rgba(90,90,96,.6)";
+  context.beginPath();
+  context.moveTo(14, height - 28);
+  context.lineTo(14 + scale, height - 28);
+  context.stroke();
+  context.fillText(appStrings.canvas.scaleGuide, 14, height - 32);
+  context.restore();
+}
+
+function drawEmptyState(context: CanvasRenderingContext2D, width: number, height: number) {
+  const centerX = width / 2;
+  const centerY = height / 2;
+  context.save();
+  context.fillStyle = "rgba(10,132,255,.1)";
+  context.strokeStyle = "rgba(10,132,255,.65)";
+  context.lineWidth = 1.5;
+  context.beginPath();
+  context.arc(centerX, centerY - 22, 18, 0, Math.PI * 2);
+  context.fill();
+  context.stroke();
+  context.strokeStyle = "#0a84ff";
+  context.beginPath();
+  context.moveTo(centerX - 8, centerY - 22);
+  context.lineTo(centerX + 8, centerY - 22);
+  context.moveTo(centerX, centerY - 30);
+  context.lineTo(centerX, centerY - 14);
+  context.stroke();
+  context.fillStyle = "#323238";
+  context.font = "600 15px -apple-system, BlinkMacSystemFont, sans-serif";
+  context.textAlign = "center";
+  context.fillText(appStrings.canvas.emptyTitle, centerX, centerY + 18);
+  context.fillStyle = "#6e6e73";
+  context.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
+  context.fillText(appStrings.canvas.emptyBody, centerX, centerY + 39);
+  context.restore();
+}
+
+function drawSelectionMarquee(
+  context: CanvasRenderingContext2D,
+  entities: RawEntity[],
+  start: PointMm,
+  current: PointMm,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  const crossing = current.xMm < start.xMm;
+  const screenStart = screenPoint(start, width, height, viewport);
+  const screenCurrent = screenPoint(current, width, height, viewport);
+  const rect = normalizedScreenRect(screenStart, screenCurrent);
+  const ids = new Set(selectionInRect(entities, start, current, crossing));
+  context.save();
+  context.fillStyle = crossing ? "rgba(52,199,89,.12)" : "rgba(10,132,255,.12)";
+  context.strokeStyle = crossing ? "#34c759" : "#0a84ff";
+  context.lineWidth = 1.5;
+  context.setLineDash(crossing ? [6, 4] : []);
+  context.fillRect(rect.x, rect.y, rect.width, rect.height);
+  context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+  context.setLineDash([4, 3]);
+  for (const entity of entities) {
+    if (!ids.has(entity.id)) continue;
+    const bounds = geometryScreenBounds(entity, width, height, viewport);
+    if (!bounds) continue;
+    context.strokeRect(bounds.x - 4, bounds.y - 4, bounds.width + 8, bounds.height + 8);
+  }
+  context.setLineDash([]);
+  drawCanvasBadge(
+    context,
+    crossing
+      ? appStrings.status.marqueeFeedback("crossing", ids.size)
+      : appStrings.status.marqueeFeedback("contained", ids.size),
+    rect.x,
+    Math.max(6, rect.y - 25),
+    crossing ? "#34c759" : "#0a84ff",
+  );
+  context.restore();
+}
+
+function geometryScreenBounds(entity: RawEntity, width: number, height: number, viewport: Viewport) {
+  const geometry = geometryOf(entity);
+  if (!geometry) return undefined;
+  if (geometry.tag === "point") {
+    const point = screenPoint(geometry.point, width, height, viewport);
+    return { x: point.x, y: point.y, width: 0, height: 0 };
+  }
+  if (geometry.tag === "lineSegment" || geometry.tag === "centerLine") {
+    const start = screenPoint(geometry.start, width, height, viewport);
+    const end = screenPoint(geometry.end, width, height, viewport);
+    return normalizedScreenRect(start, end);
+  }
+  if (geometry.tag !== "circle" && geometry.tag !== "arc") return undefined;
+  const center = screenPoint(geometry.center, width, height, viewport);
+  const radius = geometry.radiusMm * displayScale(viewport);
+  return { x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2 };
+}
+
+function drawPendingTargetFeedback(
+  context: CanvasRenderingContext2D,
+  pendingTargetEntityIds: Set<string>,
+  point: PointMm | undefined,
+  tool: Tool,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  if (
+    !point ||
+    tool === "select" ||
+    [
+      "point",
+      "line",
+      "circle",
+      "arc",
+      "freeText",
+      "centerLine",
+      "horizontalCenterLine",
+      "verticalCenterLine",
+      "roundHole",
+      "stitchStartPoint",
+    ].includes(tool)
+  )
+    return;
+  const screen = screenPoint(point, width, height, viewport);
+  context.save();
+  context.strokeStyle = pendingTargetEntityIds.size ? "#0a84ff" : "#f59f00";
+  context.lineWidth = 2;
+  context.setLineDash(pendingTargetEntityIds.size ? [] : [5, 3]);
+  context.beginPath();
+  context.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
+  context.stroke();
+  context.setLineDash([]);
+  drawCanvasBadge(
+    context,
+    appStrings.canvas.constraintTargetSelection(pendingTargetEntityIds.size + 1),
+    screen.x + 12,
+    screen.y - 10,
+    pendingTargetEntityIds.size ? "#0a84ff" : "#f59f00",
+  );
+  context.restore();
+}
+
+function drawDragFeedback(
+  context: CanvasRenderingContext2D,
+  count: number,
+  duplicating: boolean,
+  point: PointMm | undefined,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  if (!point) return;
+  const screen = screenPoint(point, width, height, viewport);
+  drawCanvasBadge(
+    context,
+    duplicating ? appStrings.canvas.dragCopy(count) : appStrings.canvas.dragMove(count),
+    screen.x + 12,
+    screen.y - 27,
+    duplicating ? "#34c759" : "#0a84ff",
+  );
+}
+
+function drawSnapFeedback(
+  context: CanvasRenderingContext2D,
+  point: PointMm | undefined,
+  enabled: boolean,
+  suppressed: boolean,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  if (!point) return;
+  const screen = screenPoint(point, width, height, viewport);
+  if (suppressed) {
+    drawCanvasBadge(context, appStrings.canvas.snapOff, screen.x + 12, screen.y + 10, "#6e6e73");
+    return;
+  }
+  if (!enabled) return;
+  context.save();
+  context.strokeStyle = "#34c759";
+  context.lineWidth = 1.5;
+  context.beginPath();
+  context.moveTo(screen.x - 8, screen.y);
+  context.lineTo(screen.x + 8, screen.y);
+  context.moveTo(screen.x, screen.y - 8);
+  context.lineTo(screen.x, screen.y + 8);
+  context.stroke();
+  context.restore();
+}
+
+function drawCanvasBadge(context: CanvasRenderingContext2D, text: string, x: number, y: number, color: string) {
+  context.save();
+  context.font = "600 11px -apple-system, BlinkMacSystemFont, sans-serif";
+  const width = context.measureText(text).width + 14;
+  context.fillStyle = color;
+  context.beginPath();
+  context.roundRect(x, y, width, 20, 5);
+  context.fill();
+  context.fillStyle = "#fff";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(text, x + width / 2, y + 10);
+  context.restore();
+}
+
 function drawEntity(
   context: CanvasRenderingContext2D,
   entity: RawEntity,
@@ -369,15 +664,17 @@ function drawEntity(
   height: number,
   viewport: Viewport,
   selected: boolean,
+  pendingTarget = false,
 ) {
   const geometry = geometryOf(entity);
   if (!geometry) return;
   const scale = displayScale(viewport);
   context.save();
-  context.strokeStyle = selected ? "#0a84ff" : rgba(style.stroke);
+  context.strokeStyle = selected ? "#0a84ff" : pendingTarget ? "#34c759" : rgba(style.stroke);
   context.fillStyle = context.strokeStyle;
-  context.lineWidth = selected ? 2.4 : Math.max(0.8, style.strokeWidthMm * scale);
-  if (!selected) setLinePattern(context, style.pattern, context.lineWidth);
+  context.lineWidth = selected || pendingTarget ? 2.2 : Math.max(0.8, style.strokeWidthMm * scale);
+  if (!selected && pendingTarget) context.setLineDash([5, 3]);
+  else if (!selected) setLinePattern(context, style.pattern, context.lineWidth);
   if (geometry.tag === "point") {
     const point = screenPoint(geometry.point, width, height, viewport);
     context.beginPath();

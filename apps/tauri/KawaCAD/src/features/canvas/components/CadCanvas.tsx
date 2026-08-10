@@ -12,6 +12,8 @@ import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import {
   displayScale,
   modelPointInA4Grid,
+  selectionInRect,
+  constraintTargetEntityId,
   screenPoint,
   type PointMm,
   type RawEntity,
@@ -55,6 +57,14 @@ type Props = {
   cursorPoint?: PointMm;
   arcSweepAngleRad?: number;
   hoveredConstraintId?: string;
+  pendingTargetEntityIds?: Set<string>;
+  marqueeStart?: PointMm;
+  marqueeCurrent?: PointMm;
+  dragDuplicating?: boolean;
+  dragging?: boolean;
+  snapEnabled?: boolean;
+  pointSnapEnabled?: boolean;
+  snapSuppressed?: boolean;
   coincidentPointGroups?: Array<{ id: string; representative: PointMm; targets: unknown[] }>;
   tool: Tool;
   toolName: string;
@@ -114,6 +124,14 @@ export function CadCanvas({
   cursorPoint,
   arcSweepAngleRad,
   hoveredConstraintId,
+  pendingTargetEntityIds = new Set(),
+  marqueeStart,
+  marqueeCurrent,
+  dragDuplicating = false,
+  dragging = false,
+  snapEnabled = false,
+  pointSnapEnabled = false,
+  snapSuppressed = false,
   coincidentPointGroups = [],
   tool,
   toolName,
@@ -187,6 +205,14 @@ export function CadCanvas({
         cursorPoint,
         arcSweepAngleRad,
         hoveredConstraintId,
+        pendingTargetEntityIds,
+        marqueeStart,
+        marqueeCurrent,
+        dragDuplicating,
+        dragging,
+        snapEnabled,
+        pointSnapEnabled,
+        snapSuppressed,
       });
     };
     draw();
@@ -209,6 +235,14 @@ export function CadCanvas({
     highlightedMeasurementAnnotationIds,
     highlightedStitchStartPointIds,
     hoveredConstraintId,
+    marqueeCurrent,
+    marqueeStart,
+    dragDuplicating,
+    dragging,
+    pendingTargetEntityIds,
+    snapEnabled,
+    pointSnapEnabled,
+    snapSuppressed,
     gridVisible,
     layers,
     measurementLabels,
@@ -242,6 +276,15 @@ export function CadCanvas({
     draftPointCount: draftPoints.length,
     tool,
     pendingTargetCount,
+    marqueeCandidateCount:
+      marqueeStart && marqueeCurrent
+        ? selectionInRect(entities, marqueeStart, marqueeCurrent, marqueeCurrent.xMm < marqueeStart.xMm).length
+        : undefined,
+    marqueeCrossing: marqueeStart && marqueeCurrent ? marqueeCurrent.xMm < marqueeStart.xMm : undefined,
+    dragDuplicating,
+    dragging,
+    selectionCount: selectedIds.size,
+    snapSuppressed,
   });
   const canvasRect = ref.current?.getBoundingClientRect();
   const inlineEditorPoint =

@@ -30,6 +30,8 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
     pan,
     marquee,
     setHoveredConstraintId,
+    setSnapSuppressed,
+    setDragDuplicating,
     setCursorPoint,
     previewCommand,
     clearCanvasPreview,
@@ -46,6 +48,8 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
 
   const canvasMove = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => {
+      setSnapSuppressed(event.ctrlKey);
+      if (move.current) setDragDuplicating(event.altKey);
       const snappedPoint = event.ctrlKey ? point : snap(point);
       setHoveredConstraintId(
         state?.viewMode === "outputPreview" || tool !== "select"
@@ -124,7 +128,13 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
           panX: current.viewport.panX + event.clientX - current.screen.x,
           panY: current.viewport.panY + event.clientY - current.screen.y,
         });
-      if (marquee.current) setMessage(appStrings.status.marqueeSelection(point.xMm.toFixed(1), point.yMm.toFixed(1)));
+      if (marquee.current && state)
+        setMessage(
+          appStrings.status.marqueeFeedback(
+            point.xMm < marquee.current.xMm ? "crossing" : "contained",
+            selectionInRect(visibleEntities, marquee.current, point, point.xMm < marquee.current.xMm).length,
+          ),
+        );
     },
     [
       canvasProjection.constraintMarkers,
@@ -136,19 +146,27 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       state?.viewMode,
       tool,
       viewport,
+      setDragDuplicating,
+      setSnapSuppressed,
+      visibleEntities,
     ],
   );
   const canvasUp = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => {
       const currentPan = pan.current;
+      const moveStarted = Boolean(move.current);
       pan.current = undefined;
+      setSnapSuppressed(false);
+      setDragDuplicating(false);
       if (state?.viewMode === "outputPreview") return;
       clearCanvasPreview();
+      const marqueeStart = marquee.current;
       if (marquee.current && state) {
         const start = marquee.current;
         marquee.current = undefined;
         const ids = selectionInRect(visibleEntities, start, point, point.xMm < start.xMm);
         setSelected((current) => (event.shiftKey ? new Set([...current, ...ids]) : new Set(ids)));
+        setMessage(appStrings.status.marqueeFeedback(point.xMm < start.xMm ? "crossing" : "contained", ids.length));
       }
       if (move.current) {
         const current = move.current;
@@ -259,11 +277,13 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
             appStrings.app.textMoved,
           );
       }
-      if (currentPan || marquee.current || move.current) setMessage(appStrings.status.operationCompleted);
+      if (currentPan || marqueeStart || moveStarted) {
+        if (!marqueeStart) setMessage(appStrings.status.operationCompleted);
+      }
       if (event.currentTarget.hasPointerCapture(event.pointerId))
         event.currentTarget.releasePointerCapture(event.pointerId);
     },
-    [clearCanvasPreview, command, snap, state, visibleEntities],
+    [clearCanvasPreview, command, setDragDuplicating, setMessage, setSnapSuppressed, snap, state, visibleEntities],
   );
 
   return { canvasMove, canvasUp };

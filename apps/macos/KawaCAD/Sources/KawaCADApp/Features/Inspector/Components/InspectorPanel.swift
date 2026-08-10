@@ -69,6 +69,26 @@ struct InspectorPanel: View {
     CardSection(title: AppStrings.tr("inspector.selection"), symbolName: "cursorarrow") {
       if let selectedConstraint {
         SelectedConstraintSection(constraint: selectedConstraint)
+      } else if let selectedMeasurementAnnotation = appState.selectedMeasurementAnnotation {
+        VStack(alignment: .leading, spacing: 10) {
+          DetailRow(
+            label: AppStrings.tr("inspector.kind"), value: selectedMeasurementAnnotation.kind)
+          HStack(spacing: 8) {
+            Button {
+              appState.convertMeasurementAnnotationToConstraint(selectedMeasurementAnnotation.id)
+            } label: {
+              Text(AppStrings.tr("canvas.menu.convert_measurement_to_constraint"))
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            Button(role: .destructive) {
+              appState.deleteMeasurementAnnotation(selectedMeasurementAnnotation)
+            } label: {
+              Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+          }
+        }
       } else if let selectedFreeText = appState.selectedFreeText {
         FreeTextEditorSection(freeText: selectedFreeText)
       } else if appState.selectedEntities.count > 1 {
@@ -123,6 +143,78 @@ struct InspectorPanel: View {
         Text(AppStrings.tr("inspector.no_selection"))
           .font(.system(size: 12))
           .foregroundStyle(LeatherColors.secondaryInk)
+      }
+    }
+
+    CardSection(title: AppStrings.tr("inspector.constraint"), symbolName: "link") {
+      if appState.constraints.isEmpty {
+        Text(AppStrings.tr("workbench.no_constraints"))
+          .font(.system(size: 12))
+          .foregroundStyle(LeatherColors.secondaryInk)
+      } else {
+        ForEach(appState.constraints) { constraint in
+          HStack(spacing: 8) {
+            Button {
+              appState.selectConstraint(constraint.id)
+            } label: {
+              VStack(alignment: .leading, spacing: 3) {
+                Text(constraint.kind)
+                  .font(.system(size: 12, weight: .semibold))
+                Text(String(describing: constraint.status))
+                  .font(.system(size: 10))
+                  .foregroundStyle(LeatherColors.secondaryInk)
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            Button(role: .destructive) {
+              appState.deleteConstraint(constraint)
+            } label: {
+              Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+          }
+        }
+      }
+    }
+
+    CardSection(title: AppStrings.tr("inspector.measurement_and_notes"), symbolName: "ruler") {
+      ForEach(appState.measurementAnnotations) { annotation in
+        HStack(spacing: 8) {
+          Button {
+            appState.selectMeasurementAnnotation(annotation.id)
+          } label: {
+            Text(annotation.kind)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
+          .buttonStyle(.plain)
+          if !annotation.visible {
+            Text(AppStrings.tr("inspector.hidden"))
+              .font(.system(size: 10))
+              .foregroundStyle(LeatherColors.secondaryInk)
+          }
+          Button {
+            appState.convertMeasurementAnnotationToConstraint(annotation.id)
+          } label: {
+            Image(systemName: "link")
+          }
+          .buttonStyle(.borderless)
+          Button(role: .destructive) {
+            appState.deleteMeasurementAnnotation(annotation)
+          } label: {
+            Image(systemName: "trash")
+          }
+          .buttonStyle(.borderless)
+        }
+      }
+      ForEach(appState.freeTexts) { freeText in
+        HStack(spacing: 8) {
+          Text(freeText.content)
+            .frame(maxWidth: .infinity, alignment: .leading)
+          Text(AppStrings.tr("tool.free_text"))
+            .font(.system(size: 10))
+            .foregroundStyle(LeatherColors.secondaryInk)
+        }
       }
     }
 

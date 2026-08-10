@@ -28,6 +28,8 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     clearAnnotationSelection,
     setEditingFreeTextId,
     setHoveredConstraintId,
+    setSnapSuppressed,
+    setDragDuplicating,
     setPendingTargets,
     setPendingConstraintValue,
     setPendingDerivedValue,
@@ -67,6 +69,8 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     clearAnnotationSelection();
     setEditingFreeTextId(undefined);
     setHoveredConstraintId(undefined);
+    setSnapSuppressed(false);
+    setDragDuplicating(false);
     setPendingTargets([]);
     setPendingConstraintValue(undefined);
     setPendingDerivedValue(undefined);
@@ -88,6 +92,8 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
       clearAnnotationSelection();
       setEditingFreeTextId(undefined);
       setHoveredConstraintId(undefined);
+      setSnapSuppressed(false);
+      setDragDuplicating(false);
       setPendingTargets([]);
       setPendingConstraintValue(undefined);
       setPendingDerivedValue(undefined);

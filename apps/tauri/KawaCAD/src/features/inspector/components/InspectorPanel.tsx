@@ -162,6 +162,7 @@ function measurementLabel(kind: string) {
 export function InspectorPanel(props: Props) {
   const [feature, setFeature] = useState(initialInspectorFeatureState);
   const [pendingTextEntry, setPendingTextEntry] = useState<PendingTextEntry>();
+  const [pendingSelectionChange, setPendingSelectionChange] = useState(false);
   const {
     selectedCount,
     selectedEntity,
@@ -193,9 +194,6 @@ export function InspectorPanel(props: Props) {
     props.selectedMeasurement ||
     props.selectedStitchStartPoint,
   );
-  const openTextEntry = (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => {
-    setPendingTextEntry({ title, fields, onConfirm });
-  };
   const selectionSummary = selectedCount
     ? appStrings.inspector.selectionSummary(selectedCount)
     : props.selectedConstraint
@@ -207,17 +205,28 @@ export function InspectorPanel(props: Props) {
           : props.selectedFreeText
             ? appStrings.inspector.selectedText
             : appStrings.inspector.noneSelected;
+  const openTextEntry = (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => {
+    setPendingTextEntry({ title, fields, onConfirm });
+  };
+  const selectionKey = [
+    selectedCount,
+    ...(props.selectedEntityIds ?? []),
+    props.selectedConstraint?.id,
+    props.selectedMeasurement?.id,
+    props.selectedFreeText?.id,
+    props.selectedStitchStartPoint?.id,
+  ].join("|");
   useEffect(() => {
     const revealSearch = () => setFeature((current) => revealInspectorSearchForCurrentTab(current));
     window.addEventListener("kawa-cad-find-inspector", revealSearch);
     return () => window.removeEventListener("kawa-cad-find-inspector", revealSearch);
   }, []);
+  useEffect(() => {
+    if (feature.inspectorTab !== "selection") setPendingSelectionChange(true);
+    else setPendingSelectionChange(false);
+  }, [feature.inspectorTab, selectionKey]);
   return (
     <aside className="inspector" aria-label={appStrings.inspector.ariaLabel}>
-      <div className="panel-title">
-        <span>{appStrings.inspector.title}</span>
-        <small>{selectionSummary}</small>
-      </div>
       <nav className="inspector-tabs" role="tablist" aria-label={appStrings.inspector.tabList}>
         {tabs.map(([id, label]) => (
           <button
@@ -225,238 +234,262 @@ export function InspectorPanel(props: Props) {
             role="tab"
             aria-selected={feature.inspectorTab === id}
             className={feature.inspectorTab === id ? "active" : ""}
-            onClick={() => setFeature((state) => setInspectorTab(state, id))}
+            onClick={() => {
+              setFeature((state) => setInspectorTab(state, id));
+              if (id === "selection") setPendingSelectionChange(false);
+            }}
           >
             {label}
           </button>
         ))}
       </nav>
-      {feature.inspectorTab === "selection" && (
-        <>
-          <section>
-            <h2>
-              <MousePointer2 aria-hidden="true" />
-              {appStrings.inspector.selection}
-            </h2>
-            {props.selectedConstraint ? (
-              <SelectedConstraintEditor
-                constraint={props.selectedConstraint}
-                parameters={parameters}
-                onCommand={onCommand}
-              />
-            ) : props.selectedMeasurement ? (
-              <SelectedMeasurementEditor
-                measurement={props.selectedMeasurement}
-                onCommand={onCommand}
-                onConvert={props.onConvertMeasurement}
-              />
-            ) : props.selectedStitchStartPoint ? (
-              <SelectedStitchStartPointEditor stitchStartPoint={props.selectedStitchStartPoint} />
-            ) : props.selectedFreeText ? (
-              <FreeTextEditor freeText={props.selectedFreeText} onCommand={onCommand} />
-            ) : selectedCount > 1 ? (
-              <div className="inspector-card multi-selection-summary">
-                <strong>{appStrings.inspector.selectionSummary(selectedCount)}</strong>
-                <div className="detail-row">
-                  <span>{appStrings.inspector.selectedGeometry}</span>
-                  <strong>{selectedGeometryLabels.join("、")}</strong>
+      {pendingSelectionChange && (
+        <div className="inspector-selection-change" role="status">
+          <span>{appStrings.inspector.selectionChanged}</span>
+          <button
+            onClick={() => {
+              setFeature((state) => setInspectorTab(state, "selection"));
+              setPendingSelectionChange(false);
+            }}
+          >
+            {appStrings.inspector.showSelection}
+          </button>
+        </div>
+      )}
+      <div className="inspector-content">
+        {feature.inspectorTab === "selection" && (
+          <>
+            <section>
+              <h2>
+                <MousePointer2 aria-hidden="true" />
+                {appStrings.inspector.selection}
+              </h2>
+              {hasSelection && selectedCount <= 1 && <p className="inspector-selection-context">{selectionSummary}</p>}
+              {props.selectedConstraint ? (
+                <SelectedConstraintEditor
+                  constraint={props.selectedConstraint}
+                  parameters={parameters}
+                  onCommand={onCommand}
+                />
+              ) : props.selectedMeasurement ? (
+                <SelectedMeasurementEditor
+                  measurement={props.selectedMeasurement}
+                  onCommand={onCommand}
+                  onConvert={props.onConvertMeasurement}
+                />
+              ) : props.selectedStitchStartPoint ? (
+                <SelectedStitchStartPointEditor stitchStartPoint={props.selectedStitchStartPoint} />
+              ) : props.selectedFreeText ? (
+                <FreeTextEditor freeText={props.selectedFreeText} onCommand={onCommand} />
+              ) : selectedCount > 1 ? (
+                <div className="inspector-card multi-selection-summary">
+                  <strong>{appStrings.inspector.selectionSummary(selectedCount)}</strong>
+                  <div className="detail-row">
+                    <span>{appStrings.inspector.selectedGeometry}</span>
+                    <strong>{selectedGeometryLabels.join("、")}</strong>
+                  </div>
+                  <div className="detail-row">
+                    <span>{appStrings.inspector.selectedLayer}</span>
+                    <strong>{selectedLayerLabels.join("、")}</strong>
+                  </div>
+                  <label>
+                    {appStrings.inspector.bulkStyle}
+                    <select value={bulkStyleID} onChange={(event) => setBulkStyleID(event.target.value)}>
+                      <option value="">{appStrings.inspector.noValue}</option>
+                      {sharedStyles.map((style) => (
+                        <option key={style.id} value={style.id}>
+                          {style.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button disabled={!bulkStyleID} onClick={() => props.onApplyStyle(bulkStyleID)}>
+                    {appStrings.inspector.applyBulkStyle}
+                  </button>
                 </div>
-                <div className="detail-row">
-                  <span>{appStrings.inspector.selectedLayer}</span>
-                  <strong>{selectedLayerLabels.join("、")}</strong>
-                </div>
-                <label>
-                  {appStrings.inspector.bulkStyle}
-                  <select value={bulkStyleID} onChange={(event) => setBulkStyleID(event.target.value)}>
-                    <option value="">{appStrings.inspector.noValue}</option>
-                    {sharedStyles.map((style) => (
-                      <option key={style.id} value={style.id}>
-                        {style.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button disabled={!bulkStyleID} onClick={() => props.onApplyStyle(bulkStyleID)}>
-                  {appStrings.inspector.applyBulkStyle}
+              ) : selectedEntity ? (
+                <EntityEditor
+                  entity={selectedEntity}
+                  derivedElement={props.selectedDerivedElement}
+                  layers={layers}
+                  sharedStyles={sharedStyles}
+                  parameters={parameters}
+                  roundHole={roundHoles.find((item) => item.entityId === selectedEntity.id)}
+                  onCommand={onCommand}
+                  onConstrainSegmentLength={props.onConstrainSegmentLength}
+                />
+              ) : (
+                <p>{appStrings.inspector.nothingSelected}</p>
+              )}
+              <div className="button-row">
+                <button disabled={!hasSelection} onClick={props.onDeleteSelection}>
+                  {appStrings.contextMenu.delete}
+                </button>
+                <button disabled={!selectedCount} onClick={props.onCreatePart}>
+                  {appStrings.inspector.parts}
                 </button>
               </div>
-            ) : selectedEntity ? (
-              <EntityEditor
-                entity={selectedEntity}
-                derivedElement={props.selectedDerivedElement}
-                layers={layers}
-                sharedStyles={sharedStyles}
-                parameters={parameters}
-                roundHole={roundHoles.find((item) => item.entityId === selectedEntity.id)}
-                onCommand={onCommand}
-                onConstrainSegmentLength={props.onConstrainSegmentLength}
-              />
-            ) : (
-              <p>{appStrings.inspector.nothingSelected}</p>
-            )}
-            <div className="button-row">
-              <button disabled={!hasSelection} onClick={props.onDeleteSelection}>
-                {appStrings.contextMenu.delete}
-              </button>
-              <button disabled={!selectedCount} onClick={props.onCreatePart}>
-                {appStrings.inspector.parts}
-              </button>
-            </div>
-          </section>
-          <section>
-            <h2>
-              <Link2 aria-hidden="true" />
-              {appStrings.inspector.constraint}
-            </h2>
-            {constraints.length ? (
-              constraints.map((item) => (
-                <div className="row" key={item.id}>
-                  <span>
-                    {constraintLabel(item.kind)}
-                    <small>
-                      {appStrings.constraintStatusNames[item.status as keyof typeof appStrings.constraintStatusNames] ??
-                        item.status}{" "}
-                      {valueLabel(item.value)}
-                    </small>
-                  </span>
-                  <div className="button-row">
-                    {item.value && (
-                      <button onClick={() => openConstraintValueEntry(item, onCommand, openTextEntry)}>
-                        {appStrings.inspector.value}
+            </section>
+            <section>
+              <h2>
+                <Link2 aria-hidden="true" />
+                {appStrings.inspector.constraint}
+              </h2>
+              {constraints.length ? (
+                constraints.map((item) => (
+                  <div className="row" key={item.id}>
+                    <span>
+                      {constraintLabel(item.kind)}
+                      <small>
+                        {appStrings.constraintStatusNames[
+                          item.status as keyof typeof appStrings.constraintStatusNames
+                        ] ?? item.status}{" "}
+                        {valueLabel(item.value)}
+                      </small>
+                    </span>
+                    <div className="button-row">
+                      {item.value && (
+                        <button onClick={() => openConstraintValueEntry(item, onCommand, openTextEntry)}>
+                          {appStrings.inspector.value}
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          onCommand(
+                            "deleteConstraint",
+                            item.id,
+                            appStrings.inspector.operationMessage.constraintDeleted,
+                          )
+                        }
+                      >
+                        {appStrings.contextMenu.delete}
                       </button>
-                    )}
-                    <button
-                      onClick={() =>
-                        onCommand("deleteConstraint", item.id, appStrings.inspector.operationMessage.constraintDeleted)
-                      }
-                    >
-                      {appStrings.contextMenu.delete}
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p>{appStrings.workbench.noConstraintDescription}</p>
-            )}
-          </section>
-          <section>
-            <h2>
-              <Ruler aria-hidden="true" />
-              {appStrings.inspector.measurementAndNotes}
-            </h2>
-            {measurements.map((item) => (
-              <div className="row" key={item.id}>
-                <button className="inspector-row-action" onClick={() => props.onSelectMeasurement?.(item.id)}>
-                  {measurementLabel(item.kind)}
-                </button>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={item.visible}
-                    onChange={(event) =>
+                ))
+              ) : (
+                <p>{appStrings.workbench.noConstraintDescription}</p>
+              )}
+            </section>
+            <section>
+              <h2>
+                <Ruler aria-hidden="true" />
+                {appStrings.inspector.measurementAndNotes}
+              </h2>
+              {measurements.map((item) => (
+                <div className="row" key={item.id}>
+                  <button className="inspector-row-action" onClick={() => props.onSelectMeasurement?.(item.id)}>
+                    {measurementLabel(item.kind)}
+                  </button>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={item.visible}
+                      onChange={(event) =>
+                        onCommand(
+                          "updateMeasurementAnnotation",
+                          { ...item, visible: event.target.checked },
+                          appStrings.inspector.operationMessage.measurementUpdated,
+                        )
+                      }
+                    />
+                    {appStrings.inspector.display}
+                  </label>
+                  <button
+                    onClick={() =>
                       onCommand(
-                        "updateMeasurementAnnotation",
-                        { ...item, visible: event.target.checked },
-                        appStrings.inspector.operationMessage.measurementUpdated,
+                        "deleteMeasurementAnnotation",
+                        item.id,
+                        appStrings.inspector.operationMessage.annotationDeleted,
                       )
                     }
-                  />
-                  {appStrings.inspector.display}
-                </label>
-                <button
-                  onClick={() =>
-                    onCommand(
-                      "deleteMeasurementAnnotation",
-                      item.id,
-                      appStrings.inspector.operationMessage.annotationDeleted,
-                    )
-                  }
-                >
-                  {appStrings.contextMenu.delete}
-                </button>
-              </div>
-            ))}
-            {freeTexts.map((item) => (
-              <div className="row" key={item.id}>
-                <span>{item.content}</span>
-                <button
-                  onClick={() =>
-                    openTextEntry(
-                      appStrings.inspector.annotationEdit,
-                      [{ id: "content", label: appStrings.inspector.annotation, initialValue: item.content }],
-                      (values) => {
-                        const content = values.content.trim();
-                        if (content)
-                          onCommand(
-                            "updateFreeText",
-                            { ...item, content },
-                            appStrings.inspector.operationMessage.textUpdated,
-                          );
-                      },
-                    )
-                  }
-                >
-                  {appStrings.inspector.edit}
-                </button>
-                <button
-                  onClick={() =>
-                    onCommand("deleteFreeText", item.id, appStrings.inspector.operationMessage.textDeleted)
-                  }
-                >
-                  {appStrings.contextMenu.delete}
-                </button>
-              </div>
-            ))}
-          </section>
-          <DocumentOverview summary={props.documentSummary} />
-        </>
-      )}
-      {feature.inspectorTab === "layers" && (
-        <InspectorLayerTab
-          props={props}
-          feature={feature}
-          updateFeature={(update) => setFeature(update)}
-          renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
-        />
-      )}
-      {feature.inspectorTab === "styles" && (
-        <InspectorStylesTab
-          props={props}
-          feature={feature}
-          updateFeature={(update) => setFeature(update)}
-          defaultStyle={defaultStyle}
-          openTextEntry={openTextEntry}
-          renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
-        />
-      )}
-      {feature.inspectorTab === "parameters" && (
-        <InspectorParametersTab
-          props={props}
-          feature={feature}
-          updateFeature={(update) => setFeature(update)}
-          renderParameterEditor={(parameter) => <ParameterEditor parameter={parameter} onCommand={onCommand} />}
-        />
-      )}
-      {feature.inspectorTab === "parts" && (
-        <InspectorPartsTab
-          props={props}
-          arrangementPartIds={arrangementPartIds}
-          partLibrary={partLibrary}
-          renderPartEditor={(part) => (
-            <PartEditor
-              part={part}
-              arrangementSelected={arrangementPartIds.has(part.id)}
-              onCommand={onCommand}
-              onSetQuantity={props.onSetPartQuantity}
-              onSelect={() => props.onSelectPart(part)}
-              onToggleArrangement={() => props.onToggleArrangementPart(part.id)}
-              onAddToLibrary={() => props.onAddPartToLibrary(part)}
-              onBeginSetOrigin={() => props.onBeginSetPartOrigin?.(part)}
-              selectedEntityIds={props.selectedEntityIds ?? []}
-            />
-          )}
-        />
-      )}
+                  >
+                    {appStrings.contextMenu.delete}
+                  </button>
+                </div>
+              ))}
+              {freeTexts.map((item) => (
+                <div className="row" key={item.id}>
+                  <span>{item.content}</span>
+                  <button
+                    onClick={() =>
+                      openTextEntry(
+                        appStrings.inspector.annotationEdit,
+                        [{ id: "content", label: appStrings.inspector.annotation, initialValue: item.content }],
+                        (values) => {
+                          const content = values.content.trim();
+                          if (content)
+                            onCommand(
+                              "updateFreeText",
+                              { ...item, content },
+                              appStrings.inspector.operationMessage.textUpdated,
+                            );
+                        },
+                      )
+                    }
+                  >
+                    {appStrings.inspector.edit}
+                  </button>
+                  <button
+                    onClick={() =>
+                      onCommand("deleteFreeText", item.id, appStrings.inspector.operationMessage.textDeleted)
+                    }
+                  >
+                    {appStrings.contextMenu.delete}
+                  </button>
+                </div>
+              ))}
+            </section>
+            <DocumentOverview summary={props.documentSummary} />
+          </>
+        )}
+        {feature.inspectorTab === "layers" && (
+          <InspectorLayerTab
+            props={props}
+            feature={feature}
+            updateFeature={(update) => setFeature(update)}
+            renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
+          />
+        )}
+        {feature.inspectorTab === "styles" && (
+          <InspectorStylesTab
+            props={props}
+            feature={feature}
+            updateFeature={(update) => setFeature(update)}
+            defaultStyle={defaultStyle}
+            openTextEntry={openTextEntry}
+            renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
+          />
+        )}
+        {feature.inspectorTab === "parameters" && (
+          <InspectorParametersTab
+            props={props}
+            feature={feature}
+            updateFeature={(update) => setFeature(update)}
+            renderParameterEditor={(parameter) => <ParameterEditor parameter={parameter} onCommand={onCommand} />}
+          />
+        )}
+        {feature.inspectorTab === "parts" && (
+          <InspectorPartsTab
+            props={props}
+            arrangementPartIds={arrangementPartIds}
+            partLibrary={partLibrary}
+            renderPartEditor={(part) => (
+              <PartEditor
+                part={part}
+                arrangementSelected={arrangementPartIds.has(part.id)}
+                onCommand={onCommand}
+                onSetQuantity={props.onSetPartQuantity}
+                onSelect={() => props.onSelectPart(part)}
+                onToggleArrangement={() => props.onToggleArrangementPart(part.id)}
+                onAddToLibrary={() => props.onAddPartToLibrary(part)}
+                onBeginSetOrigin={() => props.onBeginSetPartOrigin?.(part)}
+                selectedEntityIds={props.selectedEntityIds ?? []}
+              />
+            )}
+          />
+        )}
+      </div>
       {pendingTextEntry && (
         <TextEntryDialog
           title={pendingTextEntry.title}

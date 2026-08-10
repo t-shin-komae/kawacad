@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { productInfo } from "@/app/productInfo";
 import { aboutMetadataForPlatform, crossPlatformMenuActions } from "@/adapters/nativeMenuAdapter";
+import { nativeMenuAvailability } from "@/app/domain/nativeMenuState";
 
 describe("cross-platform native menu", () => {
   it("keeps the desktop menu action set platform neutral", () => {
@@ -31,5 +32,58 @@ describe("cross-platform native menu", () => {
       shortVersion: "",
     });
     expect(aboutMetadataForPlatform("Mozilla/5.0 (X11; Linux x86_64)")).not.toHaveProperty("shortVersion");
+  });
+
+  it("tracks document, selection, view, and panel state for native menu availability", () => {
+    expect(
+      nativeMenuAvailability({
+        hasDocument: true,
+        viewMode: "editDisplay",
+        canUndo: true,
+        canRedo: false,
+        hasSelection: true,
+        canPaste: true,
+        canEditLayers: true,
+        canExportPDF: true,
+        canDirectPrint: true,
+        canSmoothArcTangencies: true,
+        inspectorOpen: true,
+        bottomWorkbenchVisible: false,
+      }),
+    ).toMatchObject({
+      save: true,
+      undo: true,
+      duplicate: true,
+      paste: true,
+      directPrint: true,
+      inspectorLabel: "インスペクタを隠す",
+      bottomWorkbenchLabel: "サマリーを表示",
+    });
+    expect(
+      nativeMenuAvailability({
+        hasDocument: true,
+        viewMode: "outputPreview",
+        canUndo: true,
+        canRedo: true,
+        hasSelection: true,
+        canPaste: true,
+        canEditLayers: true,
+        canExportPDF: true,
+        canDirectPrint: true,
+        canSmoothArcTangencies: true,
+        inspectorOpen: false,
+        bottomWorkbenchVisible: true,
+      }),
+    ).toMatchObject({
+      exportPDF: true,
+      directPrint: true,
+      undo: true,
+      duplicate: false,
+      delete: false,
+      paste: false,
+      addLayer: false,
+      inspectorLabel: "インスペクタを表示",
+      bottomWorkbenchLabel: "サマリーを隠す",
+    });
   });
 });

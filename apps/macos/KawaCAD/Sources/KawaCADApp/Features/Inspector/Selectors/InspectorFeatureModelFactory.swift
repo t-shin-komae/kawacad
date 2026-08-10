@@ -41,10 +41,13 @@ enum InspectorFeatureModelFactory {
     state.partLibraryEntries = actionHandlers.parts.partLibraryEntries
     state.entities = actionHandlers.document.entities
     state.constraints = actionHandlers.document.constraints
+    state.measurementAnnotations = actionHandlers.document.measurementAnnotations
+    state.freeTexts = actionHandlers.document.freeTexts
     state.selectedEntity = actionHandlers.canvas.selectedEntity
     state.selectedEntities = actionHandlers.canvas.selectedEntities
     state.selectedFreeText = actionHandlers.canvas.selectedFreeText
     state.selectedConstraintID = actionHandlers.canvas.selectedConstraintID
+    state.selectedMeasurementAnnotation = actionHandlers.canvas.selectedMeasurementAnnotation
     state.selectedDerivedElement = WorkspaceViewStateFactory.selectedDerivedElement(
       selectedEntities: actionHandlers.canvas.selectedEntities,
       derivedElements: actionHandlers.document.derivedElements
@@ -109,6 +112,11 @@ enum InspectorFeatureModelFactory {
     actions.updateFreeText = actionHandlers.canvas.updateFreeText
     actions.deleteSelectedFreeText = actionHandlers.canvas.deleteSelectedFreeText
     actions.deleteConstraint = actionHandlers.canvas.deleteConstraint
+    actions.selectConstraint = actionHandlers.canvas.selectConstraint
+    actions.selectMeasurementAnnotation = actionHandlers.canvas.selectMeasurementAnnotation
+    actions.deleteMeasurementAnnotation = actionHandlers.canvas.deleteMeasurementAnnotation
+    actions.convertMeasurementAnnotationToConstraint =
+      actionHandlers.canvas.convertMeasurementAnnotationToConstraint
     actions.hoverConstraint = actionHandlers.canvas.hoverConstraint
     actions.constrainSelectedLineLengthsEqual =
       actionHandlers.document.constrainSelectedLineLengthsEqual

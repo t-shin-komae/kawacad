@@ -107,6 +107,8 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
     setSelectedStitchStartPointId,
     setInspectorSelectedPartId,
     setMessage,
+    setSnapSuppressed,
+    setDragDuplicating,
     setPendingTargets,
     setPendingDerivedValue,
     setDraft,
@@ -133,6 +135,8 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
   const handleCanvasPoint = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>, original: PointMm) => {
       if (!state || state.viewMode === "outputPreview") return;
+      setSnapSuppressed(event.ctrlKey);
+      setDragDuplicating(Boolean(event.altKey && move.current));
       const placement = snapWithTarget(original, !event.ctrlKey);
       const point = placement.point;
       if (settingPartOriginId) {
@@ -284,6 +288,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           );
         else {
           marquee.current = point;
+          setDragDuplicating(false);
           setSelected(event.shiftKey ? selected : new Set());
           event.currentTarget.setPointerCapture(event.pointerId);
         }
@@ -469,6 +474,8 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       useSelectedTargets,
       viewport,
       visibleEntities,
+      setDragDuplicating,
+      setSnapSuppressed,
     ],
   );
 

@@ -255,8 +255,7 @@ input[type="checkbox"] {
   outline-offset: 2px;
   border-radius: 3px;
 }
-.document-file-info,
-.panel-title small {
+.document-file-info {
   overflow: hidden;
   color: var(--secondary-ink);
   font-size: 11px;
@@ -633,7 +632,6 @@ input[type="checkbox"] {
 .tool-palette,
 .inspector {
   min-width: 0;
-  overflow: auto;
   background: var(--panel);
 }
 .tool-palette {
@@ -664,20 +662,41 @@ input[type="checkbox"] {
   background: var(--selected-stroke);
 }
 .inspector {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   border-left: 1px solid var(--panel-stroke);
   padding: var(--panel-padding);
 }
-.panel-title {
-  display: grid;
-  gap: 1px;
-  padding: 1px 3px 8px;
-  border-bottom: 1px solid var(--panel-stroke);
-  margin-bottom: 8px;
+.inspector-content {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
 }
-.panel-title > span {
-  color: #1d1d1f;
-  font-size: 12px;
-  font-weight: 600;
+.compact-inspector-drawer {
+  overflow: hidden;
+}
+.compact-inspector-drawer .inspector {
+  height: 100%;
+}
+.inspector-selection-change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 7px 8px;
+  border: 1px solid rgba(10, 132, 255, 0.35);
+  border-radius: 7px;
+  background: rgba(10, 132, 255, 0.08);
+  color: #204ab3;
+  font-size: 11px;
+}
+.inspector-selection-context {
+  margin: -4px 0 8px;
+  color: var(--secondary-ink);
+  font-size: 11px;
 }
 .inspector-tabs {
   display: grid;

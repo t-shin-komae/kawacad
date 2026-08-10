@@ -68,9 +68,11 @@ export function useCanvasPresentation() {
   const [pendingTextEntry, setPendingTextEntry] = useState<PendingTextEntry>();
   const [contextMenu, setContextMenu] = useState<ContextMenu>();
   const [hoveredConstraintId, setHoveredConstraintId] = useState<string>();
+  const [snapSuppressed, setSnapSuppressed] = useState(false);
+  const [dragDuplicating, setDragDuplicating] = useState(false);
   const pan = useRef<{ screen: { x: number; y: number }; viewport: Viewport }>();
   const marquee = useRef<PointMm>();
-  const move = useRef<{ start: PointMm; ids: string[] }>();
+  const move = useRef<{ start: PointMm; ids: string[]; partId?: string }>();
   const controlMove = useRef<{ target: EditControlTarget }>();
   const measurementMove = useRef<{ id: string; start: PointMm; labelOnly: boolean }>();
   const dimensionMove = useRef<{ constraintId: string; start: PointMm; labelOnly: boolean }>();
@@ -117,6 +119,10 @@ export function useCanvasPresentation() {
     setContextMenu,
     hoveredConstraintId,
     setHoveredConstraintId,
+    snapSuppressed,
+    setSnapSuppressed,
+    dragDuplicating,
+    setDragDuplicating,
     pan,
     marquee,
     move,

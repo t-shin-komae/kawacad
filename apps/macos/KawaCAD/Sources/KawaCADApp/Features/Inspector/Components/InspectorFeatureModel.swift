@@ -23,10 +23,13 @@ struct InspectorFeatureViewState {
   let partLibraryEntries: [PartLibraryEntry]
   let entities: [CanvasEntity]
   let constraints: [ProjectConstraint]
+  let measurementAnnotations: [ProjectMeasurementAnnotation]
+  let freeTexts: [ProjectFreeText]
   let selectedEntity: CanvasEntity?
   let selectedEntities: [CanvasEntity]
   let selectedFreeText: ProjectFreeText?
   let selectedConstraintID: String?
+  let selectedMeasurementAnnotation: ProjectMeasurementAnnotation?
   let selectedDerivedElement: ProjectDerivedElement?
   let selectedRoundHole: ProjectRoundHole?
   let filteredInspectorLayers: [ProjectLayer]
@@ -58,10 +61,13 @@ struct InspectorFeatureViewState {
     self.partLibraryEntries = builder.partLibraryEntries
     self.entities = builder.entities
     self.constraints = builder.constraints
+    self.measurementAnnotations = builder.measurementAnnotations
+    self.freeTexts = builder.freeTexts
     self.selectedEntity = builder.selectedEntity
     self.selectedEntities = builder.selectedEntities
     self.selectedFreeText = builder.selectedFreeText
     self.selectedConstraintID = builder.selectedConstraintID
+    self.selectedMeasurementAnnotation = builder.selectedMeasurementAnnotation
     self.selectedDerivedElement = builder.selectedDerivedElement
     self.selectedRoundHole = builder.selectedRoundHole
     self.filteredInspectorLayers = builder.filteredInspectorLayers
@@ -101,6 +107,10 @@ struct InspectorFeatureActions {
   let updateFreeText: (ProjectFreeText) -> Bool
   let deleteSelectedFreeText: () -> Void
   let deleteConstraint: (ProjectConstraint) -> Void
+  let selectConstraint: (String?) -> Void
+  let selectMeasurementAnnotation: (String?) -> Void
+  let deleteMeasurementAnnotation: (ProjectMeasurementAnnotation) -> Void
+  let convertMeasurementAnnotationToConstraint: (String) -> Void
   let hoverConstraint: (String?) -> Void
   let constrainSelectedLineLengthsEqual: () -> Void
   let setConstraintDegrees: (ProjectConstraint, Double) -> Bool
@@ -162,6 +172,10 @@ struct InspectorFeatureActions {
     self.updateFreeText = builder.updateFreeText
     self.deleteSelectedFreeText = builder.deleteSelectedFreeText
     self.deleteConstraint = builder.deleteConstraint
+    self.selectConstraint = builder.selectConstraint
+    self.selectMeasurementAnnotation = builder.selectMeasurementAnnotation
+    self.deleteMeasurementAnnotation = builder.deleteMeasurementAnnotation
+    self.convertMeasurementAnnotationToConstraint = builder.convertMeasurementAnnotationToConstraint
     self.hoverConstraint = builder.hoverConstraint
     self.constrainSelectedLineLengthsEqual = builder.constrainSelectedLineLengthsEqual
     self.setConstraintDegrees = builder.setConstraintDegrees
@@ -220,10 +234,13 @@ final class InspectorFeatureViewStateBuilder {
   var partLibraryEntries: [PartLibraryEntry]!
   var entities: [CanvasEntity]!
   var constraints: [ProjectConstraint]!
+  var measurementAnnotations: [ProjectMeasurementAnnotation]!
+  var freeTexts: [ProjectFreeText]!
   var selectedEntity: CanvasEntity?
   var selectedEntities: [CanvasEntity]!
   var selectedFreeText: ProjectFreeText?
   var selectedConstraintID: String?
+  var selectedMeasurementAnnotation: ProjectMeasurementAnnotation?
   var selectedDerivedElement: ProjectDerivedElement?
   var selectedRoundHole: ProjectRoundHole?
   var filteredInspectorLayers: [ProjectLayer]!
@@ -260,6 +277,10 @@ final class InspectorFeatureActionsBuilder {
   var updateFreeText: ((ProjectFreeText) -> Bool)!
   var deleteSelectedFreeText: (() -> Void)!
   var deleteConstraint: ((ProjectConstraint) -> Void)!
+  var selectConstraint: ((String?) -> Void)!
+  var selectMeasurementAnnotation: ((String?) -> Void)!
+  var deleteMeasurementAnnotation: ((ProjectMeasurementAnnotation) -> Void)!
+  var convertMeasurementAnnotationToConstraint: ((String) -> Void)!
   var hoverConstraint: ((String?) -> Void)!
   var constrainSelectedLineLengthsEqual: (() -> Void)!
   var setConstraintDegrees: ((ProjectConstraint, Double) -> Bool)!
@@ -321,10 +342,13 @@ final class InspectorFeatureModel: ObservableObject {
   let partLibraryEntries: [PartLibraryEntry]
   let entities: [CanvasEntity]
   let constraints: [ProjectConstraint]
+  let measurementAnnotations: [ProjectMeasurementAnnotation]
+  let freeTexts: [ProjectFreeText]
   let selectedEntity: CanvasEntity?
   let selectedEntities: [CanvasEntity]
   let selectedFreeText: ProjectFreeText?
   let selectedConstraintID: String?
+  let selectedMeasurementAnnotation: ProjectMeasurementAnnotation?
   let selectedDerivedElement: ProjectDerivedElement?
   let selectedRoundHole: ProjectRoundHole?
   let filteredInspectorLayers: [ProjectLayer]
@@ -360,6 +384,10 @@ final class InspectorFeatureModel: ObservableObject {
   let updateFreeText: (ProjectFreeText) -> Bool
   let deleteSelectedFreeText: () -> Void
   let deleteConstraint: (ProjectConstraint) -> Void
+  let selectConstraint: (String?) -> Void
+  let selectMeasurementAnnotation: (String?) -> Void
+  let deleteMeasurementAnnotation: (ProjectMeasurementAnnotation) -> Void
+  let convertMeasurementAnnotationToConstraint: (String) -> Void
   let hoverConstraint: (String?) -> Void
   let constrainSelectedLineLengthsEqual: () -> Void
   let setConstraintDegrees: (ProjectConstraint, Double) -> Bool
@@ -416,10 +444,13 @@ final class InspectorFeatureModel: ObservableObject {
     self.partLibraryEntries = state.partLibraryEntries
     self.entities = state.entities
     self.constraints = state.constraints
+    self.measurementAnnotations = state.measurementAnnotations
+    self.freeTexts = state.freeTexts
     self.selectedEntity = state.selectedEntity
     self.selectedEntities = state.selectedEntities
     self.selectedFreeText = state.selectedFreeText
     self.selectedConstraintID = state.selectedConstraintID
+    self.selectedMeasurementAnnotation = state.selectedMeasurementAnnotation
     self.selectedDerivedElement = state.selectedDerivedElement
     self.selectedRoundHole = state.selectedRoundHole
     self.filteredInspectorLayers = state.filteredInspectorLayers
@@ -454,6 +485,10 @@ final class InspectorFeatureModel: ObservableObject {
     self.updateFreeText = actions.updateFreeText
     self.deleteSelectedFreeText = actions.deleteSelectedFreeText
     self.deleteConstraint = actions.deleteConstraint
+    self.selectConstraint = actions.selectConstraint
+    self.selectMeasurementAnnotation = actions.selectMeasurementAnnotation
+    self.deleteMeasurementAnnotation = actions.deleteMeasurementAnnotation
+    self.convertMeasurementAnnotationToConstraint = actions.convertMeasurementAnnotationToConstraint
     self.hoverConstraint = actions.hoverConstraint
     self.constrainSelectedLineLengthsEqual = actions.constrainSelectedLineLengthsEqual
     self.setConstraintDegrees = actions.setConstraintDegrees

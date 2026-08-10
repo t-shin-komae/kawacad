@@ -1,11 +1,46 @@
-import { Menu, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
+import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import type { AboutMetadata } from "@tauri-apps/api/menu";
 import { productInfo } from "@/app/productInfo";
 import { invokeCommand } from "@/adapters/tauriCommandAdapter";
 import { appStrings } from "@/localization";
 import type { MenuAction } from "@/app/domain/nativeMenuTypes";
+import { nativeMenuAvailability, type NativeMenuState } from "@/app/domain/nativeMenuState";
 
 export type { MenuAction } from "@/app/domain/nativeMenuTypes";
+export type { NativeMenuState } from "@/app/domain/nativeMenuState";
+
+const dynamicMenuItems = new Map<string, MenuItem>();
+let currentMenuState: NativeMenuState | undefined;
+
+export function updateNativeMenuState(state: NativeMenuState) {
+  currentMenuState = state;
+  void applyNativeMenuState();
+}
+
+async function applyNativeMenuState() {
+  const availability = nativeMenuAvailability(currentMenuState);
+  const enabled: Record<string, boolean> = {
+    save: availability.save,
+    saveAs: availability.saveAs,
+    exportPDF: availability.exportPDF,
+    directPrint: availability.directPrint,
+    undo: availability.undo,
+    redo: availability.redo,
+    duplicate: availability.duplicate,
+    delete: availability.delete,
+    paste: availability.paste,
+    addLayer: availability.addLayer,
+    smoothArcTangencies: availability.smoothArcTangencies,
+    findInspector: availability.findInspector,
+  };
+  await Promise.all(
+    Object.entries(enabled).map(([action, isEnabled]) => dynamicMenuItems.get(action)?.setEnabled(isEnabled)),
+  );
+  await Promise.all([
+    dynamicMenuItems.get("toggleInspector")?.setText(availability.inspectorLabel),
+    dynamicMenuItems.get("toggleBottomWorkbench")?.setText(availability.bottomWorkbenchLabel),
+  ]);
+}
 
 /** Actions intentionally shared by the Windows, Linux, and macOS menu. */
 export const crossPlatformMenuActions: readonly MenuAction[] = [
@@ -101,128 +136,160 @@ export function aboutMetadataForPlatform(userAgent: string): AboutMetadata {
  * intentionally left to the host OS so the same definition works on
  * Windows, Linux, and macOS. */
 export async function installNativeMenu() {
-  const item = (text: string, action: MenuAction, accelerator?: string) => ({
-    text,
-    accelerator,
-    action: () => dispatch(action),
-  });
+  const item = async (text: string, action: MenuAction, accelerator?: string) => {
+    const menuItem = await MenuItem.new({
+      id: `kawa-cad-${action}`,
+      text,
+      accelerator,
+      action: () => dispatch(action),
+    });
+    if (
+      [
+        "save",
+        "saveAs",
+        "exportPDF",
+        "directPrint",
+        "undo",
+        "redo",
+        "duplicate",
+        "delete",
+        "paste",
+        "addLayer",
+        "smoothArcTangencies",
+        "findInspector",
+        "toggleInspector",
+        "toggleBottomWorkbench",
+      ].includes(action)
+    )
+      dynamicMenuItems.set(action, menuItem);
+    return menuItem;
+  };
   const aboutItem = await PredefinedMenuItem.new({
     text: appStrings.menu.item.about,
     item: { About: aboutMetadataForPlatform(navigator.userAgent) },
   });
-  const directPrintAvailable = await invokeCommand<{ status: string }>("direct_print_availability")
+  const platformDirectPrintAvailable = await invokeCommand<{ status: string }>("direct_print_availability")
     .then((availability) => availability.status === "available")
     .catch(() => false);
-  const directPrintItems = directPrintAvailable ? [item(appStrings.menu.item.directPrint, "directPrint")] : [];
+  const directPrintItems = platformDirectPrintAvailable
+    ? [await item(appStrings.menu.item.directPrint, "directPrint")]
+    : [];
   const applicationMenu = await Submenu.new({
     text: productInfo.name,
-    items: [aboutItem, item(appStrings.menu.item.openSourceLicenses, "openLicenses")],
+    items: [aboutItem, await item(appStrings.menu.item.openSourceLicenses, "openLicenses")],
   });
+  const fileItems = [
+    await item(appStrings.menu.item.new, "new", "CmdOrCtrl+N"),
+    await item(appStrings.menu.item.open, "open", "CmdOrCtrl+O"),
+    await item(appStrings.menu.item.save, "save", "CmdOrCtrl+S"),
+    await item(appStrings.menu.item.saveAs, "saveAs", "CmdOrCtrl+Shift+S"),
+    { item: "Separator" as const },
+    await item(appStrings.menu.item.exportPDF, "exportPDF"),
+    ...directPrintItems,
+  ];
+  const editItems = [
+    await item(appStrings.menu.item.undo, "undo", "CmdOrCtrl+Z"),
+    await item(appStrings.menu.item.redo, "redo", "CmdOrCtrl+Shift+Z"),
+    await item(appStrings.menu.item.cut, "cut", "CmdOrCtrl+X"),
+    await item(appStrings.menu.item.copy, "copy", "CmdOrCtrl+C"),
+    await item(appStrings.menu.item.paste, "paste", "CmdOrCtrl+V"),
+    await item(appStrings.menu.item.duplicate, "duplicate", "CmdOrCtrl+D"),
+    await item(appStrings.menu.item.delete, "delete"),
+    await item(appStrings.menu.item.selectAll, "selectAll", "CmdOrCtrl+A"),
+    await item(appStrings.menu.item.findInspector, "findInspector", "CmdOrCtrl+F"),
+  ];
+  const drawingItems = [
+    await item(appStrings.toolNames.select, "select", "CmdOrCtrl+1"),
+    await item(appStrings.toolNames.point, "point", "CmdOrCtrl+2"),
+    await item(appStrings.toolNames.line, "line", "CmdOrCtrl+3"),
+    await item(appStrings.toolNames.circle, "circle", "CmdOrCtrl+4"),
+    await item(appStrings.toolNames.roundHole, "roundHole"),
+    await item(appStrings.toolNames.arc, "arc"),
+    await item(appStrings.toolNames.stitchStartPoint, "stitchStartPoint"),
+    await item(appStrings.toolNames.freeText, "freeText"),
+    { item: "Separator" as const },
+    await item(appStrings.toolNames.centerLine, "centerLine", "CmdOrCtrl+5"),
+    await item(appStrings.toolNames.horizontalCenterLine, "horizontalCenterLine"),
+    await item(appStrings.toolNames.verticalCenterLine, "verticalCenterLine"),
+    { item: "Separator" as const },
+    await item(appStrings.toolNames.offset, "offset"),
+    await item(appStrings.toolNames.fillet, "fillet"),
+  ];
+  const constraintItems = [
+    await item(appStrings.toolNames.coincident, "coincident"),
+    await item(appStrings.toolNames.horizontal, "horizontal", "CmdOrCtrl+Shift+H"),
+    await item(appStrings.toolNames.vertical, "vertical", "CmdOrCtrl+Shift+V"),
+    await item(appStrings.toolNames.parallel, "parallel"),
+    await item(appStrings.toolNames.perpendicular, "perpendicular"),
+    await item(appStrings.toolNames.tangent, "tangent"),
+    await item(appStrings.toolNames.equalLength, "equalLength"),
+    await item(appStrings.toolNames.angle, "angle"),
+    await item(appStrings.toolNames.symmetric, "symmetric"),
+    await item(appStrings.toolNames.pointOnLine, "pointOnLine"),
+    await item(appStrings.toolNames.fixed, "fixed"),
+    { item: "Separator" as const },
+    await item(appStrings.menu.item.smoothArcTangencies, "smoothArcTangencies"),
+  ];
+  const measurementItems = [
+    await item(appStrings.toolNames.distance, "distance"),
+    await item(appStrings.toolNames.horizontalDistance, "horizontalDistance"),
+    await item(appStrings.toolNames.verticalDistance, "verticalDistance"),
+    await item(appStrings.toolNames.lineLineDistance, "lineLineDistance"),
+    await item(appStrings.toolNames.segmentLength, "segmentLength"),
+    await item(appStrings.toolNames.diameter, "diameter"),
+    await item(appStrings.toolNames.radius, "radius"),
+    { item: "Separator" as const },
+    await item(appStrings.toolNames.measureDistance, "measureDistance"),
+    await item(appStrings.menu.item.measureSegmentLength, "measureSegmentLength"),
+    await item(appStrings.toolNames.measureAngle, "measureAngle"),
+    await item(appStrings.toolNames.measureRadius, "measureRadius"),
+    await item(appStrings.toolNames.measureDiameter, "measureDiameter"),
+    await item(appStrings.toolNames.measureArcSweepAngle, "measureArcSweepAngle"),
+  ];
+  const viewItems = [
+    await item(appStrings.canvas.editDisplay, "editDisplay", "CmdOrCtrl+Alt+1"),
+    await item(appStrings.canvas.outputPreview, "outputPreview", "CmdOrCtrl+Alt+2"),
+    await item(appStrings.menu.item.toggleA4Orientation, "toggleA4Orientation"),
+    await item(appStrings.toolbar.zoomToFit, "zoomToFit"),
+    await item(appStrings.menu.item.toggleInspector, "toggleInspector"),
+    await item(appStrings.menu.item.toggleBottomWorkbench, "toggleBottomWorkbench"),
+    { item: "Separator" as const },
+    await item(appStrings.menu.item.resetLayout, "resetLayout"),
+    await item(appStrings.menu.item.reload, "reload", "CmdOrCtrl+R"),
+  ];
   const menu = await Menu.new({
     items: [
       applicationMenu,
       {
         text: appStrings.menu.section.file,
-        items: [
-          item(appStrings.menu.item.new, "new", "CmdOrCtrl+N"),
-          item(appStrings.menu.item.open, "open", "CmdOrCtrl+O"),
-          item(appStrings.menu.item.save, "save", "CmdOrCtrl+S"),
-          item(appStrings.menu.item.saveAs, "saveAs", "CmdOrCtrl+Shift+S"),
-          { item: "Separator" },
-          item(appStrings.menu.item.exportPDF, "exportPDF"),
-          ...directPrintItems,
-        ],
+        items: fileItems,
       },
       {
         text: appStrings.menu.section.edit,
-        items: [
-          item(appStrings.menu.item.undo, "undo", "CmdOrCtrl+Z"),
-          item(appStrings.menu.item.redo, "redo", "CmdOrCtrl+Shift+Z"),
-          item(appStrings.menu.item.cut, "cut", "CmdOrCtrl+X"),
-          item(appStrings.menu.item.copy, "copy", "CmdOrCtrl+C"),
-          item(appStrings.menu.item.paste, "paste", "CmdOrCtrl+V"),
-          item(appStrings.menu.item.duplicate, "duplicate", "CmdOrCtrl+D"),
-          item(appStrings.menu.item.delete, "delete"),
-          item(appStrings.menu.item.selectAll, "selectAll", "CmdOrCtrl+A"),
-          item(appStrings.menu.item.findInspector, "findInspector", "CmdOrCtrl+F"),
-        ],
+        items: editItems,
       },
       {
         text: appStrings.menu.section.drawing,
-        items: [
-          item(appStrings.toolNames.select, "select", "CmdOrCtrl+1"),
-          item(appStrings.toolNames.point, "point", "CmdOrCtrl+2"),
-          item(appStrings.toolNames.line, "line", "CmdOrCtrl+3"),
-          item(appStrings.toolNames.circle, "circle", "CmdOrCtrl+4"),
-          item(appStrings.toolNames.roundHole, "roundHole"),
-          item(appStrings.toolNames.arc, "arc"),
-          item(appStrings.toolNames.stitchStartPoint, "stitchStartPoint"),
-          item(appStrings.toolNames.freeText, "freeText"),
-          { item: "Separator" },
-          item(appStrings.toolNames.centerLine, "centerLine", "CmdOrCtrl+5"),
-          item(appStrings.toolNames.horizontalCenterLine, "horizontalCenterLine"),
-          item(appStrings.toolNames.verticalCenterLine, "verticalCenterLine"),
-          { item: "Separator" },
-          item(appStrings.toolNames.offset, "offset"),
-          item(appStrings.toolNames.fillet, "fillet"),
-        ],
+        items: drawingItems,
       },
       {
         text: appStrings.menu.section.constraint,
-        items: [
-          item(appStrings.toolNames.coincident, "coincident"),
-          item(appStrings.toolNames.horizontal, "horizontal", "CmdOrCtrl+Shift+H"),
-          item(appStrings.toolNames.vertical, "vertical", "CmdOrCtrl+Shift+V"),
-          item(appStrings.toolNames.parallel, "parallel"),
-          item(appStrings.toolNames.perpendicular, "perpendicular"),
-          item(appStrings.toolNames.tangent, "tangent"),
-          item(appStrings.toolNames.equalLength, "equalLength"),
-          item(appStrings.toolNames.angle, "angle"),
-          item(appStrings.toolNames.symmetric, "symmetric"),
-          item(appStrings.toolNames.pointOnLine, "pointOnLine"),
-          item(appStrings.toolNames.fixed, "fixed"),
-          { item: "Separator" },
-          item(appStrings.menu.item.smoothArcTangencies, "smoothArcTangencies"),
-          { item: "Separator" },
-          item(appStrings.toolNames.distance, "distance"),
-          item(appStrings.toolNames.horizontalDistance, "horizontalDistance"),
-          item(appStrings.toolNames.verticalDistance, "verticalDistance"),
-          item(appStrings.toolNames.lineLineDistance, "lineLineDistance"),
-          item(appStrings.toolNames.segmentLength, "segmentLength"),
-          item(appStrings.toolNames.diameter, "diameter"),
-          item(appStrings.toolNames.radius, "radius"),
-        ],
+        items: constraintItems,
       },
       {
         text: appStrings.menu.section.measurement,
-        items: [
-          item(appStrings.toolNames.measureDistance, "measureDistance"),
-          item(appStrings.menu.item.measureSegmentLength, "measureSegmentLength"),
-          item(appStrings.toolNames.measureAngle, "measureAngle"),
-          item(appStrings.toolNames.measureRadius, "measureRadius"),
-          item(appStrings.toolNames.measureDiameter, "measureDiameter"),
-          item(appStrings.toolNames.measureArcSweepAngle, "measureArcSweepAngle"),
-        ],
+        items: measurementItems,
       },
       {
         text: appStrings.menu.section.layer,
-        items: [item(appStrings.app.addLayerTitle, "addLayer", "CmdOrCtrl+Shift+L")],
+        items: [await item(appStrings.app.addLayerTitle, "addLayer", "CmdOrCtrl+Shift+L")],
       },
       {
         text: appStrings.menu.section.view,
-        items: [
-          item(appStrings.canvas.editDisplay, "editDisplay", "CmdOrCtrl+Alt+1"),
-          item(appStrings.canvas.outputPreview, "outputPreview", "CmdOrCtrl+Alt+2"),
-          item(appStrings.menu.item.toggleA4Orientation, "toggleA4Orientation"),
-          item(appStrings.toolbar.zoomToFit, "zoomToFit"),
-          item(appStrings.menu.item.toggleInspector, "toggleInspector"),
-          item(appStrings.menu.item.toggleBottomWorkbench, "toggleBottomWorkbench"),
-          { item: "Separator" },
-          item(appStrings.menu.item.resetLayout, "resetLayout"),
-          item(appStrings.menu.item.reload, "reload", "CmdOrCtrl+R"),
-        ],
+        items: viewItems,
       },
     ],
   });
   await menu.setAsAppMenu();
+  await applyNativeMenuState();
 }
