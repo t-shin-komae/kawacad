@@ -41,7 +41,14 @@ describe("CAD toolbar constraint-status parity", () => {
 
     rerender(<CadToolbar {...toolbarProps} showToolPaletteButton />);
 
-    expect(screen.getByRole("button", { name: appStrings.accessibility.showTools })).toBeInTheDocument();
+    const toolPaletteButton = screen.getByRole("button", { name: appStrings.accessibility.showTools });
+    expect(toolPaletteButton).toBeInTheDocument();
+    expect(toolPaletteButton.nextElementSibling).toHaveClass("toolbar-tool-palette-divider");
+    expect(toolPaletteButton.nextElementSibling?.nextElementSibling).toBe(
+      screen
+        .getByRole("navigation", { name: appStrings.accessibility.cadToolbar })
+        .querySelector(".toolbar-tool-cluster"),
+    );
   });
 
   it("uses the SwiftUI status priority when multiple Core constraints are present", () => {
