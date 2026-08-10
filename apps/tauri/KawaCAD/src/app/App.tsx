@@ -149,8 +149,6 @@ export function App() {
     setPointSnapEnabled,
     inspectorOpen,
     setInspectorOpen,
-    paletteOpen,
-    setPaletteOpen,
     bottomWorkbenchVisible,
     setBottomWorkbenchVisible,
     basicToolsOnly,
@@ -672,7 +670,7 @@ export function App() {
 
   return (
     <main
-      className={`app-shell layout-${layout.mode}${paletteOpen && layout.toolDockVisible ? "" : " tool-palette-hidden"}`}
+      className={`app-shell layout-${layout.mode}${layout.toolDockVisible ? "" : " tool-palette-hidden"}`}
       style={{ "--tool-palette-width": `${toolPaletteWidth}px` } as CSSProperties}
       aria-label={
         state
@@ -681,7 +679,7 @@ export function App() {
           : undefined
       }
     >
-      {paletteOpen && layout.toolDockVisible && (
+      {layout.toolDockVisible && (
         <>
           <ToolPalette
             activeStyle={activeStyle}
@@ -842,16 +840,13 @@ export function App() {
           }}
           onSnapChange={setSnapEnabled}
           onPointSnapChange={setPointSnapEnabled}
+          showToolPaletteButton={layout.mode === "compact"}
           onToggleInspector={() =>
             layout.mode === "compact"
               ? setCompactDrawer((value) => (value === "inspector" ? undefined : "inspector"))
               : setInspectorOpen((value) => !value)
           }
-          onToggleTools={() =>
-            layout.mode === "compact"
-              ? setCompactDrawer((value) => (value === "tools" ? undefined : "tools"))
-              : setPaletteOpen((value) => !value)
-          }
+          onToggleTools={() => setCompactDrawer((value) => (value === "tools" ? undefined : "tools"))}
         />
         <section className="workspace">
           <section className="canvas-area">

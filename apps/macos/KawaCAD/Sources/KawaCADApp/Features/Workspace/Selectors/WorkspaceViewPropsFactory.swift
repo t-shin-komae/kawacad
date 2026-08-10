@@ -41,7 +41,14 @@ struct WorkspaceViewPropsFactory {
   private var documentName: String { handler.documentName }
   private var canRenameDocument: Bool { handler.canRenameDocument }
   private var unitLabel: String { handler.unitLabel }
-  private var paperLabel: String { handler.paperLabel }
+  private var paperLabel: String {
+    switch workspacePreferences.a4ReferenceOrientation {
+    case .portrait:
+      return AppStrings.tr("app.paper.a4_portrait")
+    case .landscape:
+      return AppStrings.tr("app.paper.a4_landscape")
+    }
+  }
   private func setToolPanelWidth(_ value: CGFloat) { handler.setToolPanelWidth(value) }
   private func setInspectorPanelWidth(_ value: CGFloat) { handler.setInspectorPanelWidth(value) }
   private func showCompactDrawer(_ drawer: CompactDrawer?) { handler.showCompactDrawer(drawer) }

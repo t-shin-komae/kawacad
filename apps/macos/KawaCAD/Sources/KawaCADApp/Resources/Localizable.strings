@@ -2,6 +2,7 @@
 "app.core.unavailable" = "未接続";
 "app.status.created_new_document" = "新規ドキュメントを作成しました";
 "app.paper.a4_portrait" = "A4 Portrait";
+"app.paper.a4_landscape" = "A4 Landscape";
 
 "output.destination.pdf" = "PDF出力";
 "output.destination.direct_print" = "直接印刷";
