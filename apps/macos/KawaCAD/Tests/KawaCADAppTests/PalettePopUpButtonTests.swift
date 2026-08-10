@@ -29,7 +29,9 @@ func palette_popup_button_uses_the_configured_width() throws {
   let container = try #require(findSubview(of: PalettePopUpContainer.self, in: hostingView))
   let popUpButton = container.button
   #expect(container.frame.width == 158)
-  #expect(popUpButton.frame.width == 158)
+  // AppKit includes focus-ring margins in the frame on some macOS versions.
+  // The alignment rect is the width Auto Layout uses for the visible control.
+  #expect(popUpButton.alignmentRect(forFrame: popUpButton.frame).width == 158)
   #expect(popUpButton.titleOfSelectedItem == "ジャンパーホック穴")
 
   popUpButton.selectItem(at: 0)
