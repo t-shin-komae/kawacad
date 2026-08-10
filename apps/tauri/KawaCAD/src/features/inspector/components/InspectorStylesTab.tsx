@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Paintbrush } from "lucide-react";
 import {
   matchesInspectorSearch,
@@ -8,6 +8,7 @@ import {
 import { appStrings } from "@/localization";
 import { type TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
+import { InspectorDisclosureRow, InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
 
 type OpenTextEntry = (
   title: string,
@@ -32,12 +33,12 @@ export function InspectorStylesTab({
   openTextEntry,
   renderStyleFields,
 }: InspectorStylesTabProps) {
+  const [selectedStyleId, setSelectedStyleId] = useState<string>();
+  const filteredStyles = props.sharedStyles.filter((item) =>
+    matchesInspectorSearch(item.name, feature.sharedStyleSearchQuery),
+  );
   return (
-    <section>
-      <h2>
-        <Paintbrush aria-hidden="true" />
-        {appStrings.inspector.sharedStyles}
-      </h2>
+    <InspectorSection title={appStrings.inspector.sharedStyles} icon={Paintbrush}>
       {(props.sharedStyles.length >= 8 || feature.sharedStyleSearchVisible || feature.sharedStyleSearchQuery) && (
         <label className="inspector-search">
           {appStrings.inspector.sharedStyleSearch}
@@ -50,11 +51,31 @@ export function InspectorStylesTab({
           />
         </label>
       )}
-      {props.sharedStyles
-        .filter((item) => matchesInspectorSearch(item.name, feature.sharedStyleSearchQuery))
-        .map((item) => (
-          <div className="inspector-card" key={item.id}>
-            <div className="row">
+      {filteredStyles.length === 0 && <p>{appStrings.inspector.noSharedStyles}</p>}
+      {filteredStyles.map((item) => {
+        const colorHex =
+          "#" +
+          [item.style.stroke.red, item.style.stroke.green, item.style.stroke.blue]
+            .map((component) =>
+              Math.round(component * 255)
+                .toString(16)
+                .padStart(2, "0"),
+            )
+            .join("")
+            .toUpperCase();
+        return (
+          <InspectorDisclosureRow
+            key={item.id}
+            title={item.name}
+            subtitle={
+              appStrings.inspector.lineStyles[item.style.pattern as keyof typeof appStrings.inspector.lineStyles] ??
+              item.style.pattern
+            }
+            metadata={colorHex}
+            expanded={selectedStyleId === item.id}
+            onToggle={() => setSelectedStyleId(item.id)}
+          >
+            <div className="row inspector-editor-heading">
               <span>{item.name}</span>
               <button
                 onClick={() =>
@@ -94,9 +115,11 @@ export function InspectorStylesTab({
                 appStrings.inspector.operationMessage.sharedStyleUpdated,
               ),
             )}
-          </div>
-        ))}
+          </InspectorDisclosureRow>
+        );
+      })}
       <button
+        className="inspector-add-button"
         onClick={() =>
           props.onCommand(
             "addSharedStyle",
@@ -107,6 +130,6 @@ export function InspectorStylesTab({
       >
         {appStrings.inspector.addSharedStyle}
       </button>
-    </section>
+    </InspectorSection>
   );
 }

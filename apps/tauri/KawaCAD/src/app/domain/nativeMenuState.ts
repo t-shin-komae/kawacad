@@ -1,4 +1,5 @@
 import type { CanvasViewMode } from "@/features/canvas/domain/canvasDomainModels";
+import type { InspectorTab } from "@/features/inspector/selectors/inspectorFeature";
 
 export type NativeMenuState = {
   hasDocument: boolean;
@@ -12,6 +13,7 @@ export type NativeMenuState = {
   canDirectPrint: boolean;
   canSmoothArcTangencies: boolean;
   inspectorOpen: boolean;
+  inspectorTab: InspectorTab;
   bottomWorkbenchVisible: boolean;
 };
 
@@ -47,7 +49,7 @@ export function nativeMenuAvailability(state: NativeMenuState | undefined): Nati
     paste: Boolean(state?.canPaste && editable),
     addLayer: Boolean(state?.canEditLayers && editable),
     smoothArcTangencies: Boolean(state?.canSmoothArcTangencies && editable),
-    findInspector: Boolean(state?.inspectorOpen),
+    findInspector: Boolean(state?.inspectorOpen && state.inspectorTab !== "selection"),
     inspectorLabel: state?.inspectorOpen ? "インスペクタを隠す" : "インスペクタを表示",
     bottomWorkbenchLabel: state?.bottomWorkbenchVisible ? "サマリーを隠す" : "サマリーを表示",
   };

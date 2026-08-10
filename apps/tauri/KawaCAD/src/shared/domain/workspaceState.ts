@@ -15,7 +15,15 @@ type Stroke = { red: number; green: number; blue: number; alpha: number };
 type LineStyle = { stroke: Stroke; strokeWidthMm: number; pattern: string };
 type Layer = { id: string; name: string; visible: boolean; printable: boolean; kind: string; style: LineStyle };
 type SharedStyle = { id: string; name: string; style: LineStyle };
-type Parameter = { id: string; name: string; valueMm: number; unit: string; memo: string };
+type Parameter = {
+  id: string;
+  name: string;
+  valueMm: number;
+  unit: string;
+  memo: string;
+  usageCount?: number;
+  usedConstraintIds?: string[];
+};
 type Constraint = { id: string; kind: string; status: string; value?: Record<string, number | string> };
 type Measurement = {
   id: string;

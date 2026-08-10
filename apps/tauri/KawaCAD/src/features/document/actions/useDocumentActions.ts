@@ -29,7 +29,10 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     setEditingFreeTextId,
     setHoveredConstraintId,
     setSnapSuppressed,
+    setSnapActive,
     setDragDuplicating,
+    setMarqueeCurrent,
+    setHoveredTargetEntityId,
     setPendingTargets,
     setPendingConstraintValue,
     setPendingDerivedValue,
@@ -70,7 +73,10 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     setEditingFreeTextId(undefined);
     setHoveredConstraintId(undefined);
     setSnapSuppressed(false);
+    setSnapActive(false);
     setDragDuplicating(false);
+    setMarqueeCurrent(undefined);
+    setHoveredTargetEntityId(undefined);
     setPendingTargets([]);
     setPendingConstraintValue(undefined);
     setPendingDerivedValue(undefined);
@@ -93,7 +99,10 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
       setEditingFreeTextId(undefined);
       setHoveredConstraintId(undefined);
       setSnapSuppressed(false);
+      setSnapActive(false);
       setDragDuplicating(false);
+      setMarqueeCurrent(undefined);
+      setHoveredTargetEntityId(undefined);
       setPendingTargets([]);
       setPendingConstraintValue(undefined);
       setPendingDerivedValue(undefined);

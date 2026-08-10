@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { angleArcCounterclockwise, CadCanvas } from "@/features/canvas/components/CadCanvas";
 import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { InspectorPanel, type Part, type PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
+import type { InspectorTab } from "@/features/inspector/selectors/inspectorFeature";
 import { WorkspaceInspector } from "@/features/inspector/components/WorkspaceInspector";
 import { CadToolbar } from "@/features/canvas/components/CadToolbar";
 import { CanvasContextMenu } from "@/features/canvas/components/CanvasContextMenu";
@@ -98,6 +99,7 @@ function performTextEditingCommand(action: "cut" | "copy" | "paste") {
 export function App() {
   const [licensesOpen, setLicensesOpen] = useState(false);
   const [outputDestination, setOutputDestination] = useState<"pdf" | "directPrint">();
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>("selection");
   const canvasPresentation = useCanvasPresentation();
   const {
     tool,
@@ -140,8 +142,14 @@ export function App() {
     setHoveredConstraintId,
     snapSuppressed,
     setSnapSuppressed,
+    snapActive,
+    setSnapActive,
     dragDuplicating,
     setDragDuplicating,
+    marqueeCurrent,
+    setMarqueeCurrent,
+    hoveredTargetEntityId,
+    setHoveredTargetEntityId,
     pan,
     marquee,
     move,
@@ -319,6 +327,8 @@ export function App() {
     distributeParts,
     removePartFromLibrary,
     beginSetPartOrigin,
+    selectConstraint,
+    selectFreeText,
     selectMeasurement,
     convertMeasurement,
   } = useAppActions({
@@ -344,7 +354,10 @@ export function App() {
     setEditingFreeTextId,
     setHoveredConstraintId,
     setSnapSuppressed,
+    setSnapActive,
     setDragDuplicating,
+    setMarqueeCurrent,
+    setHoveredTargetEntityId,
     setPendingTargets,
     setPendingConstraintValue,
     setPendingDerivedValue,
@@ -448,12 +461,14 @@ export function App() {
         state && selectedSourceArcId(selected, state.entities, state.drawingEntityMetadata ?? []),
       ),
       inspectorOpen: layout.mode === "compact" ? compactDrawer === "inspector" : inspectorOpen,
+      inspectorTab,
       bottomWorkbenchVisible,
     });
   }, [
     bottomWorkbenchVisible,
     clipboard,
     inspectorOpen,
+    inspectorTab,
     compactDrawer,
     layout.mode,
     selected,
@@ -536,7 +551,10 @@ export function App() {
         marquee.current = undefined;
         move.current = undefined;
         setSnapSuppressed(false);
+        setSnapActive(false);
         setDragDuplicating(false);
+        setMarqueeCurrent(undefined);
+        setHoveredTargetEntityId(undefined);
         controlMove.current = undefined;
         measurementMove.current = undefined;
         dimensionMove.current = undefined;
@@ -622,6 +640,8 @@ export function App() {
       } else if (action === "duplicate") duplicateSelection();
       else if (action === "delete") deleteSelection();
       else if (action === "selectAll") setSelected(new Set(state?.entities.map((entity) => entity.id) ?? []));
+      else if (action === "cancelCurrentInteraction")
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
       else if (action === "findInspector") window.dispatchEvent(new Event("kawa-cad-find-inspector"));
       else if (action === "toggleInspector") {
         if (layout.mode === "compact") setCompactDrawer((value) => (value === "inspector" ? undefined : "inspector"));
@@ -734,9 +754,12 @@ export function App() {
     onInsertPartFromLibrary: insertPartFromLibrary,
     onRemovePartFromLibrary: removePartFromLibrary,
     onConstrainSegmentLength: (entityId: string) => void constrainSegmentLengthFromInspector(entityId),
+    onSelectConstraint: selectConstraint,
+    onSelectFreeText: selectFreeText,
     onSelectMeasurement: selectMeasurement,
     onConvertMeasurement: convertMeasurement,
     onBeginSetPartOrigin: beginSetPartOrigin,
+    onTabChange: setInspectorTab,
   } satisfies ComponentProps<typeof InspectorPanel>;
 
   return (
@@ -954,12 +977,12 @@ export function App() {
               hoveredConstraintId={hoveredConstraintId}
               pendingTargetEntityIds={new Set(pendingTargets.map(constraintTargetEntityId))}
               marqueeStart={marquee.current}
-              marqueeCurrent={marquee.current ? cursorPoint : undefined}
+              marqueeCurrent={marquee.current ? marqueeCurrent : undefined}
               dragDuplicating={dragDuplicating}
               dragging={Boolean(move.current)}
-              snapEnabled={snapEnabled}
-              pointSnapEnabled={pointSnapEnabled}
+              snapActive={snapActive}
               snapSuppressed={snapSuppressed}
+              hoveredTargetEntityId={hoveredTargetEntityId}
               coincidentPointGroups={canvasState?.coincidentPointGroups}
               tool={tool}
               toolName={names[tool]}

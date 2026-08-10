@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { BookOpen, Package } from "lucide-react";
 import { appStrings } from "@/localization";
 import type { Part, PartLibraryEntry, Props } from "@/features/inspector/components/InspectorPanel";
+import { InspectorDisclosureRow, InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
 
 type InspectorPartsTabProps = {
   props: Props;
@@ -16,19 +17,33 @@ export function InspectorPartsTab({
   partLibrary,
   renderPartEditor,
 }: InspectorPartsTabProps) {
+  const [selectedPartId, setSelectedPartId] = useState<string>();
   return (
     <>
-      <section>
-        <h2>
-          <Package aria-hidden="true" />
-          {appStrings.inspector.parts}
-        </h2>
+      <InspectorSection title={appStrings.inspector.parts} icon={Package}>
         {props.parts.length ? (
-          props.parts.map((part) => <div key={part.id}>{renderPartEditor(part)}</div>)
+          props.parts.map((part) => (
+            <InspectorDisclosureRow
+              key={part.id}
+              title={part.name}
+              subtitle={appStrings.inspector.partStructure(
+                part.outlineEntityIds.length,
+                part.holeEntityIdGroups.length,
+              )}
+              metadata={appStrings.inspector.partQuantityMembers(part.quantity, part.entityIds.length)}
+              expanded={selectedPartId === part.id}
+              onToggle={() => {
+                props.onSelectPart(part);
+                setSelectedPartId(part.id);
+              }}
+            >
+              {renderPartEditor(part)}
+            </InspectorDisclosureRow>
+          ))
         ) : (
           <p>{appStrings.inspector.noParts}</p>
         )}
-        {props.parts.length > 1 && (
+        {props.parts.length > 0 && (
           <div className="arrangement-controls">
             <small>{appStrings.inspector.alignDescription}</small>
             <div className="button-row">
@@ -36,8 +51,9 @@ export function InspectorPartsTab({
                 ["left", appStrings.inspector.alignLeft],
                 ["horizontalCenter", appStrings.inspector.alignCenter],
                 ["right", appStrings.inspector.alignRight],
-                ["top", appStrings.inspector.alignTop],
                 ["bottom", appStrings.inspector.alignBottom],
+                ["verticalCenter", appStrings.inspector.alignVerticalCenter],
+                ["top", appStrings.inspector.alignTop],
               ].map(([alignment, label]) => (
                 <button
                   key={alignment}
@@ -58,21 +74,17 @@ export function InspectorPartsTab({
             </div>
           </div>
         )}
-        <button disabled={!props.selectedCount} onClick={props.onCreatePart}>
+        <button className="inspector-add-button" disabled={!props.selectedCount} onClick={props.onCreatePart}>
           {appStrings.inspector.createPartFromSelection}
         </button>
-      </section>
-      <section>
-        <h2>
-          <BookOpen aria-hidden="true" />
-          {appStrings.inspector.partLibrary}
-        </h2>
+      </InspectorSection>
+      <InspectorSection title={appStrings.inspector.partLibrary} icon={BookOpen}>
         {partLibrary.length ? (
           partLibrary.map((item) => (
             <div className="row" key={item.id}>
               <span>
                 {item.name}
-                <small>×{item.sourcePart.quantity}</small>
+                <small>{appStrings.inspector.partLibraryQuantity(item.sourcePart.quantity)}</small>
               </span>
               <div className="button-row">
                 <button onClick={() => props.onInsertPartFromLibrary(item)}>{appStrings.inspector.place}</button>
@@ -83,7 +95,7 @@ export function InspectorPartsTab({
         ) : (
           <p>{appStrings.inspector.noRegisteredParts}</p>
         )}
-      </section>
+      </InspectorSection>
     </>
   );
 }

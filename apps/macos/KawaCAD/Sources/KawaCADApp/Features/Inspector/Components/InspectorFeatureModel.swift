@@ -108,6 +108,7 @@ struct InspectorFeatureActions {
   let deleteSelectedFreeText: () -> Void
   let deleteConstraint: (ProjectConstraint) -> Void
   let selectConstraint: (String?) -> Void
+  let selectFreeText: (String?) -> Void
   let selectMeasurementAnnotation: (String?) -> Void
   let deleteMeasurementAnnotation: (ProjectMeasurementAnnotation) -> Void
   let convertMeasurementAnnotationToConstraint: (String) -> Void
@@ -173,6 +174,7 @@ struct InspectorFeatureActions {
     self.deleteSelectedFreeText = builder.deleteSelectedFreeText
     self.deleteConstraint = builder.deleteConstraint
     self.selectConstraint = builder.selectConstraint
+    self.selectFreeText = builder.selectFreeText
     self.selectMeasurementAnnotation = builder.selectMeasurementAnnotation
     self.deleteMeasurementAnnotation = builder.deleteMeasurementAnnotation
     self.convertMeasurementAnnotationToConstraint = builder.convertMeasurementAnnotationToConstraint
@@ -278,6 +280,7 @@ final class InspectorFeatureActionsBuilder {
   var deleteSelectedFreeText: (() -> Void)!
   var deleteConstraint: ((ProjectConstraint) -> Void)!
   var selectConstraint: ((String?) -> Void)!
+  var selectFreeText: ((String?) -> Void)!
   var selectMeasurementAnnotation: ((String?) -> Void)!
   var deleteMeasurementAnnotation: ((ProjectMeasurementAnnotation) -> Void)!
   var convertMeasurementAnnotationToConstraint: ((String) -> Void)!
@@ -385,6 +388,7 @@ final class InspectorFeatureModel: ObservableObject {
   let deleteSelectedFreeText: () -> Void
   let deleteConstraint: (ProjectConstraint) -> Void
   let selectConstraint: (String?) -> Void
+  let selectFreeText: (String?) -> Void
   let selectMeasurementAnnotation: (String?) -> Void
   let deleteMeasurementAnnotation: (ProjectMeasurementAnnotation) -> Void
   let convertMeasurementAnnotationToConstraint: (String) -> Void
@@ -486,6 +490,7 @@ final class InspectorFeatureModel: ObservableObject {
     self.deleteSelectedFreeText = actions.deleteSelectedFreeText
     self.deleteConstraint = actions.deleteConstraint
     self.selectConstraint = actions.selectConstraint
+    self.selectFreeText = actions.selectFreeText
     self.selectMeasurementAnnotation = actions.selectMeasurementAnnotation
     self.deleteMeasurementAnnotation = actions.deleteMeasurementAnnotation
     self.convertMeasurementAnnotationToConstraint = actions.convertMeasurementAnnotationToConstraint

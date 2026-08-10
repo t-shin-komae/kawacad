@@ -68,13 +68,13 @@ export type CanvasRenderOptions = {
   cursorPoint?: PointMm;
   arcSweepAngleRad?: number;
   hoveredConstraintId?: string;
+  hoveredTargetEntityId?: string;
   pendingTargetEntityIds?: Set<string>;
   marqueeStart?: PointMm;
   marqueeCurrent?: PointMm;
   dragDuplicating: boolean;
   dragging: boolean;
-  snapEnabled: boolean;
-  pointSnapEnabled: boolean;
+  snapActive: boolean;
   snapSuppressed: boolean;
 };
 
@@ -131,20 +131,20 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
     cursorPoint,
     arcSweepAngleRad,
     hoveredConstraintId,
+    hoveredTargetEntityId,
     pendingTargetEntityIds = new Set(),
     marqueeStart,
     marqueeCurrent,
     dragDuplicating,
     dragging,
-    snapEnabled,
-    pointSnapEnabled,
+    snapActive,
     snapSuppressed,
   } = options;
   if (!outputPreview && gridVisible) drawGrid(context, width, height, viewport, a4Landscape);
   if (!outputPreview && a4Visible) drawA4(context, width, height, viewport, a4Landscape);
-  if (outputPreview) drawOutputPreviewPages(context, outputPages, width, height, viewport);
+  if (!outputPreview) drawCoordinateReference(context, width, height, viewport);
   const visibleEntities = entities.filter((entity) => entityIsVisible(entity, layers));
-  if (!outputPreview && visibleEntities.length === 0 && freeTexts.length === 0) drawEmptyState(context, width, height);
+  if (!outputPreview && entities.length === 0 && freeTexts.length === 0) drawEmptyState(context, width, height);
   visibleEntities.forEach((entity) =>
     drawEntity(
       context,
@@ -155,6 +155,7 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
       viewport,
       !outputPreview && selectedIds.has(entity.id),
       !outputPreview && pendingTargetEntityIds.has(entity.id),
+      !outputPreview && entity.id === hoveredTargetEntityId,
     ),
   );
   freeTexts
@@ -202,6 +203,7 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
         item.id === selectedStitchStartPointId || highlightedStitchStartPointIds.has(item.id),
       ),
     );
+  if (outputPreview) drawOutputPreviewPages(context, outputPages, width, height, viewport);
   if (!outputPreview && selectedPartOrigin) drawPartOrigin(context, selectedPartOrigin, width, height, viewport);
   if (!outputPreview) {
     if (showsCoincidentGroups(tool)) {
@@ -225,10 +227,19 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
       );
     if (marqueeStart && marqueeCurrent)
       drawSelectionMarquee(context, visibleEntities, marqueeStart, marqueeCurrent, width, height, viewport);
-    drawPendingTargetFeedback(context, pendingTargetEntityIds, cursorPoint, tool, width, height, viewport);
+    drawPendingTargetFeedback(
+      context,
+      pendingTargetEntityIds,
+      hoveredTargetEntityId,
+      cursorPoint,
+      tool,
+      width,
+      height,
+      viewport,
+    );
     if (dragging && moveFeedbackVisible(selectedIds, cursorPoint))
       drawDragFeedback(context, selectedIds.size, dragDuplicating, cursorPoint, width, height, viewport);
-    drawSnapFeedback(context, cursorPoint, snapEnabled || pointSnapEnabled, snapSuppressed, width, height, viewport);
+    drawSnapFeedback(context, cursorPoint, snapActive, snapSuppressed, width, height, viewport);
   }
 }
 
@@ -408,7 +419,7 @@ function drawA4(
   context.save();
   context.fillStyle = "rgba(255,255,255,.38)";
   context.fillRect(gridBounds.x, gridBounds.y, gridBounds.width, gridBounds.height);
-  context.setLineDash([4, 4]);
+  context.setLineDash([]);
   for (let row = 0; row < 5; row += 1)
     for (let column = 0; column < 5; column += 1) {
       const centerPoint = { xMm: (column - center) * pageWidth, yMm: (center - row) * pageHeight };
@@ -428,10 +439,13 @@ function drawA4(
   context.lineWidth = 0.8;
   context.strokeRect(centralTopLeft.x, centralTopLeft.y, pageWidth * scale, pageHeight * scale);
   context.setLineDash([]);
-  drawCoordinateReference(context, width, height, viewport);
   context.fillStyle = "#6e6e73";
   context.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
-  context.fillText(`A4 5×5 · ${landscape ? "横" : "縦"}`, 14, height - 14);
+  context.fillText(
+    "DrawingSnapshot / A4 5x5 / 100%",
+    centralTopLeft.x + 14,
+    centralTopLeft.y + pageHeight * scale - 14,
+  );
   context.restore();
 }
 
@@ -551,6 +565,7 @@ function geometryScreenBounds(entity: RawEntity, width: number, height: number, 
 function drawPendingTargetFeedback(
   context: CanvasRenderingContext2D,
   pendingTargetEntityIds: Set<string>,
+  hoveredTargetEntityId: string | undefined,
   point: PointMm | undefined,
   tool: Tool,
   width: number,
@@ -559,6 +574,7 @@ function drawPendingTargetFeedback(
 ) {
   if (
     !point ||
+    !hoveredTargetEntityId ||
     tool === "select" ||
     [
       "point",
@@ -576,9 +592,9 @@ function drawPendingTargetFeedback(
     return;
   const screen = screenPoint(point, width, height, viewport);
   context.save();
-  context.strokeStyle = pendingTargetEntityIds.size ? "#0a84ff" : "#f59f00";
+  context.strokeStyle = "#34c759";
   context.lineWidth = 2;
-  context.setLineDash(pendingTargetEntityIds.size ? [] : [5, 3]);
+  context.setLineDash([]);
   context.beginPath();
   context.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
   context.stroke();
@@ -588,7 +604,7 @@ function drawPendingTargetFeedback(
     appStrings.canvas.constraintTargetSelection(pendingTargetEntityIds.size + 1),
     screen.x + 12,
     screen.y - 10,
-    pendingTargetEntityIds.size ? "#0a84ff" : "#f59f00",
+    "#34c759",
   );
   context.restore();
 }
@@ -665,15 +681,22 @@ function drawEntity(
   viewport: Viewport,
   selected: boolean,
   pendingTarget = false,
+  hoveredTarget = false,
 ) {
   const geometry = geometryOf(entity);
   if (!geometry) return;
   const scale = displayScale(viewport);
   context.save();
-  context.strokeStyle = selected ? "#0a84ff" : pendingTarget ? "#34c759" : rgba(style.stroke);
+  context.strokeStyle = selected
+    ? "#0a84ff"
+    : hoveredTarget
+      ? "#34c759"
+      : pendingTarget
+        ? "#0a84ff"
+        : rgba(style.stroke);
   context.fillStyle = context.strokeStyle;
-  context.lineWidth = selected || pendingTarget ? 2.2 : Math.max(0.8, style.strokeWidthMm * scale);
-  if (!selected && pendingTarget) context.setLineDash([5, 3]);
+  context.lineWidth = selected || pendingTarget || hoveredTarget ? 2.2 : Math.max(0.8, style.strokeWidthMm * scale);
+  if (!selected && pendingTarget && !hoveredTarget) context.setLineDash([5, 3]);
   else if (!selected) setLinePattern(context, style.pattern, context.lineWidth);
   if (geometry.tag === "point") {
     const point = screenPoint(geometry.point, width, height, viewport);

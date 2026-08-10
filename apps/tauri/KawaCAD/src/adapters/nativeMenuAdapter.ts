@@ -11,14 +11,32 @@ export type { NativeMenuState } from "@/app/domain/nativeMenuState";
 
 const dynamicMenuItems = new Map<string, MenuItem>();
 let currentMenuState: NativeMenuState | undefined;
+let menuStateApplyRequested = false;
+let menuStateApplyInProgress = false;
 
 export function updateNativeMenuState(state: NativeMenuState) {
   currentMenuState = state;
-  void applyNativeMenuState();
+  menuStateApplyRequested = true;
+  if (!menuStateApplyInProgress) void flushNativeMenuState();
 }
 
-async function applyNativeMenuState() {
-  const availability = nativeMenuAvailability(currentMenuState);
+async function flushNativeMenuState() {
+  menuStateApplyInProgress = true;
+  try {
+    while (menuStateApplyRequested) {
+      menuStateApplyRequested = false;
+      await applyNativeMenuState(currentMenuState);
+    }
+  } catch (error) {
+    console.info("KawaCAD menu state could not be updated.", error);
+  } finally {
+    menuStateApplyInProgress = false;
+    if (menuStateApplyRequested) void flushNativeMenuState();
+  }
+}
+
+async function applyNativeMenuState(state: NativeMenuState | undefined) {
+  const availability = nativeMenuAvailability(state);
   const enabled: Record<string, boolean> = {
     save: availability.save,
     saveAs: availability.saveAs,
@@ -58,6 +76,7 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "duplicate",
   "delete",
   "selectAll",
+  "cancelCurrentInteraction",
   "findInspector",
   "select",
   "point",
@@ -136,6 +155,7 @@ export function aboutMetadataForPlatform(userAgent: string): AboutMetadata {
  * intentionally left to the host OS so the same definition works on
  * Windows, Linux, and macOS. */
 export async function installNativeMenu() {
+  dynamicMenuItems.clear();
   const item = async (text: string, action: MenuAction, accelerator?: string) => {
     const menuItem = await MenuItem.new({
       id: `kawa-cad-${action}`,
@@ -196,6 +216,8 @@ export async function installNativeMenu() {
     await item(appStrings.menu.item.duplicate, "duplicate", "CmdOrCtrl+D"),
     await item(appStrings.menu.item.delete, "delete"),
     await item(appStrings.menu.item.selectAll, "selectAll", "CmdOrCtrl+A"),
+    { item: "Separator" as const },
+    await item(appStrings.menu.item.cancelCurrentInteraction, "cancelCurrentInteraction", "Escape"),
     await item(appStrings.menu.item.findInspector, "findInspector", "CmdOrCtrl+F"),
   ];
   const drawingItems = [
@@ -291,5 +313,6 @@ export async function installNativeMenu() {
     ],
   });
   await menu.setAsAppMenu();
-  await applyNativeMenuState();
+  menuStateApplyRequested = true;
+  if (!menuStateApplyInProgress) await flushNativeMenuState();
 }

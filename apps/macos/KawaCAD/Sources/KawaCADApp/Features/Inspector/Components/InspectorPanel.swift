@@ -160,7 +160,7 @@ struct InspectorPanel: View {
               VStack(alignment: .leading, spacing: 3) {
                 Text(constraint.kind)
                   .font(.system(size: 12, weight: .semibold))
-                Text(String(describing: constraint.status))
+                Text(constraint.status.displayName)
                   .font(.system(size: 10))
                   .foregroundStyle(LeatherColors.secondaryInk)
               }
@@ -209,8 +209,13 @@ struct InspectorPanel: View {
       }
       ForEach(appState.freeTexts) { freeText in
         HStack(spacing: 8) {
-          Text(freeText.content)
-            .frame(maxWidth: .infinity, alignment: .leading)
+          Button {
+            appState.selectFreeText(freeText.id)
+          } label: {
+            Text(freeText.content)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
+          .buttonStyle(.plain)
           Text(AppStrings.tr("tool.free_text"))
             .font(.system(size: 10))
             .foregroundStyle(LeatherColors.secondaryInk)

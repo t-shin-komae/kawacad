@@ -41,7 +41,10 @@ export type AppActionContext = {
   setEditingFreeTextId: Setter<string | undefined>;
   setHoveredConstraintId: Setter<string | undefined>;
   setSnapSuppressed: Setter<boolean>;
+  setSnapActive: Setter<boolean>;
   setDragDuplicating: Setter<boolean>;
+  setMarqueeCurrent: Setter<PointMm | undefined>;
+  setHoveredTargetEntityId: Setter<string | undefined>;
   setPendingTargets: Setter<ConstraintTarget[]>;
   setPendingConstraintValue: Setter<PendingConstraintValue | undefined>;
   setPendingDerivedValue: Setter<PendingDerivedValue | undefined>;
@@ -125,7 +128,10 @@ export type DocumentActionContext = Pick<
   | "setEditingFreeTextId"
   | "setHoveredConstraintId"
   | "setSnapSuppressed"
+  | "setSnapActive"
   | "setDragDuplicating"
+  | "setMarqueeCurrent"
+  | "setHoveredTargetEntityId"
   | "setPendingTargets"
   | "setPendingConstraintValue"
   | "setPendingDerivedValue"
@@ -175,7 +181,10 @@ export type CanvasActionContext = Pick<
   | "setSelected"
   | "setHoveredConstraintId"
   | "setSnapSuppressed"
+  | "setSnapActive"
   | "setDragDuplicating"
+  | "setMarqueeCurrent"
+  | "setHoveredTargetEntityId"
   | "setPendingTargets"
   | "setPendingConstraintValue"
   | "setPendingDerivedValue"

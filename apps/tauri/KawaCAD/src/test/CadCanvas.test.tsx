@@ -10,12 +10,29 @@ import {
   outputPreviewPageRects,
 } from "@/features/canvas/components/CadCanvas";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
+import type { RawEntity } from "@/features/canvas/domain/cad";
 
 function canvas(
   tool: Tool,
   draftPoints: Array<{ xMm: number; yMm: number }> = [],
   pendingTargetCount = 0,
-  options: { filletDraftEntityCount?: number; filletDraftClosed?: boolean; settingPartOrigin?: boolean } = {},
+  options: {
+    filletDraftEntityCount?: number;
+    filletDraftClosed?: boolean;
+    settingPartOrigin?: boolean;
+    entities?: RawEntity[];
+    layers?: Array<{
+      id: string;
+      visible: boolean;
+      style: {
+        stroke: { red: number; green: number; blue: number; alpha: number };
+        strokeWidthMm: number;
+        pattern: string;
+      };
+    }>;
+    marqueeStart?: { xMm: number; yMm: number };
+    marqueeCurrent?: { xMm: number; yMm: number };
+  } = {},
 ) {
   return (
     <CadCanvas
@@ -84,6 +101,30 @@ describe("Canvas accessibility parity", () => {
     expect(screen.getByText(/フィレット対象 3 件、開いた輪郭/)).toBeInTheDocument();
     rerender(canvas("select", [], 0, { settingPartOrigin: true }));
     expect(screen.getByText(/パーツ原点を選択中/)).toBeInTheDocument();
+  });
+
+  it("reports the same visible marquee candidates used by canvas selection", () => {
+    const entities: RawEntity[] = [
+      { id: "point:visible", layerId: "layer:visible", kind: { point: { xMm: 1, yMm: 1 } } },
+      { id: "point:hidden", layerId: "layer:hidden", kind: { point: { xMm: 2, yMm: 2 } } },
+    ];
+    const layerStyle = {
+      stroke: { red: 0, green: 0, blue: 0, alpha: 1 },
+      strokeWidthMm: 0.2,
+      pattern: "solid",
+    };
+    render(
+      canvas("select", [], 0, {
+        entities,
+        layers: [
+          { id: "layer:visible", visible: true, style: layerStyle },
+          { id: "layer:hidden", visible: false, style: layerStyle },
+        ],
+        marqueeStart: { xMm: 0, yMm: 0 },
+        marqueeCurrent: { xMm: 5, yMm: 5 },
+      }),
+    );
+    expect(screen.getByText(/包含選択: 1 件/)).toBeInTheDocument();
   });
 });
 

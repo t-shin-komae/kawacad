@@ -26,5 +26,41 @@ export function useInspectorActions(context: InspectorActionContext) {
       context.setSelectedStitchStartPointId,
     ],
   );
-  return { resetInspectorPresentation, selectMeasurement };
+  const selectConstraint = useCallback(
+    (constraintId: string) => {
+      context.setSelected(new Set());
+      context.setSelectedFreeTextId(undefined);
+      context.setSelectedMeasurementId(undefined);
+      context.setSelectedStitchStartPointId(undefined);
+      context.setSelectedConstraintId(constraintId);
+      context.setInspectorSelectedPartId(undefined);
+    },
+    [
+      context.setInspectorSelectedPartId,
+      context.setSelected,
+      context.setSelectedConstraintId,
+      context.setSelectedFreeTextId,
+      context.setSelectedMeasurementId,
+      context.setSelectedStitchStartPointId,
+    ],
+  );
+  const selectFreeText = useCallback(
+    (freeTextId: string) => {
+      context.setSelected(new Set());
+      context.setSelectedConstraintId(undefined);
+      context.setSelectedMeasurementId(undefined);
+      context.setSelectedStitchStartPointId(undefined);
+      context.setSelectedFreeTextId(freeTextId);
+      context.setInspectorSelectedPartId(undefined);
+    },
+    [
+      context.setInspectorSelectedPartId,
+      context.setSelected,
+      context.setSelectedConstraintId,
+      context.setSelectedFreeTextId,
+      context.setSelectedMeasurementId,
+      context.setSelectedStitchStartPointId,
+    ],
+  );
+  return { resetInspectorPresentation, selectConstraint, selectFreeText, selectMeasurement };
 }

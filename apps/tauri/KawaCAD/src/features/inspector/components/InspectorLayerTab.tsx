@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Layers3 } from "lucide-react";
 import {
   matchesInspectorLayerSearch,
@@ -7,6 +7,7 @@ import {
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
 import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
+import { InspectorDisclosureRow, InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
 
 type InspectorLayerTabProps = {
   props: Props;
@@ -16,12 +17,9 @@ type InspectorLayerTabProps = {
 };
 
 export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFields }: InspectorLayerTabProps) {
+  const [selectedLayerId, setSelectedLayerId] = useState<string>();
   return (
-    <section>
-      <h2>
-        <Layers3 aria-hidden="true" />
-        {appStrings.inspector.layers}
-      </h2>
+    <InspectorSection title={appStrings.inspector.layers} icon={Layers3}>
       <label>
         {appStrings.inspector.drawingLayer}
         <select value={props.activeLayerId} onChange={(event) => props.onActiveLayerChange(event.target.value)}>
@@ -32,19 +30,30 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
           ))}
         </select>
       </label>
-      <label className="inspector-search">
-        {appStrings.inspector.layerSearch}
-        <input
-          type="search"
-          value={feature.layerSearchQuery}
-          onChange={(event) => updateFeature((state) => setInspectorLayerSearchQuery(state, event.target.value))}
-        />
-      </label>
+      {(props.layers.length >= 8 || feature.layerSearchVisible || feature.layerSearchQuery) && (
+        <label className="inspector-search">
+          {appStrings.inspector.layerSearch}
+          <input
+            type="search"
+            value={feature.layerSearchQuery}
+            onChange={(event) => updateFeature((state) => setInspectorLayerSearchQuery(state, event.target.value))}
+          />
+        </label>
+      )}
       {props.layers
         .filter((item) => matchesInspectorLayerSearch(item.name, feature.layerSearchQuery))
         .map((item) => (
-          <div className="inspector-card" key={item.id}>
-            <div className="row">
+          <InspectorDisclosureRow
+            key={item.id}
+            title={item.name}
+            subtitle={
+              appStrings.inspector.layerKinds[item.kind as keyof typeof appStrings.inspector.layerKinds] ?? item.kind
+            }
+            metadata={item.visible ? appStrings.inspector.visible : appStrings.inspector.hidden}
+            expanded={selectedLayerId === item.id}
+            onToggle={() => setSelectedLayerId(item.id)}
+          >
+            <div className="row inspector-editor-heading">
               <label>
                 <input
                   type="checkbox"
@@ -86,9 +95,11 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
             <button disabled={props.layers.length <= 1} onClick={() => props.onDeleteLayer(item)}>
               {appStrings.contextMenu.delete}
             </button>
-          </div>
+          </InspectorDisclosureRow>
         ))}
-      <button onClick={props.onAddLayer}>{appStrings.inspector.addLayer}</button>
-    </section>
+      <button className="inspector-add-button" onClick={props.onAddLayer}>
+        {appStrings.inspector.addLayer}
+      </button>
+    </InspectorSection>
   );
 }

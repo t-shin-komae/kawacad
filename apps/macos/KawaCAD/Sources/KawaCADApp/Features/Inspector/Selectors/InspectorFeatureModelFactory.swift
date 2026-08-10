@@ -113,6 +113,7 @@ enum InspectorFeatureModelFactory {
     actions.deleteSelectedFreeText = actionHandlers.canvas.deleteSelectedFreeText
     actions.deleteConstraint = actionHandlers.canvas.deleteConstraint
     actions.selectConstraint = actionHandlers.canvas.selectConstraint
+    actions.selectFreeText = actionHandlers.canvas.selectFreeText
     actions.selectMeasurementAnnotation = actionHandlers.canvas.selectMeasurementAnnotation
     actions.deleteMeasurementAnnotation = actionHandlers.canvas.deleteMeasurementAnnotation
     actions.convertMeasurementAnnotationToConstraint =

@@ -13,6 +13,7 @@ describe("cross-platform native menu", () => {
     expect(crossPlatformMenuActions).toContain("outputPreview");
     expect(crossPlatformMenuActions).toContain("openLicenses");
     expect(crossPlatformMenuActions).toContain("exportPDF");
+    expect(crossPlatformMenuActions).toContain("cancelCurrentInteraction");
     expect(crossPlatformMenuActions).not.toContain("print");
   });
 
@@ -48,6 +49,7 @@ describe("cross-platform native menu", () => {
         canDirectPrint: true,
         canSmoothArcTangencies: true,
         inspectorOpen: true,
+        inspectorTab: "layers",
         bottomWorkbenchVisible: false,
       }),
     ).toMatchObject({
@@ -56,6 +58,7 @@ describe("cross-platform native menu", () => {
       duplicate: true,
       paste: true,
       directPrint: true,
+      findInspector: true,
       inspectorLabel: "インスペクタを隠す",
       bottomWorkbenchLabel: "サマリーを表示",
     });
@@ -72,6 +75,7 @@ describe("cross-platform native menu", () => {
         canDirectPrint: true,
         canSmoothArcTangencies: true,
         inspectorOpen: false,
+        inspectorTab: "selection",
         bottomWorkbenchVisible: true,
       }),
     ).toMatchObject({
@@ -85,5 +89,25 @@ describe("cross-platform native menu", () => {
       inspectorLabel: "インスペクタを表示",
       bottomWorkbenchLabel: "サマリーを隠す",
     });
+  });
+
+  it("enables inspector search only for a searchable visible tab", () => {
+    const base = {
+      hasDocument: true,
+      viewMode: "editDisplay" as const,
+      canUndo: false,
+      canRedo: false,
+      hasSelection: false,
+      canPaste: false,
+      canEditLayers: true,
+      canExportPDF: true,
+      canDirectPrint: true,
+      canSmoothArcTangencies: false,
+      inspectorOpen: true,
+      bottomWorkbenchVisible: false,
+    };
+    expect(nativeMenuAvailability({ ...base, inspectorTab: "selection" }).findInspector).toBe(false);
+    expect(nativeMenuAvailability({ ...base, inspectorTab: "layers" }).findInspector).toBe(true);
+    expect(nativeMenuAvailability({ ...base, inspectorOpen: false, inspectorTab: "layers" }).findInspector).toBe(false);
   });
 });

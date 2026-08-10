@@ -667,12 +667,20 @@ input[type="checkbox"] {
   min-height: 0;
   overflow: hidden;
   border-left: 1px solid var(--panel-stroke);
-  padding: var(--panel-padding);
+  padding: 0;
+}
+.inspector-header {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid var(--panel-stroke);
+  background: color-mix(in srgb, var(--panel) 86%, var(--window));
 }
 .inspector-content {
   min-height: 0;
   overflow: auto;
-  padding-right: 2px;
+  padding: 10px 16px 18px;
 }
 .compact-inspector-drawer {
   overflow: hidden;
@@ -682,33 +690,38 @@ input[type="checkbox"] {
 }
 .inspector-selection-change {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 0 0 8px;
-  padding: 7px 8px;
-  border: 1px solid rgba(10, 132, 255, 0.35);
+  min-height: 30px;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--panel-stroke));
   border-radius: 7px;
-  background: rgba(10, 132, 255, 0.08);
-  color: #204ab3;
+  background: color-mix(in srgb, var(--selected-fill) 58%, transparent);
+  color: var(--ink);
   font-size: 11px;
+  text-align: left;
 }
-.inspector-selection-context {
-  margin: -4px 0 8px;
-  color: var(--secondary-ink);
-  font-size: 11px;
+.inspector-selection-change-status {
+  width: 100%;
+}
+.inspector-selection-change strong {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
 }
 .inspector-tabs {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 2px;
-  margin: 0 0 12px;
+  margin: 0;
   padding: 3px;
   border: 1px solid var(--panel-stroke);
   border-radius: var(--card-radius);
-  background: color-mix(in srgb, var(--panel) 55%, transparent);
-  overflow-x: auto;
+  background: color-mix(in srgb, var(--window) 48%, transparent);
+  overflow: hidden;
 }
 .inspector-tabs button {
   min-height: 28px;
@@ -1305,31 +1318,47 @@ input[type="checkbox"] {
 .canvas-context-menu button:hover:not(:disabled) {
   background: var(--selected-fill);
 }
-.inspector section {
-  margin: 0 0 12px;
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, var(--panel-stroke) 65%, transparent);
-  border-radius: var(--card-radius);
-  background: color-mix(in srgb, var(--panel) 55%, transparent);
-  box-shadow: var(--panel-shadow);
+.inspector-section {
+  margin: 0;
+  padding: 6px 0;
 }
-.inspector section:first-of-type {
-  padding-top: 10px;
+.inspector-section + .inspector-section {
+  margin-top: 6px;
 }
-.inspector section h2 {
+.inspector-section h2 {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   margin: 0 0 10px;
   color: var(--ink);
   font-size: 12px;
   font-weight: 600;
   line-height: 16px;
 }
-.inspector section h2 svg {
-  width: 14px;
+.inspector-section h2 svg {
+  width: 16px;
   height: 14px;
   color: var(--accent);
+  stroke-width: 2;
+}
+.inspector-section-content {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 4px 0 24px;
+}
+.inspector-section-content > label,
+.inspector-card > label {
+  display: grid;
+  gap: 4px;
+  color: var(--secondary-ink);
+  font-size: 11px;
+}
+.inspector-section-content > label select,
+.inspector-section-content > label input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height);
 }
 .inspector p {
   margin: 0;
@@ -1360,13 +1389,98 @@ input[type="checkbox"] {
   padding: 1px 6px;
   font-size: 11px;
 }
+.inspector-list-row {
+  min-height: 30px;
+  padding: 0;
+}
+.inspector-list-row > small {
+  flex: 0 0 auto;
+  color: var(--secondary-ink);
+  font-size: 10px;
+}
+.inspector-list-row .inspector-row-action {
+  display: grid;
+  flex: 1 1 auto;
+  justify-items: start;
+  min-width: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+.inspector-list-row .inspector-row-action:hover:not(:disabled) {
+  border-color: transparent;
+  background: transparent;
+}
+.inspector-list-row .inspector-row-action small {
+  color: var(--secondary-ink);
+  font-size: 10px;
+}
+.inspector-destructive-button {
+  width: 100%;
+}
 .inspector-card {
   display: grid;
-  gap: 5px;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.inspector-disclosure {
+  display: grid;
+  gap: 8px;
+}
+.inspector-disclosure-summary {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   padding: 10px;
-  border: 1px solid color-mix(in srgb, var(--panel-stroke) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--panel-stroke) 35%, transparent);
   border-radius: var(--card-radius);
-  background: var(--inset-fill, rgba(255, 255, 255, 0.32));
+  background: var(--panel);
+  text-align: left;
+}
+.inspector-disclosure-summary.selected {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--panel-stroke));
+  background: var(--inset-fill);
+}
+.inspector-disclosure-summary > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.inspector-disclosure-summary strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inspector-disclosure-summary small {
+  color: var(--secondary-ink);
+  font-size: 10px;
+  font-weight: 500;
+}
+.inspector-disclosure-summary > small {
+  max-width: 42%;
+  text-align: right;
+}
+.inspector-disclosure-content {
+  display: grid;
+  gap: 10px;
+}
+.inspector-editor-heading {
+  padding-top: 0;
+}
+.inspector-add-button {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
 }
 .geometry-fields,
 .constraint-editor,
@@ -1397,8 +1511,7 @@ input[type="checkbox"] {
   height: 24px;
   border-radius: var(--control-radius);
 }
-.document-overview {
-  display: grid;
+.document-overview .inspector-section-content {
   gap: 3px;
 }
 .detail-row {

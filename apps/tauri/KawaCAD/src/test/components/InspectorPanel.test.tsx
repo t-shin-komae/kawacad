@@ -1,3 +1,4 @@
+import { cloneElement } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RawEntity } from "@/features/canvas/domain/cad";
@@ -91,6 +92,30 @@ describe("InspectorPanel", () => {
     expect(screen.getByText("表示モード")).toBeInTheDocument();
     expect(screen.getByText("Outline")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("selects constraints, measurements, and notes from the same rows as SwiftUI", () => {
+    const onSelectConstraint = vi.fn();
+    const onSelectMeasurement = vi.fn();
+    const onSelectFreeText = vi.fn();
+    render(
+      cloneElement(panel(), {
+        constraints: [{ id: "constraint:1", kind: "segmentLength", status: "fullyConstrained" }],
+        measurements: [{ id: "measurement:1", kind: "distance", visible: true }],
+        freeTexts: [{ id: "text:1", content: "注記", positionMm: { xMm: 0, yMm: 0 }, fontSizeMm: 3 }],
+        onSelectConstraint,
+        onSelectMeasurement,
+        onSelectFreeText,
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^線分長完全拘束/ }));
+    fireEvent.click(screen.getByRole("button", { name: "距離表示" }));
+    fireEvent.click(screen.getByRole("button", { name: "注記" }));
+
+    expect(onSelectConstraint).toHaveBeenCalledWith("constraint:1");
+    expect(onSelectMeasurement).toHaveBeenCalledWith("measurement:1");
+    expect(onSelectFreeText).toHaveBeenCalledWith("text:1");
   });
 
   it("summarizes multiple selections and applies a shared style to all selected entities", () => {
@@ -217,17 +242,34 @@ describe("InspectorPanel", () => {
     expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
 
+    expect(screen.getByRole("button", { name: /^Outline/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Stitch/ })).toBeInTheDocument();
+    fireEvent(window, new Event("kawa-cad-find-inspector"));
     const search = screen.getByRole("searchbox", { name: "レイヤーを検索" });
-    expect(screen.getByRole("checkbox", { name: "Outline" })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Stitch" })).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "outline" } });
-    expect(screen.getByRole("checkbox", { name: "Outline" })).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: "Stitch" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Outline/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Stitch/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the selection-change notice only after selection changes on another tab", () => {
+    const view = render(panel());
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    expect(screen.queryByText("選択が変更されました。")).not.toBeInTheDocument();
+
+    view.rerender(
+      panel(vi.fn(), [], [], [], undefined, undefined, undefined, undefined, undefined, undefined, vi.fn(), [
+        "entity:changed",
+      ]),
+    );
+    expect(screen.getByText("選択が変更されました。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "選択を表示" }));
+    expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("offers the SwiftUI color and drafting-width presets with custom fallback", () => {
     render(panel());
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
     expect(screen.getAllByRole("combobox", { name: "色プリセット" })[0]).toHaveValue("custom");
     expect(screen.getAllByRole("combobox", { name: "線幅プリセット" })[0]).toHaveValue("custom");
   });
@@ -236,6 +278,7 @@ describe("InspectorPanel", () => {
     const onCommand = vi.fn();
     render(panel(onCommand, [], [{ id: "style:stitch", name: "縫い線", style }]));
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    fireEvent.click(screen.getByRole("button", { name: /^縫い線/ }));
     fireEvent.click(screen.getByRole("button", { name: "名称" }));
     expect(screen.getByRole("dialog", { name: "線種名を変更" })).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "線種名" }), { target: { value: "飾り縫い" } });
@@ -251,6 +294,7 @@ describe("InspectorPanel", () => {
     const onCommand = vi.fn();
     render(panel(onCommand));
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Outline を出力対象に含める" }));
     expect(onCommand).toHaveBeenCalledWith(
       "setLayerPrintable",
@@ -277,6 +321,7 @@ describe("InspectorPanel", () => {
     };
     render(panel(onCommand, [], [], [part]));
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: "カードケース を出力対象に含める" }));
     fireEvent.change(screen.getByRole("spinbutton", { name: "カードケース の原点 X (mm)" }), {
       target: { value: "12.5" },
@@ -317,6 +362,7 @@ describe("InspectorPanel", () => {
       ]),
     );
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
     fireEvent.click(screen.getByRole("button", { name: "選択を追加" }));
     fireEvent.click(screen.getByRole("button", { name: "選択を除外" }));
     fireEvent.click(screen.getByRole("button", { name: "選択を外形に設定" }));
@@ -355,6 +401,7 @@ describe("InspectorPanel", () => {
     };
     render(panel(onCommand, [], [], [part]));
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
 
     const name = screen.getByRole("textbox", { name: "カードケース の名前" });
     fireEvent.change(name, { target: { value: "カード入れ" } });
@@ -495,7 +542,7 @@ describe("InspectorPanel", () => {
     );
   });
 
-  it("edits a selected measurement and exposes its conversion action", () => {
+  it("exposes the SwiftUI conversion and deletion actions for a selected measurement", () => {
     const onCommand = vi.fn();
     const onConvertMeasurement = vi.fn();
     const selectedMeasurement = { id: "measurement:1", kind: "distance", visible: true };
@@ -515,13 +562,8 @@ describe("InspectorPanel", () => {
       ),
     );
     expect(screen.getByText("距離表示", { exact: true })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("checkbox", { name: "表示" }));
     fireEvent.click(screen.getByRole("button", { name: "寸法拘束へ変換" }));
-    expect(onCommand).toHaveBeenCalledWith(
-      "updateMeasurementAnnotation",
-      { ...selectedMeasurement, visible: false },
-      "計測表示を更新しました。",
-    );
+    expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
     expect(onConvertMeasurement).toHaveBeenCalledWith("measurement:1");
   });
 
@@ -540,6 +582,7 @@ describe("InspectorPanel", () => {
     const onCommand = vi.fn();
     render(panel(onCommand, [{ id: "parameter:width", name: "幅", valueMm: 25, unit: "millimeter", memo: "胴回り" }]));
     fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^幅/ }));
     const value = screen.getByRole("spinbutton", { name: "幅 の値 (mm)" });
     fireEvent.change(value, { target: { value: "30" } });
     fireEvent.blur(value);

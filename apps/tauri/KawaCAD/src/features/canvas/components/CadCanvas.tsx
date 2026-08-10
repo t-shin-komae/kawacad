@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   drawCanvasFrame,
+  entityIsVisible,
   type DisplayStyle,
   type OutputPreviewPage,
   type ResolvedCanvasGeometry,
@@ -57,13 +58,13 @@ type Props = {
   cursorPoint?: PointMm;
   arcSweepAngleRad?: number;
   hoveredConstraintId?: string;
+  hoveredTargetEntityId?: string;
   pendingTargetEntityIds?: Set<string>;
   marqueeStart?: PointMm;
   marqueeCurrent?: PointMm;
   dragDuplicating?: boolean;
   dragging?: boolean;
-  snapEnabled?: boolean;
-  pointSnapEnabled?: boolean;
+  snapActive?: boolean;
   snapSuppressed?: boolean;
   coincidentPointGroups?: Array<{ id: string; representative: PointMm; targets: unknown[] }>;
   tool: Tool;
@@ -124,13 +125,13 @@ export function CadCanvas({
   cursorPoint,
   arcSweepAngleRad,
   hoveredConstraintId,
+  hoveredTargetEntityId,
   pendingTargetEntityIds = new Set(),
   marqueeStart,
   marqueeCurrent,
   dragDuplicating = false,
   dragging = false,
-  snapEnabled = false,
-  pointSnapEnabled = false,
+  snapActive = false,
   snapSuppressed = false,
   coincidentPointGroups = [],
   tool,
@@ -205,13 +206,13 @@ export function CadCanvas({
         cursorPoint,
         arcSweepAngleRad,
         hoveredConstraintId,
+        hoveredTargetEntityId,
         pendingTargetEntityIds,
         marqueeStart,
         marqueeCurrent,
         dragDuplicating,
         dragging,
-        snapEnabled,
-        pointSnapEnabled,
+        snapActive,
         snapSuppressed,
       });
     };
@@ -235,13 +236,13 @@ export function CadCanvas({
     highlightedMeasurementAnnotationIds,
     highlightedStitchStartPointIds,
     hoveredConstraintId,
+    hoveredTargetEntityId,
     marqueeCurrent,
     marqueeStart,
     dragDuplicating,
     dragging,
     pendingTargetEntityIds,
-    snapEnabled,
-    pointSnapEnabled,
+    snapActive,
     snapSuppressed,
     gridVisible,
     layers,
@@ -278,7 +279,12 @@ export function CadCanvas({
     pendingTargetCount,
     marqueeCandidateCount:
       marqueeStart && marqueeCurrent
-        ? selectionInRect(entities, marqueeStart, marqueeCurrent, marqueeCurrent.xMm < marqueeStart.xMm).length
+        ? selectionInRect(
+            entities.filter((entity) => entityIsVisible(entity, layers)),
+            marqueeStart,
+            marqueeCurrent,
+            marqueeCurrent.xMm < marqueeStart.xMm,
+          ).length
         : undefined,
     marqueeCrossing: marqueeStart && marqueeCurrent ? marqueeCurrent.xMm < marqueeStart.xMm : undefined,
     dragDuplicating,
