@@ -226,8 +226,9 @@ struct ProjectSidebar: View {
           .tag(style.id)
         }
       }
+      .pickerStyle(.menu)
       .labelsHidden()
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(width: contentWidth, alignment: .leading)
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -262,8 +263,9 @@ struct ProjectSidebar: View {
           Text(kind.displayName).tag(kind)
         }
       }
+      .pickerStyle(.menu)
       .labelsHidden()
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(width: contentWidth, alignment: .leading)
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
@@ -317,6 +319,10 @@ struct ProjectSidebar: View {
       }
     }
     .padding(.bottom, 3)
+  }
+
+  private var contentWidth: CGFloat {
+    max(0, width - 18)
   }
 
   private func isGroupExpanded(_ group: ToolGroup) -> Bool {
