@@ -219,10 +219,10 @@ struct ProjectSidebar: View {
           )
         },
         selection: state.activePatternLineStyleID,
+        width: contentWidth,
         accessibilityLabel: AppStrings.tr("sidebar.pattern_line_style"),
         onSelect: actions.setActivePatternLineStyle
       )
-      .frame(width: contentWidth)
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -254,10 +254,10 @@ struct ProjectSidebar: View {
           )
         },
         selection: state.activeRoundHoleKind,
+        width: contentWidth,
         accessibilityLabel: AppStrings.tr("sidebar.round_hole_kind"),
         onSelect: actions.setActiveRoundHoleKind
       )
-      .frame(width: contentWidth)
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
@@ -339,9 +339,20 @@ struct PalettePopUpItem<Value: Hashable>: Equatable {
   let value: Value
 }
 
+final class PalettePopUpContainer: NSView {
+  let button = NSPopUpButton(frame: .zero, pullsDown: false)
+  var buttonWidthConstraint: NSLayoutConstraint?
+  var preferredWidth: CGFloat = 0
+
+  override var intrinsicContentSize: NSSize {
+    NSSize(width: preferredWidth, height: button.intrinsicContentSize.height)
+  }
+}
+
 struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
   let items: [PalettePopUpItem<Value>]
   let selection: Value
+  let width: CGFloat
   let accessibilityLabel: String
   let onSelect: (Value) -> Void
 
@@ -351,23 +362,42 @@ struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
     Coordinator(parent: self)
   }
 
-  func makeNSView(context: Context) -> NSPopUpButton {
-    let button = NSPopUpButton(frame: .zero, pullsDown: false)
+  func makeNSView(context: Context) -> PalettePopUpContainer {
+    let container = PalettePopUpContainer()
+    let button = container.button
     button.target = context.coordinator
     button.action = #selector(Coordinator.selectionChanged(_:))
+    button.translatesAutoresizingMaskIntoConstraints = false
     button.setContentHuggingPriority(.defaultLow, for: .horizontal)
     button.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    return button
+    container.addSubview(button)
+    let widthConstraint = button.widthAnchor.constraint(equalToConstant: width)
+    container.buttonWidthConstraint = widthConstraint
+    container.preferredWidth = width
+    NSLayoutConstraint.activate([
+      button.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+      widthConstraint,
+      button.topAnchor.constraint(equalTo: container.topAnchor),
+      button.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+    ])
+    return container
   }
 
-  func updateNSView(_ button: NSPopUpButton, context: Context) {
+  func updateNSView(_ container: PalettePopUpContainer, context: Context) {
     context.coordinator.parent = self
+    let button = container.button
+    if container.preferredWidth != width {
+      container.preferredWidth = width
+      container.buttonWidthConstraint?.constant = width
+      container.invalidateIntrinsicContentSize()
+    }
     if context.coordinator.items != items {
       button.removeAllItems()
       for item in items {
         button.addItem(withTitle: item.title)
       }
       context.coordinator.items = items
+      container.invalidateIntrinsicContentSize()
     }
 
     if let selectedIndex = items.firstIndex(where: { $0.value == selection }),
@@ -381,13 +411,13 @@ struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
 
   func sizeThatFits(
     _ proposal: ProposedViewSize,
-    nsView button: NSPopUpButton,
+    nsView container: PalettePopUpContainer,
     context _: Context
   ) -> CGSize? {
-    guard let width = proposal.width else {
-      return nil
-    }
-    return CGSize(width: width, height: button.fittingSize.height)
+    CGSize(
+      width: width,
+      height: proposal.height ?? container.button.fittingSize.height
+    )
   }
 
   final class Coordinator: NSObject {

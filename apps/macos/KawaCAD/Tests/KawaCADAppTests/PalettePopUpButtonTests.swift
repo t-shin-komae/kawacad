@@ -6,24 +6,29 @@ import Testing
 
 @Test("ツールパレットのポップアップボタンは指定幅で描画される")
 @MainActor
-func palette_popup_button_uses_the_proposed_width() throws {
+func palette_popup_button_uses_the_configured_width() throws {
   var selectedValue = "snapFastener"
   let hostingView = NSHostingView(
-    rootView: PalettePopUpButton(
-      items: [
-        PalettePopUpItem(title: "外形カット線", value: "outer"),
-        PalettePopUpItem(title: "ジャンパーホック穴", value: "snapFastener"),
-      ],
-      selection: selectedValue,
-      accessibilityLabel: "型紙線種",
-      onSelect: { selectedValue = $0 }
-    )
-    .frame(width: 158)
+    rootView: HStack(spacing: 0) {
+      PalettePopUpButton(
+        items: [
+          PalettePopUpItem(title: "外形カット線", value: "outer"),
+          PalettePopUpItem(title: "ジャンパーホック穴", value: "snapFastener"),
+        ],
+        selection: selectedValue,
+        width: 158,
+        accessibilityLabel: "型紙線種",
+        onSelect: { selectedValue = $0 }
+      )
+      Spacer(minLength: 0)
+    }
   )
-  hostingView.frame = NSRect(x: 0, y: 0, width: 158, height: 40)
+  hostingView.frame = NSRect(x: 0, y: 0, width: 220, height: 40)
   hostingView.layoutSubtreeIfNeeded()
 
-  let popUpButton = try #require(findSubview(of: NSPopUpButton.self, in: hostingView))
+  let container = try #require(findSubview(of: PalettePopUpContainer.self, in: hostingView))
+  let popUpButton = container.button
+  #expect(container.frame.width == 158)
   #expect(popUpButton.frame.width == 158)
   #expect(popUpButton.titleOfSelectedItem == "ジャンパーホック穴")
 
