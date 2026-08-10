@@ -211,24 +211,32 @@ struct ProjectSidebar: View {
         .lineLimit(1)
         .padding(.horizontal, 2)
 
-      Picker(
-        AppStrings.tr("sidebar.pattern_line_style"),
-        selection: Binding(
-          get: { state.activePatternLineStyleID },
-          set: actions.setActivePatternLineStyle
-        )
-      ) {
+      Menu {
         ForEach(state.sharedStyles) { style in
-          HStack(spacing: 6) {
+          Button {
+            actions.setActivePatternLineStyle(style.id)
+          } label: {
+            HStack(spacing: 6) {
+              PatternLineStyleSwatch(style: style)
+              Text(style.name)
+            }
+          }
+        }
+      } label: {
+        HStack(spacing: 6) {
+          if let style = activePatternLineStyle {
             PatternLineStyleSwatch(style: style)
             Text(style.name)
           }
-          .tag(style.id)
+          Spacer(minLength: 0)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(.system(size: 9, weight: .semibold))
         }
+        .frame(width: contentWidth, height: 22, alignment: .leading)
       }
-      .pickerStyle(.menu)
-      .labelsHidden()
-      .frame(width: contentWidth, alignment: .leading)
+      .buttonStyle(.bordered)
+      .controlSize(.small)
+      .accessibilityLabel(AppStrings.tr("sidebar.pattern_line_style"))
       .disabled(state.sharedStyles.isEmpty)
 
       Button {
@@ -252,20 +260,24 @@ struct ProjectSidebar: View {
         .lineLimit(1)
         .padding(.horizontal, 2)
 
-      Picker(
-        AppStrings.tr("sidebar.round_hole_kind"),
-        selection: Binding(
-          get: { state.activeRoundHoleKind },
-          set: actions.setActiveRoundHoleKind
-        )
-      ) {
+      Menu {
         ForEach(ProjectRoundHoleKind.allCases) { kind in
-          Text(kind.displayName).tag(kind)
+          Button(kind.displayName) {
+            actions.setActiveRoundHoleKind(kind)
+          }
         }
+      } label: {
+        HStack(spacing: 6) {
+          Text(state.activeRoundHoleKind.displayName)
+          Spacer(minLength: 0)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(.system(size: 9, weight: .semibold))
+        }
+        .frame(width: contentWidth, height: 22, alignment: .leading)
       }
-      .pickerStyle(.menu)
-      .labelsHidden()
-      .frame(width: contentWidth, alignment: .leading)
+      .buttonStyle(.bordered)
+      .controlSize(.small)
+      .accessibilityLabel(AppStrings.tr("sidebar.round_hole_kind"))
 
       SyncedTextField(
         placeholder: AppStrings.tr("sidebar.round_hole_diameter_mm"),
@@ -323,6 +335,10 @@ struct ProjectSidebar: View {
 
   private var contentWidth: CGFloat {
     max(0, width - 18)
+  }
+
+  private var activePatternLineStyle: ProjectSharedStyle? {
+    state.sharedStyles.first { $0.id == state.activePatternLineStyleID }
   }
 
   private func isGroupExpanded(_ group: ToolGroup) -> Bool {
