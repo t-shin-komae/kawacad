@@ -215,13 +215,9 @@ struct ProjectSidebar: View {
       PalettePopUpButton(
         items: state.sharedStyles.map { style in
           PalettePopUpItem(
-            key: [
-              style.id, style.name, style.colorHex, String(style.strokeWidthMM),
-              style.linePattern.rawValue,
-            ].joined(separator: "|"),
+            key: "\(style.id)|\(style.name)",
             title: style.name,
-            value: style.id,
-            image: { Self.patternLineStyleImage(for: style) }
+            value: style.id
           )
         },
         selection: state.activePatternLineStyleID,
@@ -324,22 +320,6 @@ struct ProjectSidebar: View {
     max(0, width - 18)
   }
 
-  private static func patternLineStyleImage(for style: ProjectSharedStyle) -> NSImage {
-    NSImage(size: NSSize(width: 18, height: 8), flipped: false) { rect in
-      let lineRect = NSRect(x: 0, y: (rect.height - 3) / 2, width: rect.width, height: 3)
-      NSColor(Color(hex: style.colorHex)).setFill()
-      NSBezierPath(roundedRect: lineRect, xRadius: 1, yRadius: 1).fill()
-
-      if style.linePattern != .solid {
-        NSColor.white.withAlphaComponent(0.85).setFill()
-        for x in stride(from: CGFloat(3), through: CGFloat(13), by: CGFloat(5)) {
-          NSRect(x: x, y: lineRect.minY, width: 2, height: lineRect.height).fill()
-        }
-      }
-      return true
-    }
-  }
-
   private func isGroupExpanded(_ group: ToolGroup) -> Bool {
     if group.tools.contains(state.selectedTool) {
       return true
@@ -361,19 +341,6 @@ struct PalettePopUpItem<Value: Hashable> {
   let key: String
   let title: String
   let value: Value
-  let image: (() -> NSImage?)?
-
-  init(
-    key: String,
-    title: String,
-    value: Value,
-    image: (() -> NSImage?)? = nil
-  ) {
-    self.key = key
-    self.title = title
-    self.value = value
-    self.image = image
-  }
 }
 
 struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
@@ -404,7 +371,6 @@ struct PalettePopUpButton<Value: Hashable>: NSViewRepresentable {
       button.removeAllItems()
       for item in items {
         button.addItem(withTitle: item.title)
-        button.lastItem?.image = item.image?()
       }
       context.coordinator.itemKeys = itemKeys
     }
