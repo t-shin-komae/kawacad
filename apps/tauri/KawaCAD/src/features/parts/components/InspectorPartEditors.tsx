@@ -8,8 +8,15 @@ import {
   matchingLayerColorPreset,
   matchingLayerStrokeWidthPreset,
 } from "@/features/inspector/domain/stylePresets";
-import type { Constraint, Part, PendingTextEntry, Props } from "@/features/inspector/components/InspectorPanel";
+import type { Constraint, Part } from "@/shared/domain/coreWireTypes";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
+
+type CommandHandler = (kind: string, payload: unknown, success: string) => void;
+type OpenTextEntry = (
+  title: string,
+  fields: TextEntryField[],
+  onConfirm: (values: Record<string, string>) => void,
+) => void;
 export function PartEditor({
   part,
   arrangementSelected,
@@ -21,7 +28,7 @@ export function PartEditor({
 }: {
   part: Part;
   arrangementSelected: boolean;
-  onCommand: Props["onCommand"];
+  onCommand: CommandHandler;
   onSelect: () => void;
   onToggleArrangement: () => void;
   onAddToLibrary: () => void;
@@ -227,11 +234,7 @@ export function PartEditor({
   );
 }
 
-export function openConstraintValueEntry(
-  item: Constraint,
-  onCommand: Props["onCommand"],
-  openTextEntry: (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void,
-) {
+export function openConstraintValueEntry(item: Constraint, onCommand: CommandHandler, openTextEntry: OpenTextEntry) {
   const degrees = typeof item.value?.fixedDegrees === "number";
   const current = degrees ? item.value?.fixedDegrees : item.value?.fixedMm;
   openTextEntry(

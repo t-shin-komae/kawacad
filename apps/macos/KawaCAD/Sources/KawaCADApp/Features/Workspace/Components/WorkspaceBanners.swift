@@ -12,7 +12,7 @@ struct WorkspaceBanners: View {
   var body: some View {
     VStack(spacing: 8) {
       if let recoveryBanner {
-        RecoveryBannerView(
+        RecoverySaveFailureBanner(
           banner: recoveryBanner,
           onRetry: onRetryRecovery,
           onDismiss: onDismissRecovery

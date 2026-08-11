@@ -4,7 +4,7 @@ import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { OffsetSourceOption } from "@/features/constraints/components/DerivedValueDialog";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { defaultViewport, type ConstraintTarget, type PointMm, type Viewport } from "@/features/canvas/domain/cad";
-import type { EditControlTarget } from "@/shared/domain/workspaceState";
+import type { EditControlTarget } from "@/shared/domain/coreWireTypes";
 
 export type SelectionExport = { clipboardJson: string; anchorPoint?: PointMm };
 export type PasteOptions = {

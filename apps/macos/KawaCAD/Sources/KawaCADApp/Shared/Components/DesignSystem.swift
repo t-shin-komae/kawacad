@@ -72,7 +72,7 @@ struct CanvasToolButton: View {
 
   var body: some View {
     Button(action: action) {
-      CanvasToolIcon(
+      ToolIcon(
         tool: tool,
         size: 18,
         color: isSelected ? LeatherColors.accent : LeatherColors.ink
@@ -98,7 +98,7 @@ struct LabeledToolButton: View {
   var body: some View {
     Button(action: action) {
       HStack(spacing: 8) {
-        CanvasToolIcon(tool: tool, size: 17, color: LeatherColors.ink)
+        ToolIcon(tool: tool, size: 17, color: LeatherColors.ink)
           .frame(width: 20)
         Text(tool.displayName)
           .font(.system(size: 12))
@@ -128,7 +128,7 @@ struct PaletteToolButton: View {
   var body: some View {
     Button(action: action) {
       HStack(alignment: .top, spacing: 6) {
-        CanvasToolIcon(
+        ToolIcon(
           tool: tool, size: 15, color: isSelected ? LeatherColors.accent : LeatherColors.ink
         )
         .frame(width: 16, height: 16)
@@ -159,7 +159,7 @@ struct PaletteToolButton: View {
   }
 }
 
-struct CanvasToolIcon: View {
+struct ToolIcon: View {
   let tool: CanvasTool
   let size: CGFloat
   let color: Color
@@ -172,13 +172,13 @@ struct CanvasToolIcon: View {
         .foregroundStyle(color)
         .frame(width: size, height: size)
     default:
-      CanvasToolIconDrawing(kind: tool.iconKind, color: color)
+      ToolIconDrawing(kind: tool.iconKind, color: color)
         .frame(width: size, height: size)
     }
   }
 }
 
-private struct CanvasToolIconDrawing: View {
+private struct ToolIconDrawing: View {
   let kind: CanvasToolIconKind
   let color: Color
 
@@ -415,7 +415,7 @@ struct ConstraintStatusBadge: View {
   }
 }
 
-struct CardSection<Content: View>: View {
+struct InspectorSection<Content: View>: View {
   let title: String
   let symbolName: String
   @ViewBuilder let content: Content

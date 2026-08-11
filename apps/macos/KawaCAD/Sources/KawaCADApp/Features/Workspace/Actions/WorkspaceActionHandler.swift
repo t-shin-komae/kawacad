@@ -113,7 +113,7 @@ extension WorkspaceActionHandler {
   func resetLayoutPreferences() {
     workspacePreferences.resetStoredPreferences(
       groupDefaults: Dictionary(
-        uniqueKeysWithValues: ProjectSidebar.allToolGroups.map { ($0.id, $0.defaultExpanded) }
+        uniqueKeysWithValues: ToolPalette.allToolGroups.map { ($0.id, $0.defaultExpanded) }
       )
     )
     workspaceLayout.resetStoredPanelWidths()

@@ -8,13 +8,14 @@ import {
   syncedField,
 } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
+import type { DocumentHeaderHandle } from "@/features/document/domain/documentHeaderTypes";
 
 type Props = {
   documentName: string;
   paperLabel: string;
   onRename: (name: string) => void | Promise<boolean | void>;
 };
-export type DocumentHeaderHandle = { commit: () => Promise<boolean>; validate: () => boolean };
+export type { DocumentHeaderHandle } from "@/features/document/domain/documentHeaderTypes";
 
 /** Mirrors the SwiftUI DocumentHeader: a plain editable project name and file metadata. */
 export const DocumentHeader = forwardRef<DocumentHeaderHandle, Props>(function DocumentHeader(

@@ -1,11 +1,17 @@
-import { defaultCollapsedToolGroups, toolGroupPreferenceIds } from "@/features/canvas/components/ToolPalette";
 import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { ConstraintTarget, PointMm } from "@/features/canvas/domain/cad";
 
 export const toolPaletteWidthRange = { min: 176, max: 260 };
 
-export { defaultCollapsedToolGroups, toolGroupPreferenceIds };
+export const toolGroupPreferenceIds: Record<string, string> = {
+  drawing: "drawing",
+  derived: "derived",
+  constraint: "constraint",
+  dimension: "dimension",
+  measurement: "measurement",
+};
+export const defaultCollapsedToolGroups = new Set<string>(["derived", "constraint", "measurement"]);
 
 export const toolNames = appStrings.toolNames;
 

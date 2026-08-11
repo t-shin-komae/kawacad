@@ -451,7 +451,7 @@ struct LinePatternPreview: View {
   }
 }
 
-struct ParameterEditorRow: View {
+struct ParameterEditor: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
   let parameter: ProjectParameter
 

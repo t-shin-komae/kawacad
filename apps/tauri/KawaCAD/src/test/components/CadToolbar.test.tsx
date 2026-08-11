@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { aggregateConstraintStatus } from "@/features/canvas/components/CadToolbar";
-import { CadToolbar } from "@/features/canvas/components/CadToolbar";
+import { CADToolbar } from "@/features/canvas/components/CadToolbar";
 import { appStrings } from "@/localization";
 
 const toolbarProps = {
@@ -35,11 +35,11 @@ const toolbarProps = {
 
 describe("CAD toolbar constraint-status parity", () => {
   it("shows the tool palette button only in compact layout", () => {
-    const { rerender } = render(<CadToolbar {...toolbarProps} showToolPaletteButton={false} />);
+    const { rerender } = render(<CADToolbar {...toolbarProps} showToolPaletteButton={false} />);
 
     expect(screen.queryByRole("button", { name: appStrings.accessibility.showTools })).not.toBeInTheDocument();
 
-    rerender(<CadToolbar {...toolbarProps} showToolPaletteButton />);
+    rerender(<CADToolbar {...toolbarProps} showToolPaletteButton />);
 
     const toolPaletteButton = screen.getByRole("button", { name: appStrings.accessibility.showTools });
     expect(toolPaletteButton).toBeInTheDocument();

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useConstraintActionCallbacks } from "@/features/constraints/actions/useConstraintActionCallbacks";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { appStrings } from "@/localization";
-import { selectedSourceArcId } from "@/shared/domain/workspaceState";
+import { selectedSourceArcId } from "@/features/canvas/selectors/canvasProjection";
 import { id } from "@/features/canvas/domain/workspaceTools";
 import type { ConstraintActionContext } from "@/app/actions/useActionRuntime";
 

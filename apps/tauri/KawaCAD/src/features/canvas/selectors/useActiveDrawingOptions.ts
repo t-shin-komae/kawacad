@@ -1,5 +1,5 @@
 import { useCallback, type Dispatch, type SetStateAction } from "react";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 
 /** Keeps the presentation-only active layer/style selection valid after a Core snapshot changes. */
 export function useActiveDrawingOptions(

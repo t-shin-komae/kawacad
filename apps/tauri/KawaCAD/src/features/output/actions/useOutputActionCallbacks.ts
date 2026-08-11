@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { appStrings } from "@/localization";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import type { CanvasViewMode, Tool } from "@/features/canvas/domain/canvasDomainModels";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 import type { OutputActionContext } from "@/app/actions/useActionRuntime";
 
 type OutputActionDependencies = Pick<OutputActionContext, "state" | "a4Landscape" | "run" | "setTool"> & {

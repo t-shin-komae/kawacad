@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import { appStrings } from "@/localization";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 
 type Props = {
   onDocumentState: (state: State) => void;

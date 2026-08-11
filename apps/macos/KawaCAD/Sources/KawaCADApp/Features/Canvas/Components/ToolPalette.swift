@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-struct ProjectSidebar: View {
+struct ToolPalette: View {
   struct ToolGroup: Equatable {
     let id: String
     let title: String

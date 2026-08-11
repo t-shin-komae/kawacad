@@ -22,7 +22,7 @@ private func licenseNoticeSections(_ notices: String) -> [LicenseNoticeSection] 
     .filter { !$0.title.isEmpty || !$0.body.isEmpty }
 }
 
-struct KawaCADLicensesView: View {
+struct OpenSourceLicensesDialog: View {
   let notices: String
 
   var body: some View {
@@ -68,7 +68,7 @@ enum KawaCADLicensesPanel {
     }
 
     let controller = NSHostingController(
-      rootView: KawaCADLicensesView(notices: noticeText(bundle: bundle)))
+      rootView: OpenSourceLicensesDialog(notices: noticeText(bundle: bundle)))
     let panel = NSPanel(
       contentRect: NSRect(x: 0, y: 0, width: 680, height: 520),
       styleMask: [.titled, .closable, .resizable],

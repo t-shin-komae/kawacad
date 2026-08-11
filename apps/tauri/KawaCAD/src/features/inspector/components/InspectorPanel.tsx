@@ -24,6 +24,7 @@ import {
   DocumentOverview,
   EntityEditor,
   FreeTextEditor,
+  MultiSelectionSummary,
   ParameterEditor,
   SelectedConstraintEditor,
   SelectedMeasurementEditor,
@@ -32,106 +33,18 @@ import {
   defaultStyle,
 } from "@/features/inspector/components/InspectorSelectionEditors";
 import { PartEditor } from "@/features/parts/components/InspectorPartEditors";
-import { InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
+import { InspectorSection } from "@/shared/components/InspectorPrimitives";
+import type { Constraint, DerivedElement, LineStyle, Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
+import type { InspectorViewModel, Measurement } from "@/features/inspector/domain/inspectorViewModel";
 
-export type Constraint = { id: string; kind: string; status: string; value?: Record<string, number | string> };
-export type Measurement = { id: string; kind: string; visible: boolean };
-export type LineStyle = {
-  stroke: { red: number; green: number; blue: number; alpha: number };
-  strokeWidthMm: number;
-  pattern: string;
-};
-export type Part = {
-  id: string;
-  name: string;
-  quantity: number;
-  visible: boolean;
-  printable: boolean;
-  originMm: PointMm;
-  entityIds: string[];
-  outlineEntityIds: string[];
-  holeEntityIdGroups: string[][];
-  derivedElementIds: string[];
-  freeTextIds: string[];
-  measurementAnnotationIds: string[];
-};
-export type PartLibraryEntry = { id: string; name: string; libraryJson: string; sourcePart: Part };
-type ConstraintValue = { fixedMm?: number; parameter?: string };
 export type PendingTextEntry = {
   title: string;
   fields: TextEntryField[];
   onConfirm: (values: Record<string, string>) => void;
 };
-type OffsetCurve = { sourceEntityIds: string[]; distance: ConstraintValue; direction: string };
-type Fillet = { sourceEntityIds: string[]; radius: ConstraintValue; closed?: boolean };
-export type DerivedElement = {
-  id: string;
-  layerId?: string | null;
-  styleId?: string | null;
-  kind: { offsetCurve?: OffsetCurve; fillet?: Fillet };
-};
-
-export type Props = {
-  selectedCount: number;
-  documentSummary: {
-    viewMode: string;
-    activeLayerName: string;
-    visibleEntityCount: number;
-    constraintCount: number;
-    parameterCount: number;
-  };
-  selectedEntityIds?: string[];
-  selectedEntities?: RawEntity[];
-  selectedEntity?: RawEntity;
-  selectedDerivedElement?: DerivedElement;
-  selectedFreeText?: { id: string; content: string; positionMm: PointMm; fontSizeMm: number };
-  selectedConstraint?: Constraint;
-  selectedMeasurement?: Measurement;
-  selectedStitchStartPoint?: { id: string; targetEntityId: string };
-  selectedStitchTargetEntity?: RawEntity;
-  constraints: Constraint[];
-  measurements: Measurement[];
-  freeTexts: Array<{ id: string; content: string; positionMm: PointMm; fontSizeMm: number }>;
-  parameters: Array<{
-    id: string;
-    name: string;
-    valueMm: number;
-    unit: string;
-    memo: string;
-    usageCount?: number;
-    usedConstraintIds?: string[];
-  }>;
-  layers: Array<{ id: string; name: string; visible: boolean; printable: boolean; kind: string; style: LineStyle }>;
-  activeLayerId: string;
-  sharedStyles: Array<{ id: string; name: string; style: LineStyle }>;
-  parts: Part[];
-  arrangementPartIds: Set<string>;
-  partLibrary: PartLibraryEntry[];
-  roundHoles: Array<{ id: string; entityId: string; kind: string }>;
-  onCommand: (kind: string, payload: unknown, success: string) => void;
-  onApplyStyle: (styleId?: string) => void;
-  onDeleteSelection: () => void;
-  onCreatePart: () => void;
-  onAddParameter: () => void;
-  onAddLayer: () => void;
-  onActiveLayerChange: (id: string) => void;
-  onRenameLayer: (id: string, name: string) => void;
-  onDeleteLayer: (layer: { id: string; name: string }) => void;
-  onSelectPart: (part: Part) => void;
-  onToggleArrangementPart: (id: string) => void;
-  onAlignParts: (alignment: string) => void;
-  onDistributeParts: (axis: string) => void;
-  onAddPartToLibrary: (part: Part) => void;
-  onInsertPartFromLibrary: (entry: PartLibraryEntry) => void;
-  onRemovePartFromLibrary: (entry: PartLibraryEntry) => void;
-  onBeginSetPartOrigin?: (part: Part) => void;
-  onConstrainSegmentLength?: (entityId: string) => void;
-  onSelectConstraint?: (id: string) => void;
-  onSelectFreeText?: (id: string) => void;
-  onSelectMeasurement?: (id: string) => void;
-  onConvertMeasurement?: (id: string) => void;
-  onTabChange?: (tab: InspectorTab) => void;
-};
+export type { Constraint, DerivedElement, LineStyle, Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
+export type { InspectorViewModel, Measurement } from "@/features/inspector/domain/inspectorViewModel";
+export type Props = InspectorViewModel;
 const tabs: Array<[InspectorTab, string]> = [
   ["selection", appStrings.inspector.tabs.selection],
   ["layers", appStrings.inspector.tabs.layers],
@@ -197,7 +110,6 @@ export function InspectorPanel(props: Props) {
   const selectedLayerLabels = selectedLayerIDs.map((id) =>
     id ? (layers.find((layer) => layer.id === id)?.name ?? id) : appStrings.inspector.noValue,
   );
-  const [bulkStyleID, setBulkStyleID] = useState("");
   const openTextEntry = (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => {
     setPendingTextEntry({ title, fields, onConfirm });
   };
@@ -286,31 +198,13 @@ export function InspectorPanel(props: Props) {
                   onDelete={props.onDeleteSelection}
                 />
               ) : selectedCount > 1 ? (
-                <div className="inspector-card multi-selection-summary">
-                  <strong>{appStrings.inspector.selectionSummary(selectedCount)}</strong>
-                  <div className="detail-row">
-                    <span>{appStrings.inspector.selectedGeometry}</span>
-                    <strong>{selectedGeometryLabels.join("、")}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span>{appStrings.inspector.selectedLayer}</span>
-                    <strong>{selectedLayerLabels.join("、")}</strong>
-                  </div>
-                  <label>
-                    {appStrings.inspector.bulkStyle}
-                    <select value={bulkStyleID} onChange={(event) => setBulkStyleID(event.target.value)}>
-                      <option value="">{appStrings.inspector.noValue}</option>
-                      {sharedStyles.map((style) => (
-                        <option key={style.id} value={style.id}>
-                          {style.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button disabled={!bulkStyleID} onClick={() => props.onApplyStyle(bulkStyleID)}>
-                    {appStrings.inspector.applyBulkStyle}
-                  </button>
-                </div>
+                <MultiSelectionSummary
+                  selectedCount={selectedCount}
+                  geometryLabels={selectedGeometryLabels}
+                  layerLabels={selectedLayerLabels}
+                  sharedStyles={sharedStyles}
+                  onApplyStyle={props.onApplyStyle}
+                />
               ) : selectedEntity ? (
                 <EntityEditor
                   entity={selectedEntity}
@@ -424,9 +318,16 @@ export function InspectorPanel(props: Props) {
         )}
         {feature.inspectorTab === "parts" && (
           <InspectorPartsTab
-            props={props}
+            selectedCount={props.selectedCount}
+            parts={props.parts}
             arrangementPartIds={arrangementPartIds}
             partLibrary={partLibrary}
+            onCreatePart={props.onCreatePart}
+            onSelectPart={props.onSelectPart}
+            onAlignParts={props.onAlignParts}
+            onDistributeParts={props.onDistributeParts}
+            onInsertPartFromLibrary={props.onInsertPartFromLibrary}
+            onRemovePartFromLibrary={props.onRemovePartFromLibrary}
             renderPartEditor={(part) => (
               <PartEditor
                 part={part}

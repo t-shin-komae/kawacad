@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct LeatherCanvasRepresentable: NSViewRepresentable {
+struct CADCanvas: NSViewRepresentable {
   let state: LeatherCanvasState
   let actions: LeatherCanvasActions
 

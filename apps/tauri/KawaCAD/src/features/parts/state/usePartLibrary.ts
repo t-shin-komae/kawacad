@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
+import type { PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import { partLibraryAdapter } from "@/adapters/partLibraryAdapter";
 import { appStrings } from "@/localization";
 

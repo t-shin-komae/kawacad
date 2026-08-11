@@ -4,7 +4,7 @@ import { documentAdapter } from "@/adapters/documentAdapter";
 import { dialogAdapter } from "@/adapters/dialogAdapter";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 import type { DocumentActionContext } from "@/app/actions/useActionRuntime";
 import { normalizeProjectSavePath } from "@/features/document/domain/projectFilePath";
 

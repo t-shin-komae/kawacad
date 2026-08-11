@@ -17,7 +17,7 @@ final class WorkspacePreferencesState: ObservableObject {
   @Published private(set) var bottomWorkbenchVisible = false
   init() {
     collapsedToolGroupIDs = Set(
-      ProjectSidebar.allToolGroups.compactMap { group in
+      ToolPalette.allToolGroups.compactMap { group in
         WorkspacePreferencesAdapter.isToolGroupCollapsed(
           group.id,
           defaultExpanded: group.defaultExpanded

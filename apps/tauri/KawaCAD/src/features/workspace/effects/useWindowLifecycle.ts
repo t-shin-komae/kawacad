@@ -1,6 +1,7 @@
 import { useEffect, type MutableRefObject } from "react";
 import { appStrings } from "@/localization";
-import { documentWindowPresentation, type State } from "@/shared/domain/workspaceState";
+import { documentWindowPresentation } from "@/features/workspace/selectors/documentWindowPresentation";
+import type { State } from "@/shared/domain/coreWireTypes";
 import { desktopAdapter } from "@/adapters/desktopAdapter";
 import { windowAdapter } from "@/adapters/windowAdapter";
 import type { DocumentSaveChoice } from "@/features/document/state/useDocumentPresentation";

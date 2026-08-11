@@ -1,13 +1,13 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { App } from "@/app/App";
+import { MainWindowView as App } from "@/app/MainWindowView";
 import {
   canvasProjectionFor,
-  documentWindowPresentation,
   hitDerivedRadiusControl,
-  partCanvasHighlights,
   selectedSourceArcId,
-} from "@/shared/domain/workspaceState";
+} from "@/features/canvas/selectors/canvasProjection";
+import { partCanvasHighlights } from "@/features/parts/selectors/partCanvasHighlights";
+import { documentWindowPresentation } from "@/features/workspace/selectors/documentWindowPresentation";
 import { screenPoint, type Viewport } from "@/features/canvas/domain/cad";
 
 const defaultTestViewport: Viewport = { zoom: 1, panX: 0, panY: 0 };

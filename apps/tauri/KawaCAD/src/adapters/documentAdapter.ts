@@ -1,5 +1,5 @@
 import { invokeCommand } from "@/adapters/tauriCommandAdapter";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 
 export const documentAdapter = {
   command: <T>(name: string, args?: Record<string, unknown>) => invokeCommand<T>(name, args),

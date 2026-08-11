@@ -5,6 +5,11 @@ import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { parseDecimal } from "@/shared/state/syncedField";
 
+// Keep the historical component import surface while the preference data is
+// owned by the canvas domain and can be consumed by adapters without pulling
+// in React components.
+export { defaultCollapsedToolGroups, toolGroupPreferenceIds } from "@/features/canvas/domain/workspaceTools";
+
 type SharedStyle = { id: string; name: string };
 type Props = {
   activeStyle: string;
@@ -95,14 +100,6 @@ export const basicTools = new Set<Tool>([
 ]);
 export const allPaletteTools = toolGroups.flatMap(([, tools]) => tools);
 export const detailedTools = new Set<Tool>(allPaletteTools.filter((tool) => !basicTools.has(tool)));
-export const toolGroupPreferenceIds: Record<string, string> = {
-  drawing: "drawing",
-  derived: "derived",
-  constraint: "constraint",
-  dimension: "dimension",
-  measurement: "measurement",
-};
-export const defaultCollapsedToolGroups = new Set<string>(["derived", "constraint", "measurement"]);
 function DisclosureIcon({ expanded }: { expanded: boolean }) {
   const Icon = expanded ? ChevronDown : ChevronRight;
   return <Icon className="palette-disclosure" size={10} strokeWidth={2} aria-hidden="true" />;
@@ -111,6 +108,26 @@ function DisclosureIcon({ expanded }: { expanded: boolean }) {
 function PaletteActionIcon({ kind }: { kind: "expand" | "compress" | "brush" }) {
   const Icon = kind === "brush" ? Paintbrush : kind === "expand" ? ChevronsUpDown : ChevronsDownUp;
   return <Icon className="palette-action-icon" size={12} strokeWidth={1.7} aria-hidden="true" />;
+}
+
+type PaletteToolButtonProps = {
+  tool: Tool;
+  isSelected: boolean;
+  onSelect: (tool: Tool) => void;
+};
+
+export function PaletteToolButton({ tool, isSelected, onSelect }: PaletteToolButtonProps) {
+  return (
+    <button
+      className={isSelected ? "active" : ""}
+      onClick={() => onSelect(tool)}
+      aria-pressed={isSelected}
+      title={labels[tool]}
+    >
+      <ToolIcon tool={tool} size={15} />
+      <span>{labels[tool]}</span>
+    </button>
+  );
 }
 
 export function ToolPalette({
@@ -225,16 +242,12 @@ export function ToolPalette({
               {expanded && (
                 <div className="tool-grid">
                   {visibleTools.map((tool) => (
-                    <button
+                    <PaletteToolButton
                       key={tool}
-                      className={tool === activeTool ? "active" : ""}
-                      onClick={() => onToolChange(tool)}
-                      aria-pressed={tool === activeTool}
-                      title={labels[tool]}
-                    >
-                      <ToolIcon tool={tool} size={15} />
-                      <span>{labels[tool]}</span>
-                    </button>
+                      tool={tool}
+                      isSelected={tool === activeTool}
+                      onSelect={onToolChange}
+                    />
                   ))}
                 </div>
               )}

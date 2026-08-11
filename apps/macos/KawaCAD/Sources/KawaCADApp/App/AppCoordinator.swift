@@ -21,16 +21,7 @@ final class AppCoordinator: ObservableObject {
 
   var documentLifecycleController: (any DocumentLifecycleControlling)? {
     get { actions.document.documentLifecycleController }
-    set {
-      actions.document.documentLifecycleController = newValue
-      actions.canvas.documentLifecycleController = newValue
-      actions.constraints.documentLifecycleController = newValue
-      actions.inspector.documentLifecycleController = newValue
-      actions.parts.documentLifecycleController = newValue
-      actions.output.documentLifecycleController = newValue
-      actions.recovery.documentLifecycleController = newValue
-      actions.workspace.documentLifecycleController = newValue
-    }
+    set { actions.setDocumentLifecycleController(newValue) }
   }
 
   init(

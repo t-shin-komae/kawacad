@@ -37,7 +37,7 @@ struct CADToolbar: View {
       }
 
       HStack(spacing: 8) {
-        CanvasToolIcon(tool: state.selectedTool, size: 18, color: LeatherColors.ink)
+        ToolIcon(tool: state.selectedTool, size: 18, color: LeatherColors.ink)
           .frame(width: 22)
         Text(state.selectedTool.displayName)
           .font(.system(size: 13))

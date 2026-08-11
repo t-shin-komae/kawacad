@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { appStrings } from "@/localization";
 import { parseDecimal } from "@/shared/state/syncedField";
 import type { PointMm } from "@/features/canvas/domain/cad";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 import { id } from "@/features/canvas/domain/workspaceTools";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import {

@@ -1,7 +1,7 @@
 import { usePartActionCallbacks } from "@/features/parts/actions/usePartActionCallbacks";
 import { useCallback } from "react";
 import { appStrings } from "@/localization";
-import type { Part, PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
+import type { Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { PartActionContext } from "@/app/actions/useActionRuntime";

@@ -1,17 +1,17 @@
 import { useRef } from "react";
-import { appStrings } from "@/localization";
 
 type Props = {
   value: number;
   min: number;
   max: number;
+  ariaLabel: string;
   onChange: (value: number) => void;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-/** Matches the SwiftUI sidebar's 8pt drag and keyboard resize affordance. */
-export function PaletteResizeHandle({ value, min, max, onChange }: Props) {
+/** Shared 8pt drag and keyboard resize affordance for workspace side panels. */
+export function PanelResizeHandle({ value, min, max, ariaLabel, onChange }: Props) {
   const drag = useRef<{ pointerId: number; startX: number; startValue: number }>();
   const updateFromPointer = (clientX: number) => {
     const current = drag.current;
@@ -21,7 +21,7 @@ export function PaletteResizeHandle({ value, min, max, onChange }: Props) {
     <div
       className="palette-resize-handle"
       role="separator"
-      aria-label={appStrings.resize.paletteWidth}
+      aria-label={ariaLabel}
       aria-orientation="vertical"
       aria-valuemin={min}
       aria-valuemax={max}
