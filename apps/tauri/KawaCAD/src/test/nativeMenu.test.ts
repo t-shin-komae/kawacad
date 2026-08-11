@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { productInfo } from "@/app/productInfo";
 import { aboutMetadataForPlatform, crossPlatformMenuActions } from "@/adapters/nativeMenuAdapter";
+import { nativeMenuAvailability } from "@/app/domain/nativeMenuState";
 
 describe("cross-platform native menu", () => {
   it("keeps the desktop menu action set platform neutral", () => {
@@ -12,6 +13,7 @@ describe("cross-platform native menu", () => {
     expect(crossPlatformMenuActions).toContain("outputPreview");
     expect(crossPlatformMenuActions).toContain("openLicenses");
     expect(crossPlatformMenuActions).toContain("exportPDF");
+    expect(crossPlatformMenuActions).toContain("cancelCurrentInteraction");
     expect(crossPlatformMenuActions).not.toContain("print");
   });
 
@@ -31,5 +33,81 @@ describe("cross-platform native menu", () => {
       shortVersion: "",
     });
     expect(aboutMetadataForPlatform("Mozilla/5.0 (X11; Linux x86_64)")).not.toHaveProperty("shortVersion");
+  });
+
+  it("tracks document, selection, view, and panel state for native menu availability", () => {
+    expect(
+      nativeMenuAvailability({
+        hasDocument: true,
+        viewMode: "editDisplay",
+        canUndo: true,
+        canRedo: false,
+        hasSelection: true,
+        canPaste: true,
+        canEditLayers: true,
+        canExportPDF: true,
+        canDirectPrint: true,
+        canSmoothArcTangencies: true,
+        inspectorOpen: true,
+        inspectorTab: "layers",
+        bottomWorkbenchVisible: false,
+      }),
+    ).toMatchObject({
+      save: true,
+      undo: true,
+      duplicate: true,
+      paste: true,
+      directPrint: true,
+      findInspector: true,
+      inspectorLabel: "インスペクタを隠す",
+      bottomWorkbenchLabel: "サマリーを表示",
+    });
+    expect(
+      nativeMenuAvailability({
+        hasDocument: true,
+        viewMode: "outputPreview",
+        canUndo: true,
+        canRedo: true,
+        hasSelection: true,
+        canPaste: true,
+        canEditLayers: true,
+        canExportPDF: true,
+        canDirectPrint: true,
+        canSmoothArcTangencies: true,
+        inspectorOpen: false,
+        inspectorTab: "selection",
+        bottomWorkbenchVisible: true,
+      }),
+    ).toMatchObject({
+      exportPDF: true,
+      directPrint: true,
+      undo: true,
+      duplicate: false,
+      delete: false,
+      paste: false,
+      addLayer: false,
+      inspectorLabel: "インスペクタを表示",
+      bottomWorkbenchLabel: "サマリーを隠す",
+    });
+  });
+
+  it("enables inspector search only for a searchable visible tab", () => {
+    const base = {
+      hasDocument: true,
+      viewMode: "editDisplay" as const,
+      canUndo: false,
+      canRedo: false,
+      hasSelection: false,
+      canPaste: false,
+      canEditLayers: true,
+      canExportPDF: true,
+      canDirectPrint: true,
+      canSmoothArcTangencies: false,
+      inspectorOpen: true,
+      bottomWorkbenchVisible: false,
+    };
+    expect(nativeMenuAvailability({ ...base, inspectorTab: "selection" }).findInspector).toBe(false);
+    expect(nativeMenuAvailability({ ...base, inspectorTab: "layers" }).findInspector).toBe(true);
+    expect(nativeMenuAvailability({ ...base, inspectorOpen: false, inspectorTab: "layers" }).findInspector).toBe(false);
   });
 });

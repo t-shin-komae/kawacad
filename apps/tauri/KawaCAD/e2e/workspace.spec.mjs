@@ -159,6 +159,39 @@ test.describe("Tauri React workspace through the real Core process", () => {
     }
   });
 
+  // インスペクタのタブ順と、内容をスクロールしてもタブが固定される構造を全レイアウトで検証する。
+  test("keeps inspector navigation fixed while only its content scrolls", async ({ page }) => {
+    for (const width of [1600, 1280, 1024]) {
+      await page.setViewportSize({ width, height: 360 });
+      await openWorkspace(page);
+      const inspector = page.getByRole("complementary", { name: "インスペクタ" });
+      if (!(await inspector.isVisible().catch(() => false))) {
+        await page.getByTestId("leather.toolbar.inspector").click();
+      }
+      await expect(inspector).toBeVisible();
+      await expect(inspector.getByRole("tab")).toHaveText(["選択", "レイヤー", "共有スタイル", "パラメータ", "パーツ"]);
+
+      const header = inspector.locator(":scope > .inspector-header");
+      const content = inspector.locator(":scope > .inspector-content");
+      const before = await header.boundingBox();
+      expect(before).not.toBeNull();
+      const scroll = await content.evaluate((element) => {
+        const beforeScrollTop = element.scrollTop;
+        element.scrollTop = element.scrollHeight;
+        return {
+          beforeScrollTop,
+          afterScrollTop: element.scrollTop,
+          scrollHeight: element.scrollHeight,
+          clientHeight: element.clientHeight,
+        };
+      });
+      expect(scroll.scrollHeight).toBeGreaterThan(scroll.clientHeight);
+      expect(scroll.afterScrollTop).toBeGreaterThan(scroll.beforeScrollTop);
+      const after = await header.boundingBox();
+      expect(after?.y).toBeCloseTo(before?.y ?? 0, 1);
+    }
+  });
+
   // 初期の折り畳み状態、パレット幅に応じた1列/2列表示、Swift版と同じパレット表示を検証する。
   test("keeps the tool palette progression and responsive grid contract", async ({ page }) => {
     await openWorkspace(page);
@@ -509,7 +542,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect.poll(async () => (await core.invoke("document_state")).entities[0].layerId).toBe(addedLayer.id);
     await page.getByTestId("leather.toolbar.drawing-layer").locator("select").selectOption(defaultLayer.id);
 
-    let layerCard = page.locator(".inspector-card").filter({ hasText: "検証レイヤー" }).first();
+    let layerCard = page.locator(".inspector-disclosure").filter({ hasText: "検証レイヤー" }).first();
+    await layerCard.locator(".inspector-disclosure-summary").click();
     await layerCard.getByRole("button", { name: "編集", exact: true }).click();
     dialog = page.getByRole("dialog");
     await dialog.getByLabel("レイヤー名").fill("検証レイヤー改名");
@@ -518,7 +552,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
       .poll(async () => (await core.invoke("document_state")).layers.some((layer) => layer.name === "検証レイヤー改名"))
       .toBe(true);
 
-    layerCard = page.locator(".inspector-card").filter({ hasText: "検証レイヤー改名" }).first();
+    layerCard = page.locator(".inspector-disclosure").filter({ hasText: "検証レイヤー改名" }).first();
     await layerCard.getByRole("checkbox").first().click();
     await expect
       .poll(
@@ -558,7 +592,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
     const newStyle = (await core.invoke("document_state")).sharedStyles.find((style) => style.name === "新規線種");
     expect(newStyle).toBeDefined();
-    const styleCard = page.locator(".inspector-card").filter({ hasText: "新規線種" }).first();
+    const styleCard = page.locator(".inspector-disclosure").filter({ hasText: "新規線種" }).first();
+    await styleCard.locator(".inspector-disclosure-summary").click();
     await styleCard.getByRole("button", { name: "名称", exact: true }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("線種名").fill("縫い線");
@@ -624,7 +659,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
     await clickTool(page, "選択");
     await clickModelPoint(page, 0, 0);
-    await expect(page.getByText("計測表示を選択中", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "寸法拘束へ変換", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "寸法拘束へ変換", exact: true }).click();
     await expect
       .poll(async () =>
@@ -642,11 +677,8 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await drawLine(page, [40, -20], [0, 40]);
     await drawLine(page, [0, 40], [-40, -20]);
     await page.keyboard.press(`${primary}+a`);
-    await page
-      .getByRole("heading", { name: "選択", exact: true })
-      .locator("..")
-      .getByRole("button", { name: "パーツ", exact: true })
-      .click();
+    await page.getByRole("tab", { name: "パーツ", exact: true }).click();
+    await page.getByRole("button", { name: "選択図形からパーツを作成", exact: true }).click();
 
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("パーツ名").fill("本体");
@@ -690,6 +722,12 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect.poll(async () => (await core.invoke("document_state")).parts).toHaveLength(1);
 
     await page.getByRole("tab", { name: "パーツ", exact: true }).click();
+    await page
+      .locator(".inspector-disclosure")
+      .filter({ hasText: "本体" })
+      .first()
+      .locator(".inspector-disclosure-summary")
+      .click();
     await page.getByRole("button", { name: "内容を選択", exact: true }).click();
     await dragModelPoint(page, [20, 10], [30, 20]);
     await expect(page.getByRole("status")).toContainText("移動プレビュー中");
@@ -712,13 +750,11 @@ test.describe("Tauri React workspace through the real Core process", () => {
     }
 
     await page.getByRole("tab", { name: "パーツ", exact: true }).click();
-    let partCard = page.locator(".inspector-card").filter({ hasText: "本体" }).first();
     const nameInput = page.getByLabel("本体 の名前");
     await nameInput.fill("本体改名");
     await nameInput.blur();
     await expect.poll(async () => (await core.invoke("document_state")).parts[0].name).toBe("本体改名");
 
-    partCard = page.locator(".inspector-card").filter({ hasText: "本体改名" }).first();
     await page.getByRole("button", { name: "数量", exact: true }).click();
     const quantityDialog = page.getByRole("dialog");
     await quantityDialog.getByLabel("数量").fill("2");

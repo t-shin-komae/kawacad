@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import {
   matchesInspectorSearch,
@@ -7,6 +7,7 @@ import {
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
 import type { Props } from "@/features/inspector/components/InspectorPanel";
+import { InspectorDisclosureRow, InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
 
 type InspectorParametersTabProps = {
   props: Props;
@@ -21,13 +22,12 @@ export function InspectorParametersTab({
   updateFeature,
   renderParameterEditor,
 }: InspectorParametersTabProps) {
+  const [selectedParameterId, setSelectedParameterId] = useState<string>();
+  const filteredParameters = props.parameters.filter((item) =>
+    matchesInspectorSearch(`${item.name} ${item.memo} ${item.unit} ${item.valueMm}`, feature.parameterSearchQuery),
+  );
   return (
-    <section>
-      <h2>
-        <SlidersHorizontal aria-hidden="true" />
-        {appStrings.inspector.parameters}
-      </h2>
-      <button onClick={props.onAddParameter}>{appStrings.inspector.add}</button>
+    <InspectorSection title={appStrings.inspector.parameters} icon={SlidersHorizontal}>
       {(props.parameters.length >= 8 || feature.parameterSearchVisible || feature.parameterSearchQuery) && (
         <label className="inspector-search">
           {appStrings.inspector.parameterSearch}
@@ -38,16 +38,28 @@ export function InspectorParametersTab({
           />
         </label>
       )}
-      {props.parameters
-        .filter((item) =>
-          matchesInspectorSearch(
-            `${item.name} ${item.memo} ${item.unit} ${item.valueMm}`,
-            feature.parameterSearchQuery,
-          ),
-        )
-        .map((item) => (
-          <div key={item.id}>{renderParameterEditor(item)}</div>
-        ))}
-    </section>
+      {filteredParameters.length === 0 && <p>{appStrings.inspector.noParameters}</p>}
+      {filteredParameters.map((item) => {
+        const usageCount =
+          item.usageCount ?? props.constraints.filter((constraint) => constraint.value?.parameter === item.id).length;
+        return (
+          <InspectorDisclosureRow
+            key={item.id}
+            title={item.name}
+            subtitle={`${item.valueMm.toFixed(2)} ${item.unit === "millimeter" ? "mm" : item.unit}`}
+            metadata={
+              usageCount === 0 ? appStrings.inspector.parameterUnused : appStrings.inspector.parameterUsage(usageCount)
+            }
+            expanded={selectedParameterId === item.id}
+            onToggle={() => setSelectedParameterId(item.id)}
+          >
+            {renderParameterEditor(item)}
+          </InspectorDisclosureRow>
+        );
+      })}
+      <button className="inspector-add-button" onClick={props.onAddParameter}>
+        {appStrings.inspector.add}
+      </button>
+    </InspectorSection>
   );
 }

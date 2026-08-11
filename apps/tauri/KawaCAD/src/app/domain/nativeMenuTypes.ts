@@ -15,6 +15,7 @@ export type MenuAction =
   | "duplicate"
   | "delete"
   | "selectAll"
+  | "cancelCurrentInteraction"
   | Tool
   | "toggleInspector"
   | "toggleBottomWorkbench"

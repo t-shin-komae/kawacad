@@ -612,7 +612,8 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
-    fireEvent.click(screen.getAllByRole("button", { name: "削除" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /^Cut Line/ }));
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
 
     const dialog = await screen.findByRole("alertdialog", { name: "レイヤー削除の確認" });
     expect(dialog).toHaveTextContent("2 件の図形または派生要素がこのレイヤーを参照しています。");
@@ -910,7 +911,6 @@ describe("React workspace shortcuts", () => {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
     });
     fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
-    expect(screen.getByText("計測表示を選択中")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "寸法拘束へ変換" })).toBeInTheDocument();
   });
   it("moves a selected measurement annotation with a canvas drag", async () => {
@@ -994,7 +994,7 @@ describe("React workspace shortcuts", () => {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
     });
     fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
-    expect(screen.getByText("テキストを選択中")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "テキスト内容" })).toHaveValue("A");
     fireEvent.pointerUp(canvas, { ...canvasClientPoint({ xMm: 10, yMm: 0 }), button: 0, pointerId: 1 });
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith(
@@ -1071,8 +1071,9 @@ describe("React workspace shortcuts", () => {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
     });
     fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
-    expect(screen.getByText("テキストを選択中")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "テキスト内容" })).toHaveValue("A");
     fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("textbox", { name: "テキスト内容" })).not.toBeInTheDocument();
     expect(screen.getAllByText("選択なし").length).toBeGreaterThan(0);
   });
   it("duplicates selected geometry when an Option drag is dropped", async () => {
@@ -1379,7 +1380,7 @@ describe("React workspace shortcuts", () => {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
     });
     fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
-    expect(screen.getByText("拘束を選択中")).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "拘束値 (mm)" })).toHaveValue(20);
     fireEvent.pointerUp(canvas, { ...canvasClientPoint({ xMm: 10, yMm: 0 }), button: 0, pointerId: 1 });
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith(
@@ -1608,6 +1609,7 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent(window, new Event("kawa-cad-find-inspector"));
     fireEvent.change(screen.getByRole("searchbox", { name: "レイヤーを検索" }), { target: { value: "cut" } });
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
     const dialog = await screen.findByRole("dialog", { name: "新規プロジェクト" });
@@ -1617,6 +1619,7 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "適用" }));
     await waitFor(() => expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true"));
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent(window, new Event("kawa-cad-find-inspector"));
     expect(screen.getByRole("searchbox", { name: "レイヤーを検索" })).toHaveValue("");
   });
   it("uses the native warning confirmation before replacing a dirty document", async () => {
@@ -2004,6 +2007,7 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByRole("tab", { name: "パーツ" });
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Card case/ }));
     await screen.findByRole("button", { name: "ライブラリへ追加" });
     fireEvent.click(screen.getByRole("button", { name: "ライブラリへ追加" }));
     await screen.findByRole("button", { name: "配置" });
@@ -2051,6 +2055,7 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Resolved part/ }));
     fireEvent.click(screen.getByRole("button", { name: "内容を選択" }));
     expect(screen.getAllByText(/2 選択/).length).toBeGreaterThan(0);
   });
@@ -2078,6 +2083,7 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Escape part/ }));
     fireEvent.click(screen.getByRole("button", { name: "内容を選択" }));
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByText(/1 選択/)).not.toBeInTheDocument();

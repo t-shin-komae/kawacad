@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { angleArcCounterclockwise, CadCanvas } from "@/features/canvas/components/CadCanvas";
 import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { InspectorPanel, type Part, type PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
+import type { InspectorTab } from "@/features/inspector/selectors/inspectorFeature";
 import { WorkspaceInspector } from "@/features/inspector/components/WorkspaceInspector";
 import { CadToolbar } from "@/features/canvas/components/CadToolbar";
 import { CanvasContextMenu } from "@/features/canvas/components/CanvasContextMenu";
@@ -19,11 +20,17 @@ import {
 import { LayerDeletionDialog } from "@/features/document/components/LayerDeletionDialog";
 import { TextEntryDialog, type TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { MenuAction } from "@/app/domain/nativeMenuTypes";
+import { updateNativeMenuState } from "@/adapters/nativeMenuAdapter";
 import type { CSSProperties } from "react";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
 import type { CanvasViewMode, Tool } from "@/features/canvas/domain/canvasDomainModels";
-import { defaultViewport, type PointMm, type ConstraintTarget } from "@/features/canvas/domain/cad";
+import {
+  defaultViewport,
+  constraintTargetEntityId,
+  type PointMm,
+  type ConstraintTarget,
+} from "@/features/canvas/domain/cad";
 import {
   canvasProjectionFor,
   documentWindowPresentation,
@@ -74,9 +81,25 @@ import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSou
 import { OutputDialog } from "@/features/output/components/OutputDialog";
 import { CircleDot, FileOutput, Info, MapPin, MousePointer2 } from "lucide-react";
 
+function isTextEditingElement(element: EventTarget | null) {
+  return (
+    element instanceof HTMLElement &&
+    (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element.isContentEditable)
+  );
+}
+
+function performTextEditingCommand(action: "cut" | "copy" | "paste") {
+  return (
+    isTextEditingElement(document.activeElement) &&
+    typeof document.execCommand === "function" &&
+    document.execCommand(action)
+  );
+}
+
 export function App() {
   const [licensesOpen, setLicensesOpen] = useState(false);
   const [outputDestination, setOutputDestination] = useState<"pdf" | "directPrint">();
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>("selection");
   const canvasPresentation = useCanvasPresentation();
   const {
     tool,
@@ -117,6 +140,16 @@ export function App() {
     setContextMenu,
     hoveredConstraintId,
     setHoveredConstraintId,
+    snapSuppressed,
+    setSnapSuppressed,
+    snapActive,
+    setSnapActive,
+    dragDuplicating,
+    setDragDuplicating,
+    marqueeCurrent,
+    setMarqueeCurrent,
+    hoveredTargetEntityId,
+    setHoveredTargetEntityId,
     pan,
     marquee,
     move,
@@ -294,6 +327,8 @@ export function App() {
     distributeParts,
     removePartFromLibrary,
     beginSetPartOrigin,
+    selectConstraint,
+    selectFreeText,
     selectMeasurement,
     convertMeasurement,
   } = useAppActions({
@@ -318,6 +353,11 @@ export function App() {
     clearAnnotationSelection,
     setEditingFreeTextId,
     setHoveredConstraintId,
+    setSnapSuppressed,
+    setSnapActive,
+    setDragDuplicating,
+    setMarqueeCurrent,
+    setHoveredTargetEntityId,
     setPendingTargets,
     setPendingConstraintValue,
     setPendingDerivedValue,
@@ -404,12 +444,47 @@ export function App() {
   useEffect(() => {
     if (layout.mode === "compact" && inspectorOpen && selected.size) setCompactDrawer("inspector");
   }, [inspectorOpen, layout.mode, selected]);
+  useEffect(() => {
+    updateNativeMenuState({
+      hasDocument: Boolean(state),
+      viewMode: state?.viewMode ?? "editDisplay",
+      canUndo: Boolean(state?.history.canUndo),
+      canRedo: Boolean(state?.history.canRedo),
+      hasSelection:
+        selected.size > 0 ||
+        Boolean(selectedFreeTextId || selectedConstraintId || selectedMeasurementId || selectedStitchStartPointId),
+      canPaste: Boolean(clipboard),
+      canEditLayers: Boolean(state?.layers.length),
+      canExportPDF: Boolean(state),
+      canDirectPrint: Boolean(state),
+      canSmoothArcTangencies: Boolean(
+        state && selectedSourceArcId(selected, state.entities, state.drawingEntityMetadata ?? []),
+      ),
+      inspectorOpen: layout.mode === "compact" ? compactDrawer === "inspector" : inspectorOpen,
+      inspectorTab,
+      bottomWorkbenchVisible,
+    });
+  }, [
+    bottomWorkbenchVisible,
+    clipboard,
+    inspectorOpen,
+    inspectorTab,
+    compactDrawer,
+    layout.mode,
+    selected,
+    selectedConstraintId,
+    selectedFreeTextId,
+    selectedMeasurementId,
+    selectedStitchStartPointId,
+    state,
+  ]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
       const primary = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
+      if (primary && ["x", "c", "v"].includes(key) && isTextEditingElement(event.target)) return;
       if (primary && key === "s") {
         event.preventDefault();
         if (event.shiftKey) void saveDocument();
@@ -475,6 +550,11 @@ export function App() {
         pan.current = undefined;
         marquee.current = undefined;
         move.current = undefined;
+        setSnapSuppressed(false);
+        setSnapActive(false);
+        setDragDuplicating(false);
+        setMarqueeCurrent(undefined);
+        setHoveredTargetEntityId(undefined);
         controlMove.current = undefined;
         measurementMove.current = undefined;
         dimensionMove.current = undefined;
@@ -551,15 +631,22 @@ export function App() {
       else if (action === "exportPDF") setOutputDestination("pdf");
       else if (action === "directPrint") setOutputDestination("directPrint");
       else if (action === "undo" || action === "redo") restoreHistory(action);
-      else if (action === "cut") void cutSelection();
-      else if (action === "copy") void copySelection();
-      else if (action === "paste") pasteSelection();
-      else if (action === "duplicate") duplicateSelection();
+      else if (action === "cut") {
+        if (!performTextEditingCommand("cut")) void cutSelection();
+      } else if (action === "copy") {
+        if (!performTextEditingCommand("copy")) void copySelection();
+      } else if (action === "paste") {
+        if (!performTextEditingCommand("paste")) pasteSelection();
+      } else if (action === "duplicate") duplicateSelection();
       else if (action === "delete") deleteSelection();
       else if (action === "selectAll") setSelected(new Set(state?.entities.map((entity) => entity.id) ?? []));
+      else if (action === "cancelCurrentInteraction")
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
       else if (action === "findInspector") window.dispatchEvent(new Event("kawa-cad-find-inspector"));
-      else if (action === "toggleInspector") setInspectorOpen((value) => !value);
-      else if (action === "toggleBottomWorkbench")
+      else if (action === "toggleInspector") {
+        if (layout.mode === "compact") setCompactDrawer((value) => (value === "inspector" ? undefined : "inspector"));
+        else setInspectorOpen((value) => !value);
+      } else if (action === "toggleBottomWorkbench")
         setBottomWorkbenchVisible((visible) => {
           setMessage(visible ? appStrings.status.summaryHidden : appStrings.status.summaryShown);
           return !visible;
@@ -581,6 +668,7 @@ export function App() {
   }, [
     addLayer,
     a4Landscape,
+    compactDrawer,
     copySelection,
     cutSelection,
     deleteSelection,
@@ -598,6 +686,9 @@ export function App() {
     smoothSelectedArcTangencies,
     state?.entities,
     setDocumentViewMode,
+    setCompactDrawer,
+    setInspectorOpen,
+    layout.mode,
     setOutputOrientation,
   ]);
 
@@ -663,9 +754,12 @@ export function App() {
     onInsertPartFromLibrary: insertPartFromLibrary,
     onRemovePartFromLibrary: removePartFromLibrary,
     onConstrainSegmentLength: (entityId: string) => void constrainSegmentLengthFromInspector(entityId),
+    onSelectConstraint: selectConstraint,
+    onSelectFreeText: selectFreeText,
     onSelectMeasurement: selectMeasurement,
     onConvertMeasurement: convertMeasurement,
     onBeginSetPartOrigin: beginSetPartOrigin,
+    onTabChange: setInspectorTab,
   } satisfies ComponentProps<typeof InspectorPanel>;
 
   return (
@@ -881,6 +975,14 @@ export function App() {
               cursorPoint={cursorPoint}
               arcSweepAngleRad={arcSweepAngle.current}
               hoveredConstraintId={hoveredConstraintId}
+              pendingTargetEntityIds={new Set(pendingTargets.map(constraintTargetEntityId))}
+              marqueeStart={marquee.current}
+              marqueeCurrent={marquee.current ? marqueeCurrent : undefined}
+              dragDuplicating={dragDuplicating}
+              dragging={Boolean(move.current)}
+              snapActive={snapActive}
+              snapSuppressed={snapSuppressed}
+              hoveredTargetEntityId={hoveredTargetEntityId}
               coincidentPointGroups={canvasState?.coincidentPointGroups}
               tool={tool}
               toolName={names[tool]}

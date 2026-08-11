@@ -68,9 +68,14 @@ export function useCanvasPresentation() {
   const [pendingTextEntry, setPendingTextEntry] = useState<PendingTextEntry>();
   const [contextMenu, setContextMenu] = useState<ContextMenu>();
   const [hoveredConstraintId, setHoveredConstraintId] = useState<string>();
+  const [snapSuppressed, setSnapSuppressed] = useState(false);
+  const [snapActive, setSnapActive] = useState(false);
+  const [dragDuplicating, setDragDuplicating] = useState(false);
+  const [marqueeCurrent, setMarqueeCurrent] = useState<PointMm>();
+  const [hoveredTargetEntityId, setHoveredTargetEntityId] = useState<string>();
   const pan = useRef<{ screen: { x: number; y: number }; viewport: Viewport }>();
   const marquee = useRef<PointMm>();
-  const move = useRef<{ start: PointMm; ids: string[] }>();
+  const move = useRef<{ start: PointMm; ids: string[]; partId?: string }>();
   const controlMove = useRef<{ target: EditControlTarget }>();
   const measurementMove = useRef<{ id: string; start: PointMm; labelOnly: boolean }>();
   const dimensionMove = useRef<{ constraintId: string; start: PointMm; labelOnly: boolean }>();
@@ -117,6 +122,16 @@ export function useCanvasPresentation() {
     setContextMenu,
     hoveredConstraintId,
     setHoveredConstraintId,
+    snapSuppressed,
+    setSnapSuppressed,
+    snapActive,
+    setSnapActive,
+    dragDuplicating,
+    setDragDuplicating,
+    marqueeCurrent,
+    setMarqueeCurrent,
+    hoveredTargetEntityId,
+    setHoveredTargetEntityId,
     pan,
     marquee,
     move,

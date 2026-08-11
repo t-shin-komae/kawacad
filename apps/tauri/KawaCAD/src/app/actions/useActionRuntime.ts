@@ -40,6 +40,11 @@ export type AppActionContext = {
   clearAnnotationSelection: () => void;
   setEditingFreeTextId: Setter<string | undefined>;
   setHoveredConstraintId: Setter<string | undefined>;
+  setSnapSuppressed: Setter<boolean>;
+  setSnapActive: Setter<boolean>;
+  setDragDuplicating: Setter<boolean>;
+  setMarqueeCurrent: Setter<PointMm | undefined>;
+  setHoveredTargetEntityId: Setter<string | undefined>;
   setPendingTargets: Setter<ConstraintTarget[]>;
   setPendingConstraintValue: Setter<PendingConstraintValue | undefined>;
   setPendingDerivedValue: Setter<PendingDerivedValue | undefined>;
@@ -122,6 +127,11 @@ export type DocumentActionContext = Pick<
   | "clearAnnotationSelection"
   | "setEditingFreeTextId"
   | "setHoveredConstraintId"
+  | "setSnapSuppressed"
+  | "setSnapActive"
+  | "setDragDuplicating"
+  | "setMarqueeCurrent"
+  | "setHoveredTargetEntityId"
   | "setPendingTargets"
   | "setPendingConstraintValue"
   | "setPendingDerivedValue"
@@ -170,6 +180,11 @@ export type CanvasActionContext = Pick<
   | "cursorPoint"
   | "setSelected"
   | "setHoveredConstraintId"
+  | "setSnapSuppressed"
+  | "setSnapActive"
+  | "setDragDuplicating"
+  | "setMarqueeCurrent"
+  | "setHoveredTargetEntityId"
   | "setPendingTargets"
   | "setPendingConstraintValue"
   | "setPendingDerivedValue"

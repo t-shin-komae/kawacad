@@ -62,6 +62,14 @@ struct KawaCADCommands: Commands {
       Button(AppStrings.tr("menu.save_as")) { uiBindings.menu.saveProjectAsPanel() }
         .keyboardShortcut("s", modifiers: [.command, .shift])
         .disabled(!actions.document.canSaveProject)
+
+      Divider()
+
+      Button(AppStrings.tr("menu.export_pdf")) { uiBindings.menu.exportPDFPanel() }
+        .disabled(!actions.output.canExportPDF)
+
+      Button(AppStrings.tr("menu.direct_print")) { uiBindings.menu.printDirectPanel() }
+        .disabled(!actions.output.canDirectPrint)
     }
 
     CommandGroup(replacing: .undoRedo) {
@@ -195,7 +203,9 @@ struct KawaCADCommands: Commands {
           entities: actions.document.entities
         ) == nil
       )
-      Divider()
+    }
+
+    CommandMenu(AppStrings.tr("menu.measurement")) {
       Button(AppStrings.tr("tool.distance")) { uiBindings.menu.activateTool(.distance) }
       Button(AppStrings.tr("tool.horizontal_distance")) {
         uiBindings.menu.activateTool(.horizontalDistance)
@@ -228,6 +238,12 @@ struct KawaCADCommands: Commands {
       }
     }
 
+    CommandMenu(AppStrings.tr("menu.layer")) {
+      Button(AppStrings.tr("menu.add_layer")) { uiBindings.menu.addLayer() }
+        .keyboardShortcut("l", modifiers: [.command, .shift])
+        .disabled(!actions.document.canEditLayers)
+    }
+
     CommandMenu(AppStrings.tr("menu.view")) {
       Button(AppStrings.tr("menu.edit_display_mode")) {
         uiBindings.menu.setViewMode(.editDisplay)
@@ -238,6 +254,14 @@ struct KawaCADCommands: Commands {
         uiBindings.menu.setViewMode(.outputPreview)
       }
       .keyboardShortcut("2", modifiers: [.command, .option])
+
+      Button(AppStrings.tr("menu.toggle_a4_orientation")) {
+        uiBindings.toolbar.setA4ReferenceOrientation(
+          workspacePreferences.a4ReferenceOrientation == .portrait ? .landscape : .portrait
+        )
+      }
+
+      Button(AppStrings.tr("toolbar.zoom_to_fit")) { uiBindings.toolbar.zoomToFit() }
 
       Divider()
 
@@ -277,19 +301,6 @@ struct KawaCADCommands: Commands {
         .keyboardShortcut("r", modifiers: [.command])
     }
 
-    CommandMenu(AppStrings.tr("menu.layer")) {
-      Button(AppStrings.tr("menu.add_layer")) { uiBindings.menu.addLayer() }
-        .keyboardShortcut("l", modifiers: [.command, .shift])
-        .disabled(!actions.document.canEditLayers)
-    }
-
-    CommandMenu(AppStrings.tr("menu.output")) {
-      Button(AppStrings.tr("menu.export_pdf")) { uiBindings.menu.exportPDFPanel() }
-        .disabled(!actions.output.canExportPDF)
-
-      Button(AppStrings.tr("menu.direct_print")) { uiBindings.menu.printDirectPanel() }
-        .disabled(!actions.output.canDirectPrint)
-    }
   }
 }
 

@@ -1,3 +1,4 @@
+import { cloneElement } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RawEntity } from "@/features/canvas/domain/cad";
@@ -85,12 +86,55 @@ function panel(
 describe("InspectorPanel", () => {
   afterEach(cleanup);
 
+  it("keeps the SwiftUI tab order in a fixed header outside the scrolling content", () => {
+    render(panel());
+    const inspector = screen.getByRole("complementary", { name: "インスペクタ" });
+    const header = inspector.querySelector(":scope > .inspector-header");
+    const content = inspector.querySelector(":scope > .inspector-content");
+
+    expect(header).not.toBeNull();
+    expect(content).not.toBeNull();
+    expect(header?.nextElementSibling).toBe(content);
+    expect(content?.querySelector('[role="tablist"]')).toBeNull();
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "選択",
+      "レイヤー",
+      "共有スタイル",
+      "パラメータ",
+      "パーツ",
+    ]);
+  });
+
   it("shows the SwiftUI document overview on the selection tab", () => {
     render(panel());
     expect(screen.getByText("ドキュメント")).toBeInTheDocument();
     expect(screen.getByText("表示モード")).toBeInTheDocument();
     expect(screen.getByText("Outline")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("selects constraints, measurements, and notes from the same rows as SwiftUI", () => {
+    const onSelectConstraint = vi.fn();
+    const onSelectMeasurement = vi.fn();
+    const onSelectFreeText = vi.fn();
+    render(
+      cloneElement(panel(), {
+        constraints: [{ id: "constraint:1", kind: "segmentLength", status: "fullyConstrained" }],
+        measurements: [{ id: "measurement:1", kind: "distance", visible: true }],
+        freeTexts: [{ id: "text:1", content: "注記", positionMm: { xMm: 0, yMm: 0 }, fontSizeMm: 3 }],
+        onSelectConstraint,
+        onSelectMeasurement,
+        onSelectFreeText,
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^線分長完全拘束/ }));
+    fireEvent.click(screen.getByRole("button", { name: "距離表示" }));
+    fireEvent.click(screen.getByRole("button", { name: "注記" }));
+
+    expect(onSelectConstraint).toHaveBeenCalledWith("constraint:1");
+    expect(onSelectMeasurement).toHaveBeenCalledWith("measurement:1");
+    expect(onSelectFreeText).toHaveBeenCalledWith("text:1");
   });
 
   it("summarizes multiple selections and applies a shared style to all selected entities", () => {
@@ -128,7 +172,7 @@ describe("InspectorPanel", () => {
       ),
     );
 
-    expect(screen.getAllByText("2 件を選択中")).toHaveLength(2);
+    expect(screen.getByText("2 件を選択中")).toBeInTheDocument();
     expect(screen.getByText("線分、円")).toBeInTheDocument();
     expect(screen.getByText("Outline、Stitch")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("combobox", { name: "選択図形の共有線種" }), {
@@ -217,17 +261,34 @@ describe("InspectorPanel", () => {
     expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
 
+    expect(screen.getByRole("button", { name: /^Outline/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Stitch/ })).toBeInTheDocument();
+    fireEvent(window, new Event("kawa-cad-find-inspector"));
     const search = screen.getByRole("searchbox", { name: "レイヤーを検索" });
-    expect(screen.getByRole("checkbox", { name: "Outline" })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Stitch" })).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "outline" } });
-    expect(screen.getByRole("checkbox", { name: "Outline" })).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: "Stitch" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Outline/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Stitch/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the selection-change notice only after selection changes on another tab", () => {
+    const view = render(panel());
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    expect(screen.queryByText("選択が変更されました。")).not.toBeInTheDocument();
+
+    view.rerender(
+      panel(vi.fn(), [], [], [], undefined, undefined, undefined, undefined, undefined, undefined, vi.fn(), [
+        "entity:changed",
+      ]),
+    );
+    expect(screen.getByText("選択が変更されました。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "選択を表示" }));
+    expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("offers the SwiftUI color and drafting-width presets with custom fallback", () => {
     render(panel());
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
     expect(screen.getAllByRole("combobox", { name: "色プリセット" })[0]).toHaveValue("custom");
     expect(screen.getAllByRole("combobox", { name: "線幅プリセット" })[0]).toHaveValue("custom");
   });
@@ -236,6 +297,7 @@ describe("InspectorPanel", () => {
     const onCommand = vi.fn();
     render(panel(onCommand, [], [{ id: "style:stitch", name: "縫い線", style }]));
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    fireEvent.click(screen.getByRole("button", { name: /^縫い線/ }));
     fireEvent.click(screen.getByRole("button", { name: "名称" }));
     expect(screen.getByRole("dialog", { name: "線種名を変更" })).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "線種名" }), { target: { value: "飾り縫い" } });
@@ -251,6 +313,7 @@ describe("InspectorPanel", () => {
     const onCommand = vi.fn();
     render(panel(onCommand));
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Outline を出力対象に含める" }));
     expect(onCommand).toHaveBeenCalledWith(
       "setLayerPrintable",
@@ -277,6 +340,7 @@ describe("InspectorPanel", () => {
     };
     render(panel(onCommand, [], [], [part]));
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: "カードケース を出力対象に含める" }));
     fireEvent.change(screen.getByRole("spinbutton", { name: "カードケース の原点 X (mm)" }), {
       target: { value: "12.5" },
@@ -317,6 +381,7 @@ describe("InspectorPanel", () => {
       ]),
     );
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
     fireEvent.click(screen.getByRole("button", { name: "選択を追加" }));
     fireEvent.click(screen.getByRole("button", { name: "選択を除外" }));
     fireEvent.click(screen.getByRole("button", { name: "選択を外形に設定" }));
@@ -355,6 +420,7 @@ describe("InspectorPanel", () => {
     };
     render(panel(onCommand, [], [], [part]));
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
 
     const name = screen.getByRole("textbox", { name: "カードケース の名前" });
     fireEvent.change(name, { target: { value: "カード入れ" } });
@@ -495,7 +561,7 @@ describe("InspectorPanel", () => {
     );
   });
 
-  it("edits a selected measurement and exposes its conversion action", () => {
+  it("exposes the SwiftUI conversion and deletion actions for a selected measurement", () => {
     const onCommand = vi.fn();
     const onConvertMeasurement = vi.fn();
     const selectedMeasurement = { id: "measurement:1", kind: "distance", visible: true };
@@ -515,13 +581,8 @@ describe("InspectorPanel", () => {
       ),
     );
     expect(screen.getByText("距離表示", { exact: true })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("checkbox", { name: "表示" }));
     fireEvent.click(screen.getByRole("button", { name: "寸法拘束へ変換" }));
-    expect(onCommand).toHaveBeenCalledWith(
-      "updateMeasurementAnnotation",
-      { ...selectedMeasurement, visible: false },
-      "計測表示を更新しました。",
-    );
+    expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
     expect(onConvertMeasurement).toHaveBeenCalledWith("measurement:1");
   });
 
@@ -540,6 +601,7 @@ describe("InspectorPanel", () => {
     const onCommand = vi.fn();
     render(panel(onCommand, [{ id: "parameter:width", name: "幅", valueMm: 25, unit: "millimeter", memo: "胴回り" }]));
     fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    fireEvent.click(screen.getByRole("button", { name: /^幅/ }));
     const value = screen.getByRole("spinbutton", { name: "幅 の値 (mm)" });
     fireEvent.change(value, { target: { value: "30" } });
     fireEvent.blur(value);
@@ -565,5 +627,84 @@ describe("InspectorPanel", () => {
     const search = screen.getByRole("searchbox", { name: "共有スタイルを検索" });
     fireEvent.change(search, { target: { value: "折り線" } });
     expect(screen.queryByText("縫い線")).not.toBeInTheDocument();
+  });
+
+  it("keeps management rows collapsed until selected and exposes their SwiftUI summaries", () => {
+    const parameter = {
+      id: "parameter:width",
+      name: "幅",
+      valueMm: 25,
+      unit: "millimeter",
+      memo: "胴回り",
+      usageCount: 3,
+    };
+    const part: Part = {
+      id: "part:card-case",
+      name: "カードケース",
+      quantity: 2,
+      visible: true,
+      printable: true,
+      originMm: { xMm: 10, yMm: 20 },
+      entityIds: ["line:1", "circle:1"],
+      outlineEntityIds: ["line:1"],
+      holeEntityIdGroups: [["circle:1"]],
+      derivedElementIds: [],
+      freeTextIds: [],
+      measurementAnnotationIds: [],
+    };
+    render(panel(vi.fn(), [parameter], [{ id: "style:stitch", name: "縫い線", style }], [part]));
+
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    const layer = screen.getByRole("button", { name: /^Outline/ });
+    expect(layer).toHaveAttribute("aria-expanded", "false");
+    expect(layer).toHaveTextContent("裁断線");
+    expect(layer).toHaveTextContent("表示");
+    fireEvent.click(layer);
+    expect(layer).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    const sharedStyle = screen.getByRole("button", { name: /^縫い線/ });
+    expect(sharedStyle).toHaveAttribute("aria-expanded", "false");
+    expect(sharedStyle).toHaveTextContent("実線");
+    expect(sharedStyle).toHaveTextContent("#121726");
+    fireEvent.click(sharedStyle);
+    expect(sharedStyle).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    const parameterRow = screen.getByRole("button", { name: /^幅/ });
+    expect(parameterRow).toHaveAttribute("aria-expanded", "false");
+    expect(parameterRow).toHaveTextContent("25.00 mm");
+    expect(parameterRow).toHaveTextContent("使用 3 件");
+    fireEvent.click(parameterRow);
+    expect(parameterRow).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    const partRow = screen.getByRole("button", { name: /^カードケース/ });
+    expect(partRow).toHaveAttribute("aria-expanded", "false");
+    expect(partRow).toHaveTextContent("外形 1 / 穴 1");
+    expect(partRow).toHaveTextContent("数量 2 / 所属 2");
+    fireEvent.click(partRow);
+    expect(partRow).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("shows management empty states and keeps add actions reachable", () => {
+    const onAddParameter = vi.fn();
+    const onCreatePart = vi.fn();
+    render(cloneElement(panel(), { onAddParameter, onCreatePart }));
+
+    fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    expect(screen.getByText("共有線種はありません。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "共有線種を追加" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    expect(screen.getByText("名前付きパラメータはありません。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    expect(onAddParameter).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    expect(screen.getByText("パーツはありません。")).toBeInTheDocument();
+    expect(screen.getByText("登録済みのパーツはありません。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "選択図形からパーツを作成" })).toBeDisabled();
+    expect(onCreatePart).not.toHaveBeenCalled();
   });
 });

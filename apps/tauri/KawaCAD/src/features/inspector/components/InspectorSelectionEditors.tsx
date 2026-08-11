@@ -19,6 +19,7 @@ import type {
   PendingTextEntry,
   Props,
 } from "@/features/inspector/components/InspectorPanel";
+import { InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
 
 export const defaultStyle: LineStyle = {
   stroke: { red: 0.07, green: 0.09, blue: 0.15, alpha: 1 },
@@ -35,28 +36,26 @@ export function DocumentOverview({ summary }: { summary: Props["documentSummary"
     [appStrings.inspector.parameterCount, summary.parameterCount],
   ];
   return (
-    <section className="document-overview">
-      <h2>
-        <FileText aria-hidden="true" />
-        {appStrings.inspector.document}
-      </h2>
+    <InspectorSection title={appStrings.inspector.document} icon={FileText} className="document-overview">
       {values.map(([label, value]) => (
         <div className="detail-row" key={label}>
           <span>{label}</span>
           <strong>{value}</strong>
         </div>
       ))}
-    </section>
+    </InspectorSection>
   );
 }
 export function SelectedConstraintEditor({
   constraint,
   parameters,
   onCommand,
+  onDelete,
 }: {
   constraint: Constraint;
   parameters: Props["parameters"];
   onCommand: Props["onCommand"];
+  onDelete: Props["onDeleteSelection"];
 }) {
   const degrees = typeof constraint.value?.fixedDegrees === "number";
   const fixedValue = degrees ? constraint.value?.fixedDegrees : constraint.value?.fixedMm;
@@ -123,18 +122,21 @@ export function SelectedConstraintEditor({
           </select>
         </label>
       )}
+      <button className="inspector-destructive-button" onClick={onDelete}>
+        {appStrings.contextMenu.delete}
+      </button>
     </div>
   );
 }
 
 export function SelectedMeasurementEditor({
   measurement,
-  onCommand,
   onConvert,
+  onDelete,
 }: {
   measurement: Measurement;
-  onCommand: Props["onCommand"];
   onConvert?: (id: string) => void;
+  onDelete: Props["onDeleteSelection"];
 }) {
   return (
     <div className="inspector-card">
@@ -142,21 +144,10 @@ export function SelectedMeasurementEditor({
         {appStrings.measurementKindNames[measurement.kind as keyof typeof appStrings.measurementKindNames] ??
           measurement.kind}
       </strong>
-      <label>
-        <input
-          type="checkbox"
-          checked={measurement.visible}
-          onChange={(event) =>
-            onCommand(
-              "updateMeasurementAnnotation",
-              { ...measurement, visible: event.target.checked },
-              appStrings.inspector.operationMessage.measurementUpdated,
-            )
-          }
-        />
-        {appStrings.inspector.display}
-      </label>
       <button onClick={() => onConvert?.(measurement.id)}>{appStrings.inspector.measurementConstraint}</button>
+      <button className="inspector-destructive-button" onClick={onDelete}>
+        {appStrings.contextMenu.delete}
+      </button>
     </div>
   );
 }
@@ -180,9 +171,11 @@ export function SelectedStitchStartPointEditor({
 export function FreeTextEditor({
   freeText,
   onCommand,
+  onDelete,
 }: {
   freeText: NonNullable<Props["selectedFreeText"]>;
   onCommand: Props["onCommand"];
+  onDelete: Props["onDeleteSelection"];
 }) {
   const [draft, setDraft] = useState({
     content: freeText.content,
@@ -242,6 +235,9 @@ export function FreeTextEditor({
           onBlur={commit}
         />
       </label>
+      <button className="inspector-destructive-button" onClick={onDelete}>
+        {appStrings.contextMenu.delete}
+      </button>
       <div className="part-origin-fields">
         <label>
           X (mm)
