@@ -12,6 +12,7 @@ import type {
   SelectionExport,
 } from "@/features/canvas/state/useCanvasPresentation";
 import type { PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
+import type { DocumentSaveChoice } from "@/features/document/state/useDocumentPresentation";
 
 type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 
@@ -110,6 +111,7 @@ export type AppActionContext = {
   arrangementPartIds: Set<string>;
   setArrangementPartIds: Setter<Set<string>>;
   inspectorSelectedPartId: string | undefined;
+  requestDocumentSaveConfirmation: (reason: string) => Promise<DocumentSaveChoice>;
 };
 
 /** Explicit dependency surfaces keep feature hooks from depending on the composition context by accident. */
@@ -148,6 +150,7 @@ export type DocumentActionContext = Pick<
   | "setMessage"
   | "documentHeader"
   | "documentNameForFileDialog"
+  | "requestDocumentSaveConfirmation"
   | "activeStyle"
   | "selected"
   | "clipboard"

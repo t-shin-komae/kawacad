@@ -25,7 +25,7 @@ extension OutputActionHandler {
     var draft = OutputRequestDraft(
       destination: .pdf,
       options: options,
-      directPrinterNames: [],
+      directPrinterNames: outputPresentation.availablePrinterNames(),
       directPrintSession: nil
     )
     draft.buildState = buildState
@@ -133,6 +133,32 @@ extension OutputActionHandler {
         includeScaleGuide: draft.options.includeScaleGuide,
         rotationDeg: draft.options.rotationDeg
       )
+    }
+  }
+
+  func setOutputRequestDestination(_ destination: OutputDestination) {
+    guard var draft = outputPresentation.requestDraft, draft.destination != destination else {
+      return
+    }
+    draft.destination = destination
+    draft.warningAcknowledged = false
+    switch destination {
+    case .pdf:
+      draft.selectedDirectPrinterName = nil
+      draft.directPrintSession = nil
+      outputPresentation.setRequestDraft(draft)
+      outputPresentation.scheduleBuild(session: cadSession)
+    case .directPrint:
+      if draft.directPrinterNames.isEmpty {
+        draft.directPrinterNames = outputPresentation.availablePrinterNames()
+      }
+      outputPresentation.setRequestDraft(draft)
+      guard let printerName = draft.directPrinterNames.first else {
+        outputPresentation.failDirectPrintSelection(
+          printerName: "", message: AppStrings.tr("output.direct_print_printer_unavailable"))
+        return
+      }
+      selectDirectPrintPrinter(printerName)
     }
   }
 

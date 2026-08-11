@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { productInfo } from "@/app/productInfo";
-import { aboutMetadataForPlatform, crossPlatformMenuActions } from "@/adapters/nativeMenuAdapter";
+import { aboutMetadataForPlatform, crossPlatformMenuActions, nativeMenuStructure } from "@/adapters/nativeMenuAdapter";
 import { nativeMenuAvailability } from "@/app/domain/nativeMenuState";
 
 describe("cross-platform native menu", () => {
@@ -19,6 +19,53 @@ describe("cross-platform native menu", () => {
 
   it("does not expose a tool palette toggle in the native menu", () => {
     expect(crossPlatformMenuActions as readonly string[]).not.toContain("toggleTools");
+  });
+
+  it("keeps SwiftUI order and separator groups for the aligned menus", () => {
+    expect(nativeMenuStructure.application).toEqual(["about", "separator", "openLicenses"]);
+    expect(nativeMenuStructure.file).toEqual([
+      "new",
+      "open",
+      "separator",
+      "save",
+      "saveAs",
+      "separator",
+      "exportPDF",
+      "directPrint",
+    ]);
+    expect(nativeMenuStructure.edit).toEqual([
+      "undo",
+      "redo",
+      "cut",
+      "copy",
+      "paste",
+      "duplicate",
+      "separator",
+      "delete",
+      "separator",
+      "selectAll",
+      "separator",
+      "cancelCurrentInteraction",
+      "separator",
+      "findInspector",
+    ]);
+    expect(nativeMenuStructure.drawing).toEqual([
+      "select",
+      "point",
+      "line",
+      "circle",
+      "roundHole",
+      "arc",
+      "stitchStartPoint",
+      "freeText",
+      "separator",
+      "centerLine",
+      "horizontalCenterLine",
+      "verticalCenterLine",
+      "separator",
+      "offset",
+      "fillet",
+    ]);
   });
 
   it("uses the shared product metadata for the About item", () => {

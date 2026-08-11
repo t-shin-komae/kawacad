@@ -128,6 +128,64 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "openLicenses",
 ];
 
+type MenuDefinition = { action: MenuAction; text: string; accelerator?: string } | { separator: true };
+
+const separator = { separator: true } as const;
+const fileMenuDefinitions = [
+  { action: "new", text: appStrings.menu.item.new, accelerator: "CmdOrCtrl+N" },
+  { action: "open", text: appStrings.menu.item.open, accelerator: "CmdOrCtrl+O" },
+  separator,
+  { action: "save", text: appStrings.menu.item.save, accelerator: "CmdOrCtrl+S" },
+  { action: "saveAs", text: appStrings.menu.item.saveAs, accelerator: "CmdOrCtrl+Shift+S" },
+  separator,
+  { action: "exportPDF", text: appStrings.menu.item.exportPDF },
+  { action: "directPrint", text: appStrings.menu.item.directPrint },
+] satisfies readonly MenuDefinition[];
+const editMenuDefinitions = [
+  { action: "undo", text: appStrings.menu.item.undo, accelerator: "CmdOrCtrl+Z" },
+  { action: "redo", text: appStrings.menu.item.redo, accelerator: "CmdOrCtrl+Shift+Z" },
+  { action: "cut", text: appStrings.menu.item.cut, accelerator: "CmdOrCtrl+X" },
+  { action: "copy", text: appStrings.menu.item.copy, accelerator: "CmdOrCtrl+C" },
+  { action: "paste", text: appStrings.menu.item.paste, accelerator: "CmdOrCtrl+V" },
+  { action: "duplicate", text: appStrings.menu.item.duplicate, accelerator: "CmdOrCtrl+D" },
+  separator,
+  { action: "delete", text: appStrings.menu.item.delete },
+  separator,
+  { action: "selectAll", text: appStrings.menu.item.selectAll, accelerator: "CmdOrCtrl+A" },
+  separator,
+  { action: "cancelCurrentInteraction", text: appStrings.menu.item.cancelCurrentInteraction, accelerator: "Escape" },
+  separator,
+  { action: "findInspector", text: appStrings.menu.item.findInspector, accelerator: "CmdOrCtrl+F" },
+] satisfies readonly MenuDefinition[];
+const drawingMenuDefinitions = [
+  { action: "select", text: appStrings.toolNames.select, accelerator: "CmdOrCtrl+1" },
+  { action: "point", text: appStrings.toolNames.point, accelerator: "CmdOrCtrl+2" },
+  { action: "line", text: appStrings.toolNames.line, accelerator: "CmdOrCtrl+3" },
+  { action: "circle", text: appStrings.toolNames.circle, accelerator: "CmdOrCtrl+4" },
+  { action: "roundHole", text: appStrings.toolNames.roundHole },
+  { action: "arc", text: appStrings.toolNames.arc },
+  { action: "stitchStartPoint", text: appStrings.toolNames.stitchStartPoint },
+  { action: "freeText", text: appStrings.toolNames.freeText },
+  separator,
+  { action: "centerLine", text: appStrings.toolNames.centerLine, accelerator: "CmdOrCtrl+5" },
+  { action: "horizontalCenterLine", text: appStrings.toolNames.horizontalCenterLine },
+  { action: "verticalCenterLine", text: appStrings.toolNames.verticalCenterLine },
+  separator,
+  { action: "offset", text: appStrings.toolNames.offset },
+  { action: "fillet", text: appStrings.toolNames.fillet },
+] satisfies readonly MenuDefinition[];
+
+const menuTokens = (definitions: readonly MenuDefinition[]) =>
+  definitions.map((definition) => ("separator" in definition ? "separator" : definition.action));
+
+/** Exact order used to keep the Tauri menu aligned with SwiftUI. */
+export const nativeMenuStructure = {
+  application: ["about", "separator", "openLicenses"],
+  file: menuTokens(fileMenuDefinitions),
+  edit: menuTokens(editMenuDefinitions),
+  drawing: menuTokens(drawingMenuDefinitions),
+} as const;
+
 function dispatch(action: MenuAction) {
   window.dispatchEvent(new CustomEvent<MenuAction>("kawa-cad-menu", { detail: action }));
 }
@@ -191,52 +249,29 @@ export async function installNativeMenu() {
   const platformDirectPrintAvailable = await invokeCommand<{ status: string }>("direct_print_availability")
     .then((availability) => availability.status === "available")
     .catch(() => false);
-  const directPrintItems = platformDirectPrintAvailable
-    ? [await item(appStrings.menu.item.directPrint, "directPrint")]
-    : [];
+  const buildItems = async (definitions: readonly MenuDefinition[]) => {
+    const items = [];
+    for (const definition of definitions) {
+      if ("separator" in definition) items.push({ item: "Separator" as const });
+      else items.push(await item(definition.text, definition.action, definition.accelerator));
+    }
+    return items;
+  };
   const applicationMenu = await Submenu.new({
     text: productInfo.name,
-    items: [aboutItem, await item(appStrings.menu.item.openSourceLicenses, "openLicenses")],
+    items: [
+      aboutItem,
+      { item: "Separator" as const },
+      await item(appStrings.menu.item.openSourceLicenses, "openLicenses"),
+    ],
   });
-  const fileItems = [
-    await item(appStrings.menu.item.new, "new", "CmdOrCtrl+N"),
-    await item(appStrings.menu.item.open, "open", "CmdOrCtrl+O"),
-    await item(appStrings.menu.item.save, "save", "CmdOrCtrl+S"),
-    await item(appStrings.menu.item.saveAs, "saveAs", "CmdOrCtrl+Shift+S"),
-    { item: "Separator" as const },
-    await item(appStrings.menu.item.exportPDF, "exportPDF"),
-    ...directPrintItems,
-  ];
-  const editItems = [
-    await item(appStrings.menu.item.undo, "undo", "CmdOrCtrl+Z"),
-    await item(appStrings.menu.item.redo, "redo", "CmdOrCtrl+Shift+Z"),
-    await item(appStrings.menu.item.cut, "cut", "CmdOrCtrl+X"),
-    await item(appStrings.menu.item.copy, "copy", "CmdOrCtrl+C"),
-    await item(appStrings.menu.item.paste, "paste", "CmdOrCtrl+V"),
-    await item(appStrings.menu.item.duplicate, "duplicate", "CmdOrCtrl+D"),
-    await item(appStrings.menu.item.delete, "delete"),
-    await item(appStrings.menu.item.selectAll, "selectAll", "CmdOrCtrl+A"),
-    { item: "Separator" as const },
-    await item(appStrings.menu.item.cancelCurrentInteraction, "cancelCurrentInteraction", "Escape"),
-    await item(appStrings.menu.item.findInspector, "findInspector", "CmdOrCtrl+F"),
-  ];
-  const drawingItems = [
-    await item(appStrings.toolNames.select, "select", "CmdOrCtrl+1"),
-    await item(appStrings.toolNames.point, "point", "CmdOrCtrl+2"),
-    await item(appStrings.toolNames.line, "line", "CmdOrCtrl+3"),
-    await item(appStrings.toolNames.circle, "circle", "CmdOrCtrl+4"),
-    await item(appStrings.toolNames.roundHole, "roundHole"),
-    await item(appStrings.toolNames.arc, "arc"),
-    await item(appStrings.toolNames.stitchStartPoint, "stitchStartPoint"),
-    await item(appStrings.toolNames.freeText, "freeText"),
-    { item: "Separator" as const },
-    await item(appStrings.toolNames.centerLine, "centerLine", "CmdOrCtrl+5"),
-    await item(appStrings.toolNames.horizontalCenterLine, "horizontalCenterLine"),
-    await item(appStrings.toolNames.verticalCenterLine, "verticalCenterLine"),
-    { item: "Separator" as const },
-    await item(appStrings.toolNames.offset, "offset"),
-    await item(appStrings.toolNames.fillet, "fillet"),
-  ];
+  const fileItems = await buildItems(
+    fileMenuDefinitions.filter(
+      (definition) => !("action" in definition && definition.action === "directPrint" && !platformDirectPrintAvailable),
+    ),
+  );
+  const editItems = await buildItems(editMenuDefinitions);
+  const drawingItems = await buildItems(drawingMenuDefinitions);
   const constraintItems = [
     await item(appStrings.toolNames.coincident, "coincident"),
     await item(appStrings.toolNames.horizontal, "horizontal", "CmdOrCtrl+Shift+H"),

@@ -14,22 +14,18 @@ export function PartEditor({
   part,
   arrangementSelected,
   onCommand,
-  onSetQuantity,
   onSelect,
   onToggleArrangement,
   onAddToLibrary,
   onBeginSetOrigin,
-  selectedEntityIds,
 }: {
   part: Part;
   arrangementSelected: boolean;
   onCommand: Props["onCommand"];
-  onSetQuantity: Props["onSetPartQuantity"];
   onSelect: () => void;
   onToggleArrangement: () => void;
   onAddToLibrary: () => void;
   onBeginSetOrigin: () => void;
-  selectedEntityIds: string[];
 }) {
   const [draftName, setDraftName] = useState(part.name);
   const [draftOrigin, setDraftOrigin] = useState({ xMm: String(part.originMm.xMm), yMm: String(part.originMm.yMm) });
@@ -61,9 +57,6 @@ export function PartEditor({
         appStrings.inspector.operationMessage.partOriginUpdated,
       );
   };
-  const selectedNormalEntityIds = selectedEntityIds.filter((id) => !id.startsWith("derived:"));
-  const addableEntityIds = selectedNormalEntityIds.filter((id) => !part.entityIds.includes(id));
-  const removableEntityIds = selectedNormalEntityIds.filter((id) => part.entityIds.includes(id));
   return (
     <div className="inspector-card">
       <div className="row">
@@ -76,7 +69,22 @@ export function PartEditor({
             onBlur={commitName}
           />
         </label>
-        <button onClick={() => onSetQuantity(part.id, part.quantity)}>{appStrings.inspector.quantity}</button>
+        <label>
+          {appStrings.inspector.quantity}
+          <input
+            aria-label={appStrings.inspector.quantityOf(part.name)}
+            type="number"
+            min="1"
+            max="999"
+            step="1"
+            value={part.quantity}
+            onChange={(event) => {
+              const quantity = Number(event.target.value);
+              if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 999)
+                onCommand("setPartQuantity", { partId: part.id, quantity }, appStrings.app.partQuantityUpdated);
+            }}
+          />
+        </label>
       </div>
       <label>
         <input type="checkbox" checked={arrangementSelected} onChange={onToggleArrangement} />
@@ -207,48 +215,14 @@ export function PartEditor({
           {appStrings.contextMenu.duplicate}
         </button>
         <button onClick={onAddToLibrary}>{appStrings.inspector.libraryAdd}</button>
-        <button onClick={() => onCommand("deletePart", part.id, appStrings.inspector.operationMessage.partDetached)}>
+        <button
+          className="inspector-destructive-button"
+          onClick={() => onCommand("deletePart", part.id, appStrings.inspector.operationMessage.partDetached)}
+        >
           {appStrings.inspector.detach}
         </button>
       </div>
-      <div className="button-row">
-        <button
-          disabled={!addableEntityIds.length}
-          onClick={() =>
-            onCommand(
-              "addEntitiesToPart",
-              { partId: part.id, entityIds: addableEntityIds },
-              appStrings.inspector.operationMessage.partAdded,
-            )
-          }
-        >
-          {appStrings.inspector.addSelection}
-        </button>
-        <button
-          disabled={!removableEntityIds.length}
-          onClick={() =>
-            onCommand(
-              "removeEntitiesFromPart",
-              { partId: part.id, entityIds: removableEntityIds },
-              appStrings.inspector.operationMessage.partRemoved,
-            )
-          }
-        >
-          {appStrings.inspector.removeSelection}
-        </button>
-        <button
-          disabled={!selectedNormalEntityIds.length}
-          onClick={() =>
-            onCommand(
-              "setPartBoundary",
-              { partId: part.id, entityIds: selectedNormalEntityIds },
-              appStrings.inspector.operationMessage.outlineUpdated,
-            )
-          }
-        >
-          {appStrings.inspector.setSelectionAsOutline}
-        </button>
-      </div>
+      <small className="inspector-help">{appStrings.inspector.partFixedHelp}</small>
     </div>
   );
 }

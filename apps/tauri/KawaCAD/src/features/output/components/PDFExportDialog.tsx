@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { dialogAdapter } from "@/adapters/dialogAdapter";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
+import { appStrings } from "@/localization";
 
 export type Orientation = "portrait" | "landscape";
 
@@ -155,50 +156,53 @@ export function PDFExportDialog({
       >
         <header className="pdf-export-header">
           <div>
-            <h2 id="pdf-export-title">PDF出力</h2>
-            <p>A4固定・100%実寸で出力します。</p>
+            <h2 id="pdf-export-title">{appStrings.output.pdfTitle}</h2>
+            <p>{appStrings.output.pdfHelp}</p>
           </div>
           <button type="button" onClick={onClose} disabled={saving} aria-label="閉じる">
-            閉じる
+            {appStrings.common.close}
           </button>
         </header>
         <div className="pdf-export-body">
           <div className="pdf-export-settings">
             <dl className="pdf-export-summary">
               <div>
-                <dt>出力先</dt>
+                <dt>{appStrings.output.destination}</dt>
                 <dd>
                   {onDestinationChange ? (
                     <select
+                      aria-label={appStrings.output.destination}
                       value="pdf"
                       onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}
                     >
-                      <option value="pdf">PDF</option>
-                      {directPrintAvailable ? <option value="directPrint">直接印刷</option> : null}
+                      <option value="pdf">{appStrings.output.pdf}</option>
+                      {directPrintAvailable ? (
+                        <option value="directPrint">{appStrings.output.directPrint}</option>
+                      ) : null}
                     </select>
                   ) : (
-                    "PDF"
+                    appStrings.output.pdf
                   )}
                 </dd>
               </div>
               <div>
-                <dt>用紙</dt>
-                <dd>A4・100%</dd>
+                <dt>{appStrings.output.paper}</dt>
+                <dd>{appStrings.output.paperPdf}</dd>
               </div>
               <div>
-                <dt>ページ数</dt>
-                <dd>{loading ? "算出中" : `${pageCount} ページ`}</dd>
+                <dt>{appStrings.output.pageCount}</dt>
+                <dd>{loading ? appStrings.output.calculating : appStrings.output.pages(pageCount)}</dd>
               </div>
             </dl>
             <fieldset disabled={saving}>
-              <legend>出力設定</legend>
+              <legend>{appStrings.output.settings}</legend>
               <label>
                 <input
                   type="checkbox"
                   checked={options.includeDimensionLabels}
                   onChange={(event) => changeOptions({ includeDimensionLabels: event.target.checked })}
                 />
-                寸法数値を出力に含める
+                {appStrings.output.includeDimensions}
               </label>
               <label>
                 <input
@@ -206,7 +210,7 @@ export function PDFExportDialog({
                   checked={options.includeScaleGuide}
                   onChange={(event) => changeOptions({ includeScaleGuide: event.target.checked })}
                 />
-                50mmガイドを出力に含める
+                {appStrings.output.includeScaleGuide}
               </label>
             </fieldset>
             {error ? (
@@ -216,7 +220,7 @@ export function PDFExportDialog({
             ) : null}
             {warnings.length > 0 ? (
               <section className="pdf-export-warnings" aria-label="出力警告">
-                <strong>警告 {warnings.length} 件</strong>
+                <strong>{appStrings.output.warningCount(warnings.length)}</strong>
                 <ul>
                   {warnings.map((warning, index) => (
                     <li key={`${warning.message}-${index}`}>{warning.message}</li>
@@ -229,18 +233,18 @@ export function PDFExportDialog({
                     disabled={loading || saving}
                     onChange={(event) => setWarningsAcknowledged(event.target.checked)}
                   />
-                  警告内容を確認しました
+                  {appStrings.output.warningsAcknowledged}
                 </label>
               </section>
             ) : null}
             {pageCount === 0 && !loading && !error ? (
               <p className="pdf-export-error" role="alert">
-                出力対象がありません。
+                {appStrings.output.noOutput}
               </p>
             ) : null}
             <div className="button-row pdf-export-actions">
               <button type="button" onClick={onClose} disabled={saving}>
-                キャンセル
+                {appStrings.common.cancel}
               </button>
               <button
                 type="button"
@@ -248,7 +252,7 @@ export function PDFExportDialog({
                 onClick={() => void save()}
                 disabled={!canSave}
               >
-                {saving ? "PDF保存中…" : "保存へ進む"}
+                {saving ? appStrings.output.saving : appStrings.output.saveNext}
               </button>
             </div>
           </div>
@@ -262,7 +266,7 @@ export function PDFExportDialog({
 export function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
   return (
     <section className="pdf-export-preview" aria-live="polite" aria-busy={loading}>
-      <h3>最終プレビュー</h3>
+      <h3>{appStrings.output.finalPreview}</h3>
       {pages.length ? (
         <ol className="pdf-export-pages">
           {pages.map((page, index) => (
@@ -275,9 +279,11 @@ export function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: b
           ))}
         </ol>
       ) : (
-        <p>{loading ? "出力内容を生成中…" : "出力対象がありません。"}</p>
+        <p>{loading ? appStrings.output.generating : appStrings.output.noOutput}</p>
       )}
-      {loading && pages.length > 0 ? <div className="pdf-export-preview-updating">設定を反映中…</div> : null}
+      {loading && pages.length > 0 ? (
+        <div className="pdf-export-preview-updating">{appStrings.output.updating}</div>
+      ) : null}
     </section>
   );
 }

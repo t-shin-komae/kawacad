@@ -1,7 +1,7 @@
 pub mod direct_print;
 
 use kawacad_core::command::{DocumentCommand, SelectionReference};
-use kawacad_core::constraints::{ConstraintKind, ConstraintTarget};
+use kawacad_core::constraints::{ConstraintKind, ConstraintTarget, ConstraintValue};
 use kawacad_core::document::DerivedElementPreflightKind;
 use kawacad_core::document::ProjectDocument;
 use kawacad_core::geometry::Point2;
@@ -15,6 +15,8 @@ use kawacad_output_engine::render_pdf;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use tauri::Manager;
@@ -25,6 +27,21 @@ struct CadSession {
     view_mode: CanvasViewMode,
     path: Option<String>,
     recovered_dirty: bool,
+    recovery_candidate_id: String,
+}
+
+static RECOVERY_SESSION_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+fn new_recovery_candidate_id() -> String {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    let sequence = RECOVERY_SESSION_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    format!(
+        "{timestamp:032x}-{:08x}-{sequence:016x}",
+        std::process::id()
+    )
 }
 
 impl CadSession {
@@ -36,6 +53,7 @@ impl CadSession {
             view_mode: CanvasViewMode::EditDisplay,
             path: None,
             recovered_dirty: false,
+            recovery_candidate_id: new_recovery_candidate_id(),
         }
     }
 
@@ -54,8 +72,12 @@ struct RecoveryMetadata {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct RecoveryCandidate {
+    id: String,
     display_name: String,
     original_document_path: Option<String>,
+    updated_at_ms: u64,
+    status: String,
+    details: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -77,33 +99,95 @@ fn application_data_path(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, 
     application_data_directory(app).map(|directory| directory.join(name))
 }
 
-fn recovery_paths(base_directory: PathBuf) -> (PathBuf, PathBuf) {
-    let directory = base_directory.join("Recovery").join("active-document");
-    (
+fn recovery_directory(base_directory: &Path, candidate_id: &str) -> Result<PathBuf, String> {
+    if candidate_id.is_empty()
+        || !candidate_id.chars().all(|character| {
+            character.is_ascii_alphanumeric() || character == '-' || character == '_'
+        })
+    {
+        return Err("Invalid recovery candidate identifier".to_owned());
+    }
+    Ok(base_directory.join("Recovery").join(candidate_id))
+}
+
+fn recovery_paths(base_directory: &Path, candidate_id: &str) -> Result<(PathBuf, PathBuf), String> {
+    let directory = recovery_directory(base_directory, candidate_id)?;
+    Ok((
         directory.join("snapshot.kawa"),
         directory.join("metadata.json"),
-    )
+    ))
 }
 
-fn recovery_candidate_at(base_directory: PathBuf) -> Result<Option<RecoveryCandidate>, String> {
-    let (snapshot_path, metadata_path) = recovery_paths(base_directory);
-    if !snapshot_path.exists() || !metadata_path.exists() {
-        return Ok(None);
+fn recovery_candidates_at(base_directory: &Path) -> Result<Vec<RecoveryCandidate>, String> {
+    let root = base_directory.join("Recovery");
+    if !root.exists() {
+        return Ok(Vec::new());
     }
-    let metadata = fs::read_to_string(metadata_path)
-        .map_err(|error| format!("Could not read recovery metadata: {error}"))
-        .and_then(|contents| {
-            serde_json::from_str::<RecoveryMetadata>(&contents)
-                .map_err(|error| format!("Could not read recovery metadata: {error}"))
-        })?;
-    Ok(Some(RecoveryCandidate {
-        display_name: metadata.display_name,
-        original_document_path: metadata.original_document_path,
-    }))
+    let mut candidates = Vec::new();
+    for entry in fs::read_dir(&root)
+        .map_err(|error| format!("Could not read recovery directory: {error}"))?
+    {
+        let entry = entry.map_err(|error| format!("Could not read recovery candidate: {error}"))?;
+        if !entry.path().is_dir() {
+            continue;
+        }
+        let id = entry.file_name().to_string_lossy().to_string();
+        let (snapshot_path, metadata_path) = recovery_paths(base_directory, &id)?;
+        let updated_at_ms = snapshot_path
+            .metadata()
+            .or_else(|_| entry.metadata())
+            .and_then(|metadata| metadata.modified())
+            .ok()
+            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+            .map(|duration| duration.as_millis() as u64)
+            .unwrap_or(0);
+        let metadata = fs::read_to_string(&metadata_path)
+            .map_err(|error| format!("Could not read recovery metadata: {error}"))
+            .and_then(|contents| {
+                serde_json::from_str::<RecoveryMetadata>(&contents)
+                    .map_err(|error| format!("Could not read recovery metadata: {error}"))
+            });
+        let snapshot_validation = ProjectDocument::read_json_file(&snapshot_path)
+            .map(|_| ())
+            .map_err(|error| format!("Could not validate recovery snapshot: {error:?}"));
+        match (metadata, snapshot_validation) {
+            (Ok(metadata), Ok(())) => candidates.push(RecoveryCandidate {
+                id,
+                display_name: metadata.display_name,
+                original_document_path: metadata.original_document_path,
+                updated_at_ms,
+                status: "recoverable".to_owned(),
+                details: None,
+            }),
+            (metadata, snapshot) => {
+                let details = metadata
+                    .as_ref()
+                    .err()
+                    .cloned()
+                    .or_else(|| snapshot.err())
+                    .unwrap_or_else(|| "Recovery candidate is incomplete".to_owned());
+                let (display_name, original_document_path) = metadata
+                    .ok()
+                    .map(|metadata| (metadata.display_name, metadata.original_document_path))
+                    .unwrap_or_else(|| ("破損した復旧候補".to_owned(), None));
+                candidates.push(RecoveryCandidate {
+                    id,
+                    display_name,
+                    original_document_path,
+                    updated_at_ms,
+                    status: "broken".to_owned(),
+                    details: Some(details),
+                });
+            }
+        }
+    }
+    candidates.sort_by_key(|candidate| std::cmp::Reverse(candidate.updated_at_ms));
+    Ok(candidates)
 }
 
-fn save_recovery_snapshot_at(session: &CadSession, base_directory: PathBuf) -> Result<(), String> {
-    let (snapshot_path, metadata_path) = recovery_paths(base_directory);
+fn save_recovery_snapshot_at(session: &CadSession, base_directory: &Path) -> Result<(), String> {
+    let (snapshot_path, metadata_path) =
+        recovery_paths(base_directory, &session.recovery_candidate_id)?;
     let directory = snapshot_path
         .parent()
         .ok_or_else(|| "Could not determine recovery directory".to_owned())?;
@@ -133,8 +217,8 @@ fn save_recovery_snapshot_at(session: &CadSession, base_directory: PathBuf) -> R
         .map_err(|error| format!("Could not write recovery metadata: {error}"))
 }
 
-fn discard_recovery_snapshot_at(base_directory: PathBuf) -> Result<(), String> {
-    let (snapshot_path, _) = recovery_paths(base_directory);
+fn discard_recovery_snapshot_at(base_directory: &Path, candidate_id: &str) -> Result<(), String> {
+    let (snapshot_path, _) = recovery_paths(base_directory, candidate_id)?;
     let directory = snapshot_path
         .parent()
         .ok_or_else(|| "Could not determine recovery directory".to_owned())?;
@@ -148,6 +232,64 @@ fn discard_recovery_snapshot_at(base_directory: PathBuf) -> Result<(), String> {
 struct AppState {
     cad_session: Mutex<CadSession>,
     prepared_prints: Mutex<direct_print::PreparedPrintStore<direct_print::PreparedDirectPrint>>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ParameterUsage {
+    id: String,
+    name: String,
+    value_mm: f64,
+    unit: kawacad_core::parameters::ParameterUnit,
+    memo: String,
+    usage_count: usize,
+    used_constraint_ids: Vec<String>,
+}
+
+fn parameters_with_usage(document: &ProjectDocument) -> Vec<ParameterUsage> {
+    document
+        .parameters()
+        .iter()
+        .map(|parameter| {
+            let used_constraint_ids = document
+                .constraints()
+                .iter()
+                .filter(|constraint| {
+                    !constraint.id.starts_with("constraint:implicit:")
+                        && matches!(
+                            &constraint.value,
+                            Some(ConstraintValue::Parameter(parameter_id)) if parameter_id == &parameter.id
+                        )
+                })
+                .map(|constraint| constraint.id.clone());
+            let used_derived_element_ids = document
+                .derived_elements()
+                .iter()
+                .filter(|derived_element| match &derived_element.kind {
+                    kawacad_core::derived::DerivedElementKind::OffsetCurve(offset_curve) => matches!(
+                        &offset_curve.distance,
+                        ConstraintValue::Parameter(parameter_id) if parameter_id == &parameter.id
+                    ),
+                    kawacad_core::derived::DerivedElementKind::Fillet(fillet) => matches!(
+                        &fillet.radius,
+                        ConstraintValue::Parameter(parameter_id) if parameter_id == &parameter.id
+                    ),
+                })
+                .map(|derived_element| derived_element.id.clone());
+            let used_constraint_ids = used_constraint_ids
+                .chain(used_derived_element_ids)
+                .collect::<Vec<_>>();
+            ParameterUsage {
+                id: parameter.id.clone(),
+                name: parameter.name.clone(),
+                value_mm: parameter.value_mm,
+                unit: parameter.unit,
+                memo: parameter.memo.clone(),
+                usage_count: used_constraint_ids.len(),
+                used_constraint_ids,
+            }
+        })
+        .collect()
 }
 
 fn state_for(session: &CadSession) -> serde_json::Value {
@@ -223,7 +365,7 @@ fn state_for(session: &CadSession) -> serde_json::Value {
         "settings": document.settings(),
         "layers": document.layers(),
         "sharedStyles": document.shared_styles(),
-        "parameters": document.parameters(),
+        "parameters": parameters_with_usage(document),
         "parts": document.parts(),
         "entities": snapshot.entities,
         "drawingEntityMetadata": drawing_entity_metadata,
@@ -600,6 +742,7 @@ fn preview_command(
         view_mode: session.view_mode,
         path: session.path.clone(),
         recovered_dirty: session.recovered_dirty,
+        recovery_candidate_id: session.recovery_candidate_id.clone(),
     };
     Ok(state_for(&preview_session))
 }
@@ -745,8 +888,8 @@ fn save_part_library(app: tauri::AppHandle, entries: serde_json::Value) -> Resul
 }
 
 #[tauri::command]
-fn recovery_candidate(app: tauri::AppHandle) -> Result<Option<RecoveryCandidate>, String> {
-    recovery_candidate_at(application_data_directory(&app)?)
+fn recovery_candidates(app: tauri::AppHandle) -> Result<Vec<RecoveryCandidate>, String> {
+    recovery_candidates_at(&application_data_directory(&app)?)
 }
 
 #[tauri::command]
@@ -755,15 +898,17 @@ fn save_recovery_snapshot(
     state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
     let session = lock_session(&state)?;
-    save_recovery_snapshot_at(&session, application_data_directory(&app)?)
+    save_recovery_snapshot_at(&session, &application_data_directory(&app)?)
 }
 
 #[tauri::command]
 fn restore_recovery_snapshot(
     app: tauri::AppHandle,
     state: tauri::State<'_, AppState>,
+    candidate_id: String,
 ) -> Result<serde_json::Value, String> {
-    let (snapshot_path, metadata_path) = recovery_paths(application_data_directory(&app)?);
+    let base_directory = application_data_directory(&app)?;
+    let (snapshot_path, metadata_path) = recovery_paths(&base_directory, &candidate_id)?;
     let metadata = fs::read_to_string(&metadata_path)
         .map_err(|error| format!("Could not read recovery metadata: {error}"))
         .and_then(|contents| {
@@ -778,12 +923,40 @@ fn restore_recovery_snapshot(
     session.view_mode = CanvasViewMode::EditDisplay;
     session.path = metadata.original_document_path;
     session.recovered_dirty = true;
+    session.recovery_candidate_id = candidate_id;
     Ok(state_for(&session))
 }
 
 #[tauri::command]
-fn discard_recovery_snapshot(app: tauri::AppHandle) -> Result<(), String> {
-    discard_recovery_snapshot_at(application_data_directory(&app)?)
+fn discard_recovery_snapshot(app: tauri::AppHandle, candidate_id: String) -> Result<(), String> {
+    discard_recovery_snapshot_at(&application_data_directory(&app)?, &candidate_id)
+}
+
+#[tauri::command]
+fn reveal_recovery_snapshot(app: tauri::AppHandle, candidate_id: String) -> Result<(), String> {
+    let directory = recovery_directory(&application_data_directory(&app)?, &candidate_id)?;
+    #[cfg(target_os = "macos")]
+    let mut command = {
+        let mut command = Command::new("open");
+        command.arg(&directory);
+        command
+    };
+    #[cfg(target_os = "windows")]
+    let mut command = {
+        let mut command = Command::new("explorer");
+        command.arg(&directory);
+        command
+    };
+    #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+    let mut command = {
+        let mut command = Command::new("xdg-open");
+        command.arg(&directory);
+        command
+    };
+    command
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| format!("Could not reveal recovery snapshot: {error}"))
 }
 
 #[tauri::command]
@@ -843,10 +1016,11 @@ pub fn run() {
             export_part_library_item,
             load_part_library,
             save_part_library,
-            recovery_candidate,
+            recovery_candidates,
             save_recovery_snapshot,
             restore_recovery_snapshot,
             discard_recovery_snapshot,
+            reveal_recovery_snapshot,
             undo,
             redo,
             exit_application,
@@ -899,6 +1073,66 @@ mod tests {
         let state = state_for(&session);
         assert!(state["entities"].as_array().unwrap().is_empty());
         assert_eq!(state["history"]["canRedo"], true);
+    }
+
+    #[test]
+    fn state_reports_parameter_usage_from_constraints_and_derived_elements() {
+        let mut session = CadSession::new("Parameter usage".to_owned());
+        for value in [
+            json!({
+                "kind": "addParameter",
+                "payload": { "id": "parameter:used", "name": "幅", "valueMm": 10.0, "unit": "millimeter", "memo": "" }
+            }),
+            json!({
+                "kind": "addParameter",
+                "payload": { "id": "parameter:unused", "name": "未使用", "valueMm": 5.0, "unit": "millimeter", "memo": "" }
+            }),
+            json!({
+                "kind": "createEntityFromGesture",
+                "payload": { "id": "line:1", "layerId": null, "gesture": { "kind": "line", "start": { "xMm": 0.0, "yMm": 0.0 }, "end": { "xMm": 20.0, "yMm": 0.0 }, "centerLine": false } }
+            }),
+            json!({
+                "kind": "addConstraint",
+                "payload": {
+                    "id": "constraint:length", "kind": "segmentLength", "targets": [{ "entity": "line:1" }],
+                    "value": { "parameter": "parameter:used" }, "status": "underConstrained"
+                }
+            }),
+            json!({
+                "kind": "addDerivedElement",
+                "payload": {
+                    "id": "derived:offset", "layerId": null,
+                    "kind": { "offsetCurve": { "sourceEntityIds": ["line:1"], "distance": { "parameter": "parameter:used" }, "direction": "left" } }
+                }
+            }),
+        ] {
+            session
+                .document
+                .apply_command(
+                    serde_json::from_value(value)
+                        .expect("parameter usage command should deserialize"),
+                )
+                .expect("parameter usage command should apply");
+        }
+
+        let state = state_for(&session);
+        let parameters = state["parameters"]
+            .as_array()
+            .expect("parameters should be serialized");
+        let used = parameters
+            .iter()
+            .find(|parameter| parameter["id"] == "parameter:used")
+            .expect("used parameter should exist");
+        let unused = parameters
+            .iter()
+            .find(|parameter| parameter["id"] == "parameter:unused")
+            .expect("unused parameter should exist");
+        assert_eq!(used["usageCount"], 2);
+        assert_eq!(
+            used["usedConstraintIds"],
+            json!(["constraint:length", "derived:offset"])
+        );
+        assert_eq!(unused["usageCount"], 0);
     }
 
     #[test]
@@ -1135,6 +1369,7 @@ mod tests {
             view_mode: session.view_mode,
             path: session.path.clone(),
             recovered_dirty: session.recovered_dirty,
+            recovery_candidate_id: session.recovery_candidate_id.clone(),
         };
 
         assert_eq!(session.document, before);
@@ -1334,25 +1569,84 @@ mod tests {
             )
             .expect("recovery document should become dirty");
 
-        save_recovery_snapshot_at(&session, directory.clone())
-            .expect("recovery snapshot should save");
-        let candidate = recovery_candidate_at(directory.clone())
-            .expect("recovery candidate should read")
-            .expect("recovery candidate should exist");
+        save_recovery_snapshot_at(&session, &directory).expect("recovery snapshot should save");
+        let candidates =
+            recovery_candidates_at(&directory).expect("recovery candidate should read");
+        let candidate = candidates.first().expect("recovery candidate should exist");
         assert_eq!(candidate.display_name, "Recovered project");
         assert_eq!(
             candidate.original_document_path.as_deref(),
             Some("/projects/recovered.kawa")
         );
 
-        let (snapshot_path, _) = recovery_paths(directory.clone());
+        let (snapshot_path, _) =
+            recovery_paths(&directory, &candidate.id).expect("recovery paths should resolve");
         let restored = ProjectDocument::read_json_file(snapshot_path)
             .expect("snapshot should be a project document");
         assert_eq!(restored.entities().len(), 1);
-        discard_recovery_snapshot_at(directory.clone()).expect("recovery snapshot should discard");
-        assert!(recovery_candidate_at(directory.clone())
+        discard_recovery_snapshot_at(&directory, &candidate.id)
+            .expect("recovery snapshot should discard");
+        assert!(recovery_candidates_at(&directory)
             .expect("discarded recovery should be readable")
-            .is_none());
+            .is_empty());
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn recovery_candidates_include_multiple_documents_and_broken_snapshots() {
+        let directory = temporary_directory("multiple-recovery");
+        for (name, path, entity_id) in [
+            ("First", "/projects/first.kawa", "point-first"),
+            ("Second", "/projects/second.kawa", "point-second"),
+        ] {
+            let mut session = CadSession::new(name.to_owned());
+            session.path = Some(path.to_owned());
+            session
+                .document
+                .apply_command(
+                    serde_json::from_value(json!({
+                        "kind": "createEntityFromGesture",
+                        "payload": {
+                            "id": entity_id,
+                            "layerId": null,
+                            "gesture": { "kind": "point", "position": { "xMm": 1.0, "yMm": 2.0 } }
+                        }
+                    }))
+                    .expect("recovery command should deserialize"),
+                )
+                .expect("recovery document should become dirty");
+            save_recovery_snapshot_at(&session, &directory).expect("recovery snapshot should save");
+        }
+
+        let broken_directory = directory.join("Recovery").join("broken-1");
+        fs::create_dir_all(&broken_directory).expect("broken candidate directory should exist");
+        fs::write(
+            broken_directory.join("metadata.json"),
+            r#"{"displayName":"Broken","originalDocumentPath":null}"#,
+        )
+        .expect("broken candidate metadata should save");
+        fs::write(
+            broken_directory.join("snapshot.kawa"),
+            "not a KawaCAD document",
+        )
+        .expect("broken candidate snapshot should save");
+
+        let candidates =
+            recovery_candidates_at(&directory).expect("all recovery candidates should be readable");
+        assert_eq!(candidates.len(), 3);
+        assert_eq!(
+            candidates
+                .iter()
+                .filter(|candidate| candidate.status == "recoverable")
+                .count(),
+            2
+        );
+        let broken = candidates
+            .iter()
+            .find(|candidate| candidate.id == "broken-1")
+            .expect("broken candidate should remain visible");
+        assert_eq!(broken.status, "broken");
+        assert!(broken.details.is_some());
         let _ = fs::remove_dir_all(directory);
     }
 
@@ -1374,13 +1668,13 @@ mod tests {
                 .expect("snapshot command should deserialize"),
             )
             .expect("snapshot document should become dirty");
-        save_recovery_snapshot_at(&session, directory.clone()).expect("dirty snapshot should save");
+        save_recovery_snapshot_at(&session, &directory).expect("dirty snapshot should save");
         session.clean_document = session.document.clone();
-        save_recovery_snapshot_at(&session, directory.clone())
+        save_recovery_snapshot_at(&session, &directory)
             .expect("clean document should clear snapshot");
-        assert!(recovery_candidate_at(directory.clone())
+        assert!(recovery_candidates_at(&directory)
             .expect("clean recovery state should be readable")
-            .is_none());
+            .is_empty());
         let _ = fs::remove_dir_all(directory);
     }
 

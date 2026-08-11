@@ -70,7 +70,6 @@ function panel(
       onActiveLayerChange={vi.fn()}
       onRenameLayer={vi.fn()}
       onDeleteLayer={vi.fn()}
-      onSetPartQuantity={vi.fn()}
       onSelectPart={vi.fn()}
       onToggleArrangementPart={vi.fn()}
       onAlignParts={vi.fn()}
@@ -293,19 +292,63 @@ describe("InspectorPanel", () => {
     expect(screen.getAllByRole("combobox", { name: "線幅プリセット" })[0]).toHaveValue("custom");
   });
 
-  it("edits a shared-style name through the labelled React dialog", () => {
+  it("edits a shared-style name inline like SwiftUI", () => {
     const onCommand = vi.fn();
     render(panel(onCommand, [], [{ id: "style:stitch", name: "縫い線", style }]));
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
     fireEvent.click(screen.getByRole("button", { name: /^縫い線/ }));
-    fireEvent.click(screen.getByRole("button", { name: "名称" }));
-    expect(screen.getByRole("dialog", { name: "線種名を変更" })).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("textbox", { name: "線種名" }), { target: { value: "飾り縫い" } });
-    fireEvent.click(screen.getByRole("button", { name: "適用" }));
+    const name = screen.getByRole("textbox", { name: "縫い線 の名前" });
+    fireEvent.change(name, { target: { value: "飾り縫い" } });
+    fireEvent.blur(name);
     expect(onCommand).toHaveBeenCalledWith(
       "updateSharedStyle",
       { id: "style:stitch", name: "飾り縫い", style },
       "共有線種を更新しました。",
+    );
+  });
+
+  it("commits an inline layer name without opening another editor", () => {
+    const onRenameLayer = vi.fn();
+    render(cloneElement(panel(), { onRenameLayer }));
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
+    const name = screen.getByRole("textbox", { name: "Outline の名前" });
+    fireEvent.change(name, { target: { value: "外形線" } });
+    fireEvent.blur(name);
+
+    expect(onRenameLayer).toHaveBeenCalledWith("layer:outline", "外形線");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps an incomplete custom color draft and commits it once valid", () => {
+    const onCommand = vi.fn();
+    render(panel(onCommand));
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
+    fireEvent.change(screen.getAllByRole("combobox", { name: "色プリセット" })[0], {
+      target: { value: "custom" },
+    });
+    const color = screen.getByRole("textbox", { name: "カスタム色 (#RRGGBB)" });
+    fireEvent.change(color, { target: { value: "#AB" } });
+    expect(color).toHaveValue("#AB");
+    expect(onCommand).not.toHaveBeenCalled();
+
+    fireEvent.change(color, { target: { value: "#ABCDEF" } });
+    expect(onCommand).toHaveBeenCalledWith(
+      "setLayerStyle",
+      {
+        layerId: "layer:outline",
+        style: {
+          ...style,
+          stroke: {
+            red: 171 / 255,
+            green: 205 / 255,
+            blue: 239 / 255,
+            alpha: 1,
+          },
+        },
+      },
+      "レイヤー線種を更新しました。",
     );
   });
 
@@ -342,6 +385,9 @@ describe("InspectorPanel", () => {
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
     fireEvent.click(screen.getByRole("checkbox", { name: "カードケース を出力対象に含める" }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: "カードケース の数量" }), {
+      target: { value: "3" },
+    });
     fireEvent.change(screen.getByRole("spinbutton", { name: "カードケース の原点 X (mm)" }), {
       target: { value: "12.5" },
     });
@@ -352,13 +398,18 @@ describe("InspectorPanel", () => {
       "パーツの出力対象を更新しました。",
     );
     expect(onCommand).toHaveBeenCalledWith(
+      "setPartQuantity",
+      { partId: "part:card-case", quantity: 3 },
+      "パーツ数量を更新しました。",
+    );
+    expect(onCommand).toHaveBeenCalledWith(
       "setPartPosition",
       { partId: "part:card-case", position: { xMm: 12.5, yMm: 20 } },
       "パーツ原点を更新しました。",
     );
     expect(screen.getByLabelText("カードケース の構成")).toHaveTextContent("外形 1穴 1派生 1テキスト 1計測 1");
   });
-  it("edits selected part membership and its boundary through Core commands", () => {
+  it("keeps fixed part membership controls out of the SwiftUI-equivalent editor", () => {
     const onCommand = vi.fn();
     const part: Part = {
       id: "part:card-case",
@@ -382,24 +433,13 @@ describe("InspectorPanel", () => {
     );
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     fireEvent.click(screen.getByRole("button", { name: /^カードケース/ }));
-    fireEvent.click(screen.getByRole("button", { name: "選択を追加" }));
-    fireEvent.click(screen.getByRole("button", { name: "選択を除外" }));
-    fireEvent.click(screen.getByRole("button", { name: "選択を外形に設定" }));
-    expect(onCommand).toHaveBeenCalledWith(
-      "addEntitiesToPart",
-      { partId: "part:card-case", entityIds: ["line:2"] },
-      "選択図形をパーツへ追加しました。",
-    );
-    expect(onCommand).toHaveBeenCalledWith(
-      "removeEntitiesFromPart",
-      { partId: "part:card-case", entityIds: ["line:1"] },
-      "選択図形をパーツから除外しました。",
-    );
-    expect(onCommand).toHaveBeenCalledWith(
-      "setPartBoundary",
-      { partId: "part:card-case", entityIds: ["line:1", "line:2"] },
-      "パーツ外形を更新しました。",
-    );
+    expect(screen.queryByRole("button", { name: "選択を追加" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "選択を除外" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "選択を外形に設定" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("パーツの形状は固定されています。構成を変更するにはパーツを解除してください。"),
+    ).toBeInTheDocument();
+    expect(onCommand).not.toHaveBeenCalled();
   });
 
   it("ports the SwiftUI part rename, visibility, movement, duplication, and removal commands", () => {
@@ -586,15 +626,23 @@ describe("InspectorPanel", () => {
     expect(onConvertMeasurement).toHaveBeenCalledWith("measurement:1");
   });
 
-  it("shows the owning entity of a selected stitch-start point", () => {
+  it("shows the owning geometry without exposing its internal id", () => {
+    const target: RawEntity = {
+      id: "line:1",
+      kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } },
+    };
     render(
-      panel(vi.fn(), [], [], [], undefined, undefined, undefined, undefined, undefined, {
-        id: "stitch:1",
-        targetEntityId: "line:1",
-      }),
+      cloneElement(
+        panel(vi.fn(), [], [], [], undefined, undefined, undefined, undefined, undefined, {
+          id: "stitch:1",
+          targetEntityId: "line:1",
+        }),
+        { selectedStitchTargetEntity: target },
+      ),
     );
     expect(screen.getByText("縫い始め点")).toBeInTheDocument();
-    expect(screen.getByText("line:1")).toBeInTheDocument();
+    expect(screen.getByText("線分")).toBeInTheDocument();
+    expect(screen.queryByText("line:1")).not.toBeInTheDocument();
   });
 
   it("updates and deletes a parameter with the full Core payload", () => {
@@ -610,7 +658,8 @@ describe("InspectorPanel", () => {
       { id: "parameter:width", name: "幅", valueMm: 30, unit: "millimeter", memo: "胴回り" },
       "幅 を更新しました。",
     );
-    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    expect(screen.getByText("このパラメータは使用されていません。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "幅 を削除" }));
     expect(onCommand).toHaveBeenCalledWith(
       "deleteParameter",
       { parameterId: "parameter:width", replacementValueMm: 25 },
@@ -677,6 +726,7 @@ describe("InspectorPanel", () => {
     expect(parameterRow).toHaveTextContent("使用 3 件");
     fireEvent.click(parameterRow);
     expect(parameterRow).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("3 件の拘束で使用されています。")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     const partRow = screen.getByRole("button", { name: /^カードケース/ });

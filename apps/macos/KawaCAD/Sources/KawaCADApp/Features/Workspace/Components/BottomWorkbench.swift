@@ -28,7 +28,7 @@ struct BottomWorkbench: View {
         )
         if let constraint = state.constraints.first {
           CompactWorkbenchMeta(
-            label: constraint.kind, value: constraint.targets.joined(separator: " / "))
+            label: AppStrings.tr("workbench.state"), value: constraint.kind)
         } else {
           CompactWorkbenchMeta(
             label: AppStrings.tr("workbench.state"),
@@ -38,12 +38,13 @@ struct BottomWorkbench: View {
 
       CompactWorkbenchSection(title: AppStrings.tr("workbench.parameter"), symbolName: "number") {
         let unusedCount = state.parameters.filter(\.isUnused).count
+        let usedCount = state.parameters.count - unusedCount
         if let parameter = state.parameters.first {
           CompactWorkbenchLine(
             primary:
               "\(parameter.name)  \(String(format: "%.2f", parameter.valueMM)) \(parameter.unitLabel)",
             secondary: AppStrings.tr(
-              "workbench.parameter_summary", parameter.usageCount, unusedCount)
+              "workbench.parameter_summary", usedCount, unusedCount)
           )
         } else {
           CompactWorkbenchLine(

@@ -154,10 +154,10 @@ struct KawaCADCommands: Commands {
         .keyboardShortcut("4", modifiers: [.command])
       Button(AppStrings.tr("tool.round_hole")) { uiBindings.menu.activateTool(.roundHole) }
       Button(AppStrings.tr("tool.arc")) { uiBindings.menu.activateTool(.arc) }
-      Button(AppStrings.tr("tool.free_text")) { uiBindings.menu.activateTool(.freeText) }
       Button(AppStrings.tr("tool.stitch_start_point")) {
         uiBindings.menu.activateTool(.stitchStartPoint)
       }
+      Button(AppStrings.tr("tool.free_text")) { uiBindings.menu.activateTool(.freeText) }
       Divider()
       Button(AppStrings.tr("tool.center_line")) {
         uiBindings.menu.activateTool(.centerLine)

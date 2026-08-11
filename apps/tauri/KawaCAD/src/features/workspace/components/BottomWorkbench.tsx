@@ -73,7 +73,7 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
       <SummarySection title={appStrings.workbench.selection} icon="selection">
         {selectedEntity ? (
           <>
-            <strong>{selectedEntity.id}</strong>
+            <strong>{entityKindLabel(selectedEntity)}</strong>
             <small>{entityKindLabel(selectedEntity)}</small>
             <span>{appStrings.workbench.layer(layerName)}</span>
           </>
@@ -89,7 +89,8 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
         <small>{appStrings.workbench.itemCount(constraints.length)}</small>
         <span>
           {constraints.length
-            ? constraints.map((item) => `${item.kind}: ${(item.targets ?? []).join(" / ") || "—"}`).join("、")
+            ? (appStrings.constraintKindNames[constraints[0].kind as keyof typeof appStrings.constraintKindNames] ??
+              constraints[0].kind)
             : appStrings.workbench.noConstraintDescription}
         </span>
       </SummarySection>

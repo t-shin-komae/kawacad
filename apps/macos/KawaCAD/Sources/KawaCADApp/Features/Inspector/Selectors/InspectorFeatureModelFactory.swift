@@ -46,6 +46,7 @@ enum InspectorFeatureModelFactory {
     state.selectedEntity = actionHandlers.canvas.selectedEntity
     state.selectedEntities = actionHandlers.canvas.selectedEntities
     state.selectedFreeText = actionHandlers.canvas.selectedFreeText
+    state.selectedStitchStartPoint = actionHandlers.canvas.selectedStitchStartPoint
     state.selectedConstraintID = actionHandlers.canvas.selectedConstraintID
     state.selectedMeasurementAnnotation = actionHandlers.canvas.selectedMeasurementAnnotation
     state.selectedDerivedElement = WorkspaceViewStateFactory.selectedDerivedElement(

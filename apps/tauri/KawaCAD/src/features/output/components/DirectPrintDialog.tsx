@@ -7,6 +7,7 @@ import {
   type OutputOptions,
   type OutputWarning,
 } from "@/features/output/components/PDFExportDialog";
+import { appStrings } from "@/localization";
 
 type Printer = { id: string; displayName: string; selectable: boolean };
 type PreparedPrint = { preparedPrintId: string; outputDocumentModel: OutputDocumentModel; warnings: OutputWarning[] };
@@ -147,51 +148,58 @@ export function DirectPrintDialog({
       >
         <header className="pdf-export-header">
           <div>
-            <h2 id="direct-print-title">直接印刷</h2>
-            <p>A4固定・100%実寸・片面で、印刷ダイアログを表示せずに送信します。</p>
+            <h2 id="direct-print-title">{appStrings.output.directPrintTitle}</h2>
+            <p>{appStrings.output.directPrintHelp}</p>
           </div>
           <button type="button" onClick={onClose} disabled={printing} aria-label="閉じる">
-            閉じる
+            {appStrings.common.close}
           </button>
         </header>
         <div className="pdf-export-body">
           <div className="pdf-export-settings">
             <dl className="pdf-export-summary">
               <div>
-                <dt>プリンタ</dt>
+                <dt>{appStrings.output.printer}</dt>
                 <dd>
-                  {printerId ? printers.find((printer) => printer.id === printerId)?.displayName : "選択してください"}
+                  {printerId
+                    ? printers.find((printer) => printer.id === printerId)?.displayName
+                    : appStrings.output.choosePrinter}
                 </dd>
               </div>
               {onDestinationChange ? (
                 <div>
-                  <dt>出力先</dt>
+                  <dt>{appStrings.output.destination}</dt>
                   <dd>
                     <select
+                      aria-label={appStrings.output.destination}
                       value="directPrint"
                       onChange={(event) => onDestinationChange(event.target.value as "pdf" | "directPrint")}
                     >
-                      <option value="pdf">PDF</option>
-                      <option value="directPrint">直接印刷</option>
+                      <option value="pdf">{appStrings.output.pdf}</option>
+                      <option value="directPrint">{appStrings.output.directPrint}</option>
                     </select>
                   </dd>
                 </div>
               ) : null}
               <div>
-                <dt>用紙</dt>
-                <dd>A4・100%・片面</dd>
+                <dt>{appStrings.output.paper}</dt>
+                <dd>{appStrings.output.paperPrint}</dd>
               </div>
               <div>
-                <dt>ページ数</dt>
-                <dd>{loading ? "算出中" : `${prepared?.outputDocumentModel.pageCount ?? 0} ページ`}</dd>
+                <dt>{appStrings.output.pageCount}</dt>
+                <dd>
+                  {loading
+                    ? appStrings.output.calculating
+                    : appStrings.output.pages(prepared?.outputDocumentModel.pageCount ?? 0)}
+                </dd>
               </div>
             </dl>
             <fieldset disabled={printing || loading}>
-              <legend>出力設定</legend>
+              <legend>{appStrings.output.settings}</legend>
               <label>
-                プリンタ
+                {appStrings.output.printer}
                 <select value={printerId} onChange={(event) => setPrinterId(event.target.value)}>
-                  <option value="">選択してください</option>
+                  <option value="">{appStrings.output.choosePrinter}</option>
                   {printers.map((printer) => (
                     <option key={printer.id} value={printer.id}>
                       {printer.displayName}
@@ -205,7 +213,7 @@ export function DirectPrintDialog({
                   checked={options.includeDimensionLabels}
                   onChange={(event) => changeOptions({ includeDimensionLabels: event.target.checked })}
                 />
-                寸法数値を出力に含める
+                {appStrings.output.includeDimensions}
               </label>
               <label>
                 <input
@@ -213,7 +221,7 @@ export function DirectPrintDialog({
                   checked={options.includeScaleGuide}
                   onChange={(event) => changeOptions({ includeScaleGuide: event.target.checked })}
                 />
-                50mmガイドを出力に含める
+                {appStrings.output.includeScaleGuide}
               </label>
             </fieldset>
             {error ? (
@@ -223,7 +231,7 @@ export function DirectPrintDialog({
             ) : null}
             {warnings.length > 0 ? (
               <section className="pdf-export-warnings" aria-label="出力警告">
-                <strong>警告 {warnings.length} 件</strong>
+                <strong>{appStrings.output.warningCount(warnings.length)}</strong>
                 <ul>
                   {warnings.map((warning, index) => (
                     <li key={`${warning.message}-${index}`}>{warning.message}</li>
@@ -236,16 +244,16 @@ export function DirectPrintDialog({
                     disabled={loading || printing}
                     onChange={(event) => setWarningsAcknowledged(event.target.checked)}
                   />
-                  警告内容を確認しました
+                  {appStrings.output.warningsAcknowledged}
                 </label>
               </section>
             ) : null}
             <div className="button-row pdf-export-actions">
               <button type="button" onClick={onClose} disabled={printing}>
-                キャンセル
+                {appStrings.common.cancel}
               </button>
               <button type="button" onClick={() => void print()} disabled={!canPrint}>
-                {printing ? "印刷中…" : "印刷を開始"}
+                {printing ? appStrings.output.printing : appStrings.output.printNext}
               </button>
             </div>
           </div>

@@ -3298,6 +3298,35 @@ func output_app_state_opens_pdf_request_sheet_with_defaults() {
   #expect(draft.options.rotationDeg == 0)
 }
 
+@Test("Output AppCoordinator は同じ出力設定シートで PDF と直接印刷を切り替える")
+@MainActor
+func output_app_state_switches_output_request_destination() {
+  let store = StubDocumentSessionAdapter(
+    createNewDocumentState: makeDocumentState(name: "Export", entities: []))
+  let printController = StubPrintController()
+  printController.printerNames = ["Test Printer"]
+  let appState = AppCoordinator(
+    documentAdapter: store,
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) },
+    outputService: OutputService(printController: printController)
+  )
+
+  appState.actions.output.exportPDFPanel()
+  appState.actions.output.setOutputRequestDestination(.directPrint)
+
+  var draft = unwrap(appState.actions.output.outputRequestDraft)
+  #expect(draft.destination == .directPrint)
+  #expect(draft.selectedDirectPrinterName == "Test Printer")
+  #expect(draft.directPrintSession != nil)
+
+  appState.actions.output.setOutputRequestDestination(.pdf)
+
+  draft = unwrap(appState.actions.output.outputRequestDraft)
+  #expect(draft.destination == .pdf)
+  #expect(draft.selectedDirectPrinterName == nil)
+  #expect(draft.directPrintSession == nil)
+}
+
 @Test("UXE-C04 PDF出力設定は空の出力を開いた時点で0ページの警告として表示する")
 @MainActor
 func uxe_c04_pdf_request_sheet_immediately_prepares_empty_output() {

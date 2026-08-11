@@ -28,6 +28,7 @@ struct InspectorFeatureViewState {
   let selectedEntity: CanvasEntity?
   let selectedEntities: [CanvasEntity]
   let selectedFreeText: ProjectFreeText?
+  let selectedStitchStartPoint: ProjectStitchStartPoint?
   let selectedConstraintID: String?
   let selectedMeasurementAnnotation: ProjectMeasurementAnnotation?
   let selectedDerivedElement: ProjectDerivedElement?
@@ -66,6 +67,7 @@ struct InspectorFeatureViewState {
     self.selectedEntity = builder.selectedEntity
     self.selectedEntities = builder.selectedEntities
     self.selectedFreeText = builder.selectedFreeText
+    self.selectedStitchStartPoint = builder.selectedStitchStartPoint
     self.selectedConstraintID = builder.selectedConstraintID
     self.selectedMeasurementAnnotation = builder.selectedMeasurementAnnotation
     self.selectedDerivedElement = builder.selectedDerivedElement
@@ -241,6 +243,7 @@ final class InspectorFeatureViewStateBuilder {
   var selectedEntity: CanvasEntity?
   var selectedEntities: [CanvasEntity]!
   var selectedFreeText: ProjectFreeText?
+  var selectedStitchStartPoint: ProjectStitchStartPoint?
   var selectedConstraintID: String?
   var selectedMeasurementAnnotation: ProjectMeasurementAnnotation?
   var selectedDerivedElement: ProjectDerivedElement?
@@ -350,6 +353,7 @@ final class InspectorFeatureModel: ObservableObject {
   let selectedEntity: CanvasEntity?
   let selectedEntities: [CanvasEntity]
   let selectedFreeText: ProjectFreeText?
+  let selectedStitchStartPoint: ProjectStitchStartPoint?
   let selectedConstraintID: String?
   let selectedMeasurementAnnotation: ProjectMeasurementAnnotation?
   let selectedDerivedElement: ProjectDerivedElement?
@@ -453,6 +457,7 @@ final class InspectorFeatureModel: ObservableObject {
     self.selectedEntity = state.selectedEntity
     self.selectedEntities = state.selectedEntities
     self.selectedFreeText = state.selectedFreeText
+    self.selectedStitchStartPoint = state.selectedStitchStartPoint
     self.selectedConstraintID = state.selectedConstraintID
     self.selectedMeasurementAnnotation = state.selectedMeasurementAnnotation
     self.selectedDerivedElement = state.selectedDerivedElement

@@ -486,7 +486,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(page.getByTestId("leather.toolbar.orientation.landscape")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("leather.toolbar.grid-snap")).toHaveAttribute("aria-pressed", "false");
     await expect(page.getByTestId("leather.toolbar.point-snap")).toHaveAttribute("aria-pressed", "false");
-    await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("125%");
+    await expect(page.getByText("倍率 125%", { exact: true })).toHaveText("倍率 125%");
     expect((await core.invoke("document_state")).entities).toEqual(stateBefore.entities);
   });
 
@@ -544,10 +544,9 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
     let layerCard = page.locator(".inspector-disclosure").filter({ hasText: "検証レイヤー" }).first();
     await layerCard.locator(".inspector-disclosure-summary").click();
-    await layerCard.getByRole("button", { name: "編集", exact: true }).click();
-    dialog = page.getByRole("dialog");
-    await dialog.getByLabel("レイヤー名").fill("検証レイヤー改名");
-    await dialog.getByRole("button", { name: "適用", exact: true }).click();
+    const layerName = layerCard.getByRole("textbox", { name: "検証レイヤー の名前", exact: true });
+    await layerName.fill("検証レイヤー改名");
+    await layerName.blur();
     await expect
       .poll(async () => (await core.invoke("document_state")).layers.some((layer) => layer.name === "検証レイヤー改名"))
       .toBe(true);
@@ -594,10 +593,9 @@ test.describe("Tauri React workspace through the real Core process", () => {
     expect(newStyle).toBeDefined();
     const styleCard = page.locator(".inspector-disclosure").filter({ hasText: "新規線種" }).first();
     await styleCard.locator(".inspector-disclosure-summary").click();
-    await styleCard.getByRole("button", { name: "名称", exact: true }).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.getByLabel("線種名").fill("縫い線");
-    await dialog.getByRole("button", { name: "適用", exact: true }).click();
+    const styleName = styleCard.getByRole("textbox", { name: "新規線種 の名前", exact: true });
+    await styleName.fill("縫い線");
+    await styleName.blur();
     await expect
       .poll(async () => (await core.invoke("document_state")).sharedStyles.some((style) => style.name === "縫い線"))
       .toBe(true);
@@ -755,10 +753,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await nameInput.blur();
     await expect.poll(async () => (await core.invoke("document_state")).parts[0].name).toBe("本体改名");
 
-    await page.getByRole("button", { name: "数量", exact: true }).click();
-    const quantityDialog = page.getByRole("dialog");
-    await quantityDialog.getByLabel("数量").fill("2");
-    await quantityDialog.getByRole("button", { name: "適用", exact: true }).click();
+    await page.getByRole("spinbutton", { name: "本体改名 の数量", exact: true }).fill("2");
     await expect.poll(async () => (await core.invoke("document_state")).parts[0].quantity).toBe(2);
 
     duplicatedState = await core.invoke("document_state");

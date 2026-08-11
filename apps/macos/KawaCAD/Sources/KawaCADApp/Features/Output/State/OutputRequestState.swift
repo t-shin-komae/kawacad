@@ -29,7 +29,7 @@ enum OutputDestination: String, Identifiable, Equatable {
 
 struct OutputRequestDraft: Identifiable, Equatable {
   let id = UUID()
-  let destination: OutputDestination
+  var destination: OutputDestination
   var options: OutputPresentationOptions
   var directPrinterNames: [String] = []
   var selectedDirectPrinterName: String? = nil

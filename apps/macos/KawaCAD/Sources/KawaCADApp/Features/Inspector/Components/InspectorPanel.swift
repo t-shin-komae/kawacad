@@ -91,6 +91,24 @@ struct InspectorPanel: View {
         }
       } else if let selectedFreeText = appState.selectedFreeText {
         FreeTextEditorSection(freeText: selectedFreeText)
+      } else if let selectedStitchStartPoint = appState.selectedStitchStartPoint {
+        VStack(alignment: .leading, spacing: 10) {
+          DetailRow(
+            label: AppStrings.tr("inspector.kind"),
+            value: AppStrings.tr("tool.stitch_start_point")
+          )
+          DetailRow(
+            label: AppStrings.tr("inspector.stitch_target"),
+            value: stitchTargetLabel(selectedStitchStartPoint)
+          )
+          Button(role: .destructive) {
+            appState.deleteSelectedEntity()
+          } label: {
+            Label(AppStrings.tr("common.delete"), systemImage: "trash")
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.bordered)
+        }
       } else if appState.selectedEntities.count > 1 {
         MultiSelectionSummarySection()
         SharedStyleSelectionField(
@@ -234,6 +252,11 @@ struct InspectorPanel: View {
       DetailRow(
         label: AppStrings.tr("inspector.parameter_count"), value: "\(appState.parameters.count)")
     }
+  }
+
+  private func stitchTargetLabel(_ stitchStartPoint: ProjectStitchStartPoint) -> String {
+    appState.entities.first(where: { $0.id == stitchStartPoint.targetID })?.kind.displayName
+      ?? AppStrings.tr("inspector.geometry")
   }
 
   @ViewBuilder

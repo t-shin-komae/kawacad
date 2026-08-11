@@ -6,22 +6,14 @@ import {
   type InspectorFeatureState,
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
-import { type TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
 import { InspectorDisclosureRow, InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
-
-type OpenTextEntry = (
-  title: string,
-  fields: TextEntryField[],
-  onConfirm: (values: Record<string, string>) => void,
-) => void;
 
 type InspectorStylesTabProps = {
   props: Props;
   feature: InspectorFeatureState;
   updateFeature: (update: (state: InspectorFeatureState) => InspectorFeatureState) => void;
   defaultStyle: LineStyle;
-  openTextEntry: OpenTextEntry;
   renderStyleFields: (style: LineStyle, onChange: (style: LineStyle) => void) => ReactNode;
 };
 
@@ -30,7 +22,6 @@ export function InspectorStylesTab({
   feature,
   updateFeature,
   defaultStyle,
-  openTextEntry,
   renderStyleFields,
 }: InspectorStylesTabProps) {
   const [selectedStyleId, setSelectedStyleId] = useState<string>();
@@ -76,27 +67,24 @@ export function InspectorStylesTab({
             onToggle={() => setSelectedStyleId(item.id)}
           >
             <div className="row inspector-editor-heading">
-              <span>{item.name}</span>
+              <span className="style-color-swatch" style={{ backgroundColor: colorHex }} aria-hidden="true" />
+              <input
+                className="inspector-inline-name"
+                aria-label={appStrings.inspector.nameOf(item.name)}
+                defaultValue={item.name}
+                onBlur={(event) => {
+                  const name = event.target.value.trim();
+                  if (name && name !== item.name)
+                    props.onCommand(
+                      "updateSharedStyle",
+                      { ...item, name },
+                      appStrings.inspector.operationMessage.sharedStyleUpdated,
+                    );
+                }}
+              />
               <button
-                onClick={() =>
-                  openTextEntry(
-                    appStrings.inspector.styleNameEdit,
-                    [{ id: "name", label: appStrings.inspector.styleName, initialValue: item.name }],
-                    (values) => {
-                      const name = values.name.trim();
-                      if (name)
-                        props.onCommand(
-                          "updateSharedStyle",
-                          { ...item, name },
-                          appStrings.inspector.operationMessage.sharedStyleUpdated,
-                        );
-                    },
-                  )
-                }
-              >
-                {appStrings.inspector.name}
-              </button>
-              <button
+                className="inspector-icon-destructive-button"
+                aria-label={appStrings.inspector.deleteStyle(item.name)}
                 onClick={() =>
                   props.onCommand(
                     "deleteSharedStyle",
