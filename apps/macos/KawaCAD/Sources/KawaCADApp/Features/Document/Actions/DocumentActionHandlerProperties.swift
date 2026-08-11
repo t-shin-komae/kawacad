@@ -151,7 +151,8 @@ extension DocumentActionHandler {
       return false
     }
     guard style.strokeWidthMM > 0, style.strokeWidthMM.isFinite else {
-      statusMessage = AppStrings.tr("status.enter_positive_value", "線幅")
+      statusMessage = AppStrings.tr(
+        "status.enter_positive_value", AppStrings.tr("status.line_width"))
       return false
     }
     let request = commandFactory.makeUpdateSharedStyleCommand(style.withName(trimmed))

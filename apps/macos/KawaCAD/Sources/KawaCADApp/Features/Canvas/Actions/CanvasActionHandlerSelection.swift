@@ -5,7 +5,7 @@ extension CanvasActionHandler {
   func addFreeText(at positionMM: ModelPoint) {
     let freeText = ProjectFreeText(
       id: "free-text:\(commandFactory.uuidProvider())",
-      content: "注記",
+      content: AppStrings.tr("app.annotation"),
       positionMM: positionMM,
       fontSizeMM: 4.0
     )
