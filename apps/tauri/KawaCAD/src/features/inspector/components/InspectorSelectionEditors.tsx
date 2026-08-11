@@ -20,12 +20,9 @@ import type {
   Props,
 } from "@/features/inspector/components/InspectorPanel";
 import { InspectorSection } from "@/shared/components/InspectorPrimitives";
+import { defaultSharedStyle } from "@/features/inspector/domain/sharedStyleDefaults";
 
-export const defaultStyle: LineStyle = {
-  stroke: { red: 0.07, green: 0.09, blue: 0.15, alpha: 1 },
-  strokeWidthMm: 0.2,
-  pattern: "solid",
-};
+export const defaultStyle = defaultSharedStyle;
 
 export function DocumentOverview({ summary }: { summary: Props["documentSummary"] }) {
   const values: Array<[string, string | number]> = [

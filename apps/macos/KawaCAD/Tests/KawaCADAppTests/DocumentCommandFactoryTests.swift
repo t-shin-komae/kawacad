@@ -787,6 +787,13 @@ func command_service_builds_shared_style_commands() {
   let addPayload = unwrap(add.payload["payload"] as? [String: Any])
   #expect((addPayload["id"] as? String) == "style:user-style-id")
   #expect((addPayload["name"] as? String) == "共有スタイル 2")
+  let addStyle = unwrap(addPayload["style"] as? [String: Any])
+  #expect((addStyle["strokeWidthMm"] as? Double) == 0.2)
+  #expect((addStyle["pattern"] as? String) == "solid")
+  let addStroke = unwrap(addStyle["stroke"] as? [String: Double])
+  #expect(abs((addStroke["red"] ?? 0) - 17.0 / 255.0) < 0.000001)
+  #expect(abs((addStroke["green"] ?? 0) - 24.0 / 255.0) < 0.000001)
+  #expect(abs((addStroke["blue"] ?? 0) - 39.0 / 255.0) < 0.000001)
 
   let style = ProjectSharedStyle(
     id: "style:stitch",
