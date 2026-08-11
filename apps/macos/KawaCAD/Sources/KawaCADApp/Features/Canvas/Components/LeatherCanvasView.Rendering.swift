@@ -275,7 +275,7 @@ extension LeatherCanvasView {
   }
 
   func drawEntities(in pageRect: CGRect) {
-    if entities.isEmpty {
+    if shouldDrawEmptyState {
       drawEmptyState(in: pageRect)
       return
     }
@@ -283,6 +283,10 @@ extension LeatherCanvasView {
     for entity in visibleEntities {
       drawEntity(entity, in: pageRect)
     }
+  }
+
+  var shouldDrawEmptyState: Bool {
+    !isOutputPreviewMode && entities.isEmpty && freeTexts.isEmpty
   }
 
   func drawFreeTexts(in pageRect: CGRect) {

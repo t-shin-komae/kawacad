@@ -684,6 +684,7 @@
 "status.inspector_panel_visible" = "右パネルを%@にしました";
 "status.bottom_workbench_visible" = "下部サマリーを%@にしました";
 "accessibility.resize_panel" = "パネル幅を調整";
+"accessibility.inspector_tabs" = "インスペクタ項目";
 "accessibility.canvas" = "作図キャンバス";
 "accessibility.canvas.value" = "ツール: %@、表示モード: %@、図形: %ld件、選択: %ld件、拘束対象: %ld件、操作状態: %@";
 "accessibility.canvas.interaction.idle" = "待機中";
@@ -744,8 +745,8 @@
 "canvas.constraint_hint.next_point" = "次: 点";
 "canvas.constraint_hint.next_point_or_line" = "次: 点/線分";
 "canvas.constraint_hint.next_axis" = "次: 対称軸";
-"canvas.empty.title" = "幾何エンティティはまだありません";
-"canvas.empty.body" = "線分、円、円弧ツールを選んで、ページ内をクリックします。";
+"canvas.empty.title" = "作図を始めましょう";
+"canvas.empty.body" = "ツールを選択してキャンバスをクリックしてください。";
 "inspector.tab.parts" = "パーツ";
 "inspector.parts" = "パーツ管理";
 "inspector.no_parts" = "パーツはまだありません。閉じた外形と内側の要素を選択して作成します。";

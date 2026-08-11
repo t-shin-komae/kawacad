@@ -2,6 +2,15 @@ import Testing
 
 @testable import KawaCADApp
 
+@Test("インスペクタのタブは表示順とアクセシビリティ名を維持する")
+func inspector_tabs_keep_order_and_accessibility_label() {
+  #expect(
+    InspectorTab.allCases.map(\.title) == [
+      "選択", "レイヤー", "共有スタイル", "パラメータ", "パーツ",
+    ])
+  #expect(AppStrings.tr("accessibility.inspector_tabs") == "インスペクタ項目")
+}
+
 @Test("Inspector feature model は表示スナップショットと操作を AppCoordinator 境界で分離する")
 @MainActor
 func inspector_feature_model_keeps_presentation_state_and_actions_separate() {

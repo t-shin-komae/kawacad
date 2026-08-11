@@ -7,7 +7,7 @@ struct InspectorPanel: View {
     VStack(spacing: 0) {
       VStack(alignment: .leading, spacing: 10) {
         Picker(
-          AppStrings.tr("inspector.selection"),
+          AppStrings.tr("accessibility.inspector_tabs"),
           selection: Binding(
             get: { appState.inspectorTab },
             set: appState.setInspectorTab
@@ -18,6 +18,8 @@ struct InspectorPanel: View {
           }
         }
         .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel(Text(AppStrings.tr("accessibility.inspector_tabs")))
 
         if appState.inspectorHasPendingSelectionChange {
           Button {
