@@ -601,6 +601,63 @@ describe("InspectorPanel", () => {
     );
   });
 
+  it("shows resolved parameter values with two decimals without replacing the reference", () => {
+    const onCommand = vi.fn();
+    render(
+      panel(
+        onCommand,
+        [{ id: "parameter:length", name: "長さ", valueMm: 12.345, unit: "millimeter", memo: "" }],
+        [],
+        [],
+        undefined,
+        undefined,
+        undefined,
+        {
+          id: "constraint:length",
+          kind: "segmentLength",
+          status: "fullyConstrained",
+          value: { parameter: "parameter:length" },
+        },
+      ),
+    );
+    const value = screen.getByRole("spinbutton", { name: "拘束値 (mm)" });
+    expect(value).toHaveValue(12.35);
+    fireEvent.blur(value);
+    expect(onCommand).not.toHaveBeenCalled();
+  });
+
+  it("shows resolved derived values with two decimals without replacing the reference", () => {
+    const onCommand = vi.fn();
+    const derivedElement: DerivedElement = {
+      id: "derived:offset-1",
+      kind: {
+        offsetCurve: {
+          sourceEntityIds: ["line:base"],
+          distance: { parameter: "parameter:offset" },
+          direction: "left",
+        },
+      },
+    };
+    const entity: RawEntity = {
+      id: "derived:offset-1:resolved:0",
+      kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } },
+    };
+    render(
+      panel(
+        onCommand,
+        [{ id: "parameter:offset", name: "縫い代", valueMm: 3.456, unit: "millimeter", memo: "" }],
+        [],
+        [],
+        entity,
+        derivedElement,
+      ),
+    );
+    const value = screen.getByRole("spinbutton", { name: "オフセット線の距離 (mm)" });
+    expect(value).toHaveValue(3.46);
+    fireEvent.blur(value);
+    expect(onCommand).not.toHaveBeenCalled();
+  });
+
   it("exposes the SwiftUI conversion and deletion actions for a selected measurement", () => {
     const onCommand = vi.fn();
     const onConvertMeasurement = vi.fn();

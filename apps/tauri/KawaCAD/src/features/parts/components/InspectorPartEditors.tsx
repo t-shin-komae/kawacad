@@ -10,6 +10,7 @@ import {
 } from "@/features/inspector/domain/stylePresets";
 import type { Constraint, Part } from "@/shared/domain/coreWireTypes";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
+import { formatInspectorNumber } from "@/features/inspector/domain/inspectorValueFormatting";
 
 type CommandHandler = (kind: string, payload: unknown, success: string) => void;
 type OpenTextEntry = (
@@ -234,9 +235,17 @@ export function PartEditor({
   );
 }
 
-export function openConstraintValueEntry(item: Constraint, onCommand: CommandHandler, openTextEntry: OpenTextEntry) {
+export function openConstraintValueEntry(
+  item: Constraint,
+  onCommand: CommandHandler,
+  openTextEntry: OpenTextEntry,
+  parameters: readonly { id: string; valueMm: number }[] = [],
+) {
   const degrees = typeof item.value?.fixedDegrees === "number";
-  const current = degrees ? item.value?.fixedDegrees : item.value?.fixedMm;
+  const fixedValue = degrees ? item.value?.fixedDegrees : item.value?.fixedMm;
+  const parameterID = typeof item.value?.parameter === "string" ? item.value.parameter : undefined;
+  const current =
+    typeof fixedValue === "number" ? fixedValue : parameters.find((parameter) => parameter.id === parameterID)?.valueMm;
   openTextEntry(
     degrees ? appStrings.inspector.operationMessage.changeAngle : appStrings.inspector.operationMessage.changeDimension,
     [
@@ -245,7 +254,7 @@ export function openConstraintValueEntry(item: Constraint, onCommand: CommandHan
         label: degrees
           ? appStrings.inspector.operationMessage.angleDegrees
           : appStrings.inspector.operationMessage.dimensionMillimeters,
-        initialValue: typeof current === "number" ? String(current) : "10",
+        initialValue: formatInspectorNumber(current),
         inputMode: "decimal",
       },
     ],
