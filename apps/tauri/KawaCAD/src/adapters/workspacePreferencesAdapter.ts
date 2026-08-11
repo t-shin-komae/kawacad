@@ -1,5 +1,8 @@
-import { defaultCollapsedToolGroups, toolGroupPreferenceIds } from "@/features/canvas/components/ToolPalette";
-import { toolPaletteWidthRange } from "@/features/canvas/domain/workspaceTools";
+import {
+  defaultCollapsedToolGroups,
+  toolGroupPreferenceIds,
+  toolPaletteWidthRange,
+} from "@/features/canvas/domain/workspaceTools";
 
 const detailedToolsPreferenceKey = "leather.toolPalette.showsDetailedTools";
 const inspectorPreferenceKey = "leather.layout.inspectorPanelVisible";

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import type { DocumentHeaderHandle } from "@/features/document/components/DocumentHeader";
+import type { DocumentHeaderHandle } from "@/features/document/domain/documentHeaderTypes";
 
 /** Owns document-level presentation drafts and transition guards. */
 export function useDocumentPresentation() {

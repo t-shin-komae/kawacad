@@ -16,6 +16,8 @@ import type {
 
 export type { AppActionContext } from "@/app/actions/useActionRuntime";
 
+export type AppActionSurface = ReturnType<typeof useAppActions>;
+
 /** Composition root for typed feature action surfaces. */
 export function useAppActions(context: AppActionContext) {
   const inspectorContext: InspectorActionContext = pickContext(context, [

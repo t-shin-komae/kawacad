@@ -1,4 +1,15 @@
 pub mod direct_print;
+mod output;
+mod recovery;
+mod session;
+
+use output::{pdf_printable_area, save_pdf_bytes, PdfOutputOptions};
+use recovery::{
+    application_data_directory, application_data_path, discard_recovery_snapshot_at,
+    recovery_candidates_at, recovery_directory, recovery_paths, save_recovery_snapshot_at,
+    RecoveryCandidate, RecoveryMetadata,
+};
+use session::CadSession;
 
 use kawacad_core::command::{DocumentCommand, SelectionReference};
 use kawacad_core::constraints::{ConstraintKind, ConstraintTarget, ConstraintValue};
@@ -12,222 +23,12 @@ use kawacad_core::output::{
 use kawacad_core::print::PrintOrientation;
 use kawacad_core::snapshot::CanvasViewMode;
 use kawacad_output_engine::render_pdf;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use tauri::Manager;
-
-struct CadSession {
-    document: ProjectDocument,
-    clean_document: ProjectDocument,
-    view_mode: CanvasViewMode,
-    path: Option<String>,
-    recovered_dirty: bool,
-    recovery_candidate_id: String,
-}
-
-static RECOVERY_SESSION_SEQUENCE: AtomicU64 = AtomicU64::new(0);
-
-fn new_recovery_candidate_id() -> String {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_nanos())
-        .unwrap_or(0);
-    let sequence = RECOVERY_SESSION_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-    format!(
-        "{timestamp:032x}-{:08x}-{sequence:016x}",
-        std::process::id()
-    )
-}
-
-impl CadSession {
-    fn new(name: String) -> Self {
-        let document = ProjectDocument::new(name);
-        Self {
-            clean_document: document.clone(),
-            document,
-            view_mode: CanvasViewMode::EditDisplay,
-            path: None,
-            recovered_dirty: false,
-            recovery_candidate_id: new_recovery_candidate_id(),
-        }
-    }
-
-    fn is_dirty(&self) -> bool {
-        self.recovered_dirty || self.document != self.clean_document
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct RecoveryMetadata {
-    display_name: String,
-    original_document_path: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct RecoveryCandidate {
-    id: String,
-    display_name: String,
-    original_document_path: Option<String>,
-    updated_at_ms: u64,
-    status: String,
-    details: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct PdfOutputOptions {
-    orientation: PrintOrientation,
-    include_dimension_labels: bool,
-    include_scale_guide: bool,
-    rotation_deg: u16,
-}
-
-fn application_data_directory(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    app.path()
-        .app_data_dir()
-        .map_err(|error| format!("Could not determine the application data directory: {error}"))
-}
-
-fn application_data_path(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, String> {
-    application_data_directory(app).map(|directory| directory.join(name))
-}
-
-fn recovery_directory(base_directory: &Path, candidate_id: &str) -> Result<PathBuf, String> {
-    if candidate_id.is_empty()
-        || !candidate_id.chars().all(|character| {
-            character.is_ascii_alphanumeric() || character == '-' || character == '_'
-        })
-    {
-        return Err("Invalid recovery candidate identifier".to_owned());
-    }
-    Ok(base_directory.join("Recovery").join(candidate_id))
-}
-
-fn recovery_paths(base_directory: &Path, candidate_id: &str) -> Result<(PathBuf, PathBuf), String> {
-    let directory = recovery_directory(base_directory, candidate_id)?;
-    Ok((
-        directory.join("snapshot.kawa"),
-        directory.join("metadata.json"),
-    ))
-}
-
-fn recovery_candidates_at(base_directory: &Path) -> Result<Vec<RecoveryCandidate>, String> {
-    let root = base_directory.join("Recovery");
-    if !root.exists() {
-        return Ok(Vec::new());
-    }
-    let mut candidates = Vec::new();
-    for entry in fs::read_dir(&root)
-        .map_err(|error| format!("Could not read recovery directory: {error}"))?
-    {
-        let entry = entry.map_err(|error| format!("Could not read recovery candidate: {error}"))?;
-        if !entry.path().is_dir() {
-            continue;
-        }
-        let id = entry.file_name().to_string_lossy().to_string();
-        let (snapshot_path, metadata_path) = recovery_paths(base_directory, &id)?;
-        let updated_at_ms = snapshot_path
-            .metadata()
-            .or_else(|_| entry.metadata())
-            .and_then(|metadata| metadata.modified())
-            .ok()
-            .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
-            .map(|duration| duration.as_millis() as u64)
-            .unwrap_or(0);
-        let metadata = fs::read_to_string(&metadata_path)
-            .map_err(|error| format!("Could not read recovery metadata: {error}"))
-            .and_then(|contents| {
-                serde_json::from_str::<RecoveryMetadata>(&contents)
-                    .map_err(|error| format!("Could not read recovery metadata: {error}"))
-            });
-        let snapshot_validation = ProjectDocument::read_json_file(&snapshot_path)
-            .map(|_| ())
-            .map_err(|error| format!("Could not validate recovery snapshot: {error:?}"));
-        match (metadata, snapshot_validation) {
-            (Ok(metadata), Ok(())) => candidates.push(RecoveryCandidate {
-                id,
-                display_name: metadata.display_name,
-                original_document_path: metadata.original_document_path,
-                updated_at_ms,
-                status: "recoverable".to_owned(),
-                details: None,
-            }),
-            (metadata, snapshot) => {
-                let details = metadata
-                    .as_ref()
-                    .err()
-                    .cloned()
-                    .or_else(|| snapshot.err())
-                    .unwrap_or_else(|| "Recovery candidate is incomplete".to_owned());
-                let (display_name, original_document_path) = metadata
-                    .ok()
-                    .map(|metadata| (metadata.display_name, metadata.original_document_path))
-                    .unwrap_or_else(|| ("破損した復旧候補".to_owned(), None));
-                candidates.push(RecoveryCandidate {
-                    id,
-                    display_name,
-                    original_document_path,
-                    updated_at_ms,
-                    status: "broken".to_owned(),
-                    details: Some(details),
-                });
-            }
-        }
-    }
-    candidates.sort_by_key(|candidate| std::cmp::Reverse(candidate.updated_at_ms));
-    Ok(candidates)
-}
-
-fn save_recovery_snapshot_at(session: &CadSession, base_directory: &Path) -> Result<(), String> {
-    let (snapshot_path, metadata_path) =
-        recovery_paths(base_directory, &session.recovery_candidate_id)?;
-    let directory = snapshot_path
-        .parent()
-        .ok_or_else(|| "Could not determine recovery directory".to_owned())?;
-    if !session.is_dirty() {
-        if directory.exists() {
-            fs::remove_dir_all(directory)
-                .map_err(|error| format!("Could not remove clean recovery snapshot: {error}"))?;
-        }
-        return Ok(());
-    }
-    fs::create_dir_all(directory)
-        .map_err(|error| format!("Could not create recovery directory: {error}"))?;
-    let temporary_snapshot = snapshot_path.with_extension("kawa.tmp");
-    session
-        .document
-        .write_json_file(&temporary_snapshot)
-        .map_err(|error| format!("Could not write recovery snapshot: {error:?}"))?;
-    fs::rename(&temporary_snapshot, &snapshot_path)
-        .map_err(|error| format!("Could not commit recovery snapshot: {error}"))?;
-    let metadata = RecoveryMetadata {
-        display_name: session.document.metadata().name.clone(),
-        original_document_path: session.path.clone(),
-    };
-    let contents = serde_json::to_vec_pretty(&metadata)
-        .map_err(|error| format!("Could not serialize recovery metadata: {error}"))?;
-    fs::write(metadata_path, contents)
-        .map_err(|error| format!("Could not write recovery metadata: {error}"))
-}
-
-fn discard_recovery_snapshot_at(base_directory: &Path, candidate_id: &str) -> Result<(), String> {
-    let (snapshot_path, _) = recovery_paths(base_directory, candidate_id)?;
-    let directory = snapshot_path
-        .parent()
-        .ok_or_else(|| "Could not determine recovery directory".to_owned())?;
-    if directory.exists() {
-        fs::remove_dir_all(directory)
-            .map_err(|error| format!("Could not discard recovery snapshot: {error}"))?;
-    }
-    Ok(())
-}
+use std::time::Instant;
 
 struct AppState {
     cad_session: Mutex<CadSession>,
@@ -389,45 +190,6 @@ fn lock_session(state: &AppState) -> Result<std::sync::MutexGuard<'_, CadSession
         .cad_session
         .lock()
         .map_err(|_| "CAD session lock was poisoned".to_owned())
-}
-
-fn pdf_printable_area(orientation: PrintOrientation) -> PrintableAreaMm {
-    let (width_mm, height_mm) = match orientation {
-        PrintOrientation::Portrait => (210.0, 297.0),
-        PrintOrientation::Landscape => (297.0, 210.0),
-    };
-    let inset_mm = 5.0;
-    PrintableAreaMm {
-        left_mm: -width_mm / 2.0 + inset_mm,
-        right_mm: width_mm / 2.0 - inset_mm,
-        top_mm: height_mm / 2.0 - inset_mm,
-        bottom_mm: -height_mm / 2.0 + inset_mm,
-    }
-}
-
-fn temporary_pdf_path(path: &Path) -> Result<PathBuf, String> {
-    let directory = path
-        .parent()
-        .ok_or_else(|| "Could not determine the PDF destination directory".to_owned())?;
-    let file_name = path
-        .file_name()
-        .ok_or_else(|| "Could not determine the PDF file name".to_owned())?
-        .to_string_lossy();
-    let nonce = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|error| format!("Could not create a temporary PDF path: {error}"))?
-        .as_nanos();
-    Ok(directory.join(format!(".{file_name}.{nonce}.tmp")))
-}
-
-fn save_pdf_bytes(path: PathBuf, bytes: &[u8]) -> Result<(), String> {
-    let temporary_path = temporary_pdf_path(&path)?;
-    fs::write(&temporary_path, bytes)
-        .map_err(|error| format!("Could not write PDF data: {error}"))?;
-    fs::rename(&temporary_path, &path).map_err(|error| {
-        let _ = fs::remove_file(&temporary_path);
-        format!("Could not save PDF: {error}")
-    })
 }
 
 #[tauri::command]

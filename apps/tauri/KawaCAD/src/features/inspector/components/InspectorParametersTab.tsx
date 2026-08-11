@@ -7,7 +7,7 @@ import {
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
 import type { Props } from "@/features/inspector/components/InspectorPanel";
-import { InspectorDisclosureRow, InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
+import { InspectorDisclosureRow, InspectorSection } from "@/shared/components/InspectorPrimitives";
 
 type InspectorParametersTabProps = {
   props: Props;

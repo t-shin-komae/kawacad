@@ -5,6 +5,11 @@ import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { parseDecimal } from "@/shared/state/syncedField";
 
+// Keep the historical component import surface while the preference data is
+// owned by the canvas domain and can be consumed by adapters without pulling
+// in React components.
+export { defaultCollapsedToolGroups, toolGroupPreferenceIds } from "@/features/canvas/domain/workspaceTools";
+
 type SharedStyle = { id: string; name: string };
 type Props = {
   activeStyle: string;
@@ -95,14 +100,6 @@ export const basicTools = new Set<Tool>([
 ]);
 export const allPaletteTools = toolGroups.flatMap(([, tools]) => tools);
 export const detailedTools = new Set<Tool>(allPaletteTools.filter((tool) => !basicTools.has(tool)));
-export const toolGroupPreferenceIds: Record<string, string> = {
-  drawing: "drawing",
-  derived: "derived",
-  constraint: "constraint",
-  dimension: "dimension",
-  measurement: "measurement",
-};
-export const defaultCollapsedToolGroups = new Set<string>(["derived", "constraint", "measurement"]);
 function DisclosureIcon({ expanded }: { expanded: boolean }) {
   const Icon = expanded ? ChevronDown : ChevronRight;
   return <Icon className="palette-disclosure" size={10} strokeWidth={2} aria-hidden="true" />;

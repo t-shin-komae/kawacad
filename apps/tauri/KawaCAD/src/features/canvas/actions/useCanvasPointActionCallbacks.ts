@@ -21,7 +21,8 @@ import {
   type ConstraintTarget,
   type PointMm,
 } from "@/features/canvas/domain/cad";
-import { hitDerivedRadiusControl, type State } from "@/shared/domain/workspaceState";
+import { hitDerivedRadiusControl } from "@/features/canvas/selectors/canvasProjection";
+import type { State } from "@/shared/domain/coreWireTypes";
 import {
   assistLine,
   constraintTools,
@@ -34,7 +35,7 @@ import {
   toolNames as names,
 } from "@/features/canvas/domain/workspaceTools";
 import type { DerivedValue } from "@/features/constraints/components/DerivedValueDialog";
-import type { Part } from "@/features/inspector/components/InspectorPanel";
+import type { Part } from "@/shared/domain/coreWireTypes";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { CanvasActionContext } from "@/app/actions/useActionRuntime";

@@ -43,7 +43,7 @@ export type Tool =
   | "measureDiameter"
   | "measureArcSweepAngle";
 
-export type CanvasViewMode = "editDisplay" | "outputPreview";
+export type { CanvasViewMode } from "@/shared/domain/coreWireTypes";
 
 export type ConstraintStatus = "unknown" | "underConstrained" | "fullyConstrained" | "overConstrained" | "conflicting";
 

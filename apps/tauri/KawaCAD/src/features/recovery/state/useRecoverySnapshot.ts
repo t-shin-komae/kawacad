@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { recoveryAdapter, type RecoveryCandidate } from "@/adapters/recoveryAdapter";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 import { appStrings } from "@/localization";
 
 type Props = {

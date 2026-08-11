@@ -19,7 +19,7 @@ import type {
   PendingTextEntry,
   Props,
 } from "@/features/inspector/components/InspectorPanel";
-import { InspectorSection } from "@/features/inspector/components/InspectorPrimitives";
+import { InspectorSection } from "@/shared/components/InspectorPrimitives";
 
 export const defaultStyle: LineStyle = {
   stroke: { red: 0.07, green: 0.09, blue: 0.15, alpha: 1 },

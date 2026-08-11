@@ -1,5 +1,5 @@
 import { invokeCommand } from "@/adapters/tauriCommandAdapter";
-import type { PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
+import type { PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 
 export const partLibraryAdapter = {
   load: () => invokeCommand<PartLibraryEntry[]>("load_part_library"),

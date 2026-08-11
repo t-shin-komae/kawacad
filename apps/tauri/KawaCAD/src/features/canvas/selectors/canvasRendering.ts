@@ -1,4 +1,5 @@
 import { appStrings } from "@/localization";
+import type { CanvasProjection } from "@/shared/domain/coreWireTypes";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import {
   controlPointsOf,
@@ -81,20 +82,6 @@ export type CanvasRenderOptions = {
 type CanvasLayer = { id: string; style: DisplayStyle; visible?: boolean };
 type CanvasSharedStyle = { id: string; style: DisplayStyle };
 type CanvasFreeText = { id: string; content: string; positionMm: PointMm; fontSizeMm: number };
-type CanvasProjection = {
-  stitchStartPoints: Array<{ id: string; positionMm: PointMm; visible: boolean }>;
-  measurementAnnotations: ResolvedCanvasGeometry[];
-  dimensionConstraints: ResolvedCanvasGeometry[];
-  constraintMarkers: Array<{
-    id: string;
-    positionMm: PointMm;
-    visible: boolean;
-    label?: string;
-    icon?: string;
-    stackIndex?: number;
-  }>;
-};
-
 export function drawCanvasFrame(options: CanvasRenderOptions) {
   const {
     context,

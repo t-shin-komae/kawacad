@@ -18,7 +18,7 @@ import type {
   PendingDerivedValue,
 } from "@/features/canvas/state/useCanvasPresentation";
 import type { PointMm, ConstraintTarget } from "@/features/canvas/domain/cad";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 import type { DerivedValue, OffsetSourceOption } from "@/features/constraints/components/DerivedValueDialog";
 import type { ConstraintActionContext } from "@/app/actions/useActionRuntime";
 

@@ -1,8 +1,8 @@
 import type * as React from "react";
-import type { DocumentHeaderHandle } from "@/features/document/components/DocumentHeader";
+import type { DocumentHeaderHandle } from "@/features/document/domain/documentHeaderTypes";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { ConstraintTarget, PointMm, RawEntity, Viewport } from "@/features/canvas/domain/cad";
-import type { CanvasProjection, EditControlTarget, State } from "@/shared/domain/workspaceState";
+import type { CanvasProjection, EditControlTarget, PartLibraryEntry, State } from "@/shared/domain/coreWireTypes";
 import type {
   PasteOptions,
   PendingConstraintValue,
@@ -11,7 +11,6 @@ import type {
   ContextMenu,
   SelectionExport,
 } from "@/features/canvas/state/useCanvasPresentation";
-import type { PartLibraryEntry } from "@/features/inspector/components/InspectorPanel";
 import type { DocumentSaveChoice } from "@/features/document/state/useDocumentPresentation";
 
 type Setter<T> = React.Dispatch<React.SetStateAction<T>>;

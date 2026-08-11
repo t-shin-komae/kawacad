@@ -1,5 +1,5 @@
 import { invokeCommand } from "@/adapters/tauriCommandAdapter";
-import type { State } from "@/shared/domain/workspaceState";
+import type { State } from "@/shared/domain/coreWireTypes";
 
 export type RecoveryCandidate = {
   id: string;

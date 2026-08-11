@@ -1,8 +1,8 @@
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { appStrings } from "@/localization";
+import type { ConstraintTarget, PointMm, RawEntity, Viewport } from "@/shared/domain/coreWireTypes";
 
-export type PointMm = { xMm: number; yMm: number };
-export type Viewport = { zoom: number; panX: number; panY: number };
+export type { ConstraintTarget, PointMm, RawEntity, Viewport } from "@/shared/domain/coreWireTypes";
 
 /** PDF/PostScript points per millimeter. The editing canvas uses this
  * device-independent document scale at 100%; backing pixels are separate. */
@@ -11,15 +11,6 @@ export const displayPointsPerMillimeter = 72 / 25.4;
 export function displayScale(viewport: Viewport) {
   return displayPointsPerMillimeter * viewport.zoom;
 }
-
-export type RawEntity = { id: string; layerId?: string | null; styleId?: string | null; kind: Record<string, unknown> };
-export type ConstraintTarget =
-  | { entity: string }
-  | {
-      controlPoint:
-        | { entityId: string; point: "start" | "end" | "center" }
-        | { entity_id: string; point: "start" | "end" | "center" };
-    };
 
 /** Converts the UI's ergonomic control-point shape to the Core wire shape.
  * Core intentionally keeps `entity_id` for this externally-tagged payload;

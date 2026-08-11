@@ -134,4 +134,17 @@ final class AppActionHandlers {
     recovery.aggregate = self
     workspace.aggregate = self
   }
+
+  /// Propagates the window/document lifecycle boundary to each feature that
+  /// may start a destructive or document-replacing operation.
+  func setDocumentLifecycleController(_ controller: (any DocumentLifecycleControlling)?) {
+    document.documentLifecycleController = controller
+    canvas.documentLifecycleController = controller
+    constraints.documentLifecycleController = controller
+    inspector.documentLifecycleController = controller
+    parts.documentLifecycleController = controller
+    output.documentLifecycleController = controller
+    recovery.documentLifecycleController = controller
+    workspace.documentLifecycleController = controller
+  }
 }
