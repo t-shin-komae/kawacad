@@ -365,7 +365,6 @@ export function StyleFields({
   style?: LineStyle;
   onChange: (style: LineStyle) => void;
 }) {
-  const [customEditor, setCustomEditor] = useState<"color" | "width">();
   const color =
     "#" +
     [style.stroke.red, style.stroke.green, style.stroke.blue]
@@ -375,6 +374,9 @@ export function StyleFields({
           .padStart(2, "0"),
       )
       .join("");
+  const [customEditor, setCustomEditor] = useState<"color" | "width">();
+  const [customColorDraft, setCustomColorDraft] = useState(color.toUpperCase());
+  useEffect(() => setCustomColorDraft(color.toUpperCase()), [color]);
   return (
     <div className="style-fields">
       <label className="style-field">
@@ -447,11 +449,13 @@ export function StyleFields({
           {appStrings.inspector.customColor}
           <input
             aria-label={appStrings.inspector.customColor}
-            value={color.toUpperCase()}
+            value={customColorDraft}
             pattern="#[0-9A-Fa-f]{6}"
             onChange={(event) => {
-              if (/^#[0-9A-Fa-f]{6}$/.test(event.target.value))
-                onChange({ ...style, stroke: colorFromHex(event.target.value, style.stroke.alpha) });
+              const draft = event.target.value;
+              setCustomColorDraft(draft);
+              if (/^#[0-9A-Fa-f]{6}$/.test(draft))
+                onChange({ ...style, stroke: colorFromHex(draft, style.stroke.alpha) });
             }}
           />
         </label>

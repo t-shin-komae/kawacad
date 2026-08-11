@@ -200,17 +200,11 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     );
   }, [command, openTextEntry]);
   const renameLayer = useCallback(
-    (layerId: string, current: string) => {
-      openTextEntry(
-        appStrings.app.renameLayerTitle,
-        [{ id: "name", label: appStrings.app.layerName, initialValue: current }],
-        (values) => {
-          const name = values.name.trim();
-          if (name) void command("renameLayer", { layerId, name }, appStrings.app.layerNameUpdated);
-        },
-      );
+    (layerId: string, requestedName: string) => {
+      const name = requestedName.trim();
+      if (name) void command("renameLayer", { layerId, name }, appStrings.app.layerNameUpdated);
     },
-    [command, openTextEntry],
+    [command],
   );
   const setPartQuantity = useCallback(
     (partId: string, current: number) => {

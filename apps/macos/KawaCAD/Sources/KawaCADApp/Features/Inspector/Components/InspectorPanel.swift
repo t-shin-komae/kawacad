@@ -18,6 +18,7 @@ struct InspectorPanel: View {
           }
         }
         .pickerStyle(.segmented)
+        .labelsHidden()
 
         if appState.inspectorHasPendingSelectionChange {
           Button {

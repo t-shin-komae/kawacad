@@ -307,6 +307,51 @@ describe("InspectorPanel", () => {
     );
   });
 
+  it("commits an inline layer name without opening another editor", () => {
+    const onRenameLayer = vi.fn();
+    render(cloneElement(panel(), { onRenameLayer }));
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
+    const name = screen.getByRole("textbox", { name: "Outline の名前" });
+    fireEvent.change(name, { target: { value: "外形線" } });
+    fireEvent.blur(name);
+
+    expect(onRenameLayer).toHaveBeenCalledWith("layer:outline", "外形線");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps an incomplete custom color draft and commits it once valid", () => {
+    const onCommand = vi.fn();
+    render(panel(onCommand));
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
+    fireEvent.change(screen.getAllByRole("combobox", { name: "色プリセット" })[0], {
+      target: { value: "custom" },
+    });
+    const color = screen.getByRole("textbox", { name: "カスタム色 (#RRGGBB)" });
+    fireEvent.change(color, { target: { value: "#AB" } });
+    expect(color).toHaveValue("#AB");
+    expect(onCommand).not.toHaveBeenCalled();
+
+    fireEvent.change(color, { target: { value: "#ABCDEF" } });
+    expect(onCommand).toHaveBeenCalledWith(
+      "setLayerStyle",
+      {
+        layerId: "layer:outline",
+        style: {
+          ...style,
+          stroke: {
+            red: 171 / 255,
+            green: 205 / 255,
+            blue: 239 / 255,
+            alpha: 1,
+          },
+        },
+      },
+      "レイヤー線種を更新しました。",
+    );
+  });
+
   it("updates the layer output flag through the existing Core command", () => {
     const onCommand = vi.fn();
     render(panel(onCommand));
@@ -681,6 +726,7 @@ describe("InspectorPanel", () => {
     expect(parameterRow).toHaveTextContent("使用 3 件");
     fireEvent.click(parameterRow);
     expect(parameterRow).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("3 件の拘束で使用されています。")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     const partRow = screen.getByRole("button", { name: /^カードケース/ });

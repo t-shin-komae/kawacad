@@ -1,7 +1,7 @@
 pub mod direct_print;
 
 use kawacad_core::command::{DocumentCommand, SelectionReference};
-use kawacad_core::constraints::{ConstraintKind, ConstraintTarget};
+use kawacad_core::constraints::{ConstraintKind, ConstraintTarget, ConstraintValue};
 use kawacad_core::document::DerivedElementPreflightKind;
 use kawacad_core::document::ProjectDocument;
 use kawacad_core::geometry::Point2;
@@ -234,6 +234,64 @@ struct AppState {
     prepared_prints: Mutex<direct_print::PreparedPrintStore<direct_print::PreparedDirectPrint>>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ParameterUsage {
+    id: String,
+    name: String,
+    value_mm: f64,
+    unit: kawacad_core::parameters::ParameterUnit,
+    memo: String,
+    usage_count: usize,
+    used_constraint_ids: Vec<String>,
+}
+
+fn parameters_with_usage(document: &ProjectDocument) -> Vec<ParameterUsage> {
+    document
+        .parameters()
+        .iter()
+        .map(|parameter| {
+            let used_constraint_ids = document
+                .constraints()
+                .iter()
+                .filter(|constraint| {
+                    !constraint.id.starts_with("constraint:implicit:")
+                        && matches!(
+                            &constraint.value,
+                            Some(ConstraintValue::Parameter(parameter_id)) if parameter_id == &parameter.id
+                        )
+                })
+                .map(|constraint| constraint.id.clone());
+            let used_derived_element_ids = document
+                .derived_elements()
+                .iter()
+                .filter(|derived_element| match &derived_element.kind {
+                    kawacad_core::derived::DerivedElementKind::OffsetCurve(offset_curve) => matches!(
+                        &offset_curve.distance,
+                        ConstraintValue::Parameter(parameter_id) if parameter_id == &parameter.id
+                    ),
+                    kawacad_core::derived::DerivedElementKind::Fillet(fillet) => matches!(
+                        &fillet.radius,
+                        ConstraintValue::Parameter(parameter_id) if parameter_id == &parameter.id
+                    ),
+                })
+                .map(|derived_element| derived_element.id.clone());
+            let used_constraint_ids = used_constraint_ids
+                .chain(used_derived_element_ids)
+                .collect::<Vec<_>>();
+            ParameterUsage {
+                id: parameter.id.clone(),
+                name: parameter.name.clone(),
+                value_mm: parameter.value_mm,
+                unit: parameter.unit,
+                memo: parameter.memo.clone(),
+                usage_count: used_constraint_ids.len(),
+                used_constraint_ids,
+            }
+        })
+        .collect()
+}
+
 fn state_for(session: &CadSession) -> serde_json::Value {
     let document = &session.document;
     let snapshot = document.drawing_snapshot(session.view_mode);
@@ -307,7 +365,7 @@ fn state_for(session: &CadSession) -> serde_json::Value {
         "settings": document.settings(),
         "layers": document.layers(),
         "sharedStyles": document.shared_styles(),
-        "parameters": document.parameters(),
+        "parameters": parameters_with_usage(document),
         "parts": document.parts(),
         "entities": snapshot.entities,
         "drawingEntityMetadata": drawing_entity_metadata,
@@ -1015,6 +1073,66 @@ mod tests {
         let state = state_for(&session);
         assert!(state["entities"].as_array().unwrap().is_empty());
         assert_eq!(state["history"]["canRedo"], true);
+    }
+
+    #[test]
+    fn state_reports_parameter_usage_from_constraints_and_derived_elements() {
+        let mut session = CadSession::new("Parameter usage".to_owned());
+        for value in [
+            json!({
+                "kind": "addParameter",
+                "payload": { "id": "parameter:used", "name": "幅", "valueMm": 10.0, "unit": "millimeter", "memo": "" }
+            }),
+            json!({
+                "kind": "addParameter",
+                "payload": { "id": "parameter:unused", "name": "未使用", "valueMm": 5.0, "unit": "millimeter", "memo": "" }
+            }),
+            json!({
+                "kind": "createEntityFromGesture",
+                "payload": { "id": "line:1", "layerId": null, "gesture": { "kind": "line", "start": { "xMm": 0.0, "yMm": 0.0 }, "end": { "xMm": 20.0, "yMm": 0.0 }, "centerLine": false } }
+            }),
+            json!({
+                "kind": "addConstraint",
+                "payload": {
+                    "id": "constraint:length", "kind": "segmentLength", "targets": [{ "entity": "line:1" }],
+                    "value": { "parameter": "parameter:used" }, "status": "underConstrained"
+                }
+            }),
+            json!({
+                "kind": "addDerivedElement",
+                "payload": {
+                    "id": "derived:offset", "layerId": null,
+                    "kind": { "offsetCurve": { "sourceEntityIds": ["line:1"], "distance": { "parameter": "parameter:used" }, "direction": "left" } }
+                }
+            }),
+        ] {
+            session
+                .document
+                .apply_command(
+                    serde_json::from_value(value)
+                        .expect("parameter usage command should deserialize"),
+                )
+                .expect("parameter usage command should apply");
+        }
+
+        let state = state_for(&session);
+        let parameters = state["parameters"]
+            .as_array()
+            .expect("parameters should be serialized");
+        let used = parameters
+            .iter()
+            .find(|parameter| parameter["id"] == "parameter:used")
+            .expect("used parameter should exist");
+        let unused = parameters
+            .iter()
+            .find(|parameter| parameter["id"] == "parameter:unused")
+            .expect("unused parameter should exist");
+        assert_eq!(used["usageCount"], 2);
+        assert_eq!(
+            used["usedConstraintIds"],
+            json!(["constraint:length", "derived:offset"])
+        );
+        assert_eq!(unused["usageCount"], 0);
     }
 
     #[test]
