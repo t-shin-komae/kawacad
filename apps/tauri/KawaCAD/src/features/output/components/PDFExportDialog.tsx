@@ -3,6 +3,16 @@ import { dialogAdapter } from "@/adapters/dialogAdapter";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
+import {
+  AlertTriangle,
+  ArrowUpLeft,
+  CheckCircle2,
+  Info,
+  LoaderCircle,
+  PackageOpen,
+  Ruler,
+  SquareSplitVertical,
+} from "lucide-react";
 
 export type Orientation = "portrait" | "landscape";
 
@@ -42,7 +52,10 @@ export type OutputPage = {
   guide?: OutputGuide | null;
 };
 export type OutputDocumentModel = { pageCount: number; pages: OutputPage[] } & Record<string, unknown>;
-export type OutputWarning = { message: string };
+export type OutputWarning = {
+  kind?: "emptyDocument" | "outOfPrintableBounds" | "pageBoundaryCrossing" | "actualScaleNotGuaranteed";
+  message: string;
+};
 type PreparedPDF = { outputDocumentModel: OutputDocumentModel; warnings: OutputWarning[] };
 
 type Props = {
@@ -105,7 +118,7 @@ export function PDFExportDialog({
       .catch((reason) => {
         if (currentRequest === request.current) {
           setPrepared(undefined);
-          setError(`出力内容を生成できません: ${String(reason)}`);
+          setError(appStrings.output.buildFailed(String(reason)));
         }
       })
       .finally(() => {
@@ -138,7 +151,7 @@ export function PDFExportDialog({
       onSaved(path);
       onClose();
     } catch (reason) {
-      setError(`PDFを保存できません: ${String(reason)}`);
+      setError(appStrings.output.saveFailed(reason));
     } finally {
       setSaving(false);
     }
@@ -159,7 +172,7 @@ export function PDFExportDialog({
             <h2 id="pdf-export-title">{appStrings.output.pdfTitle}</h2>
             <p>{appStrings.output.pdfHelp}</p>
           </div>
-          <button type="button" onClick={onClose} disabled={saving} aria-label="閉じる">
+          <button type="button" onClick={onClose} disabled={saving} aria-label={appStrings.common.close}>
             {appStrings.common.close}
           </button>
         </header>
@@ -187,13 +200,41 @@ export function PDFExportDialog({
               </div>
               <div>
                 <dt>{appStrings.output.paper}</dt>
-                <dd>{appStrings.output.paperPdf}</dd>
+                <dd>{appStrings.output.paperValue}</dd>
+              </div>
+              <div>
+                <dt>{appStrings.output.scale}</dt>
+                <dd>{appStrings.output.scaleActualSize}</dd>
               </div>
               <div>
                 <dt>{appStrings.output.pageCount}</dt>
                 <dd>{loading ? appStrings.output.calculating : appStrings.output.pages(pageCount)}</dd>
               </div>
             </dl>
+            <section className="pdf-export-status" aria-live="polite">
+              <h3>{appStrings.output.status}</h3>
+              {loading ? (
+                <p>
+                  <LoaderCircle aria-hidden="true" size={16} /> {appStrings.output.buildLoading}
+                </p>
+              ) : error ? (
+                <p>
+                  <Info aria-hidden="true" size={16} /> {error}
+                </p>
+              ) : pageCount === 0 ? (
+                <p>
+                  <Info aria-hidden="true" size={16} /> {appStrings.output.noOutput}
+                </p>
+              ) : warnings.length > 0 ? (
+                <p>
+                  <AlertTriangle aria-hidden="true" size={16} /> {appStrings.output.warningCount(warnings.length)}
+                </p>
+              ) : (
+                <p>
+                  <CheckCircle2 aria-hidden="true" size={16} /> {appStrings.output.ready}
+                </p>
+              )}
+            </section>
             <fieldset disabled={saving}>
               <legend>{appStrings.output.settings}</legend>
               <label>
@@ -219,13 +260,17 @@ export function PDFExportDialog({
               </p>
             ) : null}
             {warnings.length > 0 ? (
-              <section className="pdf-export-warnings" aria-label="出力警告">
+              <section className="pdf-export-warnings" aria-label={appStrings.output.warningLabel}>
                 <strong>{appStrings.output.warningCount(warnings.length)}</strong>
                 <ul>
                   {warnings.map((warning, index) => (
-                    <li key={`${warning.message}-${index}`}>{warning.message}</li>
+                    <li key={`${warning.message}-${index}`}>
+                      <WarningIcon warning={warning} />
+                      {warning.message}
+                    </li>
                   ))}
                 </ul>
+                {!warningsAcknowledged ? <p>{appStrings.output.warningAckRequired}</p> : null}
                 <label>
                   <input
                     type="checkbox"
@@ -263,6 +308,20 @@ export function PDFExportDialog({
   );
 }
 
+function WarningIcon({ warning }: { warning: OutputWarning }) {
+  const Icon =
+    warning.kind === "emptyDocument"
+      ? PackageOpen
+      : warning.kind === "outOfPrintableBounds"
+        ? ArrowUpLeft
+        : warning.kind === "pageBoundaryCrossing"
+          ? SquareSplitVertical
+          : warning.kind === "actualScaleNotGuaranteed"
+            ? Ruler
+            : AlertTriangle;
+  return <Icon aria-hidden="true" size={14} />;
+}
+
 export function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
   return (
     <section className="pdf-export-preview" aria-live="polite" aria-busy={loading}>
@@ -297,7 +356,7 @@ function PDFPreviewPage({ page, pageNumber }: { page: OutputPage; pageNumber: nu
       data-rotation-deg={page.rotationDeg}
       viewBox={`0 0 ${page.widthMm} ${page.heightMm}`}
       role="img"
-      aria-label={`PDF ${pageNumber}ページ目`}
+      aria-label={appStrings.output.pdfPageLabel(pageNumber)}
     >
       <rect width={page.widthMm} height={page.heightMm} className="pdf-page-background" />
       <PrintableArea page={page} />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { thirdPartyLicenses, type ThirdPartyLicense } from "@/features/licenses/thirdPartyLicenses";
+import { appStrings } from "@/localization";
 
 type OpenSourceLicensesDialogProps = {
   onClose: () => void;
@@ -34,14 +35,14 @@ export function OpenSourceLicensesDialog({ onClose }: OpenSourceLicensesDialogPr
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="licenses-dialog-header">
-          <h2 id="open-source-licenses-title">OSSライセンス</h2>
-          <button type="button" onClick={onClose} aria-label="閉じる">
-            閉じる
+          <h2 id="open-source-licenses-title">{appStrings.licenses.title}</h2>
+          <button type="button" onClick={onClose} aria-label={appStrings.common.close}>
+            {appStrings.common.close}
           </button>
         </header>
         <div className="licenses-dialog-body" aria-busy={licenses === null}>
           {licenses === null ? (
-            <p>読み込み中…</p>
+            <p>{appStrings.licenses.loading}</p>
           ) : (
             licenses.map((license, index) => (
               <article className="license-entry" key={`${license.name}-${license.version}-${license.license}-${index}`}>

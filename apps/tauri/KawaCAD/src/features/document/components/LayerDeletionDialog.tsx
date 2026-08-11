@@ -12,7 +12,7 @@ export function LayerDeletionDialog({ layerName, affectedCount, onConfirm, onCan
         aria-label={appStrings.dialog.layerDeletion.ariaLabel}
       >
         <h2>{appStrings.dialog.layerDeletion.title(layerName)}</h2>
-        <p>{appStrings.dialog.layerDeletion.impact(affectedCount)}</p>
+        <p>{appStrings.dialog.layerDeletion.impact(layerName, affectedCount)}</p>
         <div className="button-row">
           <button type="button" onClick={onCancel}>
             {appStrings.dialog.layerDeletion.cancel}

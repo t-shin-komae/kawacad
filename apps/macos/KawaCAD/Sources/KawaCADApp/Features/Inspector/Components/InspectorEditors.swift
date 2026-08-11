@@ -116,11 +116,13 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
   }
 
   private var linePatternMenu: some View {
-    LayerStylePickerField(title: "線種", value: style.linePattern.displayName) {
+    LayerStylePickerField(
+      title: AppStrings.tr("inspector.line_pattern"), value: style.linePattern.displayName
+    ) {
       LinePatternPreview(pattern: style.linePattern, colorHex: normalizedHex(style.colorHex))
         .frame(width: 34, height: 10)
     } control: {
-      Picker("線種", selection: linePatternSelection) {
+      Picker(AppStrings.tr("inspector.line_pattern"), selection: linePatternSelection) {
         ForEach(LinePattern.allCases) { pattern in
           Text(pattern.displayName).tag(pattern)
         }
@@ -129,42 +131,46 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       .pickerStyle(.menu)
       .controlSize(.small)
     }
-    .help("線種を選択")
+    .help(AppStrings.tr("inspector.select_line_pattern"))
   }
 
   private var colorMenu: some View {
-    LayerStylePickerField(title: "色", value: colorDisplayName) {
+    LayerStylePickerField(title: AppStrings.tr("inspector.color"), value: colorDisplayName) {
       LayerColorSwatch(colorHex: normalizedHex(style.colorHex), size: 14)
     } control: {
-      Picker("色", selection: colorSelection) {
+      Picker(AppStrings.tr("inspector.color"), selection: colorSelection) {
         ForEach(LayerColorPreset.all) { preset in
           Text(preset.displayName).tag(preset.id)
         }
-        Text("カスタム...").tag(StyleEditorConstants.customColorSelectionID)
+        Text(AppStrings.tr("inspector.custom_option")).tag(
+          StyleEditorConstants.customColorSelectionID)
       }
       .labelsHidden()
       .pickerStyle(.menu)
       .controlSize(.small)
     }
-    .help("線色を選択")
+    .help(AppStrings.tr("inspector.select_color"))
   }
 
   private var strokeWidthMenu: some View {
-    LayerStylePickerField(title: "線幅", value: strokeWidthDisplayName) {
+    LayerStylePickerField(
+      title: AppStrings.tr("inspector.line_width"), value: strokeWidthDisplayName
+    ) {
       LayerStrokeWidthPreview(widthMM: style.strokeWidthMM, colorHex: normalizedHex(style.colorHex))
         .frame(width: 34, height: 10)
     } control: {
-      Picker("線幅", selection: strokeWidthSelection) {
+      Picker(AppStrings.tr("inspector.line_width"), selection: strokeWidthSelection) {
         ForEach(LayerStrokeWidthPreset.all) { preset in
           Text(preset.displayName).tag(preset.widthMM)
         }
-        Text("カスタム...").tag(StyleEditorConstants.customStrokeWidthSelection)
+        Text(AppStrings.tr("inspector.custom_option")).tag(
+          StyleEditorConstants.customStrokeWidthSelection)
       }
       .labelsHidden()
       .pickerStyle(.menu)
       .controlSize(.small)
     }
-    .help("線幅を選択")
+    .help(AppStrings.tr("inspector.select_line_width"))
   }
 
   @ViewBuilder
@@ -172,7 +178,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
     HStack(spacing: 8) {
       switch editor {
       case .color:
-        Text("カスタム色")
+        Text(AppStrings.tr("inspector.custom_color"))
           .font(.system(size: 10, weight: .medium))
           .foregroundStyle(LeatherColors.secondaryInk)
         SyncedTextField(
@@ -191,7 +197,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
           onValidate: hexColorSyntaxValidation
         )
       case .strokeWidth:
-        Text("カスタム線幅")
+        Text(AppStrings.tr("inspector.custom_line_width"))
           .font(.system(size: 10, weight: .medium))
           .foregroundStyle(LeatherColors.secondaryInk)
         SyncedTextField(
@@ -203,7 +209,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
           font: .system(size: 11, weight: .medium),
           onValidate: CommonFieldValidators.optionalDecimalSyntax
         )
-        Text("mm")
+        Text(AppStrings.tr("common.unit_mm"))
           .font(.system(size: 10))
           .foregroundStyle(LeatherColors.secondaryInk)
       }
@@ -217,7 +223,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       }
       .buttonStyle(.borderless)
       .foregroundStyle(LeatherColors.secondaryInk)
-      .help("カスタム入力を閉じる")
+      .help(AppStrings.tr("inspector.close_custom_input"))
     }
     .padding(.horizontal, 8)
     .padding(.vertical, 5)

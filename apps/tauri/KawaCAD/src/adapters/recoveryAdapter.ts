@@ -14,6 +14,7 @@ export const recoveryAdapter = {
   candidates: () => invokeCommand<RecoveryCandidate[]>("recovery_candidates"),
   restore: (candidateId: string) => invokeCommand<State>("restore_recovery_snapshot", { candidateId }),
   discard: (candidateId: string) => invokeCommand<void>("discard_recovery_snapshot", { candidateId }),
+  discardCurrent: () => invokeCommand<void>("discard_current_recovery_snapshot"),
   reveal: (candidateId: string) => invokeCommand<void>("reveal_recovery_snapshot", { candidateId }),
   save: () => invokeCommand<void>("save_recovery_snapshot"),
 };

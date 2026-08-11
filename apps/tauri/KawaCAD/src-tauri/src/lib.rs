@@ -695,6 +695,18 @@ fn discard_recovery_snapshot(app: tauri::AppHandle, candidate_id: String) -> Res
 }
 
 #[tauri::command]
+fn discard_current_recovery_snapshot(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    let session = lock_session(&state)?;
+    discard_recovery_snapshot_at(
+        &application_data_directory(&app)?,
+        &session.recovery_candidate_id,
+    )
+}
+
+#[tauri::command]
 fn reveal_recovery_snapshot(app: tauri::AppHandle, candidate_id: String) -> Result<(), String> {
     let directory = recovery_directory(&application_data_directory(&app)?, &candidate_id)?;
     #[cfg(target_os = "macos")]
@@ -782,6 +794,7 @@ pub fn run() {
             save_recovery_snapshot,
             restore_recovery_snapshot,
             discard_recovery_snapshot,
+            discard_current_recovery_snapshot,
             reveal_recovery_snapshot,
             undo,
             redo,

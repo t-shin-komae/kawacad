@@ -76,7 +76,7 @@ describe("PDFExportDialog", () => {
       <PDFExportDialog documentName="Pattern" initialOrientation="portrait" onClose={vi.fn()} onSaved={onSaved} />,
     );
 
-    await screen.findByText("1 ページ");
+    await screen.findByText("1ページ");
     fireEvent.click(screen.getByRole("button", { name: "保存へ進む" }));
 
     await waitFor(() =>
@@ -126,7 +126,7 @@ describe("PDFExportDialog", () => {
 
     expect(await screen.findByText(/出力内容を生成できません/)).toBeInTheDocument();
     expect(save).toBeDisabled();
-    expect(screen.getByText("0 ページ")).toBeInTheDocument();
+    expect(screen.getByText("0ページ")).toBeInTheDocument();
   });
 
   it("renders graphics, text, the printable area, and the scale guide in the final preview", async () => {

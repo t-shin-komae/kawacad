@@ -1,5 +1,6 @@
 import type { CanvasViewMode } from "@/features/canvas/domain/canvasDomainModels";
 import type { InspectorTab } from "@/features/inspector/selectors/inspectorFeature";
+import { appStrings } from "@/localization";
 
 export type NativeMenuState = {
   hasDocument: boolean;
@@ -50,7 +51,9 @@ export function nativeMenuAvailability(state: NativeMenuState | undefined): Nati
     addLayer: Boolean(state?.canEditLayers && editable),
     smoothArcTangencies: Boolean(state?.canSmoothArcTangencies && editable),
     findInspector: Boolean(state?.inspectorOpen && state.inspectorTab !== "selection"),
-    inspectorLabel: state?.inspectorOpen ? "インスペクタを隠す" : "インスペクタを表示",
-    bottomWorkbenchLabel: state?.bottomWorkbenchVisible ? "サマリーを隠す" : "サマリーを表示",
+    inspectorLabel: state?.inspectorOpen ? appStrings.menu.item.inspectorHide : appStrings.menu.item.inspectorShow,
+    bottomWorkbenchLabel: state?.bottomWorkbenchVisible
+      ? appStrings.menu.item.bottomWorkbenchHide
+      : appStrings.menu.item.bottomWorkbenchShow,
   };
 }

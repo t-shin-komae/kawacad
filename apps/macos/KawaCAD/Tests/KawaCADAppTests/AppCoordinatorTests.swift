@@ -50,7 +50,7 @@ func uc1_app_state_initial_project_is_reflected_in_the_ui_model() {
   #expect(
     appState.actions.document.coreStatus
       == .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)))
-  #expect(appState.actions.document.statusMessage == "新規ドキュメントを作成しました")
+  #expect(appState.actions.document.statusMessage == "新規プロジェクトを作成しました。")
 }
 
 @Test("UC1 AppCoordinator はプロジェクト名変更を境界へ送る")
@@ -1671,7 +1671,7 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   #expect(appState.actions.document.entities.map(\.id) == ["entity:line-a"])
   #expect(appState.actions.workspace.a4ReferenceOrientation == .portrait)
   #expect(appState.actions.output.outputRequestDraft?.options.orientation == .portrait)
-  #expect(appState.actions.document.statusMessage == "元に戻しました")
+  #expect(appState.actions.document.statusMessage == "元に戻しました。")
 
   appState.actions.document.redo()
 
@@ -1685,7 +1685,7 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   )
   #expect(appState.actions.workspace.a4ReferenceOrientation == .landscape)
   #expect(appState.actions.output.outputRequestDraft?.options.orientation == .landscape)
-  #expect(appState.actions.document.statusMessage == "やり直しました")
+  #expect(appState.actions.document.statusMessage == "やり直しました。")
 }
 
 @Test("UC1 復旧した文書の印刷向きをワークスペースへ反映する")
@@ -2031,14 +2031,14 @@ func uc1_app_state_arc_tool_uses_center_start_end_flow() {
 
   #expect(appState.actions.canvas.draftStartPoint == .init(xMM: 10.0, yMM: 10.0))
   #expect(appState.actions.canvas.draftArcStartPoint == nil)
-  #expect(appState.actions.document.statusMessage == "円弧の開始点をクリックします")
+  #expect(appState.actions.document.statusMessage == "円弧の開始点をクリックします。")
 
   appState.actions.canvas.handleCanvasHover(.init(xMM: 15.0, yMM: 10.0))
   #expect(appState.actions.canvas.draftCurrentPoint == .init(xMM: 15.0, yMM: 10.0))
 
   appState.actions.canvas.handleCanvasPlacement(.init(xMM: 15.0, yMM: 10.0))
   #expect(appState.actions.canvas.draftArcStartPoint == .init(xMM: 15.0, yMM: 10.0))
-  #expect(appState.actions.document.statusMessage == "円弧の終点をクリックします")
+  #expect(appState.actions.document.statusMessage == "円弧の終点をクリックします。")
 
   appState.actions.canvas.handleCanvasHover(.init(xMM: 10.0, yMM: 15.0))
   #expect(appState.actions.canvas.draftCurrentPoint == .init(xMM: 10.0, yMM: 15.0))
@@ -3012,7 +3012,7 @@ func uc1_uc5_app_state_open_save_reload_routes_through_the_store() {
   appState.actions.document.saveProject()
   #expect(store.saveDocumentCalls == [saveURL])
   #expect(appState.actions.document.documentURL == saveURL)
-  #expect(appState.actions.document.statusMessage == "\(saveURL.lastPathComponent) に保存しました")
+  #expect(appState.actions.document.statusMessage == "「\(saveURL.lastPathComponent)」に保存しました。")
 
   let openURL = uniqueTempURL("opened-project.kawa")
   appState.actions.canvas.selectedEntityID = "entity:point-a"
@@ -3039,7 +3039,7 @@ func uc1_uc5_app_state_open_save_reload_routes_through_the_store() {
   #expect(appState.actions.canvas.draftCurrentPoint == nil)
   #expect(appState.actions.document.documentName == "Reopened")
   #expect(appState.actions.document.entities.map(\.id) == ["entity:line-b"])
-  #expect(appState.actions.document.statusMessage == "\(openURL.lastPathComponent) を開きました")
+  #expect(appState.actions.document.statusMessage == "「\(openURL.lastPathComponent)」を開きました。")
 
   appState.actions.canvas.selectedEntityID = "entity:missing"
   appState.actions.canvas.selectedEntityIDs = ["entity:missing"]
@@ -4567,7 +4567,7 @@ func uc6_app_state_layer_delete_confirmation_can_be_cancelled() {
   #expect(store.appliedPayloads.isEmpty)
   #expect(appState.actions.document.layerDeletionConfirmation == nil)
   #expect(appState.actions.document.layers.map(\.id) == ["layer:cut-line", "layer:user-a"])
-  #expect(appState.actions.document.statusMessage == "Layer A の削除をキャンセルしました")
+  #expect(appState.actions.document.statusMessage == "「Layer A」の削除を取り消しました。")
 }
 
 @Test("UC203 AppCoordinator はオフセット線を再オフセットするとき派生要素IDを参照元にする", .disabled("派生参照の正規化は Core 結合テストへ移管"))

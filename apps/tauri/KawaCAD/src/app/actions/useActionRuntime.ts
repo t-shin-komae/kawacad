@@ -110,7 +110,7 @@ export type AppActionContext = {
   arrangementPartIds: Set<string>;
   setArrangementPartIds: Setter<Set<string>>;
   inspectorSelectedPartId: string | undefined;
-  requestDocumentSaveConfirmation: (reason: string) => Promise<DocumentSaveChoice>;
+  requestDocumentSaveConfirmation: (reason: string, documentName: string) => Promise<DocumentSaveChoice>;
 };
 
 /** Explicit dependency surfaces keep feature hooks from depending on the composition context by accident. */

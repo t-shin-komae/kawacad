@@ -124,7 +124,7 @@ describe("Canvas accessibility parity", () => {
         marqueeCurrent: { xMm: 5, yMm: 5 },
       }),
     );
-    expect(screen.getByText(/包含選択: 1 件/)).toBeInTheDocument();
+    expect(screen.getByText(/包含選択: 1件/)).toBeInTheDocument();
   });
 });
 

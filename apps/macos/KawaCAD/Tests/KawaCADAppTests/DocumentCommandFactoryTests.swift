@@ -489,7 +489,7 @@ func command_service_builds_add_fillet_command() {
   let fillet = unwrap(kind["fillet"] as? [String: Any])
   #expect((fillet["sourceEntityIds"] as? [String]) == ["entity:first", "entity:second"])
   #expect((fillet["radius"] as? [String: Double])?["fixedMm"] == 2.0)
-  #expect(request.successMessage == "フィレットを追加しました")
+  #expect(request.successMessage == "フィレットを追加しました。")
 }
 
 @Test("CommandFactory は3本以上のフィレット元 ID を保持する")

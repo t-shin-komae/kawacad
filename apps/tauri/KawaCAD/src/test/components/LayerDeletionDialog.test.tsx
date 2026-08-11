@@ -9,7 +9,7 @@ describe("LayerDeletionDialog", () => {
     render(<LayerDeletionDialog layerName="補助線" affectedCount={3} onConfirm={vi.fn()} onCancel={vi.fn()} />);
 
     expect(screen.getByRole("alertdialog", { name: "レイヤー削除の確認" })).toHaveTextContent(
-      "3 件の図形または派生要素がこのレイヤーを参照しています。",
+      "「補助線」には3件の図形または派生要素が紐づいています。削除すると、対象は残りのレイヤーへ移動します。",
     );
   });
 

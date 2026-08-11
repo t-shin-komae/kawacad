@@ -3,6 +3,7 @@ import { appStrings } from "@/localization";
 import { documentWindowPresentation } from "@/features/workspace/selectors/documentWindowPresentation";
 import type { State } from "@/shared/domain/coreWireTypes";
 import { desktopAdapter } from "@/adapters/desktopAdapter";
+import { recoveryAdapter } from "@/adapters/recoveryAdapter";
 import { windowAdapter } from "@/adapters/windowAdapter";
 import type { DocumentSaveChoice } from "@/features/document/state/useDocumentPresentation";
 
@@ -10,7 +11,7 @@ type Props = {
   state: State | undefined;
   allowWindowClose: MutableRefObject<boolean>;
   saveBeforeDestructiveAction: () => Promise<boolean>;
-  requestDocumentSaveConfirmation: (reason: string) => Promise<DocumentSaveChoice>;
+  requestDocumentSaveConfirmation: (reason: string, documentName: string) => Promise<DocumentSaveChoice>;
 };
 
 /** Owns the native window title and close-confirmation boundary. */
@@ -43,10 +44,19 @@ export function useWindowLifecycle({
           await desktopAdapter.exitApplication();
           return;
         }
-        const choice = await requestDocumentSaveConfirmation(appStrings.app.saveAndCloseQuestion);
+        const choice = await requestDocumentSaveConfirmation(
+          appStrings.app.saveAndCloseQuestion,
+          state?.snapshot.name ?? appStrings.app.untitled,
+        );
         if (choice === "save") {
           if (!(await saveBeforeDestructiveAction())) return;
-        } else if (choice === "cancel") return;
+        } else if (choice === "discard") {
+          try {
+            await recoveryAdapter.discardCurrent();
+          } catch {
+            return;
+          }
+        } else return;
         allowWindowClose.current = true;
         await desktopAdapter.exitApplication();
       })
@@ -59,5 +69,11 @@ export function useWindowLifecycle({
       disposed = true;
       unlisten?.();
     };
-  }, [allowWindowClose, requestDocumentSaveConfirmation, saveBeforeDestructiveAction, state?.persistence.isDirty]);
+  }, [
+    allowWindowClose,
+    requestDocumentSaveConfirmation,
+    saveBeforeDestructiveAction,
+    state?.persistence.isDirty,
+    state?.snapshot.name,
+  ]);
 }
