@@ -113,7 +113,7 @@ export function usePartActionCallbacks(dependencies: PartActionDependencies) {
   const insertPartFromLibrary = useCallback(
     (entry: PartLibraryEntry) => {
       const source = entry.sourcePart.originMm ?? { xMm: 0, yMm: 0 };
-    const target = partLibraryPlacement(cursorPoint, state?.parts.map((part) => part.originMm) ?? []);
+      const target = partLibraryPlacement(cursorPoint, state?.parts.map((part) => part.originMm) ?? []);
       const duplicateCount = state?.parts.filter((part) => part.name === entry.name).length ?? 0;
       const newName = duplicateCount ? `${entry.name} ${duplicateCount + 1}` : entry.name;
       void command(
