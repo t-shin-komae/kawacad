@@ -383,7 +383,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
         return;
       }
       if (tool === "freeText") {
-          openTextEntry(
+        openTextEntry(
           appStrings.app.addAnnotationTitle,
           [{ id: "content", label: appStrings.app.annotation, initialValue: appStrings.app.annotation }],
           (values) => {

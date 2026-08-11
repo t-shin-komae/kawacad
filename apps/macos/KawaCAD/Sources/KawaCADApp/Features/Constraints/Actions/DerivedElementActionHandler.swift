@@ -136,7 +136,8 @@ extension ConstraintActionHandler {
       title: CanvasTool.fillet.displayName,
       prompt: AppStrings.tr("status.specify_fillet_radius"),
       targets: [],
-      valueText: initialValueText.isEmpty ? DerivedElementDefaults.filletRadiusText : initialValueText,
+      valueText: initialValueText.isEmpty
+        ? DerivedElementDefaults.filletRadiusText : initialValueText,
       unit: "mm",
       allowsParameterReference: true,
       entryMode: .fixedValue,
