@@ -32,7 +32,7 @@ export type Geometry =
   | { tag: "arc"; center: PointMm; radiusMm: number; startAngleRad: number; sweepAngleRad: number };
 
 // SwiftUI's canvas opens at its 100% document scale.  Keep the model unit
-// scale separate from device pixel ratio, which CadCanvas applies at render.
+// scale separate from device pixel ratio, which CADCanvas applies at render.
 export const defaultViewport: Viewport = { zoom: 1, panX: 0, panY: 0 };
 
 export function geometryOf(entity: RawEntity): Geometry | undefined {

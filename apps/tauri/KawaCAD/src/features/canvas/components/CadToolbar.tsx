@@ -102,7 +102,7 @@ function SnapIcon({ children }: { children: ReactNode }) {
 }
 
 /** The toolbar renders one stable control tree; CSS container queries hide lower-priority controls by available width. */
-export function CadToolbar({
+export function CADToolbar({
   tool,
   layers,
   activeLayer,

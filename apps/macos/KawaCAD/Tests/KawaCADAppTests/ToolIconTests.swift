@@ -3,7 +3,7 @@ import Testing
 @testable import KawaCADApp
 
 @Test("ツールパレットの各ツールは表示用アイコンを持つ")
-func canvas_tool_icons_have_display_fallbacks() {
+func tool_icons_have_display_fallbacks() {
   for tool in CanvasTool.allCases {
     #expect(!tool.symbolName.isEmpty, "\(tool.rawValue) should have a fallback SF Symbol")
     #expect(!tool.iconIdentity.isEmpty, "\(tool.rawValue) should have a display icon identity")
@@ -11,7 +11,7 @@ func canvas_tool_icons_have_display_fallbacks() {
 }
 
 @Test("ツールパレットの主要アイコンはグループ内で意味が衝突しない")
-func canvas_tool_icons_do_not_collide_within_palette_groups() {
+func tool_icons_do_not_collide_within_palette_groups() {
   let groups: [[CanvasTool]] = [
     [
       .select, .point, .line, .circle, .arc, .centerLine, .horizontalCenterLine,
@@ -31,15 +31,15 @@ func canvas_tool_icons_do_not_collide_within_palette_groups() {
 }
 
 @Test("ツールパレットは接線拘束を表示する")
-func project_sidebar_palette_includes_tangent_constraint_tool() {
-  let paletteTools = ProjectSidebar.toolGroups.flatMap(\.tools)
+func tool_palette_includes_tangent_constraint_tool() {
+  let paletteTools = ToolPalette.toolGroups.flatMap(\.tools)
 
   #expect(paletteTools.contains(.tangent))
 }
 
 @Test("ツールパレットは全ツールをカテゴリ切替なしで表示対象にする")
-func project_sidebar_palette_includes_all_canvas_tools() {
-  let paletteTools = ProjectSidebar.toolGroups.flatMap(\.tools)
+func tool_palette_includes_all_canvas_tools() {
+  let paletteTools = ToolPalette.toolGroups.flatMap(\.tools)
 
   #expect(Set(paletteTools) == Set(CanvasTool.allCases))
   #expect(paletteTools.count == CanvasTool.allCases.count)
@@ -54,7 +54,7 @@ func restored_constraint_tool_icons_use_previous_symbols() {
 }
 
 @Test("拘束、寸法ツールは個別のCAD記号を使う")
-func canvas_tool_icons_distinguish_cad_specific_tools() {
+func tool_icons_distinguish_cad_specific_tools() {
   #expect(CanvasTool.symmetric.iconIdentity != CanvasTool.horizontal.iconIdentity)
   #expect(CanvasTool.equalLength.iconIdentity != CanvasTool.segmentLength.iconIdentity)
   #expect(CanvasTool.segmentLength.iconIdentity != CanvasTool.radius.iconIdentity)

@@ -98,7 +98,7 @@ type Props = {
   onContextMenu: (event: React.MouseEvent<HTMLCanvasElement>, point: PointMm) => void;
 };
 
-export function CadCanvas({
+export function CADCanvas({
   entities,
   layers,
   sharedStyles,

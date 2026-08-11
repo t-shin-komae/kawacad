@@ -86,7 +86,7 @@ struct WorkspaceCanvasLayout<CanvasColumn: View, InspectorPanel: View>: View {
 
           switch drawer {
           case .tools:
-            ProjectSidebar(
+            ToolPalette(
               state: state.toolPaletteState,
               actions: actions.toolPaletteActions,
               width: policy.compactToolDrawerWidth

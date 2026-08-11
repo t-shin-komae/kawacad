@@ -24,6 +24,7 @@ import {
   DocumentOverview,
   EntityEditor,
   FreeTextEditor,
+  MultiSelectionSummary,
   ParameterEditor,
   SelectedConstraintEditor,
   SelectedMeasurementEditor,
@@ -109,7 +110,6 @@ export function InspectorPanel(props: Props) {
   const selectedLayerLabels = selectedLayerIDs.map((id) =>
     id ? (layers.find((layer) => layer.id === id)?.name ?? id) : appStrings.inspector.noValue,
   );
-  const [bulkStyleID, setBulkStyleID] = useState("");
   const openTextEntry = (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => {
     setPendingTextEntry({ title, fields, onConfirm });
   };
@@ -198,31 +198,13 @@ export function InspectorPanel(props: Props) {
                   onDelete={props.onDeleteSelection}
                 />
               ) : selectedCount > 1 ? (
-                <div className="inspector-card multi-selection-summary">
-                  <strong>{appStrings.inspector.selectionSummary(selectedCount)}</strong>
-                  <div className="detail-row">
-                    <span>{appStrings.inspector.selectedGeometry}</span>
-                    <strong>{selectedGeometryLabels.join("、")}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span>{appStrings.inspector.selectedLayer}</span>
-                    <strong>{selectedLayerLabels.join("、")}</strong>
-                  </div>
-                  <label>
-                    {appStrings.inspector.bulkStyle}
-                    <select value={bulkStyleID} onChange={(event) => setBulkStyleID(event.target.value)}>
-                      <option value="">{appStrings.inspector.noValue}</option>
-                      {sharedStyles.map((style) => (
-                        <option key={style.id} value={style.id}>
-                          {style.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button disabled={!bulkStyleID} onClick={() => props.onApplyStyle(bulkStyleID)}>
-                    {appStrings.inspector.applyBulkStyle}
-                  </button>
-                </div>
+                <MultiSelectionSummary
+                  selectedCount={selectedCount}
+                  geometryLabels={selectedGeometryLabels}
+                  layerLabels={selectedLayerLabels}
+                  sharedStyles={sharedStyles}
+                  onApplyStyle={props.onApplyStyle}
+                />
               ) : selectedEntity ? (
                 <EntityEditor
                   entity={selectedEntity}

@@ -1,14 +1,16 @@
 import { useEffect, useMemo } from "react";
 import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { WorkspaceInspector } from "@/features/inspector/components/WorkspaceInspector";
-import { CadToolbar } from "@/features/canvas/components/CadToolbar";
+import { CADToolbar } from "@/features/canvas/components/CadToolbar";
 import { BottomWorkbench } from "@/features/workspace/components/BottomWorkbench";
 import { DocumentHeader } from "@/features/document/components/DocumentHeader";
 import { DocumentSaveConfirmationDialog } from "@/features/document/components/DocumentSaveConfirmationDialog";
-import { PaletteResizeHandle } from "@/features/workspace/components/PaletteResizeHandle";
+import { PanelResizeHandle } from "@/features/workspace/components/PanelResizeHandle";
 import { WorkspaceCanvasSurface } from "@/features/workspace/components/WorkspaceCanvasSurface";
+import { WorkspaceCanvasLayout } from "@/features/workspace/components/WorkspaceCanvasLayout";
+import { CanvasStatusBar } from "@/features/canvas/components/CanvasStatusBar";
 import type { PastePlacementMode } from "@/features/document/components/PasteOptionsOverlay";
-import { AppErrorBanner } from "@/features/workspace/components/AppErrorBanner";
+import { WorkspaceBanners } from "@/features/workspace/components/WorkspaceBanners";
 import { ConstraintValueDialog } from "@/features/constraints/components/ConstraintValueDialog";
 import {
   DerivedValueDialog,
@@ -19,7 +21,6 @@ import { LayerDeletionDialog } from "@/features/document/components/LayerDeletio
 import { TextEntryDialog, type TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { MenuAction } from "@/app/domain/nativeMenuTypes";
 import type { CSSProperties } from "react";
-import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
 import type { CanvasViewMode, Tool } from "@/features/canvas/domain/canvasDomainModels";
 import {
@@ -67,7 +68,6 @@ import { useOutputPresentation } from "@/features/output/state/useOutputPresenta
 import { useLicensesPresentation } from "@/features/licenses/state/useLicensesPresentation";
 import { useAppActions } from "@/app/actions/useAppActions";
 import { RecoveryChooserDialog } from "@/features/recovery/components/RecoveryChooserDialog";
-import { RecoverySaveFailureBanner } from "@/features/recovery/components/RecoverySaveFailureBanner";
 import { useActiveDrawingOptions } from "@/features/canvas/selectors/useActiveDrawingOptions";
 import { useWindowLifecycle } from "@/features/workspace/effects/useWindowLifecycle";
 import { useNativeMenuSynchronization } from "@/features/workspace/effects/useNativeMenuSynchronization";
@@ -75,9 +75,8 @@ import { useGlobalCommands } from "@/features/workspace/effects/useGlobalCommand
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
 import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSourceLicensesDialog";
 import { OutputDialog } from "@/features/output/components/OutputDialog";
-import { CircleDot, FileOutput, Info, MapPin, MousePointer2 } from "lucide-react";
 
-export function App() {
+export function MainWindowView() {
   const { licensesOpen, setLicensesOpen } = useLicensesPresentation();
   const { outputDestination, setOutputDestination } = useOutputPresentation();
   const {
@@ -596,10 +595,11 @@ export function App() {
             onCollapsedGroupsChange={setCollapsedToolGroups}
             onApplyStyle={applyActiveStyle}
           />
-          <PaletteResizeHandle
+          <PanelResizeHandle
             value={toolPaletteWidth}
             min={toolPaletteWidthRange.min}
             max={toolPaletteWidthRange.max}
+            ariaLabel={appStrings.resize.paletteWidth}
             onChange={setToolPaletteWidth}
           />
         </>
@@ -615,14 +615,13 @@ export function App() {
           paperLabel={a4Landscape ? appStrings.app.paperLandscape : appStrings.app.paperPortrait}
           onRename={renameDocument}
         />
-        {errorPresentation && <AppErrorBanner presentation={errorPresentation} onDismiss={dismissPresentedError} />}
-        {recoveryEffects.saveFailure && (
-          <RecoverySaveFailureBanner
-            details={recoveryEffects.saveFailure}
-            onRetry={() => void recoveryEffects.retry()}
-            onDismiss={recoveryEffects.dismiss}
-          />
-        )}
+        <WorkspaceBanners
+          errorPresentation={errorPresentation}
+          recoverySaveFailure={recoveryEffects.saveFailure}
+          onDismissError={dismissPresentedError}
+          onRetryRecovery={() => void recoveryEffects.retry()}
+          onDismissRecovery={recoveryEffects.dismiss}
+        />
         {documentWarning && (
           <aside className="document-warning-banner" role="alert">
             <span>{documentWarning}</span>
@@ -712,7 +711,7 @@ export function App() {
             onPrinted={() => setMessage("印刷ジョブを開始しました。")}
           />
         )}
-        <CadToolbar
+        <CADToolbar
           tool={tool}
           layers={state?.layers ?? []}
           activeLayer={activeLayer}
@@ -751,105 +750,99 @@ export function App() {
           }
           onToggleTools={() => setCompactDrawer((value) => (value === "tools" ? undefined : "tools"))}
         />
-        <section className="workspace">
-          <WorkspaceCanvasSurface
-            canvas={{
-              entities: canvasState?.entities ?? [],
-              layers: canvasState?.layers ?? [],
-              sharedStyles: canvasState?.sharedStyles ?? [],
-              freeTexts: canvasState?.freeTexts ?? [],
-              editingFreeText: state?.freeTexts.find((item) => item.id === editingFreeTextId),
-              highlightedFreeTextIds: selectedPartHighlights.freeTextIds,
-              highlightedMeasurementAnnotationIds: selectedPartHighlights.measurementAnnotationIds,
-              highlightedStitchStartPointIds: selectedPartHighlights.stitchStartPointIds,
-              selectedIds: selected,
-              selectedMeasurementAnnotationId: selectedMeasurementId,
-              selectedStitchStartPointId: selectedStitchStartPointId,
-              viewport: viewport,
-              gridVisible: gridVisible,
-              a4Visible: a4Visible,
-              a4Landscape: a4Landscape,
-              outputPreview: state?.viewMode === "outputPreview",
-              outputPages: state?.outputPreview?.pages ?? [],
-              pendingTargetCount: pendingTargets.length,
-              filletDraftEntityCount:
-                pendingDerivedValue?.candidate === "fillet" ? pendingDerivedValue.preflight.sourceEntityIds.length : 0,
-              filletDraftClosed:
-                pendingDerivedValue?.candidate === "fillet" ? pendingDerivedValue.preflight.closed : false,
-              settingPartOrigin: Boolean(settingPartOriginId),
-              selectedPartOrigin: selectedPart?.visible ? selectedPart.originMm : undefined,
-              draftPoints: draft,
-              cursorPoint: cursorPoint,
-              arcSweepAngleRad: arcSweepAngle.current,
-              hoveredConstraintId: hoveredConstraintId,
-              pendingTargetEntityIds: new Set(pendingTargets.map(constraintTargetEntityId)),
-              marqueeStart: marquee.current,
-              marqueeCurrent: marquee.current ? marqueeCurrent : undefined,
-              dragDuplicating: dragDuplicating,
-              dragging: Boolean(move.current),
-              snapActive: snapActive,
-              snapSuppressed: snapSuppressed,
-              hoveredTargetEntityId: hoveredTargetEntityId,
-              coincidentPointGroups: canvasState?.coincidentPointGroups,
-              tool: tool,
-              toolName: names[tool],
-              projection: canvasProjection,
-              measurementLabels: measurementLabels,
-              measurementLabelOffsets: measurementLabelOffsets,
-              dimensionLabels: dimensionLabels,
-              dimensionLabelOffsets: dimensionLabelOffsets,
-              measurementArcCounterclockwise: measurementArcCounterclockwise,
-              dimensionArcCounterclockwise: dimensionArcCounterclockwise,
-              onPointerDown: handleCanvasPoint,
-              onPointerMove: canvasMove,
-              onPointerUp: canvasUp,
-              onDoubleClick: handleCanvasDoubleClick,
-              onCommitFreeText: commitFreeTextEdit,
-              onCancelFreeText: cancelFreeTextEdit,
-              onWheel: handleCanvasWheel,
-              onContextMenu: handleCanvasContextMenu,
-            }}
-            hudText={appStrings.app.hud(Math.round(viewport.zoom * 100), selected.size)}
-            pasteOptions={pasteOverlayProps}
-            contextMenu={contextMenuProps}
-          />
-          {inspectorOpen && layout.mode !== "compact" && (
-            <WorkspaceInspector mode="docked" revision={inspectorRevision} inspector={inspectorProps} />
-          )}
-          {layout.mode === "compact" && compactDrawer === "tools" && (
-            <aside className="compact-drawer compact-tools-drawer" aria-label={appStrings.app.toolDrawer}>
-              <ToolPalette
-                activeStyle={activeStyle}
-                sharedStyles={state?.sharedStyles ?? []}
-                activeTool={tool}
-                roundDiameter={roundDiameter}
-                roundKind={roundKind}
-                selectedCount={selected.size}
-                basicOnly={basicToolsOnly}
-                collapsedGroups={collapsedToolGroups}
-                onActiveStyleChange={setActiveStyle}
-                onToolChange={(next) => {
-                  selectTool(next);
-                  setCompactDrawer(undefined);
-                }}
-                onRoundDiameterChange={setRoundDiameter}
-                onRoundKindChange={setRoundKind}
-                onBasicOnlyChange={setBasicToolsOnly}
-                onCollapsedGroupsChange={setCollapsedToolGroups}
-                onApplyStyle={applyActiveStyle}
-              />
-            </aside>
-          )}
-          {layout.mode === "compact" &&
-            (compactDrawer === "tools" || (compactDrawer === "inspector" && inspectorOpen)) && (
-              <button
-                type="button"
-                className="compact-drawer-backdrop"
-                aria-label={appStrings.accessibility.dismissDrawer}
-                onClick={() => setCompactDrawer(undefined)}
-              />
-            )}
-          {layout.mode === "compact" && compactDrawer === "inspector" && inspectorOpen && (
+        <WorkspaceCanvasLayout
+          mode={layout.mode}
+          inspectorOpen={inspectorOpen}
+          compactDrawer={compactDrawer}
+          canvas={
+            <WorkspaceCanvasSurface
+              canvas={{
+                entities: canvasState?.entities ?? [],
+                layers: canvasState?.layers ?? [],
+                sharedStyles: canvasState?.sharedStyles ?? [],
+                freeTexts: canvasState?.freeTexts ?? [],
+                editingFreeText: state?.freeTexts.find((item) => item.id === editingFreeTextId),
+                highlightedFreeTextIds: selectedPartHighlights.freeTextIds,
+                highlightedMeasurementAnnotationIds: selectedPartHighlights.measurementAnnotationIds,
+                highlightedStitchStartPointIds: selectedPartHighlights.stitchStartPointIds,
+                selectedIds: selected,
+                selectedMeasurementAnnotationId: selectedMeasurementId,
+                selectedStitchStartPointId: selectedStitchStartPointId,
+                viewport: viewport,
+                gridVisible: gridVisible,
+                a4Visible: a4Visible,
+                a4Landscape: a4Landscape,
+                outputPreview: state?.viewMode === "outputPreview",
+                outputPages: state?.outputPreview?.pages ?? [],
+                pendingTargetCount: pendingTargets.length,
+                filletDraftEntityCount:
+                  pendingDerivedValue?.candidate === "fillet"
+                    ? pendingDerivedValue.preflight.sourceEntityIds.length
+                    : 0,
+                filletDraftClosed:
+                  pendingDerivedValue?.candidate === "fillet" ? pendingDerivedValue.preflight.closed : false,
+                settingPartOrigin: Boolean(settingPartOriginId),
+                selectedPartOrigin: selectedPart?.visible ? selectedPart.originMm : undefined,
+                draftPoints: draft,
+                cursorPoint: cursorPoint,
+                arcSweepAngleRad: arcSweepAngle.current,
+                hoveredConstraintId: hoveredConstraintId,
+                pendingTargetEntityIds: new Set(pendingTargets.map(constraintTargetEntityId)),
+                marqueeStart: marquee.current,
+                marqueeCurrent: marquee.current ? marqueeCurrent : undefined,
+                dragDuplicating: dragDuplicating,
+                dragging: Boolean(move.current),
+                snapActive: snapActive,
+                snapSuppressed: snapSuppressed,
+                hoveredTargetEntityId: hoveredTargetEntityId,
+                coincidentPointGroups: canvasState?.coincidentPointGroups,
+                tool: tool,
+                toolName: names[tool],
+                projection: canvasProjection,
+                measurementLabels: measurementLabels,
+                measurementLabelOffsets: measurementLabelOffsets,
+                dimensionLabels: dimensionLabels,
+                dimensionLabelOffsets: dimensionLabelOffsets,
+                measurementArcCounterclockwise: measurementArcCounterclockwise,
+                dimensionArcCounterclockwise: dimensionArcCounterclockwise,
+                onPointerDown: handleCanvasPoint,
+                onPointerMove: canvasMove,
+                onPointerUp: canvasUp,
+                onDoubleClick: handleCanvasDoubleClick,
+                onCommitFreeText: commitFreeTextEdit,
+                onCancelFreeText: cancelFreeTextEdit,
+                onWheel: handleCanvasWheel,
+                onContextMenu: handleCanvasContextMenu,
+              }}
+              hudText={appStrings.app.hud(Math.round(viewport.zoom * 100), selected.size)}
+              pasteOptions={pasteOverlayProps}
+              contextMenu={contextMenuProps}
+            />
+          }
+          dockedInspector={<WorkspaceInspector mode="docked" revision={inspectorRevision} inspector={inspectorProps} />}
+          compactToolDrawer={
+            <ToolPalette
+              activeStyle={activeStyle}
+              sharedStyles={state?.sharedStyles ?? []}
+              activeTool={tool}
+              roundDiameter={roundDiameter}
+              roundKind={roundKind}
+              selectedCount={selected.size}
+              basicOnly={basicToolsOnly}
+              collapsedGroups={collapsedToolGroups}
+              onActiveStyleChange={setActiveStyle}
+              onToolChange={(next) => {
+                selectTool(next);
+                setCompactDrawer(undefined);
+              }}
+              onRoundDiameterChange={setRoundDiameter}
+              onRoundKindChange={setRoundKind}
+              onBasicOnlyChange={setBasicToolsOnly}
+              onCollapsedGroupsChange={setCollapsedToolGroups}
+              onApplyStyle={applyActiveStyle}
+            />
+          }
+          compactInspectorDrawer={
             <WorkspaceInspector
               mode="compact"
               revision={inspectorRevision}
@@ -861,8 +854,9 @@ export function App() {
                 },
               }}
             />
-          )}
-        </section>
+          }
+          onDismissCompactDrawer={() => setCompactDrawer(undefined)}
+        />
         {bottomWorkbenchVisible && (
           <BottomWorkbench
             selectedEntity={selectedEntity}
@@ -871,56 +865,22 @@ export function App() {
             parameters={state?.parameters ?? []}
           />
         )}
-        <footer className="statusbar" data-testid={accessibilityIdentifiers.workspaceStatusBar}>
-          <span>
-            <span className="statusbar-item">
-              <CircleDot size={12} strokeWidth={1.8} aria-hidden="true" />
-              {appStrings.app.statusGeometry(visibleEntities.length)}
-            </span>{" "}
-            ·{" "}
-            <span className="statusbar-item">
-              <MousePointer2 size={12} strokeWidth={1.8} aria-hidden="true" />
-              {selected.size ? appStrings.app.statusSelection(selected.size) : appStrings.app.statusNoSelection}
-            </span>{" "}
-            ·{" "}
-            {cursorPoint ? (
-              <span className="statusbar-item">
-                <MapPin size={12} strokeWidth={1.8} aria-hidden="true" />
-                {appStrings.app.statusCoordinates(cursorPoint.xMm, cursorPoint.yMm)}
-              </span>
-            ) : (
-              <span className="statusbar-item">
-                <MapPin size={12} strokeWidth={1.8} aria-hidden="true" />
-                {appStrings.app.statusNoCoordinates}
-              </span>
-            )}
-          </span>
-          {state?.viewMode === "outputPreview" && (
-            <span>
-              <FileOutput size={12} strokeWidth={1.8} aria-hidden="true" />{" "}
-              {state.outputPreview?.warnings.length
-                ? appStrings.app.outputWarnings(state.outputPreview.warnings.length)
-                : appStrings.app.outputPages(state.outputPreview?.pages.length ?? 0)}
-            </span>
-          )}
-          <span className="statusbar-item" role="status" aria-live="polite">
-            <Info size={12} strokeWidth={1.8} aria-hidden="true" />
-            {message}
-          </span>
-          <button
-            type="button"
-            className="statusbar-summary-toggle"
-            aria-label={bottomWorkbenchVisible ? appStrings.app.statusSummaryHide : appStrings.app.statusSummaryShow}
-            onClick={() =>
-              setBottomWorkbenchVisible((visible) => {
-                setMessage(visible ? appStrings.status.summaryHidden : appStrings.status.summaryShown);
-                return !visible;
-              })
-            }
-          >
-            {bottomWorkbenchVisible ? appStrings.app.statusSummaryHide : appStrings.app.statusSummaryShow}
-          </button>
-        </footer>
+        <CanvasStatusBar
+          visibleEntityCount={visibleEntities.length}
+          selectedCount={selected.size}
+          cursorPoint={cursorPoint}
+          viewMode={state?.viewMode ?? "editDisplay"}
+          outputWarningCount={state?.outputPreview?.warnings.length ?? 0}
+          outputPageCount={state?.outputPreview?.pages.length ?? 0}
+          message={message}
+          summaryVisible={bottomWorkbenchVisible}
+          onToggleSummary={() =>
+            setBottomWorkbenchVisible((visible) => {
+              setMessage(visible ? appStrings.status.summaryHidden : appStrings.status.summaryShown);
+              return !visible;
+            })
+          }
+        />
       </section>
     </main>
   );

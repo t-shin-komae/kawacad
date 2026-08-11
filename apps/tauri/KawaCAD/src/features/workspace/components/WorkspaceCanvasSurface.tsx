@@ -1,10 +1,10 @@
 import type { ComponentProps } from "react";
-import { CadCanvas } from "@/features/canvas/components/CadCanvas";
+import { CADCanvas } from "@/features/canvas/components/CadCanvas";
 import { CanvasContextMenu } from "@/features/canvas/components/CanvasContextMenu";
 import { PasteOptionsOverlay } from "@/features/document/components/PasteOptionsOverlay";
 
 export type WorkspaceCanvasSurfaceProps = {
-  canvas: ComponentProps<typeof CadCanvas>;
+  canvas: ComponentProps<typeof CADCanvas>;
   hudText: string;
   pasteOptions?: ComponentProps<typeof PasteOptionsOverlay>;
   contextMenu?: ComponentProps<typeof CanvasContextMenu>;
@@ -14,7 +14,7 @@ export type WorkspaceCanvasSurfaceProps = {
 export function WorkspaceCanvasSurface({ canvas, hudText, pasteOptions, contextMenu }: WorkspaceCanvasSurfaceProps) {
   return (
     <section className="canvas-area">
-      <CadCanvas {...canvas} />
+      <CADCanvas {...canvas} />
       <div className="canvas-hud" aria-hidden="true">
         {hudText}
       </div>

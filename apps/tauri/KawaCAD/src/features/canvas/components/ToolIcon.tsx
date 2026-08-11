@@ -73,7 +73,7 @@ export const toolIcons: Record<Tool, LucideIcon> = {
 
 export function ToolIcon({ tool, size = 16, className }: Props) {
   const Icon = toolIcons[tool];
-  // CanvasToolIcon places an SF Symbol in a size-sized frame at 82% of that
+  // Swift's ToolIcon places an SF Symbol in a size-sized frame at 82% of that
   // frame. Lucide needs the same optical reduction to avoid looking larger.
   return <Icon className={className} size={size * 0.82} strokeWidth={1.8} aria-hidden="true" focusable="false" />;
 }

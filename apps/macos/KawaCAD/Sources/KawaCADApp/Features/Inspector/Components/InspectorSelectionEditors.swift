@@ -1,6 +1,128 @@
 import SwiftUI
 
-struct PartEditorRow: View {
+struct DocumentOverview: View {
+  @EnvironmentObject private var appState: InspectorFeatureModel
+
+  var body: some View {
+    InspectorSection(title: AppStrings.tr("inspector.document_overview"), symbolName: "doc.text") {
+      DetailRow(
+        label: AppStrings.tr("inspector.visible_mode"), value: appState.viewMode.displayName)
+      DetailRow(label: AppStrings.tr("inspector.active_layer"), value: activeLayerName)
+      DetailRow(
+        label: AppStrings.tr("inspector.visible_entities"), value: "\(appState.entities.count)")
+      DetailRow(
+        label: AppStrings.tr("inspector.constraint_count"), value: "\(appState.constraints.count)")
+      DetailRow(
+        label: AppStrings.tr("inspector.parameter_count"), value: "\(appState.parameters.count)")
+    }
+  }
+
+  private var activeLayerName: String {
+    appState.layers.first(where: { $0.id == appState.activeLayerID })?.name
+      ?? AppStrings.tr("workbench.none")
+  }
+}
+
+struct SelectedMeasurementEditor: View {
+  @EnvironmentObject private var appState: InspectorFeatureModel
+  let measurement: ProjectMeasurementAnnotation
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      DetailRow(label: AppStrings.tr("inspector.kind"), value: measurement.kind)
+      HStack(spacing: 8) {
+        Button {
+          appState.convertMeasurementAnnotationToConstraint(measurement.id)
+        } label: {
+          Text(AppStrings.tr("canvas.menu.convert_measurement_to_constraint"))
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        Button(role: .destructive) {
+          appState.deleteMeasurementAnnotation(measurement)
+        } label: {
+          Image(systemName: "trash")
+        }
+        .buttonStyle(.borderless)
+      }
+    }
+  }
+}
+
+struct SelectedStitchStartPointEditor: View {
+  @EnvironmentObject private var appState: InspectorFeatureModel
+  let stitchStartPoint: ProjectStitchStartPoint
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      DetailRow(
+        label: AppStrings.tr("inspector.kind"), value: AppStrings.tr("tool.stitch_start_point"))
+      DetailRow(label: AppStrings.tr("inspector.stitch_target"), value: targetLabel)
+      Button(role: .destructive) {
+        appState.deleteSelectedEntity()
+      } label: {
+        Label(AppStrings.tr("common.delete"), systemImage: "trash")
+          .frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.bordered)
+    }
+  }
+
+  private var targetLabel: String {
+    appState.entities.first(where: { $0.id == stitchStartPoint.targetID })?.kind.displayName
+      ?? AppStrings.tr("inspector.geometry")
+  }
+}
+
+struct EntityEditor: View {
+  @EnvironmentObject private var appState: InspectorFeatureModel
+  let entity: CanvasEntity
+
+  var body: some View {
+    DetailRow(label: AppStrings.tr("inspector.kind"), value: entity.kind.displayName)
+    Picker(
+      AppStrings.tr("inspector.layer"),
+      selection: Binding(
+        get: { entity.layerID ?? "" },
+        set: { appState.setSelectedEntityLayer($0) }
+      )
+    ) {
+      ForEach(appState.layers) { layer in
+        Text(layer.name).tag(layer.id)
+      }
+    }
+    .font(.system(size: 12))
+
+    if let derivedElement = appState.selectedDerivedElement {
+      SharedStyleSelectionField(
+        selectedStyleID: derivedElement.styleID,
+        sharedStyles: appState.sharedStyles,
+        onChange: { appState.setSelectedEntitiesSharedStyle($0) }
+      )
+      DerivedElementEditor(derivedElement: derivedElement)
+    } else {
+      SharedStyleSelectionField(
+        selectedStyleID: entity.styleID,
+        sharedStyles: appState.sharedStyles,
+        onChange: { appState.setSelectedEntitiesSharedStyle($0) }
+      )
+      if let roundHole = appState.selectedRoundHole {
+        RoundHoleEditor(roundHole: roundHole, entity: entity)
+      }
+      EntityGeometryEditor(entity: entity)
+    }
+
+    Button(role: .destructive) {
+      appState.deleteSelectedEntity()
+    } label: {
+      Label(AppStrings.tr("common.delete"), systemImage: "trash")
+        .frame(maxWidth: .infinity)
+    }
+    .buttonStyle(.bordered)
+  }
+}
+
+struct PartEditor: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
   let part: ProjectPart
 
@@ -181,7 +303,7 @@ struct PartEditorRow: View {
   }
 }
 
-struct InspectorSectionRow<Content: View>: View {
+struct InspectorDisclosureRow<Content: View>: View {
   let title: String
   let subtitle: String
   let metadata: String
@@ -227,7 +349,7 @@ struct InspectorSectionRow<Content: View>: View {
   }
 }
 
-struct FreeTextEditorSection: View {
+struct FreeTextEditor: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
   let freeText: ProjectFreeText
 
@@ -302,7 +424,7 @@ struct FreeTextEditorSection: View {
   }
 }
 
-struct SelectedConstraintSection: View {
+struct SelectedConstraintEditor: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
   let constraint: ProjectConstraint
 
@@ -331,7 +453,7 @@ struct SelectedConstraintSection: View {
   }
 }
 
-struct MultiSelectionSummarySection: View {
+struct MultiSelectionSummary: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
 
   var body: some View {
@@ -346,6 +468,12 @@ struct MultiSelectionSummarySection: View {
       if let layerSummary = layerSummaryText(for: selectedEntities) {
         DetailRow(label: AppStrings.tr("inspector.layer"), value: layerSummary)
       }
+
+      SharedStyleSelectionField(
+        selectedStyleID: nil,
+        sharedStyles: appState.sharedStyles,
+        onChange: { appState.setSelectedEntitiesSharedStyle($0) }
+      )
 
       Text(AppStrings.tr("inspector.batch_actions"))
         .font(.system(size: 12))
@@ -466,7 +594,7 @@ struct ConstraintValueEditor: View {
   }
 }
 
-struct OffsetDerivedElementEditor: View {
+struct DerivedElementEditor: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
   let derivedElement: ProjectDerivedElement
 
@@ -579,7 +707,7 @@ struct OffsetDerivedElementEditor: View {
   }
 }
 
-struct RoundHoleEditorSection: View {
+struct RoundHoleEditor: View {
   @EnvironmentObject private var appState: InspectorFeatureModel
   let roundHole: ProjectRoundHole
   let entity: CanvasEntity

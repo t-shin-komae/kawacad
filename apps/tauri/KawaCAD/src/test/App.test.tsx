@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { App } from "@/app/App";
+import { MainWindowView as App } from "@/app/MainWindowView";
 import {
   canvasProjectionFor,
   hitDerivedRadiusControl,

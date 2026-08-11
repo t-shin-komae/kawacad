@@ -46,6 +46,51 @@ export function DocumentOverview({ summary }: { summary: Props["documentSummary"
     </InspectorSection>
   );
 }
+
+export function MultiSelectionSummary({
+  selectedCount,
+  geometryLabels,
+  layerLabels,
+  sharedStyles,
+  onApplyStyle,
+}: {
+  selectedCount: number;
+  geometryLabels: string[];
+  layerLabels: string[];
+  sharedStyles: Props["sharedStyles"];
+  onApplyStyle: Props["onApplyStyle"];
+}) {
+  const [styleID, setStyleID] = useState("");
+
+  return (
+    <div className="inspector-card multi-selection-summary">
+      <strong>{appStrings.inspector.selectionSummary(selectedCount)}</strong>
+      <div className="detail-row">
+        <span>{appStrings.inspector.selectedGeometry}</span>
+        <strong>{geometryLabels.join("、")}</strong>
+      </div>
+      <div className="detail-row">
+        <span>{appStrings.inspector.selectedLayer}</span>
+        <strong>{layerLabels.join("、")}</strong>
+      </div>
+      <label>
+        {appStrings.inspector.bulkStyle}
+        <select value={styleID} onChange={(event) => setStyleID(event.target.value)}>
+          <option value="">{appStrings.inspector.noValue}</option>
+          {sharedStyles.map((style) => (
+            <option key={style.id} value={style.id}>
+              {style.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button disabled={!styleID} onClick={() => onApplyStyle(styleID)}>
+        {appStrings.inspector.applyBulkStyle}
+      </button>
+    </div>
+  );
+}
+
 export function SelectedConstraintEditor({
   constraint,
   parameters,
@@ -721,7 +766,7 @@ export function EntityEditor({
         </select>
       </label>
       {geometry && geometry.tag !== "point" && (
-        <EntityGeometryFields
+        <EntityGeometryEditor
           entityId={entity.id}
           geometry={geometry}
           onCommand={onCommand}
@@ -741,7 +786,7 @@ export function EntityEditor({
           {appStrings.inspector.smoothArcTangencies}
         </button>
       )}
-      {roundHole && <RoundHoleFields entity={entity} roundHole={roundHole} onCommand={onCommand} />}
+      {roundHole && <RoundHoleEditor entity={entity} roundHole={roundHole} onCommand={onCommand} />}
     </div>
   );
 }
@@ -763,7 +808,7 @@ export function geometryDisplayName(entity: RawEntity) {
   }
 }
 
-export function RoundHoleFields({
+export function RoundHoleEditor({
   entity,
   roundHole,
   onCommand,
@@ -822,7 +867,7 @@ export function RoundHoleFields({
   );
 }
 
-export function EntityGeometryFields({
+export function EntityGeometryEditor({
   entityId,
   geometry,
   onCommand,

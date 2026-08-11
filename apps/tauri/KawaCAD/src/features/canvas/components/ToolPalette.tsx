@@ -110,6 +110,26 @@ function PaletteActionIcon({ kind }: { kind: "expand" | "compress" | "brush" }) 
   return <Icon className="palette-action-icon" size={12} strokeWidth={1.7} aria-hidden="true" />;
 }
 
+type PaletteToolButtonProps = {
+  tool: Tool;
+  isSelected: boolean;
+  onSelect: (tool: Tool) => void;
+};
+
+export function PaletteToolButton({ tool, isSelected, onSelect }: PaletteToolButtonProps) {
+  return (
+    <button
+      className={isSelected ? "active" : ""}
+      onClick={() => onSelect(tool)}
+      aria-pressed={isSelected}
+      title={labels[tool]}
+    >
+      <ToolIcon tool={tool} size={15} />
+      <span>{labels[tool]}</span>
+    </button>
+  );
+}
+
 export function ToolPalette({
   activeStyle,
   sharedStyles,
@@ -222,16 +242,12 @@ export function ToolPalette({
               {expanded && (
                 <div className="tool-grid">
                   {visibleTools.map((tool) => (
-                    <button
+                    <PaletteToolButton
                       key={tool}
-                      className={tool === activeTool ? "active" : ""}
-                      onClick={() => onToolChange(tool)}
-                      aria-pressed={tool === activeTool}
-                      title={labels[tool]}
-                    >
-                      <ToolIcon tool={tool} size={15} />
-                      <span>{labels[tool]}</span>
-                    </button>
+                      tool={tool}
+                      isSelected={tool === activeTool}
+                      onSelect={onToolChange}
+                    />
                   ))}
                 </div>
               )}
