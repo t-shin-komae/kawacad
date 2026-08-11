@@ -13,10 +13,10 @@ export function useDocumentPresentation() {
   const documentHeader = useRef<DocumentHeaderHandle>(null);
   const documentNameForFileDialog = useRef<string>();
   const confirmationResolver = useRef<(choice: DocumentSaveChoice) => void>();
-  const [documentSaveConfirmation, setDocumentSaveConfirmation] = useState<{ reason: string }>();
-  const requestDocumentSaveConfirmation = useCallback((reason: string) => {
+  const [documentSaveConfirmation, setDocumentSaveConfirmation] = useState<{ reason: string; documentName: string }>();
+  const requestDocumentSaveConfirmation = useCallback((reason: string, documentName: string) => {
     confirmationResolver.current?.("cancel");
-    setDocumentSaveConfirmation({ reason });
+    setDocumentSaveConfirmation({ reason, documentName });
     return new Promise<DocumentSaveChoice>((resolve) => {
       confirmationResolver.current = resolve;
     });

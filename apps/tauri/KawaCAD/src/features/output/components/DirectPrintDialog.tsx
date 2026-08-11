@@ -56,16 +56,17 @@ export function DirectPrintDialog({
         "direct_print_availability",
       )
       .then(async (availability) => {
-        if (availability.status !== "available") throw new Error(availability.reason ?? "直接印刷は利用できません。");
+        if (availability.status !== "available")
+          throw new Error(availability.reason ?? appStrings.output.directPrintUnavailable);
         const result = await documentAdapter.command<Printer[]>("list_printers");
         if (!active) return;
         const selectable = result.filter((printer) => printer.selectable);
         setPrinters(selectable);
         setPrinterId(selectable[0]?.id ?? "");
-        if (selectable.length === 0) setError("利用可能なプリンタがありません。");
+        if (selectable.length === 0) setError(appStrings.output.printerUnavailable);
       })
       .catch((reason) => {
-        if (active) setError(`直接印刷を利用できません: ${String(reason)}`);
+        if (active) setError(appStrings.output.directPrintUnavailableWithReason(reason));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -102,7 +103,7 @@ export function DirectPrintDialog({
         else void documentAdapter.command("discard_prepared_direct_print", { preparedPrintId });
       })
       .catch((reason) => {
-        if (active) setError(`出力内容を生成できません: ${String(reason)}`);
+        if (active) setError(appStrings.output.buildFailed(String(reason)));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -131,7 +132,7 @@ export function DirectPrintDialog({
     } catch (reason) {
       setPrepared(undefined);
       setPreparationRevision((revision) => revision + 1);
-      setError(`印刷ジョブを開始できません: ${String(reason)}`);
+      setError(appStrings.output.directPrintFailedWithReason(reason));
     } finally {
       setPrinting(false);
     }
@@ -151,7 +152,7 @@ export function DirectPrintDialog({
             <h2 id="direct-print-title">{appStrings.output.directPrintTitle}</h2>
             <p>{appStrings.output.directPrintHelp}</p>
           </div>
-          <button type="button" onClick={onClose} disabled={printing} aria-label="閉じる">
+          <button type="button" onClick={onClose} disabled={printing} aria-label={appStrings.common.close}>
             {appStrings.common.close}
           </button>
         </header>
@@ -183,7 +184,11 @@ export function DirectPrintDialog({
               ) : null}
               <div>
                 <dt>{appStrings.output.paper}</dt>
-                <dd>{appStrings.output.paperPrint}</dd>
+                <dd>{appStrings.output.paperValue}</dd>
+              </div>
+              <div>
+                <dt>{appStrings.output.scale}</dt>
+                <dd>{appStrings.output.scaleActualSize}</dd>
               </div>
               <div>
                 <dt>{appStrings.output.pageCount}</dt>
@@ -230,7 +235,7 @@ export function DirectPrintDialog({
               </p>
             ) : null}
             {warnings.length > 0 ? (
-              <section className="pdf-export-warnings" aria-label="出力警告">
+              <section className="pdf-export-warnings" aria-label={appStrings.output.warningLabel}>
                 <strong>{appStrings.output.warningCount(warnings.length)}</strong>
                 <ul>
                   {warnings.map((warning, index) => (

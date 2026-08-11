@@ -261,7 +261,7 @@ describe("React workspace shortcuts", () => {
     fireEvent.keyDown(window, { key: "z", metaKey: true });
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("undo"));
     expect(screen.queryByText(/1 選択/)).not.toBeInTheDocument();
-    expect(screen.getByText("取り消しました。")).toBeInTheDocument();
+    expect(screen.getByText("元に戻しました。")).toBeInTheDocument();
   });
   it("clears SwiftUI transient selection and resets to Select when changing display modes", async () => {
     const previewState = {
@@ -616,7 +616,7 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(screen.getByRole("button", { name: "削除" }));
 
     const dialog = await screen.findByRole("alertdialog", { name: "レイヤー削除の確認" });
-    expect(dialog).toHaveTextContent("2 件の図形または派生要素がこのレイヤーを参照しています。");
+    expect(dialog).toHaveTextContent("「Cut Line」には2件の図形または派生要素が紐づいています。");
     expect(mocks.invoke).not.toHaveBeenCalledWith(
       "apply_command",
       expect.objectContaining({ command: expect.objectContaining({ kind: "deleteLayer" }) }),
@@ -1312,7 +1312,7 @@ describe("React workspace shortcuts", () => {
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("export_selection", expect.anything()));
     fireEvent.pointerMove(canvas, { ...canvasClientPoint({ xMm: 10, yMm: 0 }), pointerId: 1 });
     fireEvent.keyDown(window, { key: "v", metaKey: true });
-    await screen.findByRole("group", { name: "貼り付け位置" });
+    await screen.findByRole("group", { name: "ペーストオプション" });
     const firstPaste = mocks.invoke.mock.calls.find(
       ([command, request]) => command === "apply_command" && request.command.kind === "pasteSelection",
     )?.[1].command.payload;
@@ -1320,7 +1320,7 @@ describe("React workspace shortcuts", () => {
     expect(firstPaste.delta.yMm).toBeCloseTo(0);
     const namespace = firstPaste.idNamespace;
 
-    fireEvent.click(screen.getByRole("button", { name: "元図形の近く" }));
+    fireEvent.click(screen.getByRole("button", { name: "コピー元の近く（+5 mm）" }));
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("undo"));
     await waitFor(() => {
       const pastes = mocks.invoke.mock.calls.filter(
@@ -1348,11 +1348,11 @@ describe("React workspace shortcuts", () => {
     fireEvent.keyDown(window, { key: "c", metaKey: true });
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("export_selection", expect.anything()));
     fireEvent.keyDown(window, { key: "v", metaKey: true });
-    await screen.findByRole("group", { name: "貼り付け位置" });
+    await screen.findByRole("group", { name: "ペーストオプション" });
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByRole("group", { name: "貼り付け位置" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "ペーストオプション" })).not.toBeInTheDocument();
     expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0);
-    expect(screen.getByText("貼り付け位置の選択を閉じました。")).toBeInTheDocument();
+    expect(screen.getByText("ペーストオプションを閉じました。")).toBeInTheDocument();
   });
   it("selects and moves a displayed dimension constraint from the canvas", async () => {
     const dimensionState = {
@@ -1491,6 +1491,43 @@ describe("React workspace shortcuts", () => {
       filters: [{ name: "KawaCAD project", extensions: ["kawa"] }],
     });
   });
+  it("refreshes the saved filename after Save As before the next ordinary save", async () => {
+    mocks.save.mockResolvedValue("/projects/wallet-pattern");
+    let currentState = {
+      ...state,
+      persistence: { isDirty: true, hasPath: false, path: undefined as string | undefined },
+    };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return currentState;
+      if (command === "save_document") {
+        currentState = {
+          ...currentState,
+          persistence: { isDirty: false, hasPath: true, path: "/projects/wallet-pattern.kawa" },
+        };
+        return currentState;
+      }
+      if (command === "save_current_document") return currentState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return currentState;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/wallet-pattern.kawa" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("「wallet-pattern.kawa」に保存しました。"),
+    );
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "save" }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_current_document"));
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("「wallet-pattern.kawa」に保存しました。"),
+    );
+  });
   it("keeps the current selection when creating a replacement document fails", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "new_document") throw new Error("create failed");
@@ -1551,7 +1588,7 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     expect(screen.getByRole("button", { name: "レイヤーを追加" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
-    expect(screen.getByRole("button", { name: "共有線種を追加" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "共有スタイルを追加" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "詳細ツールを表示" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "詳細ツールを表示" }));
     fireEvent.click(screen.getByRole("button", { name: "基本ツールだけを表示" }));
@@ -1582,7 +1619,7 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
-    const stylePicker = await screen.findByRole("combobox", { name: "選択図形の共有線種" });
+    const stylePicker = await screen.findByRole("combobox", { name: "選択図形の共有スタイル" });
     fireEvent.change(stylePicker, { target: { value: "style:stitch" } });
     const bulkStyleButtons = screen.getAllByRole("button", { name: "選択へ適用" });
     fireEvent.click(bulkStyleButtons[bulkStyleButtons.length - 1]);
@@ -1632,8 +1669,8 @@ describe("React workspace shortcuts", () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    const confirmation = await screen.findByRole("dialog", { name: "未保存の変更があります" });
-    expect(confirmation).toHaveTextContent("未保存の変更");
+    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    expect(confirmation).toHaveTextContent("現在の未保存変更");
     fireEvent.click(within(confirmation).getByRole("button", { name: "キャンセル" }));
     expect(screen.queryByRole("dialog", { name: "新規プロジェクト" })).not.toBeInTheDocument();
     expect(mocks.invoke).not.toHaveBeenCalledWith("new_document", expect.anything());
@@ -1651,7 +1688,7 @@ describe("React workspace shortcuts", () => {
     await screen.findByDisplayValue("Test project");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "未保存の変更があります" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );
@@ -1671,7 +1708,7 @@ describe("React workspace shortcuts", () => {
     await screen.findByDisplayValue("Test project");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "open" }));
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "未保存の変更があります" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );
@@ -1693,7 +1730,7 @@ describe("React workspace shortcuts", () => {
     await screen.findByDisplayValue("Test project");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "未保存の変更があります" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );
@@ -1854,7 +1891,7 @@ describe("React workspace shortcuts", () => {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
     });
     fireEvent.contextMenu(canvas, { clientX: 50, clientY: 50, offsetX: 50, offsetY: 50 });
-    expect(screen.getByRole("menuitem", { name: "寸法拘束へ変換" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "拘束へ変換" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "コピー" })).not.toBeInTheDocument();
   });
   it("runs the SwiftUI smooth-tangencies command from an arc context menu", async () => {
@@ -2120,12 +2157,14 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    expect(await screen.findByRole("dialog", { name: "復旧するドキュメントを選択" })).toHaveTextContent("復旧する型紙");
-    fireEvent.click(screen.getByRole("button", { name: "復元" }));
+    expect(await screen.findByRole("dialog", { name: "復旧できる編集中データがあります" })).toHaveTextContent(
+      "復旧する型紙",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "復旧して開く" }));
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith("restore_recovery_snapshot", { candidateId: "recoverable-1" }),
     );
-    expect(screen.queryByRole("dialog", { name: "復旧するドキュメントを選択" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "復旧できる編集中データがあります" })).not.toBeInTheDocument();
   });
   it("keeps a SwiftUI recovery candidate when the user chooses to review it later", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
@@ -2143,9 +2182,9 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByRole("dialog", { name: "復旧するドキュメントを選択" });
+    await screen.findByRole("dialog", { name: "復旧できる編集中データがあります" });
     fireEvent.click(screen.getByRole("button", { name: "後で" }));
-    expect(screen.queryByRole("dialog", { name: "復旧するドキュメントを選択" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "復旧できる編集中データがあります" })).not.toBeInTheDocument();
     expect(screen.getByText("復旧候補は後で確認できます。")).toBeInTheDocument();
     expect(mocks.invoke).not.toHaveBeenCalledWith("discard_recovery_snapshot");
   });
@@ -2191,12 +2230,38 @@ describe("React workspace shortcuts", () => {
     expect(handler).toBeDefined();
     const preventDefault = vi.fn();
     const closeRequest = handler?.({ preventDefault });
-    const confirmation = await screen.findByRole("dialog", { name: "未保存の変更があります" });
-    fireEvent.click(within(confirmation).getByRole("button", { name: "保存しない" }));
+    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    fireEvent.click(within(confirmation).getByRole("button", { name: "変更を破棄" }));
     await closeRequest;
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(mocks.invoke).toHaveBeenCalledWith("discard_current_recovery_snapshot");
     expect(mocks.invoke).toHaveBeenCalledWith("exit_application");
+  });
+  it("reports recovery discard failures and keeps the window open", async () => {
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return { ...state, persistence: { isDirty: true } };
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      if (command === "discard_current_recovery_snapshot") throw new Error("permission denied");
+      return state;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
+      [(event: { preventDefault: () => void }) => Promise<void>]
+    >;
+    const handler = calls[calls.length - 1]?.[0] as
+      ((event: { preventDefault: () => void }) => Promise<void>) | undefined;
+    const closeRequest = handler?.({ preventDefault: vi.fn() });
+    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    fireEvent.click(within(confirmation).getByRole("button", { name: "変更を破棄" }));
+    await closeRequest;
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "復旧用スナップショットを破棄できません: Error: permission denied",
+    );
+    expect(mocks.invoke).not.toHaveBeenCalledWith("exit_application");
   });
   it("saves a dirty document before completing a window close", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
@@ -2215,7 +2280,7 @@ describe("React workspace shortcuts", () => {
       ((event: { preventDefault: () => void }) => Promise<void>) | undefined;
     const closeRequest = handler?.({ preventDefault: vi.fn() });
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "未保存の変更があります" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );

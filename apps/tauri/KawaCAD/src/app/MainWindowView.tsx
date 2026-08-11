@@ -453,7 +453,13 @@ export function MainWindowView() {
     onRestored: resetInspectorPresentation,
   });
   const { recoveryCandidates } = recoverySnapshot;
-  useWindowLifecycle({ state, allowWindowClose, saveBeforeDestructiveAction, requestDocumentSaveConfirmation });
+  useWindowLifecycle({
+    state,
+    allowWindowClose,
+    saveBeforeDestructiveAction,
+    presentOperationFailure,
+    requestDocumentSaveConfirmation,
+  });
   const recoveryEffects = useRecoveryEffects({ state });
   useEffect(() => {
     void refresh().then(() => setMessage(appStrings.status.readyToDraw));
@@ -697,6 +703,7 @@ export function MainWindowView() {
         {documentSaveConfirmation && (
           <DocumentSaveConfirmationDialog
             reason={documentSaveConfirmation.reason}
+            documentName={documentSaveConfirmation.documentName}
             onChoose={resolveDocumentSaveConfirmation}
           />
         )}
@@ -707,8 +714,8 @@ export function MainWindowView() {
             initialOrientation={a4Landscape ? "landscape" : "portrait"}
             initialDestination={outputDestination}
             onClose={() => setOutputDestination(undefined)}
-            onSaved={(path) => setMessage(`PDFを保存しました: ${path}`)}
-            onPrinted={() => setMessage("印刷ジョブを開始しました。")}
+            onSaved={(path) => setMessage(appStrings.output.exported(path))}
+            onPrinted={() => setMessage(appStrings.output.directPrintStarted)}
           />
         )}
         <CADToolbar

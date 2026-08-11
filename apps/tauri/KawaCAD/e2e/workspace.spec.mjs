@@ -43,7 +43,7 @@ async function clickTool(page, name) {
     const detailedTools = palette.getByRole("button", { name: "詳細ツールを表示", exact: true });
     if (await detailedTools.count()) await detailedTools.click();
 
-    for (const groupName of ["作図", "派生", "拘束", "寸法", "計測"]) {
+    for (const groupName of ["作図", "派生", "拘束", "寸法", "計測表示"]) {
       const group = palette.getByRole("button", { name: groupName, exact: true });
       if ((await group.count()) && (await group.getAttribute("aria-expanded")) === "false") await group.click();
     }
@@ -223,7 +223,10 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await palette.getByRole("button", { name: "詳細ツールを表示", exact: true }).click();
     await expect(palette.getByRole("button", { name: "派生", exact: true })).toHaveAttribute("aria-expanded", "false");
     await expect(palette.getByRole("button", { name: "拘束", exact: true })).toHaveAttribute("aria-expanded", "false");
-    await expect(palette.getByRole("button", { name: "計測", exact: true })).toHaveAttribute("aria-expanded", "false");
+    await expect(palette.getByRole("button", { name: "計測表示", exact: true })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
     await expect(palette).toContainText("補助パレット");
     await expect.poll(columnCount).toBe(1);
     await expect(palette.locator(".line-style-swatch")).toHaveCount(0);
@@ -338,7 +341,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     expect(state.freeTexts[0].content).toBe("E2E note");
   });
 
-  // コピー後の貼り付け位置UIを表示し、Escapeで一時的な貼り付け状態だけを安全に解除できることを検証する。
+  // コピー後のペーストオプションUIを表示し、Escapeで一時的なペースト状態だけを安全に解除できることを検証する。
   test("copies, pastes, and dismisses the paste-placement affordance", async ({ page }) => {
     await openWorkspace(page);
     await clickTool(page, "点");
@@ -349,11 +352,11 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(page.getByRole("status")).toContainText("1 件の図形をコピーしました。");
 
     await page.keyboard.press(`${primary}+v`);
-    await expect(page.getByRole("group", { name: "貼り付け位置" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "ペーストオプション" })).toBeVisible();
     await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("2 図形");
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("group", { name: "貼り付け位置" })).toHaveCount(0);
-    await expect(page.getByRole("status")).toContainText("貼り付け位置の選択を閉じました。");
+    await expect(page.getByRole("group", { name: "ペーストオプション" })).toHaveCount(0);
+    await expect(page.getByRole("status")).toContainText("ペーストオプションを閉じました。");
   });
 
   // 保存済みドキュメントの再読み込みと新規プロジェクト作成で、Coreの内容とファイル契約が壊れないことを検証する。
@@ -365,7 +368,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await page.getByRole("menuitem", { name: "A4横向き", exact: true }).click();
     await expect.poll(() => core.orientation).toBe("landscape");
     await page.keyboard.press(`${primary}+s`);
-    await expect(page.getByRole("status")).toContainText("プロジェクトを保存しました。");
+    await expect(page.getByRole("status")).toContainText("「e2e-project.kawa」に保存しました。");
 
     await clickTool(page, "点");
     await clickModelPoint(page, 35, 35);
@@ -584,7 +587,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await page.keyboard.press(`${primary}+a`);
     await page.getByRole("tab", { name: "共有スタイル", exact: true }).click();
     const initialStyleCount = (await core.invoke("document_state")).sharedStyles.length;
-    await page.getByRole("button", { name: "共有線種を追加", exact: true }).click();
+    await page.getByRole("button", { name: "共有スタイルを追加", exact: true }).click();
     await expect
       .poll(async () => (await core.invoke("document_state")).sharedStyles)
       .toHaveLength(initialStyleCount + 1);

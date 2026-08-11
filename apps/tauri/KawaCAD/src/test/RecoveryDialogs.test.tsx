@@ -35,12 +35,12 @@ describe("recovery presentation", () => {
       />,
     );
 
-    const dialog = screen.getByRole("dialog", { name: "復旧するドキュメントを選択" });
+    const dialog = screen.getByRole("dialog", { name: "復旧できる編集中データがあります" });
     const candidates = dialog.querySelectorAll(".recovery-candidate-card");
     expect(candidates).toHaveLength(2);
-    fireEvent.click(within(candidates[0] as HTMLElement).getByRole("button", { name: "復元" }));
+    fireEvent.click(within(candidates[0] as HTMLElement).getByRole("button", { name: "復旧して開く" }));
     expect(onRestore).toHaveBeenCalledWith("recoverable-1");
-    expect(within(candidates[1] as HTMLElement).getByRole("button", { name: "復元" })).toBeDisabled();
+    expect(within(candidates[1] as HTMLElement).getByRole("button", { name: "復旧して開く" })).toBeDisabled();
     expect(within(candidates[1] as HTMLElement).getByRole("alert")).toHaveTextContent("snapshot.kawa");
     fireEvent.click(within(candidates[1] as HTMLElement).getByRole("button", { name: "破棄" }));
     fireEvent.click(within(candidates[1] as HTMLElement).getByRole("button", { name: "フォルダーに表示" }));

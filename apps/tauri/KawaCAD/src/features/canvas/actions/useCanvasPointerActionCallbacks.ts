@@ -106,7 +106,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
                   ? {
                       partId: part.id,
                       newPartId: `part:${crypto.randomUUID()}`,
-                      newName: `${part.name} のコピー`,
+                      newName: appStrings.inspector.copyOf(part.name),
                       idNamespace: crypto.randomUUID(),
                       delta,
                     }
@@ -214,7 +214,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
                 {
                   partId: part.id,
                   newPartId: `part:${crypto.randomUUID()}`,
-                  newName: `${part.name} のコピー`,
+                  newName: appStrings.inspector.copyOf(part.name),
                   idNamespace: crypto.randomUUID(),
                   delta,
                 },

@@ -174,7 +174,7 @@ describe("InspectorPanel", () => {
     expect(screen.getByText("2 件を選択中")).toBeInTheDocument();
     expect(screen.getByText("線分、円")).toBeInTheDocument();
     expect(screen.getByText("Outline、Stitch")).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("combobox", { name: "選択図形の共有線種" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "選択図形の共有スタイル" }), {
       target: { value: "style:stitch" },
     });
     fireEvent.click(screen.getByRole("button", { name: "選択へ適用" }));
@@ -239,14 +239,14 @@ describe("InspectorPanel", () => {
         [{ id: "round-hole:1", entityId: "entity:hole", kind: "rivet" }],
       ),
     );
-    fireEvent.change(screen.getByRole("combobox", { name: "丸穴用途" }), { target: { value: "decorative" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "穴種別" }), { target: { value: "decorative" } });
     const diameter = screen.getByRole("spinbutton", { name: "丸穴の直径 (mm)" });
     fireEvent.change(diameter, { target: { value: "8" } });
     fireEvent.blur(diameter);
     expect(onCommand).toHaveBeenCalledWith(
       "setRoundHoleKind",
       { roundHoleId: "round-hole:1", kind: "decorative" },
-      "丸穴用途を更新しました。",
+      "穴種別を更新しました。",
     );
     expect(onCommand).toHaveBeenCalledWith(
       "setRoundHoleDiameter",
@@ -303,7 +303,7 @@ describe("InspectorPanel", () => {
     expect(onCommand).toHaveBeenCalledWith(
       "updateSharedStyle",
       { id: "style:stitch", name: "飾り縫い", style },
-      "共有線種を更新しました。",
+      "共有スタイルを更新しました。",
     );
   });
 
@@ -437,7 +437,7 @@ describe("InspectorPanel", () => {
     expect(screen.queryByRole("button", { name: "選択を除外" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "選択を外形に設定" })).not.toBeInTheDocument();
     expect(
-      screen.getByText("パーツの形状は固定されています。構成を変更するにはパーツを解除してください。"),
+      screen.getByText("パーツの形状は固定されています。形状を編集するには、先にパーツを解除してください。"),
     ).toBeInTheDocument();
     expect(onCommand).not.toHaveBeenCalled();
   });
@@ -490,7 +490,7 @@ describe("InspectorPanel", () => {
       expect.objectContaining({
         partId: "part:card-case",
         newPartId: expect.stringMatching(/^part:/),
-        newName: "カードケースのコピー",
+        newName: "カードケース のコピー",
         idNamespace: expect.any(String),
         delta: { xMm: 10, yMm: -10 },
       }),
@@ -706,7 +706,7 @@ describe("InspectorPanel", () => {
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     const layer = screen.getByRole("button", { name: /^Outline/ });
     expect(layer).toHaveAttribute("aria-expanded", "false");
-    expect(layer).toHaveTextContent("裁断線");
+    expect(layer).toHaveTextContent("カット線");
     expect(layer).toHaveTextContent("表示");
     fireEvent.click(layer);
     expect(layer).toHaveAttribute("aria-expanded", "true");
@@ -743,8 +743,8 @@ describe("InspectorPanel", () => {
     render(cloneElement(panel(), { onAddParameter, onCreatePart }));
 
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
-    expect(screen.getByText("共有線種はありません。")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "共有線種を追加" })).toBeEnabled();
+    expect(screen.getByText("共有スタイルはありません。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "共有スタイルを追加" })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
     expect(screen.getByText("名前付きパラメータはありません。")).toBeInTheDocument();
@@ -752,7 +752,9 @@ describe("InspectorPanel", () => {
     expect(onAddParameter).toHaveBeenCalledOnce();
 
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
-    expect(screen.getByText("パーツはありません。")).toBeInTheDocument();
+    expect(
+      screen.getByText("パーツはまだありません。閉じた外形と内側の要素を選択して作成します。"),
+    ).toBeInTheDocument();
     expect(screen.getByText("登録済みのパーツはありません。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "選択図形からパーツを作成" })).toBeDisabled();
     expect(onCreatePart).not.toHaveBeenCalled();

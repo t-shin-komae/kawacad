@@ -29,6 +29,7 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     openTextEntry,
     resetLoadedDocumentPresentation,
   } = dependencies;
+  const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
   const renameDocument = useCallback(
     async (name: string) => {
@@ -53,20 +54,27 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     if (!path) return false;
     const normalizedPath = normalizeProjectSavePath(path);
     return Boolean(
-      await run(() => documentAdapter.command<State>("save_document", { path: normalizedPath }), appStrings.app.saved),
+      await run(
+        () => documentAdapter.command<State>("save_document", { path: normalizedPath }),
+        appStrings.app.saved(fileName(normalizedPath)),
+      ),
     );
   }, [commitPendingDocumentName, documentNameForFileDialog, run, state?.persistence.path, state?.snapshot.name]);
   const resolveDirtyReplacement = useCallback(
     async (actionLabel: string) => {
       if (!validatePendingDocumentName()) return false;
       if (!state?.persistence.isDirty) return true;
-      const choice = await requestDocumentSaveConfirmation(appStrings.app.saveContinueQuestion(actionLabel));
+      const choice = await requestDocumentSaveConfirmation(
+        actionLabel,
+        state?.snapshot.name ?? appStrings.app.untitled,
+      );
       if (choice === "save") return saveBeforeDestructiveAction();
       return choice === "discard";
     },
     [
       requestDocumentSaveConfirmation,
       saveBeforeDestructiveAction,
+      state?.snapshot.name,
       state?.persistence.isDirty,
       validatePendingDocumentName,
     ],
@@ -96,7 +104,7 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     if (typeof path !== "string") return;
     const next = await run(
       () => documentAdapter.command<State>("open_document", { path }),
-      appStrings.app.projectOpened,
+      appStrings.app.projectOpened(fileName(path)),
     );
     if (next) resetLoadedDocumentPresentation(next);
   }, [resetLoadedDocumentPresentation, resolveDirtyReplacement, run]);
@@ -108,14 +116,22 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     });
     if (path) {
       const normalizedPath = normalizeProjectSavePath(path);
-      await run(() => documentAdapter.command<State>("save_document", { path: normalizedPath }), appStrings.app.saved);
+      await run(
+        () => documentAdapter.command<State>("save_document", { path: normalizedPath }),
+        appStrings.app.saved(fileName(normalizedPath)),
+      );
     }
   }, [commitPendingDocumentName, documentNameForFileDialog, run, state?.snapshot.name]);
   const saveCurrentDocument = useCallback(async () => {
     if (!(await commitPendingDocumentName())) return;
     if (!state?.persistence.hasPath) return void saveDocument();
-    await run(() => documentAdapter.command<State>("save_current_document"), appStrings.app.saved);
-  }, [commitPendingDocumentName, run, saveDocument, state?.persistence.hasPath]);
+    await run(
+      () => documentAdapter.command<State>("save_current_document"),
+      appStrings.app.saved(
+        fileName(state.persistence.path ?? documentNameForFileDialog.current ?? appStrings.app.untitled),
+      ),
+    );
+  }, [commitPendingDocumentName, run, saveDocument, state?.persistence.hasPath, state?.persistence.path]);
   const reloadDocument = useCallback(() => {
     void run(() => documentAdapter.command<State>("reload_document"), appStrings.app.reloaded).then((next) => {
       if (next) resetLoadedDocumentPresentation(next);

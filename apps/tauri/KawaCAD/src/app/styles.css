@@ -295,6 +295,11 @@ input[type="checkbox"] {
   background: #b42318;
   color: white;
 }
+.document-save-confirmation-actions .primary {
+  border-color: #007aff;
+  background: #007aff;
+  color: white;
+}
 .recovery-chooser-dialog {
   display: grid;
   width: min(620px, calc(100vw - 40px));

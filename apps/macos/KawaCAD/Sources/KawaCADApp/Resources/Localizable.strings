@@ -1,10 +1,10 @@
 "app.document.untitled" = "無題プロジェクト";
 "app.core.unavailable" = "未接続";
-"app.status.created_new_document" = "新規ドキュメントを作成しました";
+"app.status.created_new_document" = "新規プロジェクトを作成しました。";
 "app.paper.a4_portrait" = "A4 Portrait";
 "app.paper.a4_landscape" = "A4 Landscape";
 
-"output.destination.pdf" = "PDF出力";
+"output.destination.pdf" = "PDF";
 "output.destination.direct_print" = "直接印刷";
 "output.confirmation.save" = "保存へ進む";
 "output.confirmation.print" = "印刷へ進む";
@@ -119,7 +119,7 @@
 
 "tool.continuation.line" = "線分の終点をクリックします";
 "tool.continuation.circle" = "半径を決める点をクリックします";
-"tool.continuation.arc" = "円弧の開始点をクリックします";
+"tool.continuation.arc" = "円弧の開始点をクリックします。";
 "tool.continuation.center_line" = "中心線の終点をクリックします";
 "tool.continuation.horizontal_center_line" = "水平中心線の終点をクリックします";
 "tool.continuation.vertical_center_line" = "垂直中心線の終点をクリックします";
@@ -171,8 +171,8 @@
 "offset_source_scope.selected_range_with_count" = "選択区間（%d要素）";
 "offset_source_scope.single_element" = "単独要素";
 
-"layer_deletion.entity_count" = "エンティティ %d 件";
-"layer_deletion.message" = "%@ には %@ が紐づいています。削除すると、対象は残りのレイヤーへ移動します。削除しますか？";
+"layer_deletion.entity_count" = "%d件の図形または派生要素";
+"layer_deletion.message" = "「%@」には%@が紐づいています。削除すると、対象は残りのレイヤーへ移動します。";
 
 "menu.new_project" = "新規プロジェクト";
 "menu.about" = "KawaCADについて";
@@ -202,8 +202,8 @@
 "menu.edit_display_mode" = "編集表示モード";
 "menu.output_preview_mode" = "出力プレビューモード";
 "menu.smooth_arc_tangencies_prototype" = "両端を接線化（試作）";
-"menu.reload" = "再読込";
-"menu.add_layer" = "レイヤー追加";
+"menu.reload" = "再読み込み";
+"menu.add_layer" = "レイヤーを追加";
 "menu.export_pdf" = "PDF出力…";
 "menu.direct_print" = "直接印刷…";
 "menu.show_hide" = "%@ %@";
@@ -228,14 +228,14 @@
 "field.error.positive_required" = "0より大きい値を入力してください";
 "field.error.non_negative_required" = "0以上の値を入力してください";
 "field.error.hex_color" = "#RRGGBB形式で入力してください";
-"field.error.invalid_number" = "数値として解釈できません";
+"field.error.invalid_number" = "数値の書式が正しくありません";
 "field.error.incomplete_number" = "数値入力が完了していません";
 "field.error.ambiguous_decimal" = "小数点の書式が曖昧です";
 "field.error.grouping_not_supported" = "桁区切りは入力できません";
 "field.error.no_exponent" = "指数表記は使用できません";
-"field.conflict.message" = "値が別の操作で変更されました";
-"field.conflict.use_latest" = "最新値を使用";
-"field.conflict.apply_draft" = "編集中の値を適用";
+"field.conflict.message" = "外部で更新されています。最新値を採用するか、入力内容を適用してください。";
+"field.conflict.use_latest" = "最新値を使う";
+"field.conflict.apply_draft" = "入力内容を適用";
 "common.ok" = "OK";
 "common.retry" = "再試行";
 "common.back" = "戻る";
@@ -243,8 +243,8 @@
 "common.done" = "完了";
 "common.skip" = "スキップ";
 "common.cancel" = "キャンセル";
-"document.save_confirmation.title" = "“%@” の変更を保存しますか？";
-"document.save_confirmation.discard" = "変更内容を破棄";
+"document.save_confirmation.title" = "%@の変更を保存しますか？";
+"document.save_confirmation.discard" = "変更を破棄";
 "document.save_confirmation.reason.new_project" = "新規プロジェクトを作成すると、現在の未保存変更は失われます。";
 "document.save_confirmation.reason.open_project" = "別のプロジェクトを開くと、現在の未保存変更は失われます。";
 "document.save_confirmation.reason.close_window" = "このウィンドウを閉じると、現在の未保存変更は失われます。";
@@ -256,7 +256,7 @@
 "document.recovery.discard" = "破棄";
 "document.recovery.later" = "後で";
 "document.recovery.show_in_finder" = "Finderに表示";
-"document.recovery.unsaved_source" = "未保存";
+"document.recovery.unsaved_source" = "未保存のドキュメント";
 "document.recovery.updated_at" = "%@ / 最終復旧: %@";
 "document.recovery.recovered_document" = "自動復旧データを開きました。保存して内容を確定してください。";
 "window.title.unsaved" = "%@ — 未保存";
@@ -283,7 +283,7 @@
 "sheet.reference_parameter" = "参照パラメータ";
 "sheet.no_parameters_fixed_value" = "参照できるパラメータがまだないため、固定値で入力します。";
 
-"dialog.delete_layer_title" = "レイヤーを削除しますか？";
+"dialog.delete_layer_title" = "「%@」を削除しますか？";
 "dialog.output_warning_title" = "警告があります";
 
 "header.project_name_placeholder" = "プロジェクト名";
@@ -293,20 +293,20 @@
 "workbench.constraint" = "拘束";
 "workbench.parameter" = "パラメータ";
 "workbench.none_selected" = "選択なし";
-"workbench.select_on_canvas" = "キャンバス上の要素を選択";
+"workbench.select_on_canvas" = "キャンバス上の要素を選択してください。";
 "workbench.layer" = "レイヤー";
 "workbench.state" = "状態";
 "workbench.no_constraints" = "拘束なし";
 "workbench.no_parameters" = "パラメータなし";
-"workbench.unused_zero" = "未使用 0";
-"workbench.parameter_summary" = "使用 %d / 未使用 %d";
+"workbench.unused_zero" = "未使用 0 件";
+"workbench.parameter_summary" = "使用 %d 件 / 未使用 %d 件";
 "workbench.item_count" = "%d 件";
 "workbench.none" = "なし";
 
 "status_item.layers" = "レイヤー %d";
 "status_item.visible" = "表示 %d";
 "status_item.origin" = "原点 中央 / Y↑";
-"status_item.coordinate_none" = "座標 -";
+"status_item.coordinate_none" = "座標 —";
 "status_item.coordinate_value" = "X %.1f / Y %.1f mm";
 "status_item.selection_count" = "選択 %d";
 "status_item.hide_summary" = "サマリーを隠す";
@@ -323,15 +323,15 @@
 "toolbar.visible_count" = "表示 %d";
 "toolbar.layer_count" = "レイヤー %d";
 "toolbar.zoom_percent" = "倍率 %d%%";
-"toolbar.zoom_out" = "ズームアウト";
+"toolbar.zoom_out" = "縮小";
 "toolbar.zoom_to_fit" = "全体表示";
-"toolbar.zoom_in" = "ズームイン";
-"toolbar.grid" = "格子";
+"toolbar.zoom_in" = "拡大";
+"toolbar.grid" = "グリッド";
 "toolbar.a4" = "A4";
 "toolbar.a4_orientation" = "A4向き";
 "toolbar.a4_landscape" = "A4横向き";
-"toolbar.grid_snap" = "格子吸着";
-"toolbar.point_snap" = "点吸着";
+"toolbar.grid_snap" = "グリッドスナップ";
+"toolbar.point_snap" = "点スナップ";
 "toolbar.view_mode" = "表示モード";
 
 "sidebar.tools" = "ツール";
@@ -351,14 +351,14 @@
 "inspector.document_overview" = "ドキュメント";
 "inspector.visible_mode" = "表示モード";
 "inspector.active_layer" = "作図レイヤー";
-"inspector.visible_entities" = "表示エンティティ";
+"inspector.visible_entities" = "表示図形";
 "inspector.constraint_count" = "拘束数";
 "inspector.constraint" = "拘束";
 "inspector.measurement_and_notes" = "計測と注記";
 "inspector.hidden" = "非表示";
 "inspector.parameter_count" = "パラメータ数";
 "inspector.layer" = "レイヤー";
-"inspector.add_layer" = "レイヤー追加";
+"inspector.add_layer" = "レイヤーを追加";
 "inspector.shared_styles" = "共有スタイル";
 "inspector.shared_style" = "共有スタイル";
 "inspector.shared_style_none" = "未設定";
@@ -432,17 +432,17 @@
 "core.error.output_decode_failed_with_reason" = "%@ を解釈できません: %@";
 "core.error.invalid_json" = "%@ の JSON を解釈できません";
 
-"status.selection_cleared" = "選択を解除しました";
+"status.selection_cleared" = "選択を解除しました。";
 "status.selected_constraint" = "%@拘束を選択中";
 "status.selected_measurement_annotation" = "%@を選択中";
 "status.measurement_annotation_update_failed" = "計測表示を更新できません";
 "status.measurement_annotation_convert_failed" = "計測表示を拘束へ変換できません";
 "status.derived_measurement_target_not_supported" = "派生要素には計測表示を追加できません。";
 "status.cancelled_drag_preview" = "ドラッグ中のプレビューをキャンセルしました";
-"status.edit_display_mode" = "編集表示に切り替えました";
-"status.output_preview_mode" = "出力プレビューに切り替えました。編集するには編集表示へ戻してください";
-"status.opened_project" = "%@ を開きました";
-"status.saved_project" = "%@ に保存しました";
+"status.edit_display_mode" = "編集表示に切り替えました。";
+"status.output_preview_mode" = "出力プレビューに切り替えました。編集するには編集表示へ戻してください。";
+"status.opened_project" = "「%@」を開きました。";
+"status.saved_project" = "「%@」に保存しました。";
 "status.grid_snap_enabled" = "グリッドスナップを%@にしました";
 "status.grid_visible_enabled" = "グリッド表示を%@にしました";
 "status.a4_reference_visible" = "A4基準表示を%@にしました";
@@ -452,7 +452,7 @@
 "status.layout_reset" = "レイアウトを初期状態に戻しました";
 "status.multiple_entities_selected" = "%d 個のエンティティを選択中";
 "status.arc_start_must_differ_from_center" = "円弧の開始点は中心と異なる位置を指定してください";
-"status.arc_click_end_point" = "円弧の終点をクリックします";
+"status.arc_click_end_point" = "円弧の終点をクリックします。";
 "status.arc_end_must_differ_angle" = "円弧の終点は開始点と異なる角度を指定してください";
 "status.document_disconnected" = "ドキュメントが未接続です";
 "status.stitch_start_point_requires_stitch_line" = "縫い始め点は縫い線上に配置してください";
@@ -475,7 +475,7 @@
 "status.angle_requires_two_distinct_lines" = "角度拘束には端点を共有する2本の線分が必要です";
 "status.tangent_target_not_supported" = "%@ は接線拘束の対象にできません";
 "status.tangent_requires_connected_line_arc" = "接線拘束には、接続済みの線分端点と円弧の開始点または終了点が必要です";
-"status.smooth_arc_tangencies_select_arc" = "両端を接線化する円弧を1つ選択してください";
+"status.smooth_arc_tangencies_select_arc" = "両端を接線化する円弧を1つ選択してください。";
 "status.smooth_arc_tangencies_requires_two_lines" = "円弧の開始点と終了点に接続した線分が必要です";
 "status.smooth_arc_tangencies_failed" = "両端を接線化できませんでした";
 "status.symmetric_point_target_not_supported" = "%@ は対称拘束の点対象にできません";
@@ -494,7 +494,7 @@
 "status.offset_source_required" = "オフセット元を選択してください";
 "status.specify_fillet_radius" = "フィレット半径を指定します";
 "status.fillet_target_not_supported" = "%@はフィレット元にできません";
-"status.fillet_source_required" = "フィレット元の接続線分を2本以上選択してください";
+"status.fillet_source_required" = "フィレット元の接続線分を2本以上選択してください。";
 "status.fillet_sources_must_connect" = "フィレット元は接続している線分または中心線だけを選択してください";
 "status.fillet_draft_collecting" = "フィレット: %ld本選択中。接続する線を追加してください";
 "status.fillet_draft_ready" = "フィレット: %ld本・%ld角・%@。線を追加するか半径を確定してください";
@@ -573,8 +573,8 @@
 "status.constraint_dimension_requires_positive" = "寸法拘束値には正の値が必要です";
 "status.constraint_targets_restore_failed" = "拘束対象を復元できませんでした";
 "status.angle_constraint_requires_fixed_degrees" = "角度拘束には固定度数法値を入力してください";
-"status.undo" = "元に戻しました";
-"status.redo" = "やり直しました";
+"status.undo" = "元に戻しました。";
+"status.redo" = "やり直しました。";
 "status.line_length_requires_positive" = "線分長には正の値を入力してください";
 "status.zero_length_line_cannot_update" = "ゼロ長の線分は更新できません";
 "status.select_line_for_segment_length_constraint" = "線分長拘束を追加する線分を選択してください";
@@ -585,7 +585,7 @@
 "status.round_hole_kind_changed" = "丸穴種別を %@ にしました";
 "status.round_hole_diameter_changed" = "丸穴の直径を %@ mm にしました";
 "status.select_round_hole" = "丸穴を選択してください";
-"status.select_arc" = "円弧を選択してください";
+"status.select_arc" = "円弧を選択してください。";
 "status.arc_requires_positive_radius_and_sweep" = "円弧には正の半径とゼロではない掃引角が必要です";
 "status.preview_duplicate_drag" = "Option+Drag 複製プレビュー中";
 "status.preview_move" = "移動プレビュー中";
@@ -601,12 +601,12 @@
 "status.active_layer_changed" = "作図レイヤーを %@ にしました";
 "status.pattern_line_style_changed" = "型紙線種を %@ にしました";
 "status.pattern_line_style_unavailable" = "選択した型紙線種は利用できません";
-"status.project_name_required" = "プロジェクト名を入力してください";
+"status.project_name_required" = "プロジェクト名を入力してください。";
 "status.layer_name_required" = "レイヤー名を入力してください";
 "status.layer_name_must_be_unique" = "レイヤー名は重複できません";
-"status.last_layer_cannot_delete" = "最後のレイヤーは削除できません";
+"status.last_layer_cannot_delete" = "最後のレイヤーは削除できません。";
 "status.layer_delete_confirmation_required" = "%@ の削除確認が必要です";
-"status.layer_delete_cancelled" = "%@ の削除をキャンセルしました";
+"status.layer_delete_cancelled" = "「%@」の削除を取り消しました。";
 
 "inspector.layer_count" = "%d レイヤー";
 "inspector.value" = "値";
@@ -630,6 +630,17 @@
 "inspector.layer_printable" = "印刷対象";
 "inspector.layer_not_printable" = "印刷しない";
 "inspector.line_pattern_accessibility" = "%@の線種";
+"inspector.line_pattern" = "線種";
+"inspector.color" = "色";
+"inspector.line_width" = "線幅";
+"inspector.custom_color" = "カスタム色";
+"inspector.custom_line_width" = "カスタム線幅";
+"inspector.custom_option" = "カスタム...";
+"inspector.select_line_pattern" = "線種を選択";
+"inspector.select_color" = "線色を選択";
+"inspector.select_line_width" = "線幅を選択";
+"inspector.close_custom_input" = "カスタム入力を閉じる";
+"common.unit_mm" = "mm";
 "inspector.parameter_name_placeholder" = "名前";
 "inspector.parameter_value_placeholder" = "値";
 "inspector.parameter_memo_placeholder" = "メモ";
@@ -641,7 +652,7 @@
 "command.entity_added" = "%@を追加しました";
 "command.constraint_added" = "%@拘束を追加しました";
 "command.offset_added" = "オフセット線を追加しました";
-"command.fillet_added" = "フィレットを追加しました";
+"command.fillet_added" = "フィレットを追加しました。";
 "command.derived_element_updated" = "%@を更新しました。";
 "command.derived_element_deleted" = "%@を削除しました。";
 "command.free_text_added" = "テキストを追加しました。";
@@ -651,7 +662,7 @@
 "command.stitch_start_point_added" = "縫い始め点を追加しました";
 "status.constraint_preflight_failed" = "対象から拘束の初期値を決定できませんでした";
 "command.stitch_start_point_updated" = "縫い始め点を更新しました";
-"command.stitch_start_point_deleted" = "縫い始め点を削除しました";
+"command.stitch_start_point_deleted" = "縫い始め点を削除しました。";
 "command.entity_pasted" = "%@ をペーストしました";
 "command.entity_duplicated" = "%@ を複製しました";
 "command.entity_updated" = "%@ を更新しました";
@@ -665,7 +676,7 @@
 "command.shared_style_updated" = "%@ を更新しました";
 "command.shared_style_deleted" = "%@ を削除しました";
 "command.entity_shared_style_updated" = "共有スタイルを適用しました";
-"command.parameter_added" = "パラメータを追加しました";
+"command.parameter_added" = "パラメータを追加しました。";
 "command.parameter_updated" = "%@ を更新しました";
 "command.parameter_deleted" = "%@ を削除しました";
 "command.constraint_deleted" = "%@拘束を削除しました";
@@ -685,7 +696,7 @@
 "status.bottom_workbench_visible" = "下部サマリーを%@にしました";
 "accessibility.resize_panel" = "パネル幅を調整";
 "accessibility.inspector_tabs" = "インスペクタ項目";
-"accessibility.canvas" = "作図キャンバス";
+"accessibility.canvas" = "型紙作図キャンバス";
 "accessibility.canvas.value" = "ツール: %@、表示モード: %@、図形: %ld件、選択: %ld件、拘束対象: %ld件、操作状態: %@";
 "accessibility.canvas.interaction.idle" = "待機中";
 "accessibility.canvas.interaction.next_point" = "次の点を指定";
@@ -720,18 +731,18 @@
 "canvas.menu.delete_constraint" = "拘束を削除";
 "canvas.menu.edit_free_text" = "テキストを編集";
 "canvas.menu.delete_free_text" = "テキストを削除";
-"canvas.menu.copy_selection" = "選択エンティティをコピー";
-"canvas.menu.duplicate_selection" = "選択エンティティを複製";
-"canvas.menu.delete_selection" = "選択エンティティを削除";
+"canvas.menu.copy_selection" = "コピー";
+"canvas.menu.duplicate_selection" = "複製";
+"canvas.menu.delete_selection" = "削除";
 "canvas.menu.smooth_arc_tangencies_prototype" = "両端を接線化（試作）";
-"canvas.menu.paste_copied" = "コピーしたエンティティをペースト";
-"canvas.menu.select_all" = "すべてのエンティティを選択";
+"canvas.menu.paste_copied" = "ペースト";
+"canvas.menu.select_all" = "すべてを選択";
 "canvas.origin_label" = "原点 0,0";
-"canvas.scale_guide_label" = "50 mm確認";
+"canvas.scale_guide_label" = "50 mm";
 "canvas.drag.copy" = "コピー";
 "canvas.drag.move" = "移動";
-"canvas.drag.copy_count" = "コピー %d";
-"canvas.drag.move_count" = "移動 %d";
+"canvas.drag.copy_count" = "%d件を複製中";
+"canvas.drag.move_count" = "%d件を移動中";
 "canvas.marquee.contained" = "完全に含まれる図形を選択: %ld件";
 "canvas.marquee.crossing" = "交差する図形を含めて選択: %ld件";
 "canvas.constraint_hint.target" = "対象を選択";
@@ -748,7 +759,7 @@
 "canvas.empty.title" = "作図を始めましょう";
 "canvas.empty.body" = "ツールを選択してキャンバスをクリックしてください。";
 "inspector.tab.parts" = "パーツ";
-"inspector.parts" = "パーツ管理";
+"inspector.parts" = "パーツ";
 "inspector.no_parts" = "パーツはまだありません。閉じた外形と内側の要素を選択して作成します。";
 "inspector.part_structure" = "外形 %d図形・穴 %d個";
 "inspector.part_members" = "所属 %d";
@@ -758,13 +769,13 @@
 "inspector.part_quantity" = "必要数: %d";
 "inspector.part_arrangement_target" = "整列・等間隔の対象";
 "inspector.part_arrangement_help" = "対象を2個以上選ぶと整列、3個以上で等間隔配置できます。";
-"inspector.distribute_horizontal" = "左右を等間隔";
-"inspector.distribute_vertical" = "上下を等間隔";
+"inspector.distribute_horizontal" = "水平に均等配置";
+"inspector.distribute_vertical" = "垂直に均等配置";
 "inspector.part_library" = "パーツライブラリ";
 "inspector.part_library_empty" = "登録済みパーツはありません";
 "inspector.part_library_quantity" = "必要数 %d";
 "inspector.add_part_to_library" = "ライブラリに登録";
-"inspector.create_part_from_selection" = "選択からパーツを作成";
+"inspector.create_part_from_selection" = "選択図形からパーツを作成";
 "inspector.part_name" = "パーツ名";
 "inspector.part_derived_members" = "派生要素";
 "inspector.part_text_members" = "注記";
@@ -804,7 +815,7 @@
 "status.part_origin_click_canvas" = "%@を配置する位置をキャンバスでクリックしてください";
 "status.part_origin_setting_cancelled" = "パーツ位置の指定をキャンセルしました";
 "status.part_origin_set" = "%@を指定位置へ移動しました";
-"status.part_selection_cleared" = "パーツ選択を解除しました";
+"status.part_selection_cleared" = "パーツ選択を解除しました。";
 "status.part_quantity_required" = "必要数は1以上を指定してください";
 "status.parts_select_two" = "整列するパーツを2個以上選択してください";
 "status.parts_select_three" = "等間隔にするパーツを3個以上選択してください";

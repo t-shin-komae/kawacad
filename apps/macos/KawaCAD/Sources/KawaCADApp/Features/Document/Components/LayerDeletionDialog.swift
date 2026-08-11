@@ -6,7 +6,7 @@ struct LayerDeletionDialog: ViewModifier {
 
   func body(content: Content) -> some View {
     content.confirmationDialog(
-      AppStrings.tr("dialog.delete_layer_title"),
+      AppStrings.tr("dialog.delete_layer_title", state.confirmation?.layer.name ?? ""),
       isPresented: Binding(
         get: { state.confirmation != nil },
         set: { isPresented in

@@ -3,10 +3,11 @@ import type { DocumentSaveChoice } from "@/features/document/state/useDocumentPr
 
 type Props = {
   reason: string;
+  documentName: string;
   onChoose: (choice: DocumentSaveChoice) => void;
 };
 
-export function DocumentSaveConfirmationDialog({ reason, onChoose }: Props) {
+export function DocumentSaveConfirmationDialog({ reason, documentName, onChoose }: Props) {
   return (
     <div className="modal-backdrop" role="presentation">
       <section
@@ -15,7 +16,7 @@ export function DocumentSaveConfirmationDialog({ reason, onChoose }: Props) {
         aria-modal="true"
         aria-labelledby="document-save-confirmation-title"
       >
-        <h2 id="document-save-confirmation-title">{appStrings.app.unsavedChangesTitle}</h2>
+        <h2 id="document-save-confirmation-title">{appStrings.app.saveChangesTitle(documentName)}</h2>
         <p>{reason}</p>
         <div className="button-row document-save-confirmation-actions">
           <button type="button" onClick={() => onChoose("cancel")}>
