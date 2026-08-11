@@ -64,4 +64,20 @@ describe("DerivedValueDialog", () => {
     fireEvent.change(screen.getByRole("textbox", { name: "値 (mm)" }), { target: { value: "3" } });
     expect(onValueTextChange).toHaveBeenCalledWith("3");
   });
+
+  it("places a floating derived editor near the recorded work position", () => {
+    render(
+      <DerivedValueDialog
+        kind="fillet"
+        floating
+        floatingPosition={{ x: 120, y: 80 }}
+        sourceCount={2}
+        parameters={[]}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("presentation")).toHaveStyle({ left: "136px", top: "96px", right: "auto", bottom: "auto" });
+  });
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { appStrings } from "@/localization";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
@@ -59,6 +59,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
     selectTool,
   } = dependencies;
   const activeStyleId = activeStyle || null;
+  const pendingFilletHudPosition = useRef<HudPosition>();
   const needsConstraintValue = (candidate: Tool) =>
     [
       "distance",
@@ -179,7 +180,13 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
     [command, selectTool],
   );
   const applyDerived = useCallback(
-    async (candidate: Tool, ids: string[], previous?: PendingDerivedValue, clickPoint?: PointMm) => {
+    async (
+      candidate: Tool,
+      ids: string[],
+      previous?: PendingDerivedValue,
+      clickPoint?: PointMm,
+      hudPosition?: HudPosition,
+    ) => {
       try {
         if (candidate === "offset") {
           const preflight = await documentAdapter.command<DerivedPreflight>("preflight_derived_element", {
@@ -193,6 +200,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
             candidate: "offset",
             preflight,
             clickPoint: clickPoint ?? previous?.clickPoint,
+            hudPosition: hudPosition ?? previous?.hudPosition,
             valueText: previous?.valueText ?? "3",
             entryMode: previous?.entryMode ?? "fixed",
             parameterId: previous?.parameterId ?? state?.parameters[0]?.id ?? "",
@@ -209,6 +217,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
           setPendingDerivedValue({
             candidate: "fillet",
             preflight,
+            hudPosition: hudPosition ?? previous?.hudPosition,
             valueText: previous?.valueText ?? "2",
             entryMode: previous?.entryMode ?? "fixed",
             parameterId: previous?.parameterId ?? state?.parameters[0]?.id ?? "",
@@ -307,18 +316,23 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
     [activeLayer, activeStyleId, command, selectTool, state?.derivedElements],
   );
   const useSelectedTargets = useCallback(
-    (candidate: Tool, next: Set<string>, clickPoint?: PointMm) => {
+    (candidate: Tool, next: Set<string>, clickPoint?: PointMm, hudPosition?: HudPosition) => {
       const required = targetCount[candidate] ?? 1;
       if (next.size < required) {
         setMessage(appStrings.status.remainingTargets(names[candidate], required - next.size));
         return;
       }
-      if (candidate === "offset") void applyDerived(candidate, [...next], undefined, clickPoint);
+      if (candidate === "offset") void applyDerived(candidate, [...next], undefined, clickPoint, hudPosition);
+      if (candidate === "fillet") pendingFilletHudPosition.current = hudPosition;
     },
     [applyDerived],
   );
   useEffect(() => {
-    if (tool === "fillet" && selected.size >= 2 && !pendingDerivedValue) void applyDerived("fillet", [...selected]);
+    if (tool === "fillet" && selected.size >= 2 && !pendingDerivedValue) {
+      const hudPosition = pendingFilletHudPosition.current;
+      pendingFilletHudPosition.current = undefined;
+      void applyDerived("fillet", [...selected], undefined, undefined, hudPosition);
+    }
   }, [applyDerived, pendingDerivedValue, selected, tool]);
   const rewindFilletDraft = useCallback(() => {
     if (pendingDerivedValue?.candidate !== "fillet") return;

@@ -35,6 +35,7 @@ export type PendingDerivedValue = {
   candidate: "offset" | "fillet";
   preflight: DerivedPreflight;
   clickPoint?: PointMm;
+  hudPosition?: HudPosition;
   valueText: string;
   entryMode: "fixed" | "parameter";
   parameterId: string;

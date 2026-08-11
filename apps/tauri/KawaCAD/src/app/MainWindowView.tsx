@@ -666,6 +666,7 @@ export function MainWindowView() {
             sourceCount={pendingDerivedValue.preflight.sourceEntityIds.length}
             parameters={state?.parameters ?? []}
             floating={pendingDerivedValue.candidate === "fillet"}
+            floatingPosition={pendingDerivedValue.hudPosition}
             valueText={pendingDerivedValue.valueText}
             entryMode={pendingDerivedValue.entryMode}
             parameterId={pendingDerivedValue.parameterId}
