@@ -1,5 +1,10 @@
 import Foundation
 
+enum DerivedElementDefaults {
+  static let offsetDistanceText = "3.00"
+  static let filletRadiusText = "5.00"
+}
+
 extension ConstraintActionHandler {
   func offsetSourceOptions(
     for entity: CanvasEntity,
@@ -47,7 +52,7 @@ extension ConstraintActionHandler {
       title: CanvasTool.offset.displayName,
       prompt: AppStrings.tr("status.specify_offset"),
       targets: [],
-      valueText: "",
+      valueText: DerivedElementDefaults.offsetDistanceText,
       unit: "mm",
       allowsParameterReference: true,
       entryMode: .fixedValue,
@@ -70,7 +75,7 @@ extension ConstraintActionHandler {
   func beginFilletValueEntry(
     sourceEntityIDs: [String],
     closed: Bool = false,
-    initialValueText: String = "",
+    initialValueText: String = DerivedElementDefaults.filletRadiusText,
     lastAddedSourceID: String? = nil
   ) {
     let sourceEntityIDs = DerivedElementFeature.uniqueEntityIDs(sourceEntityIDs)
@@ -131,7 +136,7 @@ extension ConstraintActionHandler {
       title: CanvasTool.fillet.displayName,
       prompt: AppStrings.tr("status.specify_fillet_radius"),
       targets: [],
-      valueText: initialValueText,
+      valueText: initialValueText.isEmpty ? DerivedElementDefaults.filletRadiusText : initialValueText,
       unit: "mm",
       allowsParameterReference: true,
       entryMode: .fixedValue,

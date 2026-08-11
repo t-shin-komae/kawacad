@@ -383,15 +383,15 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
         return;
       }
       if (tool === "freeText") {
-        openTextEntry(
+          openTextEntry(
           appStrings.app.addAnnotationTitle,
-          [{ id: "content", label: appStrings.app.annotation, initialValue: "" }],
+          [{ id: "content", label: appStrings.app.annotation, initialValue: appStrings.app.annotation }],
           (values) => {
             const content = values.content.trim();
             if (!content) return;
             void command(
               "addFreeText",
-              { id: id("free-text"), content, positionMm: point, fontSizeMm: 3.2 },
+              { id: id("free-text"), content, positionMm: point, fontSizeMm: 4.0 },
               appStrings.app.textAdded,
             );
           },

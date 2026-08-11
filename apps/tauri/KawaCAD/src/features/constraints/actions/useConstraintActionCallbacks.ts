@@ -20,6 +20,7 @@ import type {
 import type { PointMm, ConstraintTarget } from "@/features/canvas/domain/cad";
 import type { State } from "@/shared/domain/coreWireTypes";
 import type { DerivedValue, OffsetSourceOption } from "@/features/constraints/components/DerivedValueDialog";
+import { derivedValueInitialText } from "@/features/constraints/domain/derivedValueDefaults";
 import type { ConstraintActionContext } from "@/app/actions/useActionRuntime";
 
 type ConstraintActionDependencies = Pick<
@@ -201,7 +202,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
             preflight,
             clickPoint: clickPoint ?? previous?.clickPoint,
             hudPosition: hudPosition ?? previous?.hudPosition,
-            valueText: previous?.valueText ?? "3",
+            valueText: previous?.valueText ?? derivedValueInitialText("offset"),
             entryMode: previous?.entryMode ?? "fixed",
             parameterId: previous?.parameterId ?? state?.parameters[0]?.id ?? "",
           });
@@ -218,7 +219,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
             candidate: "fillet",
             preflight,
             hudPosition: hudPosition ?? previous?.hudPosition,
-            valueText: previous?.valueText ?? "2",
+            valueText: previous?.valueText ?? derivedValueInitialText("fillet"),
             entryMode: previous?.entryMode ?? "fixed",
             parameterId: previous?.parameterId ?? state?.parameters[0]?.id ?? "",
           });

@@ -30,6 +30,11 @@ describe("DerivedValueDialog", () => {
     );
   });
 
+  it("uses the shared offset initial value", () => {
+    render(<DerivedValueDialog kind="offset" parameters={[]} onConfirm={vi.fn()} onCancel={vi.fn()} />);
+    expect(screen.getByRole("textbox", { name: "値 (mm)" })).toHaveValue("3.00");
+  });
+
   it("keeps fillet value entry explicit and cancellable", () => {
     const onConfirm = vi.fn();
     const onCancel = vi.fn();
@@ -38,6 +43,7 @@ describe("DerivedValueDialog", () => {
     );
 
     expect(screen.getByText("選択した 3 件の連続する要素にフィレットを作成します。")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "値 (mm)" })).toHaveValue("5.00");
     fireEvent.change(screen.getByRole("textbox", { name: "値 (mm)" }), { target: { value: "2.5" } });
     fireEvent.click(screen.getByRole("button", { name: "適用" }));
     expect(onConfirm).toHaveBeenCalledWith({ fixedMm: 2.5 }, undefined);

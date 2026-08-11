@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { parseDecimal } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
+import { derivedValueInitialText } from "@/features/constraints/domain/derivedValueDefaults";
 
 export type DerivedValue = { fixedMm: number } | { parameter: string };
 export type OffsetSourceOption = {
@@ -46,7 +47,7 @@ export function DerivedValueDialog({
   onCancel,
 }: Props) {
   const [localEntryMode, setLocalEntryMode] = useState<"fixed" | "parameter">("fixed");
-  const [localValueText, setLocalValueText] = useState(kind === "offset" ? "3" : "2");
+  const [localValueText, setLocalValueText] = useState(derivedValueInitialText(kind));
   const [localParameterId, setLocalParameterId] = useState(parameters[0]?.id ?? "");
   const [scope, setScope] = useState(offsetOptions[0]?.scope ?? "singleElement");
   const entryMode = controlledEntryMode ?? localEntryMode;
