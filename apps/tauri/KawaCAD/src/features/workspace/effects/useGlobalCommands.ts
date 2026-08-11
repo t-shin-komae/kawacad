@@ -221,6 +221,8 @@ export function useGlobalCommands(context: ActionContext) {
       } else if (primary && event.shiftKey && key === "l") {
         event.preventDefault();
         actions.addLayer();
+      } else if ((event.key === "Delete" || event.key === "Backspace") && isTextEditingElement(event.target)) {
+        return;
       } else if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         actions.deleteSelection();

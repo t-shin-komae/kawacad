@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { PointMm } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
 
@@ -36,9 +37,20 @@ export function CanvasContextMenu({
   onSelectAll,
   onDismiss,
 }: Props) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const dismissOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) onDismiss();
+    };
+    document.addEventListener("pointerdown", dismissOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", dismissOnOutsidePointer);
+  }, [onDismiss]);
+
   if (selectionKind === "measurement")
     return (
       <div
+        ref={menuRef}
         className="canvas-context-menu"
         role="menu"
         style={{ left: position.x, top: position.y }}
@@ -68,6 +80,7 @@ export function CanvasContextMenu({
   if (selectionKind === "constraint" || selectionKind === "freeText")
     return (
       <div
+        ref={menuRef}
         className="canvas-context-menu"
         role="menu"
         style={{ left: position.x, top: position.y }}
@@ -99,6 +112,7 @@ export function CanvasContextMenu({
   if (selectionKind === "entity")
     return (
       <div
+        ref={menuRef}
         className="canvas-context-menu"
         role="menu"
         style={{ left: position.x, top: position.y }}

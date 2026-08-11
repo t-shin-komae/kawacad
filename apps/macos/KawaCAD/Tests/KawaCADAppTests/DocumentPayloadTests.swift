@@ -3,6 +3,20 @@ import Testing
 
 @testable import KawaCADApp
 
+@Test("layer deletion impact decodes the Core camelCase layer id")
+func bridge_decodes_layer_deletion_impact() throws {
+  let impact = try JSONDecoder().decode(
+    LayerDeletionImpact.self,
+    from: Data(
+      "{\"layerId\":\"layer:construction\",\"entityCount\":1,\"derivedElementCount\":2}".utf8)
+  )
+
+  #expect(impact.layerID == "layer:construction")
+  #expect(impact.entityCount == 1)
+  #expect(impact.derivedElementCount == 2)
+  #expect(impact.affectedCount == 3)
+}
+
 @Test("CoreConstraintTarget は Core wire shape を型付きで往復する")
 func core_constraint_target_round_trips_wire_shape() throws {
   let targets = [

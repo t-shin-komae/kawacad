@@ -624,6 +624,65 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
     expect(screen.queryByRole("alertdialog", { name: "レイヤー削除の確認" })).not.toBeInTheDocument();
   });
+  it("uses the layer selected in the Inspector for the next entity", async () => {
+    const layeredState = {
+      ...state,
+      layers: [
+        ...state.layers,
+        {
+          id: "layer:construction",
+          name: "補助線",
+          visible: true,
+          printable: false,
+          kind: "construction",
+          style: { stroke: { red: 0.4, green: 0.4, blue: 0.4, alpha: 1 }, strokeWidthMm: 0.13, pattern: "dashed" },
+        },
+      ],
+    };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return layeredState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return layeredState;
+    });
+
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^補助線/ }));
+    fireEvent.keyDown(window, { key: "2", metaKey: true });
+    const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
+    Object.defineProperty(canvas, "getBoundingClientRect", {
+      value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+    });
+    fireEvent.pointerDown(canvas, { clientX: 50, clientY: 50, button: 0, pointerId: 1 });
+
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith(
+        "apply_command",
+        expect.objectContaining({
+          command: expect.objectContaining({
+            kind: "createEntityFromGesture",
+            payload: expect.objectContaining({ layerId: "layer:construction" }),
+          }),
+        }),
+      ),
+    );
+  });
+  it("leaves Backspace available to the layer name field", async () => {
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Cut Line/ }));
+    const input = screen.getByRole("textbox", { name: "Cut Line の名前" });
+    input.focus();
+
+    const event = new KeyboardEvent("keydown", { key: "Backspace", bubbles: true, cancelable: true });
+    input.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(mocks.invoke).not.toHaveBeenCalledWith("apply_command", expect.anything());
+  });
   it("selects a free text on the canvas before underlying geometry and exposes its editor", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state")
@@ -1855,6 +1914,22 @@ describe("React workspace shortcuts", () => {
     });
     expect(screen.getByRole("menu")).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "すべてを選択" })).toBeInTheDocument();
+  });
+
+  it("dismisses the canvas context menu when the pointer lands outside it", async () => {
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    fireEvent.contextMenu(screen.getByRole("application", { name: "型紙作図キャンバス" }), {
+      clientX: 12,
+      clientY: 14,
+      offsetX: 12,
+      offsetY: 14,
+    });
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
   it("uses the measurement-specific SwiftUI context actions", async () => {
     const measurementState = {

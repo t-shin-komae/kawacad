@@ -382,6 +382,12 @@ struct LayerDeletionImpact: Codable, Equatable {
   let entityCount: Int
   let derivedElementCount: Int
   var affectedCount: Int { entityCount + derivedElementCount }
+
+  private enum CodingKeys: String, CodingKey {
+    case layerID = "layerId"
+    case entityCount
+    case derivedElementCount
+  }
 }
 
 struct CorePoint: Codable, Equatable, Hashable {
