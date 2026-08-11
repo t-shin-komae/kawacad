@@ -31,7 +31,9 @@ export function ConstraintValueDialog({
   const initialFixed = degrees ? initialValue?.fixedDegrees : initialValue?.fixedMm;
   const initialParameter = typeof initialValue?.parameter === "string" ? initialValue.parameter : undefined;
   const [mode, setMode] = useState<"fixed" | "parameter">(initialParameter ? "parameter" : "fixed");
-  const [draft, setDraft] = useState(formatInspectorNumber(typeof initialFixed === "number" ? initialFixed : undefined));
+  const [draft, setDraft] = useState(
+    formatInspectorNumber(typeof initialFixed === "number" ? initialFixed : undefined),
+  );
   const [parameter, setParameter] = useState(initialParameter ?? parameters[0]?.id ?? "");
   const parsedValue = parseDecimal(draft);
   const numericValue = parsedValue.ok ? parsedValue.value : undefined;
