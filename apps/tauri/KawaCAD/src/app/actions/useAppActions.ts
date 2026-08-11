@@ -144,6 +144,7 @@ export function useAppActions(context: AppActionContext) {
   ]);
   const partContext: PartActionContext = pickContext(context, [
     "state",
+    "cursorPoint",
     "command",
     "selected",
     "setSelected",

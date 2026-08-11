@@ -7,10 +7,12 @@ import type { Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { PartActionContext } from "@/app/actions/useActionRuntime";
+import { partDefaultName, partLibraryPlacement } from "@/features/parts/domain/partDefaults";
 
 type PartActionDependencies = Pick<
   PartActionContext,
   | "state"
+  | "cursorPoint"
   | "command"
   | "selected"
   | "setSelected"
@@ -28,6 +30,7 @@ type PartActionDependencies = Pick<
 export function usePartActionCallbacks(dependencies: PartActionDependencies) {
   const {
     state,
+    cursorPoint,
     command,
     selected,
     setSelected,
@@ -48,7 +51,13 @@ export function usePartActionCallbacks(dependencies: PartActionDependencies) {
     }
     openTextEntry(
       appStrings.app.createPartTitle,
-      [{ id: "name", label: appStrings.app.partName, initialValue: appStrings.app.newPart }],
+      [
+        {
+          id: "name",
+          label: appStrings.app.partName,
+          initialValue: partDefaultName((state?.parts.length ?? 0) + 1),
+        },
+      ],
       (values) => {
         const name = values.name.trim();
         if (name) {
@@ -104,11 +113,7 @@ export function usePartActionCallbacks(dependencies: PartActionDependencies) {
   const insertPartFromLibrary = useCallback(
     (entry: PartLibraryEntry) => {
       const source = entry.sourcePart.originMm ?? { xMm: 0, yMm: 0 };
-      const target = {
-        xMm:
-          (state?.parts.map((part) => part.originMm.xMm).reduce((max, value) => Math.max(max, value), -30) ?? -30) + 30,
-        yMm: 0,
-      };
+    const target = partLibraryPlacement(cursorPoint, state?.parts.map((part) => part.originMm) ?? []);
       const duplicateCount = state?.parts.filter((part) => part.name === entry.name).length ?? 0;
       const newName = duplicateCount ? `${entry.name} ${duplicateCount + 1}` : entry.name;
       void command(
@@ -123,7 +128,7 @@ export function usePartActionCallbacks(dependencies: PartActionDependencies) {
         appStrings.app.libraryPartPlaced(newName),
       );
     },
-    [command, state?.parts],
+    [command, cursorPoint, state?.parts],
   );
 
   return { createPart, selectPartContents, addPartToLibrary, insertPartFromLibrary };
