@@ -41,6 +41,8 @@
 "tool.round_hole" = "丸穴";
 "tool.arc" = "円弧";
 "tool.stitch_start_point" = "縫い始め点";
+"inspector.stitch_target" = "対象図形";
+"inspector.geometry" = "図形";
 "tool.center_line" = "中心線";
 "tool.horizontal_center_line" = "水平中心線";
 "tool.vertical_center_line" = "垂直中心線";

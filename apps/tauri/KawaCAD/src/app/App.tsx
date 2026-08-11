@@ -8,6 +8,7 @@ import { CadToolbar } from "@/features/canvas/components/CadToolbar";
 import { CanvasContextMenu } from "@/features/canvas/components/CanvasContextMenu";
 import { BottomWorkbench } from "@/features/workspace/components/BottomWorkbench";
 import { DocumentHeader } from "@/features/document/components/DocumentHeader";
+import { DocumentSaveConfirmationDialog } from "@/features/document/components/DocumentSaveConfirmationDialog";
 import { PaletteResizeHandle } from "@/features/workspace/components/PaletteResizeHandle";
 import { PasteOptionsOverlay, type PastePlacementMode } from "@/features/document/components/PasteOptionsOverlay";
 import { AppErrorBanner } from "@/features/workspace/components/AppErrorBanner";
@@ -73,7 +74,8 @@ import {
 import { useDocumentPresentation } from "@/features/document/state/useDocumentPresentation";
 import { useInspectorPresentation } from "@/features/inspector/state/useInspectorPresentation";
 import { useAppActions } from "@/app/actions/useAppActions";
-import { useRecoveryActions } from "@/features/recovery/actions/useRecoveryActions";
+import { RecoveryChooserDialog } from "@/features/recovery/components/RecoveryChooserDialog";
+import { RecoverySaveFailureBanner } from "@/features/recovery/components/RecoverySaveFailureBanner";
 import { useActiveDrawingOptions } from "@/features/canvas/selectors/useActiveDrawingOptions";
 import { useWindowLifecycle } from "@/features/workspace/effects/useWindowLifecycle";
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
@@ -218,6 +220,9 @@ export function App() {
     allowWindowClose,
     documentHeader,
     documentNameForFileDialog,
+    documentSaveConfirmation,
+    requestDocumentSaveConfirmation,
+    resolveDocumentSaveConfirmation,
   } = useDocumentPresentation();
   const {
     arrangementPartIds,
@@ -288,7 +293,6 @@ export function App() {
     createPart,
     addParameter,
     renameLayer,
-    setPartQuantity,
     applyActiveStyle,
     snap,
     snapWithTarget,
@@ -377,6 +381,7 @@ export function App() {
     setInspectorRevision,
     documentHeader,
     documentNameForFileDialog,
+    requestDocumentSaveConfirmation,
     resetWorkspacePreferences,
     resetWorkspaceLayout,
     activeLayer,
@@ -427,10 +432,9 @@ export function App() {
     report: setMessage,
     onRestored: resetInspectorPresentation,
   });
-  const { recoveryCandidate } = recoverySnapshot;
-  const recoveryActions = useRecoveryActions(recoverySnapshot);
-  useWindowLifecycle({ state, allowWindowClose, saveBeforeDestructiveAction });
-  useRecoveryEffects({ state, presentOperationFailure });
+  const { recoveryCandidates } = recoverySnapshot;
+  useWindowLifecycle({ state, allowWindowClose, saveBeforeDestructiveAction, requestDocumentSaveConfirmation });
+  const recoveryEffects = useRecoveryEffects({ state });
   useEffect(() => {
     void refresh().then(() => setMessage(appStrings.status.readyToDraw));
   }, [refresh]);
@@ -708,6 +712,7 @@ export function App() {
     state?.drawingEntityMetadata ?? [],
     state?.stitchStartPoints ?? [],
   );
+  const selectedStitchStartPoint = state?.stitchStartPoints.find((item) => item.id === selectedStitchStartPointId);
   const inspectorProps = {
     selectedCount: selected.size,
     documentSummary: {
@@ -724,7 +729,10 @@ export function App() {
     selectedFreeText: state?.freeTexts.find((item) => item.id === selectedFreeTextId),
     selectedConstraint: state?.constraints.find((item) => item.id === selectedConstraintId),
     selectedMeasurement: state?.measurementAnnotations.find((item) => item.id === selectedMeasurementId),
-    selectedStitchStartPoint: state?.stitchStartPoints.find((item) => item.id === selectedStitchStartPointId),
+    selectedStitchStartPoint,
+    selectedStitchTargetEntity: state?.entities.find(
+      (entity) => entity.id === selectedStitchStartPoint?.targetEntityId,
+    ),
     constraints: state?.constraints ?? [],
     measurements: state?.measurementAnnotations ?? [],
     freeTexts: state?.freeTexts ?? [],
@@ -745,7 +753,6 @@ export function App() {
     onActiveLayerChange: setActiveLayer,
     onDeleteLayer: deleteLayer,
     onRenameLayer: renameLayer,
-    onSetPartQuantity: setPartQuantity,
     onSelectPart: selectPartContents,
     onToggleArrangementPart: toggleArrangementPart,
     onAlignParts: alignParts,
@@ -812,6 +819,13 @@ export function App() {
           onRename={renameDocument}
         />
         {errorPresentation && <AppErrorBanner presentation={errorPresentation} onDismiss={dismissPresentedError} />}
+        {recoveryEffects.saveFailure && (
+          <RecoverySaveFailureBanner
+            details={recoveryEffects.saveFailure}
+            onRetry={() => void recoveryEffects.retry()}
+            onDismiss={recoveryEffects.dismiss}
+          />
+        )}
         {documentWarning && (
           <aside className="document-warning-banner" role="alert">
             <span>{documentWarning}</span>
@@ -820,22 +834,14 @@ export function App() {
             </button>
           </aside>
         )}
-        {recoveryCandidate && (
-          <aside className="recovery-banner" aria-label={appStrings.app.recoveryAria}>
-            <span>
-              {appStrings.app.recoveryNotice(recoveryCandidate.displayName)}
-              {recoveryCandidate.originalDocumentPath ? ` ${appStrings.app.recoveryOriginal}` : ""}
-            </span>
-            <button type="button" onClick={recoveryActions.restoreRecoverySnapshot}>
-              {appStrings.app.restore}
-            </button>
-            <button type="button" onClick={recoveryActions.discardRecoverySnapshot}>
-              {appStrings.app.discard}
-            </button>
-            <button type="button" onClick={recoveryActions.postponeRecoverySnapshot}>
-              {appStrings.app.later}
-            </button>
-          </aside>
+        {recoveryCandidates.length > 0 && (
+          <RecoveryChooserDialog
+            candidates={recoveryCandidates}
+            onRestore={recoverySnapshot.restoreRecoverySnapshot}
+            onDiscard={recoverySnapshot.discardRecoverySnapshot}
+            onReveal={recoverySnapshot.revealRecoverySnapshot}
+            onPostpone={recoverySnapshot.postponeRecoverySnapshot}
+          />
         )}
         {pendingConstraintValue && (
           <ConstraintValueDialog
@@ -890,6 +896,12 @@ export function App() {
             affectedCount={layerDeletionConfirmation.affectedCount}
             onConfirm={confirmDeleteLayer}
             onCancel={cancelDeleteLayer}
+          />
+        )}
+        {documentSaveConfirmation && (
+          <DocumentSaveConfirmationDialog
+            reason={documentSaveConfirmation.reason}
+            onChoose={resolveDocumentSaveConfirmation}
           />
         )}
         {licensesOpen && <OpenSourceLicensesDialog onClose={() => setLicensesOpen(false)} />}
@@ -1100,9 +1112,6 @@ export function App() {
           />
         )}
         <footer className="statusbar" data-testid={accessibilityIdentifiers.workspaceStatusBar}>
-          <span role="status" aria-live="polite">
-            {message}
-          </span>
           <span>
             <span className="statusbar-item">
               <CircleDot size={12} strokeWidth={1.8} aria-hidden="true" />
@@ -1124,8 +1133,7 @@ export function App() {
                 <MapPin size={12} strokeWidth={1.8} aria-hidden="true" />
                 {appStrings.app.statusNoCoordinates}
               </span>
-            )}{" "}
-            · {Math.round(viewport.zoom * 100)}%
+            )}
           </span>
           {state?.viewMode === "outputPreview" && (
             <span>
@@ -1135,8 +1143,9 @@ export function App() {
                 : appStrings.app.outputPages(state.outputPreview?.pages.length ?? 0)}
             </span>
           )}
-          <span className="statusbar-item">
+          <span className="statusbar-item" role="status" aria-live="polite">
             <Info size={12} strokeWidth={1.8} aria-hidden="true" />
+            {message}
           </span>
           <button
             type="button"

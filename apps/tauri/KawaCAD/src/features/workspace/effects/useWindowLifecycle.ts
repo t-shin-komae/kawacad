@@ -2,17 +2,23 @@ import { useEffect, type MutableRefObject } from "react";
 import { appStrings } from "@/localization";
 import { documentWindowPresentation, type State } from "@/shared/domain/workspaceState";
 import { desktopAdapter } from "@/adapters/desktopAdapter";
-import { dialogAdapter } from "@/adapters/dialogAdapter";
 import { windowAdapter } from "@/adapters/windowAdapter";
+import type { DocumentSaveChoice } from "@/features/document/state/useDocumentPresentation";
 
 type Props = {
   state: State | undefined;
   allowWindowClose: MutableRefObject<boolean>;
   saveBeforeDestructiveAction: () => Promise<boolean>;
+  requestDocumentSaveConfirmation: (reason: string) => Promise<DocumentSaveChoice>;
 };
 
 /** Owns the native window title and close-confirmation boundary. */
-export function useWindowLifecycle({ state, allowWindowClose, saveBeforeDestructiveAction }: Props) {
+export function useWindowLifecycle({
+  state,
+  allowWindowClose,
+  saveBeforeDestructiveAction,
+  requestDocumentSaveConfirmation,
+}: Props) {
   useEffect(() => {
     if (!state) return;
     const title = documentWindowPresentation(
@@ -36,23 +42,10 @@ export function useWindowLifecycle({ state, allowWindowClose, saveBeforeDestruct
           await desktopAdapter.exitApplication();
           return;
         }
-        const saveChanges = await dialogAdapter.confirm(appStrings.app.saveAndCloseQuestion, {
-          title: appStrings.app.productName,
-          kind: "warning",
-          okLabel: appStrings.app.saveAndClose,
-          cancelLabel: appStrings.app.discardChanges,
-        });
-        if (saveChanges) {
+        const choice = await requestDocumentSaveConfirmation(appStrings.app.saveAndCloseQuestion);
+        if (choice === "save") {
           if (!(await saveBeforeDestructiveAction())) return;
-        } else {
-          const discard = await dialogAdapter.confirm(appStrings.app.discardAndCloseQuestion, {
-            title: appStrings.app.productName,
-            kind: "warning",
-            okLabel: appStrings.app.closeWithoutSaving,
-            cancelLabel: appStrings.app.cancel,
-          });
-          if (!discard) return;
-        }
+        } else if (choice === "cancel") return;
         allowWindowClose.current = true;
         await desktopAdapter.exitApplication();
       })
@@ -65,5 +58,5 @@ export function useWindowLifecycle({ state, allowWindowClose, saveBeforeDestruct
       disposed = true;
       unlisten?.();
     };
-  }, [allowWindowClose, saveBeforeDestructiveAction, state?.persistence.isDirty]);
+  }, [allowWindowClose, requestDocumentSaveConfirmation, saveBeforeDestructiveAction, state?.persistence.isDirty]);
 }

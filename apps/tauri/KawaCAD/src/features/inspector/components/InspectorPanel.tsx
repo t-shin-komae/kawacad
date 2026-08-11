@@ -88,6 +88,7 @@ export type Props = {
   selectedConstraint?: Constraint;
   selectedMeasurement?: Measurement;
   selectedStitchStartPoint?: { id: string; targetEntityId: string };
+  selectedStitchTargetEntity?: RawEntity;
   constraints: Constraint[];
   measurements: Measurement[];
   freeTexts: Array<{ id: string; content: string; positionMm: PointMm; fontSizeMm: number }>;
@@ -116,7 +117,6 @@ export type Props = {
   onActiveLayerChange: (id: string) => void;
   onRenameLayer: (id: string, name: string) => void;
   onDeleteLayer: (layer: { id: string; name: string }) => void;
-  onSetPartQuantity: (id: string, quantity: number) => void;
   onSelectPart: (part: Part) => void;
   onToggleArrangementPart: (id: string) => void;
   onAlignParts: (alignment: string) => void;
@@ -278,7 +278,7 @@ export function InspectorPanel(props: Props) {
                   onDelete={props.onDeleteSelection}
                 />
               ) : props.selectedStitchStartPoint ? (
-                <SelectedStitchStartPointEditor stitchStartPoint={props.selectedStitchStartPoint} />
+                <SelectedStitchStartPointEditor targetEntity={props.selectedStitchTargetEntity} />
               ) : props.selectedFreeText ? (
                 <FreeTextEditor
                   freeText={props.selectedFreeText}
@@ -411,7 +411,6 @@ export function InspectorPanel(props: Props) {
             feature={feature}
             updateFeature={(update) => setFeature(update)}
             defaultStyle={defaultStyle}
-            openTextEntry={openTextEntry}
             renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
           />
         )}
@@ -433,12 +432,10 @@ export function InspectorPanel(props: Props) {
                 part={part}
                 arrangementSelected={arrangementPartIds.has(part.id)}
                 onCommand={onCommand}
-                onSetQuantity={props.onSetPartQuantity}
                 onSelect={() => props.onSelectPart(part)}
                 onToggleArrangement={() => props.onToggleArrangementPart(part.id)}
                 onAddToLibrary={() => props.onAddPartToLibrary(part)}
                 onBeginSetOrigin={() => props.onBeginSetPartOrigin?.(part)}
-                selectedEntityIds={props.selectedEntityIds ?? []}
               />
             )}
           />

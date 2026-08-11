@@ -54,7 +54,16 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
             onToggle={() => setSelectedLayerId(item.id)}
           >
             <div className="row inspector-editor-heading">
-              <label>
+              <input
+                className="inspector-inline-name"
+                aria-label={appStrings.inspector.nameOf(item.name)}
+                defaultValue={item.name}
+                onBlur={(event) => {
+                  const name = event.target.value.trim();
+                  if (name && name !== item.name) props.onRenameLayer(item.id, name);
+                }}
+              />
+              <label aria-label={item.visible ? appStrings.inspector.visible : appStrings.inspector.hidden}>
                 <input
                   type="checkbox"
                   checked={item.visible}
@@ -66,25 +75,24 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                     )
                   }
                 />
-                {item.name}
+                {appStrings.inspector.display}
               </label>
-              <button onClick={() => props.onRenameLayer(item.id, item.name)}>{appStrings.inspector.edit}</button>
+              <label>
+                <input
+                  type="checkbox"
+                  aria-label={appStrings.inspector.includeInOutput(item.name)}
+                  checked={item.printable}
+                  onChange={(event) =>
+                    props.onCommand(
+                      "setLayerPrintable",
+                      { layerId: item.id, printable: event.target.checked },
+                      appStrings.inspector.operationMessage.layerOutputUpdated,
+                    )
+                  }
+                />
+                {appStrings.inspector.outputTarget}
+              </label>
             </div>
-            <label>
-              <input
-                type="checkbox"
-                aria-label={appStrings.inspector.includeInOutput(item.name)}
-                checked={item.printable}
-                onChange={(event) =>
-                  props.onCommand(
-                    "setLayerPrintable",
-                    { layerId: item.id, printable: event.target.checked },
-                    appStrings.inspector.operationMessage.layerOutputUpdated,
-                  )
-                }
-              />
-              {appStrings.inspector.outputTarget}
-            </label>
             {renderStyleFields(item.style, (style) =>
               props.onCommand(
                 "setLayerStyle",
@@ -92,7 +100,11 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                 appStrings.inspector.operationMessage.layerStyleUpdated,
               ),
             )}
-            <button disabled={props.layers.length <= 1} onClick={() => props.onDeleteLayer(item)}>
+            <button
+              className="inspector-destructive-button"
+              disabled={props.layers.length <= 1}
+              onClick={() => props.onDeleteLayer(item)}
+            >
               {appStrings.contextMenu.delete}
             </button>
           </InspectorDisclosureRow>

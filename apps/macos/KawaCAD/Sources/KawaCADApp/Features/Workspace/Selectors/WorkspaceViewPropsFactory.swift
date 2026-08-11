@@ -317,6 +317,7 @@ struct WorkspaceViewPropsFactory {
   }
   var outputRequestSheetActions: OutputRequestSheetActions {
     OutputRequestSheetActions(
+      setDestination: { [self] in actions.output.setOutputRequestDestination($0) },
       setIncludeDimensionLabels: { [self] in
         actions.output.setOutputRequestIncludeDimensionLabels($0)
       },

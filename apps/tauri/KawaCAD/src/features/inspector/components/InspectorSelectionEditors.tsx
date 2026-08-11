@@ -152,17 +152,13 @@ export function SelectedMeasurementEditor({
   );
 }
 
-export function SelectedStitchStartPointEditor({
-  stitchStartPoint,
-}: {
-  stitchStartPoint: NonNullable<Props["selectedStitchStartPoint"]>;
-}) {
+export function SelectedStitchStartPointEditor({ targetEntity }: { targetEntity?: RawEntity }) {
   return (
     <div className="inspector-card">
       <strong>{appStrings.inspector.stitchStartPoint}</strong>
       <div className="detail-row">
         <span>{appStrings.inspector.targetGeometry}</span>
-        <strong>{stitchStartPoint.targetEntityId}</strong>
+        <strong>{targetEntity ? geometryDisplayName(targetEntity) : appStrings.inspector.geometry}</strong>
       </div>
     </div>
   );
@@ -327,6 +323,8 @@ export function ParameterEditor({
           />
         </label>
         <button
+          className="inspector-icon-destructive-button"
+          aria-label={appStrings.inspector.deleteParameter(parameter.name)}
           onClick={() =>
             onCommand(
               "deleteParameter",
@@ -347,9 +345,17 @@ export function ParameterEditor({
           onBlur={commit}
         />
       </label>
-      <small>{parameter.unit === "millimeter" ? appStrings.inspector.unitMillimeter : parameter.unit}</small>
+      <small className={parameterUsageCount(parameter) === 0 ? "parameter-usage-warning" : "inspector-help"}>
+        {parameterUsageCount(parameter) === 0
+          ? appStrings.inspector.parameterUnusedHint
+          : appStrings.inspector.parameterUsedHint(parameterUsageCount(parameter))}
+      </small>
     </div>
   );
+}
+
+function parameterUsageCount(parameter: Props["parameters"][number]) {
+  return parameter.usageCount ?? parameter.usedConstraintIds?.length ?? 0;
 }
 
 export function StyleFields({
@@ -359,6 +365,7 @@ export function StyleFields({
   style?: LineStyle;
   onChange: (style: LineStyle) => void;
 }) {
+  const [customEditor, setCustomEditor] = useState<"color" | "width">();
   const color =
     "#" +
     [style.stroke.red, style.stroke.green, style.stroke.blue]
@@ -370,14 +377,33 @@ export function StyleFields({
       .join("");
   return (
     <div className="style-fields">
-      <label>
-        {appStrings.inspector.colorPreset}
+      <label className="style-field">
+        <span>{appStrings.inspector.lineStyle}</span>
+        <span className={`line-style-preview ${style.pattern}`} aria-hidden="true" />
+        <select
+          aria-label={appStrings.inspector.lineStyle}
+          value={style.pattern}
+          onChange={(event) => onChange({ ...style, pattern: event.target.value })}
+        >
+          <option value="solid">{appStrings.inspector.lineStyles.solid}</option>
+          <option value="dashed">{appStrings.inspector.lineStyles.dashed}</option>
+          <option value="dotted">{appStrings.inspector.lineStyles.dotted}</option>
+          <option value="construction">{appStrings.inspector.lineStyles.construction}</option>
+        </select>
+      </label>
+      <label className="style-field">
+        <span>{appStrings.inspector.color}</span>
+        <span className="style-color-swatch" style={{ backgroundColor: color }} aria-hidden="true" />
         <select
           aria-label={appStrings.inspector.colorPreset}
           value={matchingLayerColorPreset(color)?.colorHex ?? "custom"}
           onChange={(event) => {
             const preset = layerColorPresets.find((item) => item.colorHex === event.target.value);
-            if (!preset) return;
+            if (!preset) {
+              setCustomEditor("color");
+              return;
+            }
+            setCustomEditor(undefined);
             onChange({ ...style, stroke: colorFromHex(preset.colorHex, style.stroke.alpha) });
           }}
         >
@@ -389,24 +415,23 @@ export function StyleFields({
           ))}
         </select>
       </label>
-      <label>
-        {appStrings.inspector.color}
-        <input
-          type="color"
-          value={color}
-          onChange={(event) => {
-            const value = event.target.value;
-            onChange({ ...style, stroke: colorFromHex(value, style.stroke.alpha) });
-          }}
+      <label className="style-field">
+        <span>{appStrings.inspector.lineWidth}</span>
+        <span
+          className="line-width-preview"
+          style={{ borderTopWidth: `${Math.max(1, style.strokeWidthMm * 5)}px`, borderTopColor: color }}
+          aria-hidden="true"
         />
-      </label>
-      <label>
-        {appStrings.inspector.lineWidthPreset}
         <select
           aria-label={appStrings.inspector.lineWidthPreset}
           value={matchingLayerStrokeWidthPreset(style.strokeWidthMm)?.widthMm ?? "custom"}
           onChange={(event) => {
-            if (event.target.value !== "custom") onChange({ ...style, strokeWidthMm: Number(event.target.value) });
+            if (event.target.value === "custom") {
+              setCustomEditor("width");
+              return;
+            }
+            setCustomEditor(undefined);
+            onChange({ ...style, strokeWidthMm: Number(event.target.value) });
           }}
         >
           <option value="custom">{appStrings.inspector.custom}</option>
@@ -417,26 +442,34 @@ export function StyleFields({
           ))}
         </select>
       </label>
-      <label>
-        {appStrings.inspector.lineWidth}
-        <input
-          type="number"
-          min=".05"
-          max="2"
-          step=".01"
-          value={style.strokeWidthMm}
-          onChange={(event) => onChange({ ...style, strokeWidthMm: Number(event.target.value) })}
-        />
-      </label>
-      <label>
-        {appStrings.inspector.lineStyle}
-        <select value={style.pattern} onChange={(event) => onChange({ ...style, pattern: event.target.value })}>
-          <option value="solid">{appStrings.inspector.lineStyles.solid}</option>
-          <option value="dashed">{appStrings.inspector.lineStyles.dashed}</option>
-          <option value="dotted">{appStrings.inspector.lineStyles.dotted}</option>
-          <option value="construction">{appStrings.inspector.lineStyles.construction}</option>
-        </select>
-      </label>
+      {customEditor === "color" && (
+        <label className="style-custom-field">
+          {appStrings.inspector.customColor}
+          <input
+            aria-label={appStrings.inspector.customColor}
+            value={color.toUpperCase()}
+            pattern="#[0-9A-Fa-f]{6}"
+            onChange={(event) => {
+              if (/^#[0-9A-Fa-f]{6}$/.test(event.target.value))
+                onChange({ ...style, stroke: colorFromHex(event.target.value, style.stroke.alpha) });
+            }}
+          />
+        </label>
+      )}
+      {customEditor === "width" && (
+        <label className="style-custom-field">
+          {appStrings.inspector.customLineWidth}
+          <input
+            aria-label={appStrings.inspector.customLineWidth}
+            type="number"
+            min=".05"
+            max="2"
+            step=".01"
+            value={style.strokeWidthMm}
+            onChange={(event) => onChange({ ...style, strokeWidthMm: Number(event.target.value) })}
+          />
+        </label>
+      )}
     </div>
   );
 }
@@ -642,10 +675,7 @@ export function EntityEditor({
   const geometry = geometryOf(entity);
   return (
     <div className="inspector-card">
-      <span>
-        {geometry?.tag ?? appStrings.inspector.geometry}
-        <small>{entity.id}</small>
-      </span>
+      <strong>{geometryDisplayName(entity)}</strong>
       <label>
         {appStrings.inspector.layer}
         <select
@@ -710,6 +740,23 @@ export function EntityEditor({
       {roundHole && <RoundHoleFields entity={entity} roundHole={roundHole} onCommand={onCommand} />}
     </div>
   );
+}
+
+export function geometryDisplayName(entity: RawEntity) {
+  switch (geometryOf(entity)?.tag) {
+    case "point":
+      return appStrings.toolNames.point;
+    case "lineSegment":
+      return appStrings.toolNames.line;
+    case "centerLine":
+      return appStrings.toolNames.centerLine;
+    case "circle":
+      return appStrings.toolNames.circle;
+    case "arc":
+      return appStrings.toolNames.arc;
+    default:
+      return appStrings.inspector.geometry;
+  }
 }
 
 export function RoundHoleFields({

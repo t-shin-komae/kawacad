@@ -26,7 +26,8 @@ describe("BottomWorkbench", () => {
       />,
     );
 
-    expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("line:edge");
+    expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("線分");
+    expect(screen.getByRole("region", { name: "サマリー" })).not.toHaveTextContent("line:edge");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("外形カット線");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("評価済み");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("幅 20.00 mm");

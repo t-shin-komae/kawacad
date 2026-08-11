@@ -155,7 +155,21 @@ struct OutputRequestSheet: View {
           }
 
           VStack(alignment: .leading, spacing: 12) {
-            summaryRow(AppStrings.tr("output.sheet.destination"), value: draft.destination.title)
+            if draft.directPrinterNames.isEmpty {
+              summaryRow(AppStrings.tr("output.sheet.destination"), value: draft.destination.title)
+            } else {
+              Picker(
+                AppStrings.tr("output.sheet.destination"),
+                selection: Binding(
+                  get: { draft.destination },
+                  set: actions.setDestination
+                )
+              ) {
+                Text(OutputDestination.pdf.title).tag(OutputDestination.pdf)
+                Text(OutputDestination.directPrint.title).tag(OutputDestination.directPrint)
+              }
+              .pickerStyle(.menu)
+            }
             summaryRow(
               AppStrings.tr("output.sheet.paper"), value: AppStrings.tr("output.sheet.paper_value"))
             summaryRow(

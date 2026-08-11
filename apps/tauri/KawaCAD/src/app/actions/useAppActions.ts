@@ -61,6 +61,7 @@ export function useAppActions(context: AppActionContext) {
     "setMessage",
     "documentHeader",
     "documentNameForFileDialog",
+    "requestDocumentSaveConfirmation",
     "activeStyle",
     "selected",
     "clipboard",

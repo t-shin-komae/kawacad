@@ -131,6 +131,7 @@ struct OutputRequestSheetState {
   let disabledReason: String?
 }
 struct OutputRequestSheetActions {
+  let setDestination: (OutputDestination) -> Void
   let setIncludeDimensionLabels: (Bool) -> Void
   let setIncludeScaleGuide: (Bool) -> Void
   let setWarningsAcknowledged: (Bool) -> Void

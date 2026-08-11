@@ -10,7 +10,7 @@ import { normalizeProjectSavePath } from "@/features/document/domain/projectFile
 
 type DocumentActionDependencies = Pick<
   DocumentActionContext,
-  "state" | "run" | "command" | "documentHeader" | "documentNameForFileDialog"
+  "state" | "run" | "command" | "documentHeader" | "documentNameForFileDialog" | "requestDocumentSaveConfirmation"
 > & {
   clearTransientCanvasState: () => void;
   openTextEntry: (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
@@ -24,6 +24,7 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     command,
     documentHeader,
     documentNameForFileDialog,
+    requestDocumentSaveConfirmation,
     clearTransientCanvasState,
     openTextEntry,
     resetLoadedDocumentPresentation,
@@ -59,21 +60,16 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     async (actionLabel: string) => {
       if (!validatePendingDocumentName()) return false;
       if (!state?.persistence.isDirty) return true;
-      const saveChanges = await dialogAdapter.confirm(appStrings.app.saveContinueQuestion(actionLabel), {
-        title: appStrings.app.productName,
-        kind: "warning",
-        okLabel: appStrings.app.saveAndContinue,
-        cancelLabel: appStrings.app.discardChanges,
-      });
-      if (saveChanges) return saveBeforeDestructiveAction();
-      return dialogAdapter.confirm(appStrings.app.discardContinueQuestion(actionLabel), {
-        title: appStrings.app.productName,
-        kind: "warning",
-        okLabel: appStrings.app.continueWithoutSaving,
-        cancelLabel: appStrings.app.cancel,
-      });
+      const choice = await requestDocumentSaveConfirmation(appStrings.app.saveContinueQuestion(actionLabel));
+      if (choice === "save") return saveBeforeDestructiveAction();
+      return choice === "discard";
     },
-    [saveBeforeDestructiveAction, state?.persistence.isDirty, validatePendingDocumentName],
+    [
+      requestDocumentSaveConfirmation,
+      saveBeforeDestructiveAction,
+      state?.persistence.isDirty,
+      validatePendingDocumentName,
+    ],
   );
   const newDocument = useCallback(async () => {
     if (!(await resolveDirtyReplacement(appStrings.app.newProjectAction))) return;
