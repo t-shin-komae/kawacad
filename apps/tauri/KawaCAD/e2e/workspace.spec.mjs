@@ -159,6 +159,39 @@ test.describe("Tauri React workspace through the real Core process", () => {
     }
   });
 
+  // インスペクタのタブ順と、内容をスクロールしてもタブが固定される構造を全レイアウトで検証する。
+  test("keeps inspector navigation fixed while only its content scrolls", async ({ page }) => {
+    for (const width of [1600, 1280, 1024]) {
+      await page.setViewportSize({ width, height: 360 });
+      await openWorkspace(page);
+      const inspector = page.getByRole("complementary", { name: "インスペクタ" });
+      if (!(await inspector.isVisible().catch(() => false))) {
+        await page.getByTestId("leather.toolbar.inspector").click();
+      }
+      await expect(inspector).toBeVisible();
+      await expect(inspector.getByRole("tab")).toHaveText(["選択", "レイヤー", "共有スタイル", "パラメータ", "パーツ"]);
+
+      const header = inspector.locator(":scope > .inspector-header");
+      const content = inspector.locator(":scope > .inspector-content");
+      const before = await header.boundingBox();
+      expect(before).not.toBeNull();
+      const scroll = await content.evaluate((element) => {
+        const beforeScrollTop = element.scrollTop;
+        element.scrollTop = element.scrollHeight;
+        return {
+          beforeScrollTop,
+          afterScrollTop: element.scrollTop,
+          scrollHeight: element.scrollHeight,
+          clientHeight: element.clientHeight,
+        };
+      });
+      expect(scroll.scrollHeight).toBeGreaterThan(scroll.clientHeight);
+      expect(scroll.afterScrollTop).toBeGreaterThan(scroll.beforeScrollTop);
+      const after = await header.boundingBox();
+      expect(after?.y).toBeCloseTo(before?.y ?? 0, 1);
+    }
+  });
+
   // 初期の折り畳み状態、パレット幅に応じた1列/2列表示、Swift版と同じパレット表示を検証する。
   test("keeps the tool palette progression and responsive grid contract", async ({ page }) => {
     await openWorkspace(page);

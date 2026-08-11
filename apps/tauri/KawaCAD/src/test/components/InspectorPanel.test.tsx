@@ -86,6 +86,25 @@ function panel(
 describe("InspectorPanel", () => {
   afterEach(cleanup);
 
+  it("keeps the SwiftUI tab order in a fixed header outside the scrolling content", () => {
+    render(panel());
+    const inspector = screen.getByRole("complementary", { name: "インスペクタ" });
+    const header = inspector.querySelector(":scope > .inspector-header");
+    const content = inspector.querySelector(":scope > .inspector-content");
+
+    expect(header).not.toBeNull();
+    expect(content).not.toBeNull();
+    expect(header?.nextElementSibling).toBe(content);
+    expect(content?.querySelector('[role="tablist"]')).toBeNull();
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "選択",
+      "レイヤー",
+      "共有スタイル",
+      "パラメータ",
+      "パーツ",
+    ]);
+  });
+
   it("shows the SwiftUI document overview on the selection tab", () => {
     render(panel());
     expect(screen.getByText("ドキュメント")).toBeInTheDocument();
@@ -608,5 +627,84 @@ describe("InspectorPanel", () => {
     const search = screen.getByRole("searchbox", { name: "共有スタイルを検索" });
     fireEvent.change(search, { target: { value: "折り線" } });
     expect(screen.queryByText("縫い線")).not.toBeInTheDocument();
+  });
+
+  it("keeps management rows collapsed until selected and exposes their SwiftUI summaries", () => {
+    const parameter = {
+      id: "parameter:width",
+      name: "幅",
+      valueMm: 25,
+      unit: "millimeter",
+      memo: "胴回り",
+      usageCount: 3,
+    };
+    const part: Part = {
+      id: "part:card-case",
+      name: "カードケース",
+      quantity: 2,
+      visible: true,
+      printable: true,
+      originMm: { xMm: 10, yMm: 20 },
+      entityIds: ["line:1", "circle:1"],
+      outlineEntityIds: ["line:1"],
+      holeEntityIdGroups: [["circle:1"]],
+      derivedElementIds: [],
+      freeTextIds: [],
+      measurementAnnotationIds: [],
+    };
+    render(panel(vi.fn(), [parameter], [{ id: "style:stitch", name: "縫い線", style }], [part]));
+
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    const layer = screen.getByRole("button", { name: /^Outline/ });
+    expect(layer).toHaveAttribute("aria-expanded", "false");
+    expect(layer).toHaveTextContent("裁断線");
+    expect(layer).toHaveTextContent("表示");
+    fireEvent.click(layer);
+    expect(layer).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    const sharedStyle = screen.getByRole("button", { name: /^縫い線/ });
+    expect(sharedStyle).toHaveAttribute("aria-expanded", "false");
+    expect(sharedStyle).toHaveTextContent("実線");
+    expect(sharedStyle).toHaveTextContent("#121726");
+    fireEvent.click(sharedStyle);
+    expect(sharedStyle).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    const parameterRow = screen.getByRole("button", { name: /^幅/ });
+    expect(parameterRow).toHaveAttribute("aria-expanded", "false");
+    expect(parameterRow).toHaveTextContent("25.00 mm");
+    expect(parameterRow).toHaveTextContent("使用 3 件");
+    fireEvent.click(parameterRow);
+    expect(parameterRow).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    const partRow = screen.getByRole("button", { name: /^カードケース/ });
+    expect(partRow).toHaveAttribute("aria-expanded", "false");
+    expect(partRow).toHaveTextContent("外形 1 / 穴 1");
+    expect(partRow).toHaveTextContent("数量 2 / 所属 2");
+    fireEvent.click(partRow);
+    expect(partRow).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("shows management empty states and keeps add actions reachable", () => {
+    const onAddParameter = vi.fn();
+    const onCreatePart = vi.fn();
+    render(cloneElement(panel(), { onAddParameter, onCreatePart }));
+
+    fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    expect(screen.getByText("共有線種はありません。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "共有線種を追加" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    expect(screen.getByText("名前付きパラメータはありません。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    expect(onAddParameter).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    expect(screen.getByText("パーツはありません。")).toBeInTheDocument();
+    expect(screen.getByText("登録済みのパーツはありません。")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "選択図形からパーツを作成" })).toBeDisabled();
+    expect(onCreatePart).not.toHaveBeenCalled();
   });
 });
