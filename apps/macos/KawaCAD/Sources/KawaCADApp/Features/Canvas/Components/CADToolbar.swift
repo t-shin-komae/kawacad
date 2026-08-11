@@ -41,6 +41,8 @@ struct CADToolbar: View {
           .frame(width: 22)
         Text(state.selectedTool.displayName)
           .font(.system(size: 13))
+          .lineLimit(1)
+          .layoutPriority(1)
         if density == .expanded {
           ControlGroup {
             copySelectionButton
@@ -50,6 +52,9 @@ struct CADToolbar: View {
         }
       }
       .foregroundStyle(LeatherColors.ink)
+      .frame(minWidth: 112, alignment: .leading)
+      .accessibilityElement(children: .combine)
+      .accessibilityLabel(state.selectedTool.displayName)
 
       if density == .expanded {
         Divider()
@@ -287,16 +292,17 @@ private struct ToolbarOrientationToggle: View {
     ) {
       Image(systemName: isLandscape ? "rectangle" : "rectangle.portrait")
         .font(.system(size: 12, weight: .semibold))
-        .frame(width: 22, height: 22)
+        .frame(width: 28, height: 28)
         .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
-        .background {
-          if isLandscape {
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-              .fill(LeatherColors.selectedFill)
-          }
-        }
+        .background(isLandscape ? LeatherColors.selectedFill : .clear)
+        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+        .overlay(
+          RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .stroke(isLandscape ? LeatherColors.selectedStroke : .clear)
+        )
     }
     .toggleStyle(.button)
+    .buttonStyle(.borderless)
     .help(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityLabel(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityValue(isLandscape ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
@@ -336,14 +342,15 @@ private struct ToolbarToggleButton: View {
       ToolbarToggleIcon(
         kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
       )
-      .frame(width: 22, height: 22)
-      .background {
-        if isOn {
-          RoundedRectangle(cornerRadius: 5, style: .continuous)
-            .fill(LeatherColors.selectedFill)
-        }
-      }
+      .frame(width: 28, height: 28)
+      .background(isOn ? LeatherColors.selectedFill : .clear)
+      .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 5, style: .continuous)
+          .stroke(isOn ? LeatherColors.selectedStroke : .clear)
+      )
     }
+    .buttonStyle(.borderless)
     .help(title)
     .accessibilityLabel(title)
     .accessibilityValue(isOn ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
