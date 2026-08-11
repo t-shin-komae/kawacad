@@ -1491,6 +1491,43 @@ describe("React workspace shortcuts", () => {
       filters: [{ name: "KawaCAD project", extensions: ["kawa"] }],
     });
   });
+  it("refreshes the saved filename after Save As before the next ordinary save", async () => {
+    mocks.save.mockResolvedValue("/projects/wallet-pattern");
+    let currentState = {
+      ...state,
+      persistence: { isDirty: true, hasPath: false, path: undefined as string | undefined },
+    };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return currentState;
+      if (command === "save_document") {
+        currentState = {
+          ...currentState,
+          persistence: { isDirty: false, hasPath: true, path: "/projects/wallet-pattern.kawa" },
+        };
+        return currentState;
+      }
+      if (command === "save_current_document") return currentState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return currentState;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/wallet-pattern.kawa" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("「wallet-pattern.kawa」に保存しました。"),
+    );
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "save" }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_current_document"));
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("「wallet-pattern.kawa」に保存しました。"),
+    );
+  });
   it("keeps the current selection when creating a replacement document fails", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "new_document") throw new Error("create failed");
@@ -2200,6 +2237,31 @@ describe("React workspace shortcuts", () => {
     expect(mocks.confirm).not.toHaveBeenCalled();
     expect(mocks.invoke).toHaveBeenCalledWith("discard_current_recovery_snapshot");
     expect(mocks.invoke).toHaveBeenCalledWith("exit_application");
+  });
+  it("reports recovery discard failures and keeps the window open", async () => {
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return { ...state, persistence: { isDirty: true } };
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      if (command === "discard_current_recovery_snapshot") throw new Error("permission denied");
+      return state;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
+      [(event: { preventDefault: () => void }) => Promise<void>]
+    >;
+    const handler = calls[calls.length - 1]?.[0] as
+      ((event: { preventDefault: () => void }) => Promise<void>) | undefined;
+    const closeRequest = handler?.({ preventDefault: vi.fn() });
+    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    fireEvent.click(within(confirmation).getByRole("button", { name: "変更を破棄" }));
+    await closeRequest;
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "復旧用スナップショットを破棄できません: Error: permission denied",
+    );
+    expect(mocks.invoke).not.toHaveBeenCalledWith("exit_application");
   });
   it("saves a dirty document before completing a window close", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {

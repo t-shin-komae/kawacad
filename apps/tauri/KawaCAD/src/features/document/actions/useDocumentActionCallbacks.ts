@@ -131,7 +131,7 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
         fileName(state.persistence.path ?? documentNameForFileDialog.current ?? appStrings.app.untitled),
       ),
     );
-  }, [commitPendingDocumentName, run, saveDocument, state?.persistence.hasPath]);
+  }, [commitPendingDocumentName, run, saveDocument, state?.persistence.hasPath, state?.persistence.path]);
   const reloadDocument = useCallback(() => {
     void run(() => documentAdapter.command<State>("reload_document"), appStrings.app.reloaded).then((next) => {
       if (next) resetLoadedDocumentPresentation(next);

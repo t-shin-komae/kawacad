@@ -743,8 +743,8 @@
 "canvas.drag.move" = "移動";
 "canvas.drag.copy_count" = "%d件を複製中";
 "canvas.drag.move_count" = "%d件を移動中";
-"canvas.marquee.contained" = "包含選択: %ld件";
-"canvas.marquee.crossing" = "交差選択: %ld件";
+"canvas.marquee.contained" = "完全に含まれる図形を選択: %ld件";
+"canvas.marquee.crossing" = "交差する図形を含めて選択: %ld件";
 "canvas.constraint_hint.target" = "対象を選択";
 "canvas.constraint_hint.point" = "点を選択";
 "canvas.constraint_hint.line" = "線分を選択";

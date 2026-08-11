@@ -171,7 +171,7 @@ const appStrings = {
     arcEndAngleInvalid: "円弧の終点は開始点と異なる角度にしてください。",
     marqueeSelection: (x: string, y: string) => `矩形選択: ${x}, ${y} mm`,
     marqueeFeedback: (mode: "contained" | "crossing", count: number) =>
-      `${mode === "crossing" ? "交差選択" : "包含選択"}: ${count}件`,
+      `${mode === "crossing" ? "交差する図形を含めて選択" : "完全に含まれる図形を選択"}: ${count}件`,
     operationCompleted: "操作を完了しました。",
     selectGeometryToCopy: "コピーする図形を選択してください。",
     copiedGeometry: (count: number) => `${count} 件の図形をコピーしました。`,

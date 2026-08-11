@@ -453,7 +453,13 @@ export function MainWindowView() {
     onRestored: resetInspectorPresentation,
   });
   const { recoveryCandidates } = recoverySnapshot;
-  useWindowLifecycle({ state, allowWindowClose, saveBeforeDestructiveAction, requestDocumentSaveConfirmation });
+  useWindowLifecycle({
+    state,
+    allowWindowClose,
+    saveBeforeDestructiveAction,
+    presentOperationFailure,
+    requestDocumentSaveConfirmation,
+  });
   const recoveryEffects = useRecoveryEffects({ state });
   useEffect(() => {
     void refresh().then(() => setMessage(appStrings.status.readyToDraw));

@@ -11,6 +11,7 @@ type Props = {
   state: State | undefined;
   allowWindowClose: MutableRefObject<boolean>;
   saveBeforeDestructiveAction: () => Promise<boolean>;
+  presentOperationFailure: (error: unknown, operation: string, commandKind?: string) => void;
   requestDocumentSaveConfirmation: (reason: string, documentName: string) => Promise<DocumentSaveChoice>;
 };
 
@@ -19,6 +20,7 @@ export function useWindowLifecycle({
   state,
   allowWindowClose,
   saveBeforeDestructiveAction,
+  presentOperationFailure,
   requestDocumentSaveConfirmation,
 }: Props) {
   useEffect(() => {
@@ -53,7 +55,12 @@ export function useWindowLifecycle({
         } else if (choice === "discard") {
           try {
             await recoveryAdapter.discardCurrent();
-          } catch {
+          } catch (error) {
+            presentOperationFailure(
+              new Error(appStrings.error.recovery.discardFailed(error)),
+              "discardCurrentRecoverySnapshot",
+              "discard_current_recovery_snapshot",
+            );
             return;
           }
         } else return;
@@ -71,6 +78,7 @@ export function useWindowLifecycle({
     };
   }, [
     allowWindowClose,
+    presentOperationFailure,
     requestDocumentSaveConfirmation,
     saveBeforeDestructiveAction,
     state?.persistence.isDirty,
