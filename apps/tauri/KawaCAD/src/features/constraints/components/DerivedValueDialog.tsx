@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { parseDecimal } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
+import { derivedValueInitialText } from "@/features/constraints/domain/derivedValueDefaults";
 
 export type DerivedValue = { fixedMm: number } | { parameter: string };
 export type OffsetSourceOption = {
@@ -16,6 +17,7 @@ type Props = {
   sourceCount?: number;
   parameters: Array<{ id: string; name: string; valueMm: number }>;
   floating?: boolean;
+  floatingPosition?: { x: number; y: number };
   valueText?: string;
   entryMode?: "fixed" | "parameter";
   parameterId?: string;
@@ -34,6 +36,7 @@ export function DerivedValueDialog({
   sourceCount = 0,
   parameters,
   floating = false,
+  floatingPosition,
   valueText: controlledValueText,
   entryMode: controlledEntryMode,
   parameterId: controlledParameterId,
@@ -44,7 +47,7 @@ export function DerivedValueDialog({
   onCancel,
 }: Props) {
   const [localEntryMode, setLocalEntryMode] = useState<"fixed" | "parameter">("fixed");
-  const [localValueText, setLocalValueText] = useState(kind === "offset" ? "3" : "2");
+  const [localValueText, setLocalValueText] = useState(derivedValueInitialText(kind));
   const [localParameterId, setLocalParameterId] = useState(parameters[0]?.id ?? "");
   const [scope, setScope] = useState(offsetOptions[0]?.scope ?? "singleElement");
   const entryMode = controlledEntryMode ?? localEntryMode;
@@ -58,9 +61,22 @@ export function DerivedValueDialog({
   const value = parsedValue.ok ? parsedValue.value : undefined;
   const canConfirm =
     entryMode === "parameter" ? Boolean(parameterId) : Boolean(parsedValue.ok && parsedValue.value > 0);
+  const positionStyle =
+    floating && floatingPosition
+      ? {
+          left: `${Math.max(16, Math.min(floatingPosition.x + 16, window.innerWidth - 296))}px`,
+          top: `${Math.max(16, Math.min(floatingPosition.y + 16, window.innerHeight - 196))}px`,
+          right: "auto",
+          bottom: "auto",
+        }
+      : undefined;
 
   return (
-    <div className={`constraint-value-backdrop${floating ? " derived-value-floating" : ""}`} role="presentation">
+    <div
+      className={`constraint-value-backdrop${floating ? " derived-value-floating" : ""}`}
+      role="presentation"
+      style={positionStyle}
+    >
       <section
         className="constraint-value-dialog"
         role="dialog"

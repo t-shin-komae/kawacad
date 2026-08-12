@@ -69,11 +69,13 @@ type CanvasPointActionDependencies = CanvasActionContext & {
     ids: string[],
     previous?: import("@/features/canvas/state/useCanvasPresentation").PendingDerivedValue,
     clickPoint?: PointMm,
+    hudPosition?: { x: number; y: number },
   ) => Promise<void>;
   useSelectedTargets: (
     candidate: import("@/features/canvas/domain/canvasDomainModels").Tool,
     ids: Set<string>,
     clickPoint?: PointMm,
+    hudPosition?: { x: number; y: number },
   ) => void;
   openTextEntry: (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
 };
@@ -337,8 +339,15 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
         next.add(hit);
         setSelected(next);
         if (tool === "fillet" && pendingDerivedValue?.candidate === "fillet")
-          void applyDerived("fillet", [...next], pendingDerivedValue);
-        else useSelectedTargets(tool, next, tool === "offset" ? point : undefined);
+          void applyDerived("fillet", [...next], pendingDerivedValue, undefined, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+        else
+          useSelectedTargets(tool, next, tool === "offset" ? point : undefined, {
+            x: event.clientX,
+            y: event.clientY,
+          });
         return;
       }
       if (tool === "point") {
@@ -376,13 +385,13 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       if (tool === "freeText") {
         openTextEntry(
           appStrings.app.addAnnotationTitle,
-          [{ id: "content", label: appStrings.app.annotation, initialValue: "" }],
+          [{ id: "content", label: appStrings.app.annotation, initialValue: appStrings.app.annotation }],
           (values) => {
             const content = values.content.trim();
             if (!content) return;
             void command(
               "addFreeText",
-              { id: id("free-text"), content, positionMm: point, fontSizeMm: 3.2 },
+              { id: id("free-text"), content, positionMm: point, fontSizeMm: 4.0 },
               appStrings.app.textAdded,
             );
           },

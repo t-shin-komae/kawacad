@@ -522,7 +522,7 @@ describe("React workspace shortcuts", () => {
                   closed: false,
                 },
               },
-              { kind: "setDerivedRadius", payload: { derivedElementId: "derived:fillet", value: { fixedMm: 2 } } },
+              { kind: "setDerivedRadius", payload: { derivedElementId: "derived:fillet", value: { fixedMm: 5 } } },
             ],
           },
         }),
@@ -708,7 +708,7 @@ describe("React workspace shortcuts", () => {
       ...state,
       viewMode: "outputPreview",
       outputPreview: { pages: [], warnings: [] },
-      freeTexts: [{ id: "text:note", content: "注記", positionMm: { xMm: 0, yMm: 0 }, fontSizeMm: 3.2 }],
+      freeTexts: [{ id: "text:note", content: "注記", positionMm: { xMm: 0, yMm: 0 }, fontSizeMm: 4.0 }],
     };
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state") return previewState;
