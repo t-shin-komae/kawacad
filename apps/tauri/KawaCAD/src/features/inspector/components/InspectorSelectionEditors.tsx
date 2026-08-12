@@ -21,6 +21,7 @@ import type {
 } from "@/features/inspector/components/InspectorPanel";
 import { InspectorSection } from "@/shared/components/InspectorPrimitives";
 import { defaultSharedStyle } from "@/features/inspector/domain/sharedStyleDefaults";
+import { formatInspectorNumber, resolveInspectorValue } from "@/features/inspector/domain/inspectorValueFormatting";
 
 export const defaultStyle = defaultSharedStyle;
 
@@ -101,13 +102,21 @@ export function SelectedConstraintEditor({
 }) {
   const degrees = typeof constraint.value?.fixedDegrees === "number";
   const fixedValue = degrees ? constraint.value?.fixedDegrees : constraint.value?.fixedMm;
-  const [draft, setDraft] = useState(typeof fixedValue === "number" ? String(fixedValue) : "");
-  useEffect(() => setDraft(typeof fixedValue === "number" ? String(fixedValue) : ""), [fixedValue]);
-  const commit = () => {
+  const parameterID = typeof constraint.value?.parameter === "string" ? constraint.value.parameter : undefined;
+  const resolvedValue = resolveInspectorValue(constraint.value, parameters, degrees ? "fixedDegrees" : "fixedMm");
+  const [draft, setDraft] = useState(formatInspectorNumber(resolvedValue));
+  const [draftDirty, setDraftDirty] = useState(false);
+  useEffect(() => {
+    setDraft(formatInspectorNumber(resolvedValue));
+    setDraftDirty(false);
+  }, [resolvedValue]);
+  const commit = (forceFixed = false) => {
+    if (!forceFixed && !draftDirty) return;
     const parsed = parseDecimal(draft);
     const value = parsed.ok ? parsed.value : undefined;
     const valid = value !== undefined && Number.isFinite(value) && (degrees ? true : value > 0);
-    if (valid && value !== fixedValue)
+    const changed = forceFixed || (parameterID ? value !== resolvedValue : value !== fixedValue);
+    if (valid && changed)
       onCommand(
         "setConstraintValue",
         {
@@ -135,8 +144,11 @@ export function SelectedConstraintEditor({
             type="number"
             step=".01"
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onBlur={commit}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setDraftDirty(true);
+            }}
+            onBlur={() => commit()}
           />
         </label>
       )}
@@ -152,7 +164,7 @@ export function SelectedConstraintEditor({
                   { constraintId: constraint.id, parameterId: event.target.value },
                   appStrings.inspector.operationMessage.constraintParameterUpdated,
                 );
-              else commit();
+              else commit(true);
             }}
           >
             <option value="">{appStrings.inspector.fixedValue}</option>
@@ -270,7 +282,7 @@ export function FreeTextEditor({
           aria-label={appStrings.inspector.textContent}
           value={draft.content}
           onChange={(event) => setDraft({ ...draft, content: event.target.value })}
-          onBlur={commit}
+          onBlur={() => commit()}
         />
       </label>
       <button className="inspector-destructive-button" onClick={onDelete}>
@@ -549,12 +561,20 @@ export function DerivedElementEditor({
   const value = offset?.distance ?? fillet?.radius ?? {};
   const commandKind = offset ? "setDerivedDistance" : "setDerivedRadius";
   const label = offset ? appStrings.inspector.distance : appStrings.inspector.radius;
-  const [draftValue, setDraftValue] = useState(String(value.fixedMm ?? ""));
-  useEffect(() => setDraftValue(String(value.fixedMm ?? "")), [value.fixedMm]);
-  const commit = () => {
+  const parameterID = typeof value.parameter === "string" ? value.parameter : undefined;
+  const resolvedValue = resolveInspectorValue(value, parameters);
+  const [draftValue, setDraftValue] = useState(formatInspectorNumber(resolvedValue));
+  const [draftDirty, setDraftDirty] = useState(false);
+  useEffect(() => {
+    setDraftValue(formatInspectorNumber(resolvedValue));
+    setDraftDirty(false);
+  }, [resolvedValue]);
+  const commit = (forceFixed = false) => {
+    if (!forceFixed && !draftDirty) return;
     const parsed = parseDecimal(draftValue);
     const fixedMm = parsed.ok ? parsed.value : undefined;
-    if (typeof fixedMm === "number" && Number.isFinite(fixedMm) && fixedMm > 0 && fixedMm !== value.fixedMm)
+    const changed = forceFixed || (parameterID ? fixedMm !== resolvedValue : fixedMm !== value.fixedMm);
+    if (typeof fixedMm === "number" && Number.isFinite(fixedMm) && fixedMm > 0 && changed)
       onCommand(
         commandKind,
         { derivedElementId: derivedElement.id, value: { fixedMm } },
@@ -615,8 +635,11 @@ export function DerivedElementEditor({
           min=".01"
           step=".01"
           value={draftValue}
-          onChange={(event) => setDraftValue(event.target.value)}
-          onBlur={commit}
+          onChange={(event) => {
+            setDraftValue(event.target.value);
+            setDraftDirty(true);
+          }}
+          onBlur={() => commit()}
         />
       </label>
       {parameters.length > 0 && (
@@ -632,7 +655,7 @@ export function DerivedElementEditor({
                   { derivedElementId: derivedElement.id, value: { parameter } },
                   appStrings.inspector.parameterLinked(kind),
                 );
-              else commit();
+              else commit(true);
             }}
           >
             <option value="">{appStrings.inspector.fixedValue}</option>

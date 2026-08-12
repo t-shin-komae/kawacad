@@ -262,6 +262,7 @@ export type InspectorActionContext = Pick<
 export type PartActionContext = Pick<
   AppActionContext,
   | "state"
+  | "cursorPoint"
   | "command"
   | "selected"
   | "setSelected"

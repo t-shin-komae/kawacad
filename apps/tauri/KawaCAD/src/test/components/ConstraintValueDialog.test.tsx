@@ -52,6 +52,32 @@ describe("ConstraintValueDialog", () => {
     expect(screen.getByRole("presentation")).toHaveClass("floating-value-backdrop");
   });
 
+  it("formats fixed initial values and leaves unresolved values blank", () => {
+    render(
+      <ConstraintValueDialog
+        label="距離"
+        initialValue={{ fixedMm: 12 }}
+        parameters={[]}
+        degrees={false}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "値 (mm)" })).toHaveValue("12.00");
+    cleanup();
+    render(
+      <ConstraintValueDialog
+        label="距離"
+        initialValue={{}}
+        parameters={[]}
+        degrees={false}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "値 (mm)" })).toHaveValue("");
+  });
+
   it("places a floating value editor near the recorded work position", () => {
     render(
       <ConstraintValueDialog

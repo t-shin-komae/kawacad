@@ -4,6 +4,34 @@ import Testing
 
 @testable import KawaCADApp
 
+@Test("CADToolbar は選択中ツールの名前と設定値を現在状態から導出する")
+@MainActor
+func cad_toolbar_state_tracks_selected_tool_and_toggle_values() {
+  let appState = AppCoordinator(
+    documentAdapter: StubDocumentSessionAdapter(
+      createNewDocumentState: makeDocumentState(name: "Toolbar State")
+    ),
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) }
+  )
+  appState.actions.canvas.selectedTool = .line
+  appState.actions.uiBindings.toolbar.setGridVisible(false)
+  appState.actions.uiBindings.toolbar.setA4ReferenceVisible(true)
+  appState.actions.uiBindings.toolbar.setGridSnapEnabled(false)
+  appState.actions.uiBindings.toolbar.setPointSnapEnabled(true)
+
+  let props = WorkspaceViewPropsFactory(
+    actions: appState.actions,
+    inspectorPresentation: appState.inspectorPresentation,
+    canvasPresentation: appState.canvasPresentation
+  )
+
+  #expect(props.toolbarState.selectedTool == .line)
+  #expect(props.toolbarState.gridVisible == false)
+  #expect(props.toolbarState.a4ReferenceVisible)
+  #expect(props.toolbarState.gridSnapEnabled == false)
+  #expect(props.toolbarState.pointSnapEnabled)
+}
+
 @Test("CADToolbar の condensed 表示は regular workspace に収まり、表示モード幅を維持する")
 @MainActor
 func cad_toolbar_condensed_presentation_fits_regular_workspace() {

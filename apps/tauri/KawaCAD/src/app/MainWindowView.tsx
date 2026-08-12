@@ -358,6 +358,7 @@ export function MainWindowView() {
     rewindFilletDraft,
     handleCanvasPoint,
     canvasMove,
+    canvasLeave,
     canvasUp,
     handleCanvasDoubleClick,
     handleCanvasWheel,
@@ -666,6 +667,7 @@ export function MainWindowView() {
             sourceCount={pendingDerivedValue.preflight.sourceEntityIds.length}
             parameters={state?.parameters ?? []}
             floating={pendingDerivedValue.candidate === "fillet"}
+            floatingPosition={pendingDerivedValue.hudPosition}
             valueText={pendingDerivedValue.valueText}
             entryMode={pendingDerivedValue.entryMode}
             parameterId={pendingDerivedValue.parameterId}
@@ -814,6 +816,7 @@ export function MainWindowView() {
                 dimensionArcCounterclockwise: dimensionArcCounterclockwise,
                 onPointerDown: handleCanvasPoint,
                 onPointerMove: canvasMove,
+                onPointerLeave: canvasLeave,
                 onPointerUp: canvasUp,
                 onDoubleClick: handleCanvasDoubleClick,
                 onCommitFreeText: commitFreeTextEdit,

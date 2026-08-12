@@ -4299,6 +4299,7 @@ func app_state_applies_active_pattern_line_style_to_offset_derived_element(
   appState.actions.document.setActivePatternLineStyle("style:stitch-line")
   appState.actions.constraints.beginOffsetValueEntry(
     sourceEntityIDs: ["entity:line-a"], direction: "left")
+  #expect(appState.actions.canvas.pendingConstraintValueDraft?.valueText == "3.00")
   appState.actions.constraints.updatePendingConstraintValueText("3.0")
   appState.actions.constraints.updatePendingConstraintEntryMode(entryMode)
   appState.actions.constraints.updatePendingConstraintParameterID("parameter:offset")
@@ -4939,6 +4940,7 @@ func uc204_app_state_fillet_tool_adds_derived_element() {
 
   appState.actions.constraints.handleConstraintTargetSelection(first.entitySelectionTarget)
   #expect(appState.actions.canvas.pendingConstraintValueDraft?.kind == "fillet")
+  #expect(appState.actions.canvas.pendingConstraintValueDraft?.valueText == "5.00")
   #expect(
     appState.actions.canvas.pendingConstraintValueDraft?.filletSourceEntityIDs == ["entity:first"])
 

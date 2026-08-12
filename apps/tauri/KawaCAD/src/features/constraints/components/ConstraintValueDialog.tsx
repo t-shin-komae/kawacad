@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { parseDecimal } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
+import { formatInspectorNumber } from "@/features/inspector/domain/inspectorValueFormatting";
 
 type Value = { fixedMm?: number; fixedDegrees?: number; parameter?: string };
 
 type Props = {
   label: string;
   initialValue?: Record<string, number | string | undefined>;
-  parameters: Array<{ id: string; name: string }>;
+  parameters: Array<{ id: string; name: string; valueMm: number }>;
   degrees: boolean;
   floating?: boolean;
   floatingPosition?: { x: number; y: number };
@@ -30,7 +31,9 @@ export function ConstraintValueDialog({
   const initialFixed = degrees ? initialValue?.fixedDegrees : initialValue?.fixedMm;
   const initialParameter = typeof initialValue?.parameter === "string" ? initialValue.parameter : undefined;
   const [mode, setMode] = useState<"fixed" | "parameter">(initialParameter ? "parameter" : "fixed");
-  const [draft, setDraft] = useState(String(typeof initialFixed === "number" ? initialFixed : 10));
+  const [draft, setDraft] = useState(
+    formatInspectorNumber(typeof initialFixed === "number" ? initialFixed : undefined),
+  );
   const [parameter, setParameter] = useState(initialParameter ?? parameters[0]?.id ?? "");
   const parsedValue = parseDecimal(draft);
   const numericValue = parsedValue.ok ? parsedValue.value : undefined;

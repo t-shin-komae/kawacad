@@ -331,5 +331,9 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
     ],
   );
 
-  return { canvasMove, canvasUp };
+  const canvasLeave = useCallback(() => {
+    setCursorPoint(undefined);
+  }, [setCursorPoint]);
+
+  return { canvasMove, canvasLeave, canvasUp };
 }
