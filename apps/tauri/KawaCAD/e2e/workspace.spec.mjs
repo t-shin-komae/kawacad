@@ -592,11 +592,12 @@ test.describe("Tauri React workspace through the real Core process", () => {
       .poll(async () => (await core.invoke("document_state")).sharedStyles)
       .toHaveLength(initialStyleCount + 1);
 
-    const newStyle = (await core.invoke("document_state")).sharedStyles.find((style) => style.name === "新規線種");
+    const newStyleName = `共有スタイル ${initialStyleCount + 1}`;
+    const newStyle = (await core.invoke("document_state")).sharedStyles.find((style) => style.name === newStyleName);
     expect(newStyle).toBeDefined();
-    const styleCard = page.locator(".inspector-disclosure").filter({ hasText: "新規線種" }).first();
+    const styleCard = page.locator(".inspector-disclosure").filter({ hasText: newStyleName }).first();
     await styleCard.locator(".inspector-disclosure-summary").click();
-    const styleName = styleCard.getByRole("textbox", { name: "新規線種 の名前", exact: true });
+    const styleName = styleCard.getByRole("textbox", { name: `${newStyleName} の名前`, exact: true });
     await styleName.fill("縫い線");
     await styleName.blur();
     await expect
