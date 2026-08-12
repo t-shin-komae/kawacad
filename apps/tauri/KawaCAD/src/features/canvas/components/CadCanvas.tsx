@@ -90,6 +90,7 @@ type Props = {
   dimensionArcCounterclockwise?: Record<string, boolean>;
   onPointerDown: (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => void;
   onPointerMove: (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => void;
+  onPointerLeave?: () => void;
   onPointerUp: (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => void;
   onDoubleClick: (event: React.MouseEvent<HTMLCanvasElement>, point: PointMm) => void;
   onCommitFreeText: (id: string, content: string) => void;
@@ -145,6 +146,7 @@ export function CADCanvas({
   dimensionArcCounterclockwise = {},
   onPointerDown,
   onPointerMove,
+  onPointerLeave,
   onPointerUp,
   onDoubleClick,
   onCommitFreeText,
@@ -313,6 +315,7 @@ export function CADCanvas({
         }}
         onPointerDown={(event) => onPointerDown(event, pointAt(event))}
         onPointerMove={(event) => onPointerMove(event, pointAt(event))}
+        onPointerLeave={onPointerLeave}
         onPointerUp={(event) => onPointerUp(event, pointAt(event))}
         onDoubleClick={(event) => onDoubleClick(event, pointAt(event))}
         onWheel={onWheel}
