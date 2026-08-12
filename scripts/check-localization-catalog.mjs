@@ -12,6 +12,7 @@ const allowedLiterals = new Set(
 );
 const japaneseCharacters = /[ぁ-んァ-ヶ一-龯]/u;
 const stringLiteral = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/gu;
+const jsxTextNode = />([^<]*[ぁ-んァ-ヶ一-龯][^<]*)</gu;
 const sourceRoots = [
   {
     directory: "apps/tauri/KawaCAD/src",
@@ -49,6 +50,16 @@ for (const { directory, shouldScan } of sourceRoots) {
         if (!japaneseCharacters.test(text)) continue;
         if (!allowedLiterals.has(`${repositoryPath}\0${text}`)) {
           violations.push(`${repositoryPath}:${lineNumber + 1}: ${text}`);
+        }
+      }
+    }
+    if (repositoryPath.endsWith(".tsx")) {
+      for (const match of contents.matchAll(jsxTextNode)) {
+        const text = match[1].replace(/\s+/gu, " ").trim();
+        if (!text) continue;
+        const lineNumber = contents.slice(0, match.index ?? 0).split("\n").length;
+        if (!allowedLiterals.has(`${repositoryPath}\0${text}`)) {
+          violations.push(`${repositoryPath}:${lineNumber}: ${text}`);
         }
       }
     }
