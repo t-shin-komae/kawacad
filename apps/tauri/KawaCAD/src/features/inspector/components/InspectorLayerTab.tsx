@@ -51,7 +51,10 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
             }
             metadata={item.visible ? appStrings.inspector.visible : appStrings.inspector.hidden}
             expanded={selectedLayerId === item.id}
-            onToggle={() => setSelectedLayerId(item.id)}
+            onToggle={() => {
+              setSelectedLayerId(item.id);
+              props.onActiveLayerChange(item.id);
+            }}
           >
             <div className="row inspector-editor-heading">
               <input

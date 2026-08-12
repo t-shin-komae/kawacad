@@ -104,6 +104,16 @@ describe("InspectorPanel", () => {
     ]);
   });
 
+  it("makes a layer selected in the layer list the drawing target", () => {
+    const onActiveLayerChange = vi.fn();
+    render(cloneElement(panel(), { onActiveLayerChange }));
+
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Stitch/ }));
+
+    expect(onActiveLayerChange).toHaveBeenCalledWith("layer:stitch");
+  });
+
   it("shows the SwiftUI document overview on the selection tab", () => {
     render(panel());
     expect(screen.getByText("ドキュメント")).toBeInTheDocument();
