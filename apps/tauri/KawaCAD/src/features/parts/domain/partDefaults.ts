@@ -1,5 +1,7 @@
+import { appStrings } from "@/localization";
+
 export function partDefaultName(index: number): string {
-  return `パーツ ${index}`;
+  return `${appStrings.inspector.parts} ${index}`;
 }
 
 export function partLibraryPlacement(

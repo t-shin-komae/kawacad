@@ -7,6 +7,7 @@ import {
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
 import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
+import { sharedStyleDefaultName } from "@/features/inspector/domain/sharedStyleDefaults";
 import { InspectorDisclosureRow, InspectorSection } from "@/shared/components/InspectorPrimitives";
 
 type InspectorStylesTabProps = {
@@ -111,7 +112,11 @@ export function InspectorStylesTab({
         onClick={() =>
           props.onCommand(
             "addSharedStyle",
-            { id: "style:" + crypto.randomUUID(), name: appStrings.inspector.newStyle, style: defaultStyle },
+            {
+              id: "style:" + crypto.randomUUID(),
+              name: sharedStyleDefaultName(props.sharedStyles.length + 1),
+              style: defaultStyle,
+            },
             appStrings.inspector.operationMessage.sharedStyleAdded,
           )
         }

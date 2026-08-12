@@ -997,10 +997,10 @@ struct DocumentCommandFactory {
   func makeAddSharedStyleCommand(number: Int) -> DocumentCommandRequest {
     let style = ProjectSharedStyle(
       id: "style:user-\(uuidProvider())",
-      name: AppStrings.tr("command.default_shared_style_name", number),
-      colorHex: "#111827",
-      strokeWidthMM: 0.2,
-      linePattern: .solid
+      name: SharedStyleDefaults.name(number: number),
+      colorHex: SharedStyleDefaults.colorHex,
+      strokeWidthMM: SharedStyleDefaults.strokeWidthMM,
+      linePattern: SharedStyleDefaults.linePattern
     )
     return DocumentCommandRequest(
       payload: [
