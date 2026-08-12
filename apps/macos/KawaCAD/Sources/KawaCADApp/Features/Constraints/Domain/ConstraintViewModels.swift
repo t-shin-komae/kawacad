@@ -117,10 +117,10 @@ enum OffsetDirection: String, CaseIterable, Identifiable, Hashable {
 
   var displayName: String {
     switch self {
-    case .left: return "左側"
-    case .right: return "右側"
-    case .inward: return "内側"
-    case .outward: return "外側"
+    case .left: return AppStrings.tr("derived.direction.left")
+    case .right: return AppStrings.tr("derived.direction.right")
+    case .inward: return AppStrings.tr("derived.direction.inward")
+    case .outward: return AppStrings.tr("derived.direction.outward")
     }
   }
 
@@ -140,8 +140,8 @@ enum ProjectDerivedElementKind: String, Hashable {
 
   var displayName: String {
     switch self {
-    case .offsetCurve: return "オフセット線"
-    case .fillet: return "フィレット"
+    case .offsetCurve: return AppStrings.tr("derived.kind.offset")
+    case .fillet: return AppStrings.tr("derived.kind.fillet")
     }
   }
 }

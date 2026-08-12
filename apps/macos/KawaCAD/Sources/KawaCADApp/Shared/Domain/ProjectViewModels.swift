@@ -43,13 +43,19 @@ struct LayerColorPreset: Identifiable, Hashable {
   let colorHex: String
 
   static let all: [LayerColorPreset] = [
-    LayerColorPreset(id: "black", displayName: "黒", colorHex: "#111827"),
-    LayerColorPreset(id: "gray", displayName: "グレー", colorHex: "#6B7280"),
-    LayerColorPreset(id: "red", displayName: "赤", colorHex: "#DC2626"),
-    LayerColorPreset(id: "blue", displayName: "青", colorHex: "#2563EB"),
-    LayerColorPreset(id: "green", displayName: "緑", colorHex: "#16A34A"),
-    LayerColorPreset(id: "orange", displayName: "オレンジ", colorHex: "#EA580C"),
-    LayerColorPreset(id: "purple", displayName: "紫", colorHex: "#9333EA"),
+    LayerColorPreset(
+      id: "black", displayName: AppStrings.tr("style.color.black"), colorHex: "#111827"),
+    LayerColorPreset(
+      id: "gray", displayName: AppStrings.tr("style.color.gray"), colorHex: "#6B7280"),
+    LayerColorPreset(id: "red", displayName: AppStrings.tr("style.color.red"), colorHex: "#DC2626"),
+    LayerColorPreset(
+      id: "blue", displayName: AppStrings.tr("style.color.blue"), colorHex: "#2563EB"),
+    LayerColorPreset(
+      id: "green", displayName: AppStrings.tr("style.color.green"), colorHex: "#16A34A"),
+    LayerColorPreset(
+      id: "orange", displayName: AppStrings.tr("style.color.orange"), colorHex: "#EA580C"),
+    LayerColorPreset(
+      id: "purple", displayName: AppStrings.tr("style.color.purple"), colorHex: "#9333EA"),
   ]
 
   static func matching(_ colorHex: String) -> LayerColorPreset? {

@@ -1089,7 +1089,9 @@ struct DocumentCommandFactory {
           "derivedElementId": .string(derivedElementID),
           "sourceEntityIds": .array(sourceEntityIDs.map(CoreJSONValue.string)),
           "closed": .bool(closed),
-        ])), successMessage: AppStrings.tr("command.derived_element_updated", "フィレット"))
+        ])),
+      successMessage: AppStrings.tr(
+        "command.derived_element_updated", AppStrings.tr("derived.kind.fillet")))
   }
 
   func makeAddParameterCommand(number: Int) -> DocumentCommandRequest {

@@ -58,6 +58,7 @@ export function parseArgs(argv) {
 
 export function preCommitPlan({ fix = false, nodePlatform = process.platform } = {}) {
   const specs = [
+    command("node", ["scripts/check-localization-catalog.mjs"], { cwd: paths.repositoryRoot }),
     command("cargo", fix ? ["fmt", "--all"] : ["fmt", "--all", "--check"], { cwd: paths.repositoryRoot }),
     command("cargo", ["clippy", "--workspace", "--all-targets", "--", "-D", "warnings"], { cwd: paths.repositoryRoot }),
   ];

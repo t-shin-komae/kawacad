@@ -1,0 +1,17 @@
+[
+  {
+    "file": "apps/macos/KawaCAD/Sources/KawaCADApp/Adapters/DocumentRecoveryAdapter.swift",
+    "text": "COMMITTED marker がありません",
+    "reason": "recovery validation diagnostic stored in broken snapshot metadata"
+  },
+  {
+    "file": "apps/macos/KawaCAD/Sources/KawaCADApp/Adapters/DocumentRecoveryAdapter.swift",
+    "text": "metadata.json を読めません",
+    "reason": "recovery validation diagnostic stored in broken snapshot metadata"
+  },
+  {
+    "file": "apps/macos/KawaCAD/Sources/KawaCADApp/Adapters/DocumentRecoveryAdapter.swift",
+    "text": "snapshot.kawa を検証できません",
+    "reason": "recovery validation diagnostic stored in broken snapshot metadata"
+  }
+]

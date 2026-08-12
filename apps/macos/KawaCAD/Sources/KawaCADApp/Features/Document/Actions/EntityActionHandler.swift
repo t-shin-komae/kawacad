@@ -79,7 +79,8 @@ extension DocumentActionHandler {
   @discardableResult
   func setDerivedElementDistance(_ derivedElement: ProjectDerivedElement, valueMM: Double) -> Bool {
     guard valueMM > 0, valueMM.isFinite else {
-      statusMessage = AppStrings.tr("status.enter_positive_value", "オフセット距離")
+      statusMessage = AppStrings.tr(
+        "status.enter_positive_value", AppStrings.tr("status.offset_distance"))
       return false
     }
     let request =

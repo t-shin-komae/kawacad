@@ -8,6 +8,7 @@ import { generateLicenseNotices } from "../generate-licenses.mjs";
 import {
   infoPlistContents,
   parseArgs,
+  preCommitPlan,
   prePushPlan,
   releaseArtifactPath,
   releasePlan,
@@ -148,6 +149,13 @@ test("pre-push verifies Swift formatting, real-Core tests, and the release build
     true,
   );
   assert.equal(swiftTest?.env.LEATHER_ENABLE_LIVE_CORE_TESTS, "1");
+});
+
+test("pre-commit checks the localization literal catalog", () => {
+  const commands = preCommitPlan({ nodePlatform: "linux" })
+    .map(commandText)
+    .join("\n");
+  assert.match(commands, /node scripts\/check-localization-catalog\.mjs/);
 });
 
 test("Swift is skipped from all-tests planning on non-macOS", () => {
