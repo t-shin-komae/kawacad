@@ -37,12 +37,17 @@ struct CADToolbar: View {
       }
 
       HStack(spacing: 8) {
-        ToolIcon(tool: state.selectedTool, size: 18, color: LeatherColors.ink)
-          .frame(width: 22)
-        Text(state.selectedTool.displayName)
-          .font(.system(size: 13))
-          .lineLimit(1)
-          .layoutPriority(1)
+        HStack(spacing: 8) {
+          ToolIcon(tool: state.selectedTool, size: 18, color: LeatherColors.ink)
+            .frame(width: 22)
+          Text(state.selectedTool.displayName)
+            .font(.system(size: 13))
+            .lineLimit(1)
+            .layoutPriority(1)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(state.selectedTool.displayName)
+
         if density == .expanded {
           ControlGroup {
             copySelectionButton
@@ -53,8 +58,6 @@ struct CADToolbar: View {
       }
       .foregroundStyle(LeatherColors.ink)
       .frame(minWidth: 112, alignment: .leading)
-      .accessibilityElement(children: .combine)
-      .accessibilityLabel(state.selectedTool.displayName)
 
       if density == .expanded {
         Divider()
