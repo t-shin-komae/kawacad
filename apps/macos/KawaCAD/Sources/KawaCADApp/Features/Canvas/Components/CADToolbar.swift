@@ -117,7 +117,7 @@ struct CADToolbar: View {
       }
 
       if density == .expanded {
-        ControlGroup {
+        HStack(spacing: 4) {
           ToolbarToggleButton(
             title: AppStrings.tr("toolbar.grid"),
             iconKind: .grid,
@@ -287,25 +287,22 @@ private struct ToolbarOrientationToggle: View {
   let action: (OutputPrintOrientation) -> Void
 
   var body: some View {
-    Toggle(
-      isOn: Binding(
-        get: { isLandscape },
-        set: { action($0 ? .landscape : .portrait) }
-      )
-    ) {
+    Button {
+      action(isLandscape ? .portrait : .landscape)
+    } label: {
       Image(systemName: isLandscape ? "rectangle" : "rectangle.portrait")
         .font(.system(size: 12, weight: .semibold))
         .frame(width: 28, height: 28)
         .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
         .background(isLandscape ? LeatherColors.selectedFill : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-        .overlay(
-          RoundedRectangle(cornerRadius: 5, style: .continuous)
-            .stroke(isLandscape ? LeatherColors.selectedStroke : .clear)
-        )
+      .overlay(
+        RoundedRectangle(cornerRadius: 5, style: .continuous)
+          .stroke(isLandscape ? LeatherColors.selectedStroke : .clear)
+      )
+      .contentShape(Rectangle())
     }
-    .toggleStyle(.button)
-    .buttonStyle(.borderless)
+    .buttonStyle(.plain)
     .help(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityLabel(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityValue(isLandscape ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
@@ -339,12 +336,9 @@ private struct ToolbarToggleButton: View {
   let action: (Bool) -> Void
 
   var body: some View {
-    Toggle(
-      isOn: Binding(
-        get: { isOn },
-        set: action
-      )
-    ) {
+    Button {
+      action(!isOn)
+    } label: {
       ToolbarToggleIcon(
         kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
       )
@@ -355,9 +349,9 @@ private struct ToolbarToggleButton: View {
         RoundedRectangle(cornerRadius: 5, style: .continuous)
           .stroke(isOn ? LeatherColors.selectedStroke : .clear)
       )
+      .contentShape(Rectangle())
     }
-    .toggleStyle(.button)
-    .buttonStyle(.borderless)
+    .buttonStyle(.plain)
     .help(title)
     .accessibilityLabel(title)
     .accessibilityValue(isOn ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
