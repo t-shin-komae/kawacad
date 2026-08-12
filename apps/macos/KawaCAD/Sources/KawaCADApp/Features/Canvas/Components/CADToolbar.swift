@@ -296,11 +296,11 @@ private struct ToolbarOrientationToggle: View {
         .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
         .background(isLandscape ? LeatherColors.selectedFill : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
-          .stroke(isLandscape ? LeatherColors.selectedStroke : .clear)
-      )
-      .contentShape(Rectangle())
+        .overlay(
+          RoundedRectangle(cornerRadius: 5, style: .continuous)
+            .stroke(isLandscape ? LeatherColors.selectedStroke : .clear)
+        )
+        .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
     .help(AppStrings.tr("toolbar.a4_landscape"))
