@@ -1080,7 +1080,7 @@ input[type="checkbox"] {
   pointer-events: none;
 }
 .derived-value-floating {
-  position: absolute;
+  position: fixed;
   inset: auto 16px 44px auto;
   display: block;
   background: transparent;
