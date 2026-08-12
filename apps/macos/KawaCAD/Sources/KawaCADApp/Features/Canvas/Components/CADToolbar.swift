@@ -117,7 +117,7 @@ struct CADToolbar: View {
       }
 
       if density == .expanded {
-        HStack(spacing: 0) {
+        ControlGroup {
           ToolbarToggleButton(
             title: AppStrings.tr("toolbar.grid"),
             iconKind: .grid,
@@ -292,7 +292,7 @@ private struct ToolbarOrientationToggle: View {
     } label: {
       Image(systemName: isLandscape ? "rectangle" : "rectangle.portrait")
         .font(.system(size: 12, weight: .semibold))
-        .frame(width: 22, height: 22)
+        .frame(width: 28, height: 28)
         .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
         .background(isLandscape ? LeatherColors.selectedFill : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
@@ -302,7 +302,7 @@ private struct ToolbarOrientationToggle: View {
         )
         .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.borderless)
     .help(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityLabel(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityValue(isLandscape ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
@@ -342,7 +342,7 @@ private struct ToolbarToggleButton: View {
       ToolbarToggleIcon(
         kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
       )
-      .frame(width: 22, height: 22)
+      .frame(width: 28, height: 28)
       .background(isOn ? LeatherColors.selectedFill : .clear)
       .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
       .overlay(
@@ -351,7 +351,7 @@ private struct ToolbarToggleButton: View {
       )
       .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.borderless)
     .help(title)
     .accessibilityLabel(title)
     .accessibilityValue(isOn ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
