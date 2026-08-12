@@ -339,9 +339,12 @@ private struct ToolbarToggleButton: View {
   let action: (Bool) -> Void
 
   var body: some View {
-    Button {
-      action(!isOn)
-    } label: {
+    Toggle(
+      isOn: Binding(
+        get: { isOn },
+        set: action
+      )
+    ) {
       ToolbarToggleIcon(
         kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
       )
@@ -353,6 +356,7 @@ private struct ToolbarToggleButton: View {
           .stroke(isOn ? LeatherColors.selectedStroke : .clear)
       )
     }
+    .toggleStyle(.button)
     .buttonStyle(.borderless)
     .help(title)
     .accessibilityLabel(title)

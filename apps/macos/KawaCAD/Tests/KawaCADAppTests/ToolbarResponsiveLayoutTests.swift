@@ -30,6 +30,21 @@ func cad_toolbar_state_tracks_selected_tool_and_toggle_values() {
   #expect(props.toolbarState.a4ReferenceVisible)
   #expect(props.toolbarState.gridSnapEnabled == false)
   #expect(props.toolbarState.pointSnapEnabled)
+
+  props.toolbarActions.setGridVisible(true)
+  props.toolbarActions.setA4ReferenceVisible(false)
+  props.toolbarActions.setGridSnapEnabled(true)
+  props.toolbarActions.setPointSnapEnabled(false)
+
+  let updatedProps = WorkspaceViewPropsFactory(
+    actions: appState.actions,
+    inspectorPresentation: appState.inspectorPresentation,
+    canvasPresentation: appState.canvasPresentation
+  )
+  #expect(updatedProps.toolbarState.gridVisible)
+  #expect(!updatedProps.toolbarState.a4ReferenceVisible)
+  #expect(updatedProps.toolbarState.gridSnapEnabled)
+  #expect(!updatedProps.toolbarState.pointSnapEnabled)
 }
 
 @Test("CADToolbar の condensed 表示は regular workspace に収まり、表示モード幅を維持する")
