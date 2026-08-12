@@ -9,6 +9,8 @@ enum LeatherColors {
   static let secondaryInk = Color(nsColor: .secondaryLabelColor)
   static let tertiaryInk = Color(nsColor: .tertiaryLabelColor)
   static let accent = Color.accentColor
+  static let selectedControlFill = Color(nsColor: .selectedControlColor)
+  static let selectedControlInk = Color(nsColor: .selectedControlTextColor)
   static let warning = Color(nsColor: .systemOrange)
   static let destructive = Color(nsColor: .systemRed)
   static let selectedFill = Color.accentColor.opacity(0.14)
