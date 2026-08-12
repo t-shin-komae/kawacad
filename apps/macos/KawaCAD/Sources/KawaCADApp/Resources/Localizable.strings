@@ -822,3 +822,20 @@
 "status.part_library_added" = "%@をパーツライブラリへ登録しました";
 "status.part_library_removed" = "%@をパーツライブラリから削除しました";
 "status.part_library_save_failed" = "パーツライブラリを保存できません: %@";
+
+"app.annotation" = "注記";
+"style.color.black" = "黒";
+"style.color.gray" = "グレー";
+"style.color.red" = "赤";
+"style.color.blue" = "青";
+"style.color.green" = "緑";
+"style.color.orange" = "オレンジ";
+"style.color.purple" = "紫";
+"derived.direction.left" = "左側";
+"derived.direction.right" = "右側";
+"derived.direction.inward" = "内側";
+"derived.direction.outward" = "外側";
+"derived.kind.offset" = "オフセット線";
+"derived.kind.fillet" = "フィレット";
+"status.offset_distance" = "オフセット距離";
+"status.line_width" = "線幅";

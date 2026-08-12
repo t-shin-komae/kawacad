@@ -141,6 +141,8 @@ const appStrings = {
   status: {
     loading: "読み込み中です。",
     readyToDraw: "ツールを選択して作図してください。",
+    offsetDistance: "オフセット距離",
+    lineWidth: "線幅",
     recoverySnapshotSaveFailed: (error: unknown) => `復旧用スナップショットを保存できません: ${String(error)}`,
     selectSingleArcForTangency: "両端を接線化する円弧を1つ選択してください。",
     cannotDeleteLastLayer: "最後のレイヤーは削除できません。",
@@ -885,6 +887,22 @@ export const sharedLocalizationKeyMap = {
   "constraint_status.fully_constrained": "constraintStatusNames.fullyConstrained",
   "constraint_status.over_constrained": "constraintStatusNames.overConstrained",
   "constraint_status.conflicting": "constraintStatusNames.conflicting",
+  "app.annotation": "app.annotation",
+  "style.color.black": "styles.black",
+  "style.color.gray": "styles.gray",
+  "style.color.red": "styles.red",
+  "style.color.blue": "styles.blue",
+  "style.color.green": "styles.green",
+  "style.color.orange": "styles.orange",
+  "style.color.purple": "styles.purple",
+  "derived.direction.left": "inspector.directions.left",
+  "derived.direction.right": "inspector.directions.right",
+  "derived.direction.inward": "inspector.directions.inward",
+  "derived.direction.outward": "inspector.directions.outward",
+  "derived.kind.offset": "inspector.offsetElement",
+  "derived.kind.fillet": "inspector.filletElement",
+  "status.offset_distance": "status.offsetDistance",
+  "status.line_width": "status.lineWidth",
 } as const;
 
 export { appStrings };
