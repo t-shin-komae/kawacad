@@ -152,6 +152,7 @@ struct CADToolbar: View {
             action: actions.setPointSnapEnabled
           )
         }
+        .tint(LeatherColors.selectedControlFill)
       }
 
       Spacer()
@@ -296,16 +297,10 @@ private struct ToolbarOrientationToggle: View {
       Image(systemName: isLandscape ? "rectangle" : "rectangle.portrait")
         .font(.system(size: 12, weight: .semibold))
         .frame(width: 28, height: 28)
-        .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
-        .background(isLandscape ? LeatherColors.selectedFill : .clear)
-        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-        .overlay(
-          RoundedRectangle(cornerRadius: 5, style: .continuous)
-            .stroke(isLandscape ? LeatherColors.selectedStroke : .clear)
-        )
+        .foregroundStyle(
+          isLandscape ? LeatherColors.selectedControlInk : LeatherColors.secondaryInk)
     }
     .toggleStyle(.button)
-    .buttonStyle(.borderless)
     .help(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityLabel(AppStrings.tr("toolbar.a4_landscape"))
     .accessibilityValue(isLandscape ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
@@ -339,21 +334,19 @@ private struct ToolbarToggleButton: View {
   let action: (Bool) -> Void
 
   var body: some View {
-    Button {
-      action(!isOn)
-    } label: {
+    Toggle(
+      isOn: Binding(
+        get: { isOn },
+        set: action
+      )
+    ) {
       ToolbarToggleIcon(
-        kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
+        kind: iconKind,
+        color: isOn ? LeatherColors.selectedControlInk : LeatherColors.secondaryInk
       )
       .frame(width: 28, height: 28)
-      .background(isOn ? LeatherColors.selectedFill : .clear)
-      .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-      .overlay(
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
-          .stroke(isOn ? LeatherColors.selectedStroke : .clear)
-      )
     }
-    .buttonStyle(.borderless)
+    .toggleStyle(.button)
     .help(title)
     .accessibilityLabel(title)
     .accessibilityValue(isOn ? AppStrings.tr("common.on") : AppStrings.tr("common.off"))
