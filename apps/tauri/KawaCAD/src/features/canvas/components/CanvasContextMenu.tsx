@@ -164,6 +164,7 @@ export function CanvasContextMenu({
     );
   return (
     <div
+      ref={menuRef}
       className="canvas-context-menu"
       role="menu"
       style={{ left: position.x, top: position.y }}
