@@ -70,7 +70,7 @@ export function usePartActionCallbacks(dependencies: PartActionDependencies) {
         }
       },
     );
-  }, [command, openTextEntry, selected]);
+  }, [command, openTextEntry, selected, state?.parts]);
 
   const selectPartContents = useCallback(
     (part: Part) => {

@@ -7,8 +7,9 @@ export function partLibraryPlacement(
   existingOrigins: Array<{ xMm: number; yMm: number }>,
 ): { xMm: number; yMm: number } {
   if (cursorPoint) return cursorPoint;
+  const maxY = existingOrigins.reduce((max, origin) => Math.max(max, origin.yMm), -Infinity);
   return {
     xMm: (existingOrigins.map((origin) => origin.xMm).reduce((max, value) => Math.max(max, value), -30) ?? -30) + 30,
-    yMm: existingOrigins.map((origin) => origin.yMm).reduce((max, value) => Math.max(max, value), 0),
+    yMm: Number.isFinite(maxY) ? maxY : 0,
   };
 }
