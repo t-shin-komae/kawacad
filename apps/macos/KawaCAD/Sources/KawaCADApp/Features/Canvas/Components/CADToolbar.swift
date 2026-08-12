@@ -117,7 +117,7 @@ struct CADToolbar: View {
       }
 
       if density == .expanded {
-        HStack(spacing: 4) {
+        HStack(spacing: 0) {
           ToolbarToggleButton(
             title: AppStrings.tr("toolbar.grid"),
             iconKind: .grid,
@@ -292,7 +292,7 @@ private struct ToolbarOrientationToggle: View {
     } label: {
       Image(systemName: isLandscape ? "rectangle" : "rectangle.portrait")
         .font(.system(size: 12, weight: .semibold))
-        .frame(width: 28, height: 28)
+        .frame(width: 22, height: 22)
         .foregroundStyle(isLandscape ? LeatherColors.accent : LeatherColors.secondaryInk)
         .background(isLandscape ? LeatherColors.selectedFill : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
@@ -342,7 +342,7 @@ private struct ToolbarToggleButton: View {
       ToolbarToggleIcon(
         kind: iconKind, color: isOn ? LeatherColors.accent : LeatherColors.secondaryInk
       )
-      .frame(width: 28, height: 28)
+      .frame(width: 22, height: 22)
       .background(isOn ? LeatherColors.selectedFill : .clear)
       .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
       .overlay(
