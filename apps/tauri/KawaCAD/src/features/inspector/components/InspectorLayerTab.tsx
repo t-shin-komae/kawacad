@@ -23,7 +23,7 @@ type InspectorLayerTabProps = {
 export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFields }: InspectorLayerTabProps) {
   const [selectedLayerId, setSelectedLayerId] = useState<string>();
   return (
-    <InspectorSection title={appStrings.inspector.layers} icon={Layers3}>
+    <InspectorSection title={appStrings.inspector.layer} icon={Layers3}>
       <label>
         {appStrings.inspector.drawingLayer}
         <select value={props.activeLayerId} onChange={(event) => props.onActiveLayerChange(event.target.value)}>
@@ -64,7 +64,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
               subtitle={
                 appStrings.inspector.layerKinds[item.kind as keyof typeof appStrings.inspector.layerKinds] ?? item.kind
               }
-              metadata={item.visible ? appStrings.inspector.visible : appStrings.inspector.hidden}
+              metadata={item.visible ? appStrings.inspector.layerVisible : appStrings.inspector.hidden}
               expanded={selectedLayerId === item.id}
               onToggle={() => {
                 setSelectedLayerId(item.id);
@@ -91,7 +91,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                     <button
                       type="button"
                       className="inspector-icon-button"
-                      aria-label={item.visible ? appStrings.inspector.visible : appStrings.inspector.hidden}
+                      aria-label={item.visible ? appStrings.inspector.layerVisible : appStrings.inspector.hidden}
                       aria-pressed={item.visible}
                       onClick={() =>
                         props.onCommand(
