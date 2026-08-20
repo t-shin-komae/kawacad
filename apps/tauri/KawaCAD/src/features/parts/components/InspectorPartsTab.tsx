@@ -140,7 +140,7 @@ export function InspectorPartsTab({
             </div>
           ))
         ) : (
-          <p>{appStrings.inspector.noRegisteredParts}</p>
+          <p>{appStrings.inspector.partLibraryEmpty}</p>
         )}
       </InspectorSection>
     </>

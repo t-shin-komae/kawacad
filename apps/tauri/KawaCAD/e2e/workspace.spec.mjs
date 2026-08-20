@@ -562,7 +562,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
       .toBe(true);
 
     layerCard = page.locator(".inspector-disclosure").filter({ hasText: "検証レイヤー改名" }).first();
-    await layerCard.getByRole("button", { name: "表示中", exact: true }).click();
+    await layerCard.getByRole("button", { name: "表示", exact: true }).click();
     await expect
       .poll(
         async () =>
@@ -594,7 +594,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await page.keyboard.press(`${primary}+a`);
     await page.getByRole("tab", { name: "共有スタイル", exact: true }).click();
     const initialStyleCount = (await core.invoke("document_state")).sharedStyles.length;
-    await page.getByRole("button", { name: "共有スタイルを追加", exact: true }).click();
+    await page.getByRole("button", { name: "共有スタイル追加", exact: true }).click();
     await expect
       .poll(async () => (await core.invoke("document_state")).sharedStyles)
       .toHaveLength(initialStyleCount + 1);

@@ -207,6 +207,22 @@ describe("InspectorPanel", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
+  it("uses the Swift fixed-string keys and values for empty inspector states", () => {
+    render(panel());
+
+    expect(screen.getByText("何も選択されていません", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("拘束なし", { exact: true })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
+    expect(screen.getByText("共有スタイルはまだありません", { exact: true })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    expect(screen.getByText("名前付きパラメータはまだありません", { exact: true })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
+    expect(screen.getByText("登録済みパーツはありません", { exact: true })).toBeInTheDocument();
+  });
+
   it("selects constraints, measurements, and notes from the same rows as SwiftUI", () => {
     const onSelectConstraint = vi.fn();
     const onSelectMeasurement = vi.fn();
@@ -367,14 +383,14 @@ describe("InspectorPanel", () => {
   it("shows the selection-change notice only after selection changes on another tab", () => {
     const view = render(panel());
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
-    expect(screen.queryByText("選択が変更されました。")).not.toBeInTheDocument();
+    expect(screen.queryByText("選択が変更されました")).not.toBeInTheDocument();
 
     view.rerender(
       panel(vi.fn(), [], [], [], undefined, undefined, undefined, undefined, undefined, undefined, vi.fn(), [
         "entity:changed",
       ]),
     );
-    expect(screen.getByText("選択が変更されました。")).toBeInTheDocument();
+    expect(screen.getByText("選択が変更されました")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "選択を表示" }));
     expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true");
   });
@@ -895,11 +911,11 @@ describe("InspectorPanel", () => {
     render(cloneElement(panel(), { onAddParameter, onCreatePart }));
 
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
-    expect(screen.getByText("共有スタイルはありません。")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "共有スタイルを追加" })).toBeEnabled();
+    expect(screen.getByText("共有スタイルはまだありません")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "共有スタイル追加" })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
-    expect(screen.getByText("名前付きパラメータはありません。")).toBeInTheDocument();
+    expect(screen.getByText("名前付きパラメータはまだありません")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "追加" }));
     expect(onAddParameter).toHaveBeenCalledOnce();
 
@@ -907,7 +923,7 @@ describe("InspectorPanel", () => {
     expect(
       screen.getByText("パーツはまだありません。閉じた外形と内側の要素を選択して作成します。"),
     ).toBeInTheDocument();
-    expect(screen.getByText("登録済みのパーツはありません。")).toBeInTheDocument();
+    expect(screen.getByText("登録済みパーツはありません")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "選択図形からパーツを作成" })).toBeDisabled();
     expect(onCreatePart).not.toHaveBeenCalled();
   });

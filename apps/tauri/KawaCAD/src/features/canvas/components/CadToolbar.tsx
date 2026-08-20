@@ -50,19 +50,24 @@ type Props = {
 };
 
 const constraintStatusPresentation: Record<ConstraintStatus, { label: string; className: string }> = {
-  unknown: { label: appStrings.constraintStatusNames.unknown, className: "unknown" },
-  underConstrained: { label: appStrings.constraintStatusNames.underConstrained, className: "under-constrained" },
-  fullyConstrained: { label: appStrings.constraintStatusNames.fullyConstrained, className: "fully-constrained" },
-  overConstrained: { label: appStrings.constraintStatusNames.overConstrained, className: "over-constrained" },
-  conflicting: { label: appStrings.constraintStatusNames.conflicting, className: "conflicting" },
+  unknown: { label: appStrings.constraintStatus.unknown, className: "unknown" },
+  underConstrained: { label: appStrings.constraintStatus.underConstrained, className: "under-constrained" },
+  fullyConstrained: { label: appStrings.constraintStatus.fullyConstrained, className: "fully-constrained" },
+  overConstrained: { label: appStrings.constraintStatus.overConstrained, className: "over-constrained" },
+  conflicting: { label: appStrings.constraintStatus.conflicting, className: "conflicting" },
 };
 
 export function aggregateConstraintStatus(statuses: string[]): ConstraintStatus {
-  if (!statuses.length) return "unknown";
-  if (statuses.includes("conflicting")) return "conflicting";
-  if (statuses.includes("overConstrained")) return "overConstrained";
-  if (statuses.every((status) => status === "fullyConstrained")) return "fullyConstrained";
-  if (statuses.includes("underConstrained")) return "underConstrained";
+  const normalizedStatuses = statuses.map((status) => {
+    if (status === "satisfied") return "fullyConstrained";
+    if (status === "unsatisfied") return "underConstrained";
+    return status;
+  });
+  if (!normalizedStatuses.length) return "unknown";
+  if (normalizedStatuses.includes("conflicting")) return "conflicting";
+  if (normalizedStatuses.includes("overConstrained")) return "overConstrained";
+  if (normalizedStatuses.every((status) => status === "fullyConstrained")) return "fullyConstrained";
+  if (normalizedStatuses.includes("underConstrained")) return "underConstrained";
   return "unknown";
 }
 

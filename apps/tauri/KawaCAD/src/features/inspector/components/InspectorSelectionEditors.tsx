@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeftRight, CircleAlert, FileText, Link2, Trash2 } from "lucide-react";
 import { geometryOf, type PointMm, type RawEntity } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
+import { aggregateConstraintStatus } from "@/features/canvas/components/CadToolbar";
 import { parseDecimal } from "@/shared/state/syncedField";
 import {
   layerColorPresets,
@@ -29,7 +30,7 @@ export function DocumentOverview({ summary }: { summary: Props["documentSummary"
   const values: Array<[string, string | number]> = [
     [appStrings.inspector.viewMode, summary.viewMode],
     [appStrings.inspector.drawingLayer, summary.activeLayerName],
-    [appStrings.inspector.visibleGeometry, summary.visibleEntityCount],
+    [appStrings.inspector.visibleEntities, summary.visibleEntityCount],
     [appStrings.inspector.constraintCount, summary.constraintCount],
     [appStrings.inspector.parameterCount, summary.parameterCount],
   ];
@@ -132,10 +133,7 @@ export function SelectedConstraintEditor({
         {appStrings.constraintKindNames[constraint.kind as keyof typeof appStrings.constraintKindNames] ??
           constraint.kind}
       </strong>
-      <small>
-        {appStrings.constraintStatusNames[constraint.status as keyof typeof appStrings.constraintStatusNames] ??
-          constraint.status}
-      </small>
+      <small>{appStrings.constraintStatus[aggregateConstraintStatus([constraint.status])] ?? constraint.status}</small>
       {constraint.value && (
         <label>
           {appStrings.inspector.constraintValue(degrees)}

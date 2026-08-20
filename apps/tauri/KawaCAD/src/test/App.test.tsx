@@ -1691,7 +1691,7 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     expect(screen.getByRole("button", { name: "レイヤーを追加" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
-    expect(screen.getByRole("button", { name: "共有スタイルを追加" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "共有スタイル追加" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "詳細ツールを表示" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "詳細ツールを表示" }));
     fireEvent.click(screen.getByRole("button", { name: "基本ツールだけを表示" }));

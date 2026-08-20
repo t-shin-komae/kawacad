@@ -38,7 +38,7 @@ export function InspectorParametersTab({
           />
         </label>
       )}
-      {filteredParameters.length === 0 && <p>{appStrings.inspector.noParameters}</p>}
+      {filteredParameters.length === 0 && <p>{appStrings.inspector.noNamedParameters}</p>}
       {filteredParameters.map((item) => {
         const usageCount =
           item.usageCount ?? props.constraints.filter((constraint) => constraint.value?.parameter === item.id).length;

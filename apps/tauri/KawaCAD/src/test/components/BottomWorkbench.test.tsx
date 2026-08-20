@@ -29,8 +29,19 @@ describe("BottomWorkbench", () => {
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("線分");
     expect(screen.getByRole("region", { name: "サマリー" })).not.toHaveTextContent("line:edge");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("外形カット線");
-    expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("評価済み");
+    expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("完全拘束");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("幅 20.00 mm");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("使用 1 件 / 未使用 1 件");
+  });
+
+  it("uses the Swift empty-state labels when no constraint or parameter exists", () => {
+    render(<BottomWorkbench selectedEntity={undefined} layers={[]} constraints={[]} parameters={[]} />);
+
+    const summary = screen.getByRole("region", { name: "サマリー" });
+    expect(summary).toHaveTextContent("選択なし");
+    expect(summary).toHaveTextContent("拘束なし");
+    expect(summary).not.toHaveTextContent("拘束はありません。");
+    expect(summary).toHaveTextContent("パラメータなし");
+    expect(summary).toHaveTextContent("未使用 0 件");
   });
 });

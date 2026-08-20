@@ -102,7 +102,7 @@ export function PartEditor({
               )
             }
           />
-          {appStrings.inspector.display}
+          {appStrings.inspector.partVisible}
         </label>
         <label>
           <input

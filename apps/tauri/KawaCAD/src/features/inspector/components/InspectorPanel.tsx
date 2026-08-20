@@ -16,6 +16,7 @@ import {
 } from "@/features/inspector/domain/stylePresets";
 import { parseDecimal } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
+import { aggregateConstraintStatus } from "@/features/canvas/components/CadToolbar";
 import { InspectorLayerTab } from "@/features/inspector/components/InspectorLayerTab";
 import { InspectorParametersTab } from "@/features/inspector/components/InspectorParametersTab";
 import { InspectorPartsTab } from "@/features/parts/components/InspectorPartsTab";
@@ -46,11 +47,11 @@ export type { Constraint, DerivedElement, LineStyle, Part, PartLibraryEntry } fr
 export type { InspectorViewModel, Measurement } from "@/features/inspector/domain/inspectorViewModel";
 export type Props = InspectorViewModel;
 const tabs: Array<[InspectorTab, string]> = [
-  ["selection", appStrings.inspector.tabs.selection],
-  ["layers", appStrings.inspector.tabs.layers],
-  ["styles", appStrings.inspector.tabs.styles],
-  ["parameters", appStrings.inspector.tabs.parameters],
-  ["parts", appStrings.inspector.tabs.parts],
+  ["selection", appStrings.inspector.tab.selection],
+  ["layers", appStrings.inspector.tab.layers],
+  ["styles", appStrings.inspector.tab.sharedStyles],
+  ["parameters", appStrings.inspector.tab.parameters],
+  ["parts", appStrings.inspector.tab.parts],
 ];
 function valueLabel(value?: Record<string, number | string>) {
   if (typeof value?.fixedMm === "number") return value.fixedMm.toFixed(2) + " mm";
@@ -218,7 +219,7 @@ export function InspectorPanel(props: Props) {
                   onDelete={props.onDeleteSelection}
                 />
               ) : (
-                <p>{appStrings.inspector.nothingSelected}</p>
+                <p>{appStrings.inspector.noSelection}</p>
               )}
             </InspectorSection>
             <InspectorSection title={appStrings.inspector.constraint} icon={Link2}>
@@ -228,9 +229,7 @@ export function InspectorPanel(props: Props) {
                     <button className="inspector-row-action" onClick={() => props.onSelectConstraint?.(item.id)}>
                       <span>{constraintLabel(item.kind)}</span>
                       <small>
-                        {appStrings.constraintStatusNames[
-                          item.status as keyof typeof appStrings.constraintStatusNames
-                        ] ?? item.status}{" "}
+                        {appStrings.constraintStatus[aggregateConstraintStatus([item.status])] ?? item.status}{" "}
                         {valueLabel(item.value)}
                       </small>
                     </button>
@@ -245,7 +244,7 @@ export function InspectorPanel(props: Props) {
                   </div>
                 ))
               ) : (
-                <p>{appStrings.workbench.noConstraintDescription}</p>
+                <p>{appStrings.workbench.noConstraints}</p>
               )}
             </InspectorSection>
             <InspectorSection title={appStrings.inspector.measurementAndNotes} icon={Ruler}>

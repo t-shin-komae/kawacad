@@ -1,3 +1,4 @@
+import { aggregateConstraintStatus } from "@/features/canvas/components/CadToolbar";
 import { geometryOf, type RawEntity } from "@/features/canvas/domain/cad";
 import type { ReactNode } from "react";
 import { CircleDot, Hash, Link2, type LucideIcon } from "lucide-react";
@@ -39,10 +40,9 @@ function entityKindLabel(entity: RawEntity) {
 }
 
 function constraintSummary(constraints: Constraint[]) {
-  if (!constraints.length) return appStrings.workbench.noConstraints;
-  if (constraints.some((item) => item.status === "overConstrained")) return appStrings.workbench.overConstrained;
-  if (constraints.some((item) => item.status === "unsatisfied")) return appStrings.workbench.unresolved;
-  return appStrings.workbench.evaluated;
+  return constraints.length
+    ? appStrings.constraintStatus[aggregateConstraintStatus(constraints.map((item) => item.status))]
+    : appStrings.workbench.noConstraints;
 }
 
 const sectionIcons: Record<string, LucideIcon> = {
@@ -75,37 +75,39 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
           <>
             <strong>{entityKindLabel(selectedEntity)}</strong>
             <small>{entityKindLabel(selectedEntity)}</small>
-            <span>{appStrings.workbench.layer(layerName)}</span>
+            <span>
+              {appStrings.workbench.layer} {layerName}
+            </span>
           </>
         ) : (
           <>
-            <strong>{appStrings.workbench.noSelection}</strong>
+            <strong>{appStrings.workbench.noneSelected}</strong>
             <small>{appStrings.workbench.selectOnCanvas}</small>
           </>
         )}
       </SummarySection>
-      <SummarySection title={appStrings.workbench.constraints} icon="constraints">
+      <SummarySection title={appStrings.workbench.constraint} icon="constraints">
         <strong>{constraintSummary(constraints)}</strong>
         <small>{appStrings.workbench.itemCount(constraints.length)}</small>
         <span>
           {constraints.length
             ? (appStrings.constraintKindNames[constraints[0].kind as keyof typeof appStrings.constraintKindNames] ??
               constraints[0].kind)
-            : appStrings.workbench.noConstraintDescription}
+            : appStrings.workbench.noConstraints}
         </span>
       </SummarySection>
-      <SummarySection title={appStrings.workbench.parameters} icon="parameters">
+      <SummarySection title={appStrings.workbench.parameter} icon="parameters">
         {parameter ? (
           <>
             <strong>
               {parameter.name} {parameter.valueMm.toFixed(2)} {parameter.unit === "millimeter" ? "mm" : parameter.unit}
             </strong>
-            <small>{appStrings.workbench.parameterUsage(usedParameterCount, unusedParameterCount)}</small>
+            <small>{appStrings.workbench.parameterSummary(usedParameterCount, unusedParameterCount)}</small>
           </>
         ) : (
           <>
             <strong>{appStrings.workbench.noParameters}</strong>
-            <small>{appStrings.workbench.unusedParameters}</small>
+            <small>{appStrings.workbench.unusedZero}</small>
           </>
         )}
       </SummarySection>
