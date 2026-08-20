@@ -215,14 +215,10 @@ export function InspectorPanel(props: Props) {
                   roundHole={roundHoles.find((item) => item.entityId === selectedEntity.id)}
                   onCommand={onCommand}
                   onConstrainSegmentLength={props.onConstrainSegmentLength}
+                  onDelete={props.onDeleteSelection}
                 />
               ) : (
                 <p>{appStrings.inspector.nothingSelected}</p>
-              )}
-              {selectedEntity && (
-                <button className="inspector-destructive-button" onClick={props.onDeleteSelection}>
-                  {appStrings.contextMenu.delete}
-                </button>
               )}
             </InspectorSection>
             <InspectorSection title={appStrings.inspector.constraint} icon={Link2}>

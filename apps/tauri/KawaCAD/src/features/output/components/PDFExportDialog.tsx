@@ -167,17 +167,12 @@ export function PDFExportDialog({
         aria-labelledby="pdf-export-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="pdf-export-header">
-          <div>
-            <h2 id="pdf-export-title">{appStrings.output.pdfTitle}</h2>
-            <p>{appStrings.output.pdfHelp}</p>
-          </div>
-          <button type="button" onClick={onClose} disabled={saving} aria-label={appStrings.common.close}>
-            {appStrings.common.close}
-          </button>
-        </header>
         <div className="pdf-export-body">
           <div className="pdf-export-settings">
+            <header className="pdf-export-header">
+              <h2 id="pdf-export-title">{appStrings.output.pdfTitle}</h2>
+              <p>{appStrings.output.pdfHelp}</p>
+            </header>
             <dl className="pdf-export-summary">
               <div>
                 <dt>{appStrings.output.destination}</dt>
@@ -211,6 +206,25 @@ export function PDFExportDialog({
                 <dd>{loading ? appStrings.output.calculating : appStrings.output.pages(pageCount)}</dd>
               </div>
             </dl>
+            <fieldset disabled={saving}>
+              <legend>{appStrings.output.settings}</legend>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={options.includeDimensionLabels}
+                  onChange={(event) => changeOptions({ includeDimensionLabels: event.target.checked })}
+                />
+                {appStrings.output.includeDimensions}
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={options.includeScaleGuide}
+                  onChange={(event) => changeOptions({ includeScaleGuide: event.target.checked })}
+                />
+                {appStrings.output.includeScaleGuide}
+              </label>
+            </fieldset>
             <section className="pdf-export-status" aria-live="polite">
               <h3>{appStrings.output.status}</h3>
               {loading ? (
@@ -235,25 +249,6 @@ export function PDFExportDialog({
                 </p>
               )}
             </section>
-            <fieldset disabled={saving}>
-              <legend>{appStrings.output.settings}</legend>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={options.includeDimensionLabels}
-                  onChange={(event) => changeOptions({ includeDimensionLabels: event.target.checked })}
-                />
-                {appStrings.output.includeDimensions}
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={options.includeScaleGuide}
-                  onChange={(event) => changeOptions({ includeScaleGuide: event.target.checked })}
-                />
-                {appStrings.output.includeScaleGuide}
-              </label>
-            </fieldset>
             {error ? (
               <p className="pdf-export-error" role="alert">
                 {error}
@@ -325,14 +320,17 @@ function WarningIcon({ warning }: { warning: OutputWarning }) {
 export function PDFPreview({ pages, loading }: { pages: OutputPage[]; loading: boolean }) {
   return (
     <section className="pdf-export-preview" aria-live="polite" aria-busy={loading}>
-      <h3>{appStrings.output.finalPreview}</h3>
+      <header className="pdf-export-preview-header">
+        <h3>{appStrings.output.finalPreview}</h3>
+        <span>{loading ? appStrings.output.calculating : appStrings.output.pages(pages.length)}</span>
+      </header>
       {pages.length ? (
         <ol className="pdf-export-pages">
           {pages.map((page, index) => (
             <li key={`${page.gridColumn}-${page.gridRow}`}>
               <PDFPreviewPage page={page} pageNumber={index + 1} />
-              <span>
-                {page.gridColumn}, {page.gridRow}
+              <span className="pdf-page-number" aria-hidden="true">
+                {index + 1}
               </span>
             </li>
           ))}

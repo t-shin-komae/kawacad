@@ -1,4 +1,15 @@
 import { useEffect, useState } from "react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  BookPlus,
+  CopyPlus,
+  Crosshair,
+  MousePointer2,
+  Ungroup,
+} from "lucide-react";
 import { geometryOf, type PointMm, type RawEntity } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
 import { parseDecimal } from "@/shared/state/syncedField";
@@ -36,10 +47,17 @@ export function PartEditor({
   onBeginSetOrigin: () => void;
 }) {
   const [draftName, setDraftName] = useState(part.name);
-  const [draftOrigin, setDraftOrigin] = useState({ xMm: String(part.originMm.xMm), yMm: String(part.originMm.yMm) });
+  const [draftOrigin, setDraftOrigin] = useState({
+    xMm: formatInspectorNumber(part.originMm.xMm),
+    yMm: formatInspectorNumber(part.originMm.yMm),
+  });
   useEffect(() => setDraftName(part.name), [part.id, part.name]);
   useEffect(
-    () => setDraftOrigin({ xMm: String(part.originMm.xMm), yMm: String(part.originMm.yMm) }),
+    () =>
+      setDraftOrigin({
+        xMm: formatInspectorNumber(part.originMm.xMm),
+        yMm: formatInspectorNumber(part.originMm.yMm),
+      }),
     [part.id, part.originMm.xMm, part.originMm.yMm],
   );
   const commitName = () => {
@@ -66,102 +84,111 @@ export function PartEditor({
       );
   };
   return (
-    <div className="inspector-card">
-      <div className="row">
-        <label>
-          {appStrings.inspector.partNameField}
-          <input
-            aria-label={appStrings.inspector.nameOf(part.name)}
-            value={draftName}
-            onChange={(event) => setDraftName(event.target.value)}
-            onBlur={commitName}
-          />
-        </label>
-        <label>
-          {appStrings.inspector.quantity}
-          <input
-            aria-label={appStrings.inspector.quantityOf(part.name)}
-            type="number"
-            min="1"
-            max="999"
-            step="1"
-            value={part.quantity}
-            onChange={(event) => {
-              const quantity = Number(event.target.value);
-              if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 999)
-                onCommand("setPartQuantity", { partId: part.id, quantity }, appStrings.app.partQuantityUpdated);
-            }}
-          />
-        </label>
-      </div>
+    <div className="inspector-card part-editor">
       <label>
         <input type="checkbox" checked={arrangementSelected} onChange={onToggleArrangement} />
         {appStrings.inspector.arrangementTarget}
       </label>
-      <label>
+      <div className="part-toggle-row">
+        <label>
+          <input
+            type="checkbox"
+            checked={part.visible}
+            onChange={(event) =>
+              onCommand(
+                "setPartVisibility",
+                { partId: part.id, visible: event.target.checked },
+                appStrings.inspector.operationMessage.partVisibilityUpdated,
+              )
+            }
+          />
+          {appStrings.inspector.display}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            aria-label={appStrings.inspector.outputOf(part.name)}
+            checked={part.printable}
+            onChange={(event) =>
+              onCommand(
+                "setPartPrintable",
+                { partId: part.id, printable: event.target.checked },
+                appStrings.inspector.operationMessage.partOutputUpdated,
+              )
+            }
+          />
+          {appStrings.inspector.partPrintable}
+        </label>
+      </div>
+      <label className="part-quantity-field">
+        <span>{appStrings.inspector.partQuantity(part.quantity)}</span>
         <input
-          type="checkbox"
-          checked={part.visible}
-          onChange={(event) =>
-            onCommand(
-              "setPartVisibility",
-              { partId: part.id, visible: event.target.checked },
-              appStrings.inspector.operationMessage.partVisibilityUpdated,
-            )
-          }
+          aria-label={appStrings.inspector.quantityOf(part.name)}
+          type="number"
+          min="1"
+          max="999"
+          step="1"
+          value={part.quantity}
+          onChange={(event) => {
+            const quantity = Number(event.target.value);
+            if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 999)
+              onCommand("setPartQuantity", { partId: part.id, quantity }, appStrings.app.partQuantityUpdated);
+          }}
         />
-        {appStrings.inspector.display}
       </label>
-      <label>
-        <input
-          type="checkbox"
-          aria-label={appStrings.inspector.outputOf(part.name)}
-          checked={part.printable}
-          onChange={(event) =>
-            onCommand(
-              "setPartPrintable",
-              { partId: part.id, printable: event.target.checked },
-              appStrings.inspector.operationMessage.partOutputUpdated,
-            )
-          }
-        />
-        {appStrings.inspector.outputTarget}
-      </label>
+      <input
+        className="part-name-field"
+        aria-label={appStrings.inspector.nameOf(part.name)}
+        placeholder={appStrings.inspector.partNameField}
+        value={draftName}
+        onChange={(event) => setDraftName(event.target.value)}
+        onBlur={commitName}
+      />
       <div className="part-origin-fields">
-        <label>
-          {appStrings.inspector.originX}
-          <input
-            aria-label={appStrings.inspector.originXOf(part.name)}
-            type="number"
-            step=".01"
-            value={draftOrigin.xMm}
-            onChange={(event) => setDraftOrigin({ ...draftOrigin, xMm: event.target.value })}
-            onBlur={commitOrigin}
-          />
-        </label>
-        <label>
-          {appStrings.inspector.originY}
-          <input
-            aria-label={appStrings.inspector.originYOf(part.name)}
-            type="number"
-            step=".01"
-            value={draftOrigin.yMm}
-            onChange={(event) => setDraftOrigin({ ...draftOrigin, yMm: event.target.value })}
-            onBlur={commitOrigin}
-          />
-        </label>
+        <input
+          aria-label={appStrings.inspector.originXOf(part.name)}
+          placeholder={appStrings.inspector.originX}
+          type="number"
+          step=".01"
+          value={draftOrigin.xMm}
+          onChange={(event) => setDraftOrigin({ ...draftOrigin, xMm: event.target.value })}
+          onBlur={commitOrigin}
+        />
+        <input
+          aria-label={appStrings.inspector.originYOf(part.name)}
+          placeholder={appStrings.inspector.originY}
+          type="number"
+          step=".01"
+          value={draftOrigin.yMm}
+          onChange={(event) => setDraftOrigin({ ...draftOrigin, yMm: event.target.value })}
+          onBlur={commitOrigin}
+        />
       </div>
-      <div className="detail-list" aria-label={appStrings.inspector.configurationOf(part.name)}>
-        <span>{appStrings.inspector.geometryCount.outline(part.outlineEntityIds.length)}</span>
-        <span>{appStrings.inspector.geometryCount.holes(part.holeEntityIdGroups.length)}</span>
-        <span>{appStrings.inspector.geometryCount.derived(part.derivedElementIds.length)}</span>
-        <span>{appStrings.inspector.geometryCount.text(part.freeTextIds.length)}</span>
-        <span>{appStrings.inspector.geometryCount.measurement(part.measurementAnnotationIds.length)}</span>
+      <button className="inspector-wide-button" onClick={onBeginSetOrigin}>
+        <Crosshair aria-hidden="true" />
+        {appStrings.inspector.specifyOrigin}
+      </button>
+      <div className="part-detail-list" aria-label={appStrings.inspector.configurationOf(part.name)}>
+        <div className="detail-row">
+          <span>{appStrings.inspector.partDerivedMembers}</span>
+          <strong>{part.derivedElementIds.length}</strong>
+        </div>
+        <div className="detail-row">
+          <span>{appStrings.inspector.partTextMembers}</span>
+          <strong>{part.freeTextIds.length}</strong>
+        </div>
+        <div className="detail-row">
+          <span>{appStrings.inspector.partMeasurementMembers}</span>
+          <strong>{part.measurementAnnotationIds.length}</strong>
+        </div>
       </div>
-      <div className="button-row">
-        <button onClick={onSelect}>{appStrings.inspector.selectContents}</button>
-        <button onClick={onBeginSetOrigin}>{appStrings.inspector.specifyOrigin}</button>
+      <button className="inspector-wide-button" onClick={onSelect}>
+        <MousePointer2 aria-hidden="true" />
+        {appStrings.inspector.selectContents}
+      </button>
+      <div className="part-move-buttons">
         <button
+          aria-label="←"
           onClick={() =>
             onCommand(
               "movePart",
@@ -170,9 +197,10 @@ export function PartEditor({
             )
           }
         >
-          ←
+          <ArrowLeft aria-hidden="true" />
         </button>
         <button
+          aria-label="↑"
           onClick={() =>
             onCommand(
               "movePart",
@@ -181,9 +209,10 @@ export function PartEditor({
             )
           }
         >
-          ↑
+          <ArrowUp aria-hidden="true" />
         </button>
         <button
+          aria-label="↓"
           onClick={() =>
             onCommand(
               "movePart",
@@ -192,9 +221,10 @@ export function PartEditor({
             )
           }
         >
-          ↓
+          <ArrowDown aria-hidden="true" />
         </button>
         <button
+          aria-label="→"
           onClick={() =>
             onCommand(
               "movePart",
@@ -203,34 +233,43 @@ export function PartEditor({
             )
           }
         >
-          →
-        </button>
-        <button
-          onClick={() =>
-            onCommand(
-              "duplicatePart",
-              {
-                partId: part.id,
-                newPartId: "part:" + crypto.randomUUID(),
-                newName: appStrings.inspector.copyOf(part.name),
-                idNamespace: crypto.randomUUID(),
-                delta: { xMm: 10, yMm: -10 },
-              },
-              appStrings.inspector.operationMessage.partDuplicated,
-            )
-          }
-        >
-          {appStrings.contextMenu.duplicate}
-        </button>
-        <button onClick={onAddToLibrary}>{appStrings.inspector.libraryAdd}</button>
-        <button
-          className="inspector-destructive-button"
-          onClick={() => onCommand("deletePart", part.id, appStrings.inspector.operationMessage.partDetached)}
-        >
-          {appStrings.inspector.detach}
+          <ArrowRight aria-hidden="true" />
         </button>
       </div>
+      <button
+        className="inspector-wide-button inspector-prominent-button"
+        aria-label={appStrings.contextMenu.duplicate}
+        onClick={() =>
+          onCommand(
+            "duplicatePart",
+            {
+              partId: part.id,
+              newPartId: "part:" + crypto.randomUUID(),
+              newName: appStrings.inspector.copyOf(part.name),
+              idNamespace: crypto.randomUUID(),
+              delta: { xMm: 10, yMm: -10 },
+            },
+            appStrings.inspector.operationMessage.partDuplicated,
+          )
+        }
+      >
+        <CopyPlus aria-hidden="true" />
+        {appStrings.inspector.duplicatePart}
+      </button>
+      <button className="inspector-wide-button" onClick={onAddToLibrary}>
+        <BookPlus aria-hidden="true" />
+        {appStrings.inspector.libraryAdd}
+      </button>
+      <div className="inspector-divider" />
       <small className="inspector-help">{appStrings.inspector.partFixedHelp}</small>
+      <button
+        className="inspector-destructive-button"
+        aria-label={appStrings.inspector.detach}
+        onClick={() => onCommand("deletePart", part.id, appStrings.inspector.operationMessage.partDetached)}
+      >
+        <Ungroup aria-hidden="true" />
+        {appStrings.inspector.detachPart}
+      </button>
     </div>
   );
 }

@@ -33,7 +33,7 @@ extension ConstraintActionHandler {
         title: title,
         prompt: prompt,
         targets: targets,
-        valueText: String(format: "%.2f", initialValue),
+        valueText: InspectorValueFormatting.format(initialValue),
         unit: unit,
         allowsParameterReference: kind != "angle",
         entryMode: .fixedValue,

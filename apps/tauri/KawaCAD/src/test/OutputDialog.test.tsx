@@ -42,7 +42,7 @@ describe("OutputDialog", () => {
     expect(screen.getByLabelText("寸法数値を出力に含める")).not.toBeChecked();
     fireEvent.change(screen.getByRole("combobox", { name: "出力先" }), { target: { value: "pdf" } });
 
-    expect(await screen.findByRole("dialog", { name: "PDF出力" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "PDF" })).toBeInTheDocument();
     expect(screen.getByLabelText("寸法数値を出力に含める")).not.toBeChecked();
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("prepare_pdf_output", expect.any(Object)));
   });

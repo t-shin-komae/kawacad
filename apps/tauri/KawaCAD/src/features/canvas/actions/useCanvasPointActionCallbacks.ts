@@ -36,8 +36,6 @@ import {
 } from "@/features/canvas/domain/workspaceTools";
 import type { DerivedValue } from "@/features/constraints/components/DerivedValueDialog";
 import type { Part } from "@/shared/domain/coreWireTypes";
-import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
-import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { CanvasActionContext } from "@/app/actions/useActionRuntime";
 
 function partIDForDraggedEntities(state: State, entityIDs: string[]): string | undefined {
@@ -77,7 +75,6 @@ type CanvasPointActionDependencies = CanvasActionContext & {
     clickPoint?: PointMm,
     hudPosition?: { x: number; y: number },
   ) => void;
-  openTextEntry: (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
 };
 
 export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDependencies) {
@@ -108,6 +105,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
     setSelectedConstraintId,
     setSelectedMeasurementId,
     setSelectedStitchStartPointId,
+    setEditingFreeTextId,
     setInspectorSelectedPartId,
     setMessage,
     setSnapSuppressed,
@@ -132,7 +130,6 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
     applyMeasurement,
     applyDerived,
     useSelectedTargets,
-    openTextEntry,
   } = dependencies;
 
   const handleCanvasPoint = useCallback(
@@ -383,19 +380,21 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
         return;
       }
       if (tool === "freeText") {
-        openTextEntry(
-          appStrings.app.addAnnotationTitle,
-          [{ id: "content", label: appStrings.app.annotation, initialValue: appStrings.app.annotation }],
-          (values) => {
-            const content = values.content.trim();
-            if (!content) return;
-            void command(
-              "addFreeText",
-              { id: id("free-text"), content, positionMm: point, fontSizeMm: 4.0 },
-              appStrings.app.textAdded,
-            );
-          },
-        );
+        const freeTextId = id("free-text");
+        void command(
+          "addFreeText",
+          { id: freeTextId, content: appStrings.app.annotation, positionMm: point, fontSizeMm: 4.0 },
+          appStrings.app.textAdded,
+        ).then((next) => {
+          if (!next?.freeTexts.some((item) => item.id === freeTextId)) return;
+          setSelected(new Set());
+          setSelectedFreeTextId(freeTextId);
+          setSelectedConstraintId(undefined);
+          setSelectedMeasurementId(undefined);
+          setSelectedStitchStartPointId(undefined);
+          setInspectorSelectedPartId(undefined);
+          setEditingFreeTextId(freeTextId);
+        });
         return;
       }
       const points = [...draft, point];
@@ -471,7 +470,6 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       dimensionLabels,
       measurementLabelOffsets,
       measurementLabels,
-      openTextEntry,
       pendingDerivedValue,
       pendingTargets,
       roundDiameter,
@@ -485,6 +483,13 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       viewport,
       visibleEntities,
       setDragDuplicating,
+      setEditingFreeTextId,
+      setInspectorSelectedPartId,
+      setSelected,
+      setSelectedConstraintId,
+      setSelectedFreeTextId,
+      setSelectedMeasurementId,
+      setSelectedStitchStartPointId,
       setSnapSuppressed,
     ],
   );

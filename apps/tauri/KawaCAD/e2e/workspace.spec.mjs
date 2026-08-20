@@ -94,6 +94,13 @@ async function acceptTextDialog(page, value) {
   await dialog.getByRole("button", { name: "適用", exact: true }).click();
 }
 
+async function setFreeTextContent(page, value) {
+  const field = page.getByRole("textbox", { name: "テキスト内容", exact: true });
+  await expect(field).toBeVisible();
+  await field.fill(value);
+  await field.blur();
+}
+
 test.describe("Tauri React workspace through the real Core process", () => {
   // 起動直後にCore接続済みのドキュメントと、主要な作図画面の操作入口が表示されることを検証する。
   test("boots with a Core-backed document and exposes the primary workspace controls", async ({ page }) => {
@@ -332,7 +339,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
     await clickTool(page, "テキスト");
     await clickModelPoint(page, -20, -45);
-    await acceptTextDialog(page, "E2E note");
+    await setFreeTextContent(page, "E2E note");
 
     const state = await core.invoke("document_state");
     expect(state.entities).toHaveLength(3);
@@ -555,7 +562,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
       .toBe(true);
 
     layerCard = page.locator(".inspector-disclosure").filter({ hasText: "検証レイヤー改名" }).first();
-    await layerCard.getByRole("checkbox").first().click();
+    await layerCard.getByRole("button", { name: "表示中", exact: true }).click();
     await expect
       .poll(
         async () =>
@@ -730,7 +737,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
       .first()
       .locator(".inspector-disclosure-summary")
       .click();
-    await page.getByRole("button", { name: "内容を選択", exact: true }).click();
+    await page.getByRole("button", { name: "所属図形を選択", exact: true }).click();
     await dragModelPoint(page, [20, 10], [30, 20]);
     await expect(page.getByRole("status")).toContainText("移動プレビュー中");
     expect((await core.invoke("document_state")).entities).toEqual(beforeEntities);
@@ -769,7 +776,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await openWorkspace(page);
     await clickTool(page, "テキスト");
     await clickModelPoint(page, -20, 20);
-    await acceptTextDialog(page, "初期注記");
+    await setFreeTextContent(page, "初期注記");
     await expect.poll(async () => (await core.invoke("document_state")).freeTexts).toHaveLength(1);
 
     await clickTool(page, "選択");

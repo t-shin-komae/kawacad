@@ -7,5 +7,7 @@ describe("inspector value formatting", () => {
     expect(formatInspectorNumber(12)).toBe("12.00");
     expect(resolveInspectorValue({ parameter: "parameter:length" }, parameters)).toBe(12.345);
     expect(formatInspectorNumber(resolveInspectorValue({ parameter: "missing" }, parameters))).toBe("");
+    expect(formatInspectorNumber(Number.POSITIVE_INFINITY)).toBe("");
+    expect(resolveInspectorValue({ fixedDegrees: 45 }, parameters, "fixedDegrees")).toBe(45);
   });
 });

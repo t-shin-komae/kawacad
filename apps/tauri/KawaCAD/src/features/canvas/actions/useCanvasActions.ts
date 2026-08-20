@@ -13,20 +13,16 @@ import {
   type ConstraintTarget,
   type PointMm,
 } from "@/features/canvas/domain/cad";
-import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
-import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import { toolNames as names } from "@/features/canvas/domain/workspaceTools";
 import { useCanvasPointerActionCallbacks } from "@/features/canvas/actions/useCanvasPointerActionCallbacks";
 import { useCanvasPointActionCallbacks } from "@/features/canvas/actions/useCanvasPointActionCallbacks";
 import { useConstraintActions } from "@/features/constraints/actions/useConstraintActions";
 import type { CanvasActionContext } from "@/app/actions/useActionRuntime";
 
-type OpenTextEntry = (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
 type SetDocumentViewMode = (viewMode: CanvasViewMode, activeTool?: Tool) => void;
 
 type CanvasActionDependencies = {
   clearTransientCanvasState: () => void;
-  openTextEntry: OpenTextEntry;
   setDocumentViewMode: SetDocumentViewMode;
 };
 
@@ -81,7 +77,7 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
     lineStartSnap,
     draft,
   } = context;
-  const { clearTransientCanvasState, openTextEntry, setDocumentViewMode } = dependencies;
+  const { clearTransientCanvasState, setDocumentViewMode } = dependencies;
 
   const selectTool = useCallback(
     (next: Tool) => {
@@ -151,7 +147,6 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
     snapWithTarget,
     addGesture,
     ...constraintActions,
-    openTextEntry,
   });
   const handleCanvasDoubleClick = useCallback(
     (_event: React.MouseEvent<HTMLCanvasElement>, point: PointMm) => {

@@ -7,7 +7,7 @@ extension PartActionHandler {
       statusMessage = AppStrings.tr("status.part_select_closed_outline")
       return
     }
-    let name = AppStrings.tr("part.default_name", parts.count + 1)
+    let name = PartDefaults.name(number: parts.count + 1)
     let request = commandFactory.makeCreatePartCommand(
       name: name,
       entityIDs: selected.map(\.id)
@@ -121,12 +121,10 @@ extension PartActionHandler {
   }
 
   func insertPartFromLibrary(_ entry: PartLibraryEntry) {
-    let target =
-      canvasPresentation.cursorModelPoint
-      ?? ModelPoint(
-        xMM: (parts.map(\.originMM.xMM).max() ?? -30) + 30,
-        yMM: parts.map(\.originMM.yMM).max() ?? 0
-      )
+    let target = PartDefaults.libraryPlacement(
+      cursorPoint: canvasPresentation.cursorModelPoint,
+      existingOrigins: parts.map(\.originMM)
+    )
     let delta = ModelPoint(
       xMM: target.xMM - entry.sourcePart.originMM.xMM,
       yMM: target.yMM - entry.sourcePart.originMM.yMM

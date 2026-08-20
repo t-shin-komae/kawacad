@@ -16,12 +16,12 @@ describe("part defaults", () => {
     expect(partLibraryPlacement({ xMm: 12, yMm: -4 }, [{ xMm: 20, yMm: 8 }])).toEqual({ xMm: 12, yMm: -4 });
   });
 
-  it("preserves negative existing Y coordinates for automatic placement", () => {
+  it("clamps automatic placement to the origin side of negative existing coordinates", () => {
     expect(
       partLibraryPlacement(undefined, [
-        { xMm: -10, yMm: -8 },
-        { xMm: 20, yMm: -2 },
+        { xMm: -80, yMm: -8 },
+        { xMm: -50, yMm: -2 },
       ]),
-    ).toEqual({ xMm: 50, yMm: -2 });
+    ).toEqual({ xMm: 0, yMm: 0 });
   });
 });

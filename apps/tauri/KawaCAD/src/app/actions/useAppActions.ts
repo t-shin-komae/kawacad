@@ -171,7 +171,6 @@ export function useAppActions(context: AppActionContext) {
   const outputActions = useOutputActions(outputContext, documentActions.clearTransientCanvasState);
   const canvasActions = useCanvasActions(canvasContext, {
     clearTransientCanvasState: documentActions.clearTransientCanvasState,
-    openTextEntry: documentActions.openTextEntry,
     setDocumentViewMode: outputActions.setDocumentViewMode,
   });
   const partActions = usePartActions(partContext, documentActions.openTextEntry);

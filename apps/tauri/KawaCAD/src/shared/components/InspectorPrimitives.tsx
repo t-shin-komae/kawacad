@@ -56,3 +56,7 @@ export function InspectorDisclosureRow({
     </div>
   );
 }
+
+export function InspectorEditorSurface({ className, children }: { className?: string; children: ReactNode }) {
+  return <div className={["inspector-editor-surface", className].filter(Boolean).join(" ")}>{children}</div>;
+}

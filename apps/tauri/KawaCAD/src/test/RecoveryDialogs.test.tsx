@@ -43,7 +43,7 @@ describe("recovery presentation", () => {
     expect(within(candidates[1] as HTMLElement).getByRole("button", { name: "復旧して開く" })).toBeDisabled();
     expect(within(candidates[1] as HTMLElement).getByRole("alert")).toHaveTextContent("snapshot.kawa");
     fireEvent.click(within(candidates[1] as HTMLElement).getByRole("button", { name: "破棄" }));
-    fireEvent.click(within(candidates[1] as HTMLElement).getByRole("button", { name: "フォルダーに表示" }));
+    fireEvent.click(within(candidates[1] as HTMLElement).getByRole("button", { name: "Finderに表示" }));
     expect(onDiscard).toHaveBeenCalledWith("broken-1");
     expect(onReveal).toHaveBeenCalledWith("broken-1");
   });

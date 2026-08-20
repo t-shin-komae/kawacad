@@ -558,18 +558,11 @@ struct ConstraintValueEditor: View {
   }
 
   private var sourceValueText: String {
-    if let valueDegrees = constraint.valueDegrees {
-      return String(format: "%.2f", valueDegrees)
-    }
-    if let valueMM = constraint.valueMM {
-      return String(format: "%.2f", valueMM)
-    }
-    if let parameterID = constraint.valueParameterID,
-      let parameter = appState.parameters.first(where: { $0.id == parameterID })
-    {
-      return String(format: "%.2f", parameter.valueMM)
-    }
-    return ""
+    InspectorValueFormatting.resolvedText(
+      fixedValue: constraint.valueDegrees ?? constraint.valueMM,
+      parameterID: constraint.valueParameterID,
+      parameters: appState.parameters
+    )
   }
 
   private func commit(_ valueText: String) -> Bool {
@@ -666,26 +659,12 @@ struct DerivedElementEditor: View {
   }
 
   private var sourceValueText: String {
-    if derivedElement.kind == .fillet {
-      if let valueMM = derivedElement.radiusMM {
-        return String(format: "%.2f", valueMM)
-      }
-      if let parameterID = derivedElement.radiusParameterID,
-        let parameter = appState.parameters.first(where: { $0.id == parameterID })
-      {
-        return String(format: "%.2f", parameter.valueMM)
-      }
-      return ""
-    }
-    if let valueMM = derivedElement.distanceMM {
-      return String(format: "%.2f", valueMM)
-    }
-    if let parameterID = derivedElement.distanceParameterID,
-      let parameter = appState.parameters.first(where: { $0.id == parameterID })
-    {
-      return String(format: "%.2f", parameter.valueMM)
-    }
-    return ""
+    InspectorValueFormatting.resolvedText(
+      fixedValue: derivedElement.kind == .fillet
+        ? derivedElement.radiusMM : derivedElement.distanceMM,
+      parameterID: currentParameterID,
+      parameters: appState.parameters
+    )
   }
 
   private func commitDistance(_ valueText: String) -> Bool {

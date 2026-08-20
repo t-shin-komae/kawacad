@@ -39,11 +39,22 @@ export function ConstraintValueDialog({
   const numericValue = parsedValue.ok ? parsedValue.value : undefined;
   const canConfirm =
     mode === "parameter" ? Boolean(parameter) : Boolean(parsedValue.ok && (degrees || parsedValue.value > 0));
+  const confirm = () => {
+    if (!canConfirm) return;
+    onConfirm(
+      mode === "parameter"
+        ? { parameter }
+        : degrees
+          ? { fixedDegrees: numericValue as number }
+          : { fixedMm: numericValue as number },
+    );
+  };
+  const floatingWidth = parameters.length ? 236 : 190;
   const positionStyle =
     floating && floatingPosition
       ? {
-          left: `${Math.max(16, Math.min(floatingPosition.x + 16, window.innerWidth - 296))}px`,
-          top: `${Math.max(16, Math.min(floatingPosition.y + 16, window.innerHeight - 196))}px`,
+          left: `${Math.max(16, Math.min(floatingPosition.x + 16, window.innerWidth - floatingWidth - 16))}px`,
+          top: `${Math.max(16, Math.min(floatingPosition.y + 16, window.innerHeight - 96))}px`,
           right: "auto",
           bottom: "auto",
         }
@@ -56,26 +67,74 @@ export function ConstraintValueDialog({
       style={positionStyle}
     >
       <section
-        className="constraint-value-dialog"
+        className={`constraint-value-dialog${floating ? " floating-constraint-value-dialog" : ""}${
+          floating && parameters.length ? " has-parameters" : ""
+        }`}
         role="dialog"
-        aria-modal="true"
+        aria-modal={floating ? undefined : true}
         aria-label={appStrings.dialog.value.ariaLabel(label)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") onCancel();
+          if (event.key === "Enter") confirm();
+        }}
       >
-        <h2>{label}</h2>
-        <div className="segmented-control" role="group" aria-label={appStrings.dialog.value.inputMethod}>
-          <button type="button" aria-pressed={mode === "fixed"} onClick={() => setMode("fixed")}>
-            {appStrings.dialog.value.fixed}
-          </button>
-          <button
-            type="button"
-            disabled={!parameters.length}
-            aria-pressed={mode === "parameter"}
-            onClick={() => setMode("parameter")}
-          >
-            {appStrings.dialog.value.parameter}
-          </button>
-        </div>
-        {mode === "fixed" ? (
+        {!floating && <h2>{label}</h2>}
+        {(!floating || parameters.length > 0) && (
+          <div className="segmented-control" role="group" aria-label={appStrings.dialog.value.inputMethod}>
+            <button type="button" aria-pressed={mode === "fixed"} onClick={() => setMode("fixed")}>
+              {appStrings.dialog.value.fixed}
+            </button>
+            <button
+              type="button"
+              disabled={!parameters.length}
+              aria-pressed={mode === "parameter"}
+              onClick={() => setMode("parameter")}
+            >
+              {appStrings.dialog.value.parameter}
+            </button>
+          </div>
+        )}
+        {floating ? (
+          <div className="floating-value-entry-row">
+            {mode === "fixed" ? (
+              <>
+                <input
+                  aria-label={degrees ? appStrings.dialog.value.degrees : appStrings.dialog.value.millimeters}
+                  autoFocus
+                  inputMode="decimal"
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                />
+                <span>{degrees ? "°" : "mm"}</span>
+              </>
+            ) : (
+              <select
+                autoFocus
+                aria-label={appStrings.dialog.value.parameter}
+                value={parameter}
+                onChange={(event) => setParameter(event.target.value)}
+              >
+                {parameters.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button type="button" aria-label={appStrings.dialog.value.cancel} onClick={onCancel}>
+              ×
+            </button>
+            <button
+              className="floating-value-confirm"
+              type="button"
+              aria-label={appStrings.dialog.value.confirm}
+              disabled={!canConfirm}
+              onClick={confirm}
+            >
+              ✓
+            </button>
+          </div>
+        ) : mode === "fixed" ? (
           <label>
             {degrees ? appStrings.dialog.value.degrees : appStrings.dialog.value.millimeters}
             <input
@@ -102,26 +161,16 @@ export function ConstraintValueDialog({
             </select>
           </label>
         )}
-        <div className="button-row">
-          <button type="button" onClick={onCancel}>
-            {appStrings.dialog.value.cancel}
-          </button>
-          <button
-            type="button"
-            disabled={!canConfirm}
-            onClick={() =>
-              onConfirm(
-                mode === "parameter"
-                  ? { parameter }
-                  : degrees
-                    ? { fixedDegrees: numericValue as number }
-                    : { fixedMm: numericValue as number },
-              )
-            }
-          >
-            {appStrings.dialog.value.confirm}
-          </button>
-        </div>
+        {!floating && (
+          <div className="button-row">
+            <button type="button" onClick={onCancel}>
+              {appStrings.dialog.value.cancel}
+            </button>
+            <button type="button" disabled={!canConfirm} onClick={confirm}>
+              {appStrings.dialog.value.confirm}
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );
