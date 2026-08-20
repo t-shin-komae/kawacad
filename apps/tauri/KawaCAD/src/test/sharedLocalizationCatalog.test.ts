@@ -29,8 +29,9 @@ function normalizeKey(key: string): string {
     .join(".");
 }
 
-function normalizeFormat(value: string): string {
-  return value.replace(/%[@df]/g, "{number}").replace(/\d+(?:\.\d+)?/g, "{number}");
+function renderSwiftTemplate(template: string, arguments_: readonly number[]): string {
+  let argumentIndex = 0;
+  return template.replace(/%d/g, () => String(arguments_[argumentIndex++]));
 }
 
 describe("shared localization catalog", () => {
@@ -52,11 +53,11 @@ describe("shared localization catalog", () => {
       const tauriValueAtPath = tauriValue(tauriPath);
       expect(tauriValueAtPath, tauriPath).not.toBeUndefined();
       expect(normalizeKey(tauriPath), swiftKey).toBe(normalizeKey(swiftKey));
+      const swiftValue = swiftStringValue(catalog, swiftKey) ?? "";
+      const sentinelArguments = [17, 29] as const;
       const renderedTauriValue =
-        typeof tauriValueAtPath === "function" ? tauriValueAtPath(3, 2) : (tauriValueAtPath as string);
-      expect(normalizeFormat(renderedTauriValue), swiftKey).toBe(
-        normalizeFormat(swiftStringValue(catalog, swiftKey) ?? ""),
-      );
+        typeof tauriValueAtPath === "function" ? tauriValueAtPath(...sentinelArguments) : (tauriValueAtPath as string);
+      expect(renderedTauriValue, swiftKey).toBe(renderSwiftTemplate(swiftValue, sentinelArguments));
     }
   });
 });
