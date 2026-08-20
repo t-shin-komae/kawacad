@@ -12,6 +12,6 @@ export function partLibraryPlacement(
   const maxY = existingOrigins.reduce((max, origin) => Math.max(max, origin.yMm), -Infinity);
   return {
     xMm: (existingOrigins.map((origin) => origin.xMm).reduce((max, value) => Math.max(max, value), -30) ?? -30) + 30,
-    yMm: Number.isFinite(maxY) ? maxY : 0,
+    yMm: Number.isFinite(maxY) ? Math.max(maxY, 0) : 0,
   };
 }

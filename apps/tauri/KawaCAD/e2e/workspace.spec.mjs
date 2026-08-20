@@ -730,7 +730,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
       .first()
       .locator(".inspector-disclosure-summary")
       .click();
-    await page.getByRole("button", { name: "内容を選択", exact: true }).click();
+    await page.getByRole("button", { name: "所属図形を選択", exact: true }).click();
     await dragModelPoint(page, [20, 10], [30, 20]);
     await expect(page.getByRole("status")).toContainText("移動プレビュー中");
     expect((await core.invoke("document_state")).entities).toEqual(beforeEntities);

@@ -542,6 +542,11 @@ export function MainWindowView() {
     ? {
         activeMode: pasteOptions.activeMode,
         canPlaceAtCursor: Boolean(pasteOptions.cursorPoint),
+        positionMm:
+          pasteOptions.activeMode === "cursor" && pasteOptions.cursorPoint
+            ? pasteOptions.cursorPoint
+            : pasteOptions.nearSourcePoint,
+        viewport,
         onSelectMode: (mode: PastePlacementMode) => void selectPastePlacement(mode),
         onDismiss: () => setPasteOptions(undefined),
       }

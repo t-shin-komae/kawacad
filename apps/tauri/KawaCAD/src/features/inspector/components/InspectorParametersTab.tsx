@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { Plus, SlidersHorizontal } from "lucide-react";
 import {
   matchesInspectorSearch,
   setInspectorParameterSearchQuery,
@@ -58,6 +58,7 @@ export function InspectorParametersTab({
         );
       })}
       <button className="inspector-add-button" onClick={props.onAddParameter}>
+        <Plus aria-hidden="true" />
         {appStrings.inspector.add}
       </button>
     </InspectorSection>

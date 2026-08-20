@@ -6,14 +6,14 @@ export function LayerDeletionDialog({ layerName, affectedCount, onConfirm, onCan
   return (
     <div className="constraint-value-backdrop" role="presentation">
       <section
-        className="constraint-value-dialog"
+        className="constraint-value-dialog layer-deletion-dialog"
         role="alertdialog"
         aria-modal="true"
         aria-label={appStrings.dialog.layerDeletion.ariaLabel}
       >
         <h2>{appStrings.dialog.layerDeletion.title(layerName)}</h2>
         <p>{appStrings.dialog.layerDeletion.impact(layerName, affectedCount)}</p>
-        <div className="button-row">
+        <div className="button-row layer-deletion-actions">
           <button type="button" onClick={onCancel}>
             {appStrings.dialog.layerDeletion.cancel}
           </button>

@@ -50,6 +50,10 @@ describe("ConstraintValueDialog", () => {
     );
 
     expect(screen.getByRole("presentation")).toHaveClass("floating-value-backdrop");
+    expect(screen.queryByText("距離")).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "入力方法" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "キャンセル" })).toHaveTextContent("×");
+    expect(screen.getByRole("button", { name: "確定" })).toHaveTextContent("✓");
   });
 
   it("formats fixed initial values and leaves unresolved values blank", () => {

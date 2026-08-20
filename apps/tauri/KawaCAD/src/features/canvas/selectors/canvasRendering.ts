@@ -366,8 +366,8 @@ function drawGrid(
     origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport),
     bounds = a4GridScreenRect(width, height, viewport, landscape);
   context.save();
-  context.strokeStyle = "#ececef";
-  context.lineWidth = 1;
+  context.strokeStyle = "rgba(95, 108, 119, .13)";
+  context.lineWidth = 0.5;
   const firstX = origin.x + Math.ceil((bounds.x - origin.x) / step) * step;
   const firstY = origin.y + Math.ceil((bounds.y - origin.y) / step) * step;
   for (let x = firstX; x <= bounds.x + bounds.width; x += step) {

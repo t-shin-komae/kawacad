@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Paintbrush } from "lucide-react";
+import { Paintbrush, Plus, Trash2 } from "lucide-react";
 import {
   matchesInspectorSearch,
   setInspectorSharedStyleSearchQuery,
@@ -8,7 +8,11 @@ import {
 import { appStrings } from "@/localization";
 import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
 import { sharedStyleDefaultName } from "@/features/inspector/domain/sharedStyleDefaults";
-import { InspectorDisclosureRow, InspectorSection } from "@/shared/components/InspectorPrimitives";
+import {
+  InspectorDisclosureRow,
+  InspectorEditorSurface,
+  InspectorSection,
+} from "@/shared/components/InspectorPrimitives";
 
 type InspectorStylesTabProps = {
   props: Props;
@@ -67,43 +71,46 @@ export function InspectorStylesTab({
             expanded={selectedStyleId === item.id}
             onToggle={() => setSelectedStyleId(item.id)}
           >
-            <div className="row inspector-editor-heading">
-              <span className="style-color-swatch" style={{ backgroundColor: colorHex }} aria-hidden="true" />
-              <input
-                className="inspector-inline-name"
-                aria-label={appStrings.inspector.nameOf(item.name)}
-                defaultValue={item.name}
-                onBlur={(event) => {
-                  const name = event.target.value.trim();
-                  if (name && name !== item.name)
+            <InspectorEditorSurface>
+              <div className="inspector-editor-heading">
+                <span className="style-color-swatch compact" style={{ backgroundColor: colorHex }} aria-hidden="true" />
+                <input
+                  className="inspector-inline-name"
+                  aria-label={appStrings.inspector.nameOf(item.name)}
+                  defaultValue={item.name}
+                  onBlur={(event) => {
+                    const name = event.target.value.trim();
+                    if (name && name !== item.name)
+                      props.onCommand(
+                        "updateSharedStyle",
+                        { ...item, name },
+                        appStrings.inspector.operationMessage.sharedStyleUpdated,
+                      );
+                  }}
+                />
+                <button
+                  type="button"
+                  className="inspector-icon-button inspector-icon-destructive-button"
+                  aria-label={appStrings.inspector.deleteStyle(item.name)}
+                  onClick={() =>
                     props.onCommand(
-                      "updateSharedStyle",
-                      { ...item, name },
-                      appStrings.inspector.operationMessage.sharedStyleUpdated,
-                    );
-                }}
-              />
-              <button
-                className="inspector-icon-destructive-button"
-                aria-label={appStrings.inspector.deleteStyle(item.name)}
-                onClick={() =>
-                  props.onCommand(
-                    "deleteSharedStyle",
-                    item.id,
-                    appStrings.inspector.operationMessage.sharedStyleDeleted,
-                  )
-                }
-              >
-                {appStrings.contextMenu.delete}
-              </button>
-            </div>
-            {renderStyleFields(item.style, (style) =>
-              props.onCommand(
-                "updateSharedStyle",
-                { ...item, style },
-                appStrings.inspector.operationMessage.sharedStyleUpdated,
-              ),
-            )}
+                      "deleteSharedStyle",
+                      item.id,
+                      appStrings.inspector.operationMessage.sharedStyleDeleted,
+                    )
+                  }
+                >
+                  <Trash2 aria-hidden="true" />
+                </button>
+              </div>
+              {renderStyleFields(item.style, (style) =>
+                props.onCommand(
+                  "updateSharedStyle",
+                  { ...item, style },
+                  appStrings.inspector.operationMessage.sharedStyleUpdated,
+                ),
+              )}
+            </InspectorEditorSurface>
           </InspectorDisclosureRow>
         );
       })}
@@ -121,6 +128,7 @@ export function InspectorStylesTab({
           )
         }
       >
+        <Plus aria-hidden="true" />
         {appStrings.inspector.addSharedStyle}
       </button>
     </InspectorSection>

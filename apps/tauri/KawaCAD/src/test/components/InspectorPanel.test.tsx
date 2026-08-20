@@ -1,5 +1,5 @@
 import { cloneElement } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RawEntity } from "@/features/canvas/domain/cad";
 import { InspectorPanel, type DerivedElement, type Part } from "@/features/inspector/components/InspectorPanel";
@@ -84,6 +84,91 @@ function panel(
 
 describe("InspectorPanel", () => {
   afterEach(cleanup);
+
+  const selectionCases: Array<[string, RawEntity, string, string[]]> = [
+    [
+      "線分",
+      {
+        id: "line:selection",
+        kind: { lineSegment: { start: { xMm: 2, yMm: 3 }, end: { xMm: 14, yMm: 8 } } },
+      },
+      "線分",
+      ["線分長 (mm)"],
+    ],
+    [
+      "円",
+      { id: "circle:selection", kind: { circle: { center: { xMm: 5, yMm: 6 }, radiusMm: 8 } } },
+      "円",
+      ["半径 (mm)"],
+    ],
+    [
+      "円弧",
+      {
+        id: "arc:selection",
+        kind: {
+          arc: {
+            center: { xMm: 0, yMm: 0 },
+            radiusMm: 10,
+            startAngleRad: Math.PI / 4,
+            sweepAngleRad: Math.PI / 2,
+          },
+        },
+      },
+      "円弧",
+      ["半径 (mm)", "掃引角 (度)", "開始角 (度)"],
+    ],
+    ["点", { id: "point:selection", kind: { point: { xMm: 1, yMm: 2 } } }, "点", []],
+    [
+      "中心線",
+      {
+        id: "center-line:selection",
+        kind: { centerLine: { start: { xMm: -5, yMm: 4 }, end: { xMm: 9, yMm: 11 } } },
+      },
+      "中心線",
+      ["線分長 (mm)"],
+    ],
+  ];
+
+  it.each(selectionCases)("matches the Swift selection editor structure for %s", (_name, entity, kind, fields) => {
+    render(panel(vi.fn(), [], [], [], entity));
+    const editor = screen.getByText("種別", { exact: true }).closest(".selection-entity-editor");
+    expect(editor).not.toBeNull();
+    const scoped = within(editor as HTMLElement);
+    expect(scoped.getByText(kind, { exact: true })).toBeInTheDocument();
+    expect(scoped.getByRole("combobox", { name: "レイヤー" })).toBeInTheDocument();
+    expect(scoped.getByRole("combobox", { name: "共有スタイル" })).toBeInTheDocument();
+    expect(scoped.queryAllByRole("spinbutton").map((field) => field.getAttribute("aria-label"))).toEqual(fields);
+    expect(scoped.getByRole("button", { name: "削除" })).toBeInTheDocument();
+  });
+
+  it("shows the Swift line endpoint row and arc field order without an inspector-only prototype action", () => {
+    const line: RawEntity = {
+      id: "line:details",
+      kind: { lineSegment: { start: { xMm: 2, yMm: 3 }, end: { xMm: 14, yMm: 8 } } },
+    };
+    const { rerender } = render(panel(vi.fn(), [], [], [], line));
+    expect(screen.getByText("終点", { exact: true }).nextElementSibling).toHaveTextContent("14.00, 8.00");
+    expect(screen.getByRole("button", { name: "現在長さを拘束" })).toBeInTheDocument();
+
+    const arc: RawEntity = {
+      id: "arc:details",
+      kind: {
+        arc: {
+          center: { xMm: 0, yMm: 0 },
+          radiusMm: 10,
+          startAngleRad: Math.PI / 4,
+          sweepAngleRad: Math.PI / 2,
+        },
+      },
+    };
+    rerender(panel(vi.fn(), [], [], [], arc));
+    expect(screen.getAllByRole("spinbutton").map((field) => field.getAttribute("aria-label"))).toEqual([
+      "半径 (mm)",
+      "掃引角 (度)",
+      "開始角 (度)",
+    ]);
+    expect(screen.queryByRole("button", { name: "円弧接線を滑らかに" })).not.toBeInTheDocument();
+  });
 
   it("keeps the SwiftUI tab order in a fixed header outside the scrolling content", () => {
     render(panel());
@@ -367,7 +452,7 @@ describe("InspectorPanel", () => {
     render(panel(onCommand));
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Outline を出力対象に含める" }));
+    fireEvent.click(screen.getByRole("button", { name: "Outline を出力対象に含める" }));
     expect(onCommand).toHaveBeenCalledWith(
       "setLayerPrintable",
       { layerId: "layer:outline", printable: false },
@@ -417,7 +502,7 @@ describe("InspectorPanel", () => {
       { partId: "part:card-case", position: { xMm: 12.5, yMm: 20 } },
       "パーツ原点を更新しました。",
     );
-    expect(screen.getByLabelText("カードケース の構成")).toHaveTextContent("外形 1穴 1派生 1テキスト 1計測 1");
+    expect(screen.getByLabelText("カードケース の構成")).toHaveTextContent("派生要素1注記1計測表示1");
   });
   it("keeps fixed part membership controls out of the SwiftUI-equivalent editor", () => {
     const onCommand = vi.fn();
@@ -725,7 +810,7 @@ describe("InspectorPanel", () => {
       { id: "parameter:width", name: "幅", valueMm: 30, unit: "millimeter", memo: "胴回り" },
       "幅 を更新しました。",
     );
-    expect(screen.getByText("このパラメータは使用されていません。")).toBeInTheDocument();
+    expect(screen.getByText("まだ拘束や派生要素から参照されていません")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "幅 を削除" }));
     expect(onCommand).toHaveBeenCalledWith(
       "deleteParameter",
@@ -793,13 +878,13 @@ describe("InspectorPanel", () => {
     expect(parameterRow).toHaveTextContent("使用 3 件");
     fireEvent.click(parameterRow);
     expect(parameterRow).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("3 件の拘束で使用されています。")).toBeInTheDocument();
+    expect(screen.getByText("拘束や派生要素から参照されています")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     const partRow = screen.getByRole("button", { name: /^カードケース/ });
     expect(partRow).toHaveAttribute("aria-expanded", "false");
-    expect(partRow).toHaveTextContent("外形 1 / 穴 1");
-    expect(partRow).toHaveTextContent("数量 2 / 所属 2");
+    expect(partRow).toHaveTextContent("外形 1図形・穴 1個");
+    expect(partRow).toHaveTextContent("必要数 2・所属 2");
     fireEvent.click(partRow);
     expect(partRow).toHaveAttribute("aria-expanded", "true");
   });

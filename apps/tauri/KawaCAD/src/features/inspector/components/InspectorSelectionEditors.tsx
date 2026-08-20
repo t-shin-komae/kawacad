@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FileText } from "lucide-react";
+import { ArrowLeftRight, CircleAlert, FileText, Link2, Trash2 } from "lucide-react";
 import { geometryOf, type PointMm, type RawEntity } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
 import { parseDecimal } from "@/shared/state/syncedField";
@@ -19,7 +19,7 @@ import type {
   PendingTextEntry,
   Props,
 } from "@/features/inspector/components/InspectorPanel";
-import { InspectorSection } from "@/shared/components/InspectorPrimitives";
+import { InspectorEditorSurface, InspectorSection } from "@/shared/components/InspectorPrimitives";
 import { defaultSharedStyle } from "@/features/inspector/domain/sharedStyleDefaults";
 import { formatInspectorNumber, resolveInspectorValue } from "@/features/inspector/domain/inspectorValueFormatting";
 
@@ -229,17 +229,17 @@ export function FreeTextEditor({
 }) {
   const [draft, setDraft] = useState({
     content: freeText.content,
-    xMm: String(freeText.positionMm.xMm),
-    yMm: String(freeText.positionMm.yMm),
-    fontSizeMm: String(freeText.fontSizeMm),
+    xMm: formatInspectorNumber(freeText.positionMm.xMm),
+    yMm: formatInspectorNumber(freeText.positionMm.yMm),
+    fontSizeMm: formatInspectorNumber(freeText.fontSizeMm),
   });
   useEffect(
     () =>
       setDraft({
         content: freeText.content,
-        xMm: String(freeText.positionMm.xMm),
-        yMm: String(freeText.positionMm.yMm),
-        fontSizeMm: String(freeText.fontSizeMm),
+        xMm: formatInspectorNumber(freeText.positionMm.xMm),
+        yMm: formatInspectorNumber(freeText.positionMm.yMm),
+        fontSizeMm: formatInspectorNumber(freeText.fontSizeMm),
       }),
     [freeText],
   );
@@ -276,54 +276,51 @@ export function FreeTextEditor({
   };
   return (
     <div className="inspector-card free-text-editor">
-      <label>
-        {appStrings.inspector.content}
-        <input
-          aria-label={appStrings.inspector.textContent}
-          value={draft.content}
-          onChange={(event) => setDraft({ ...draft, content: event.target.value })}
-          onBlur={() => commit()}
-        />
-      </label>
-      <button className="inspector-destructive-button" onClick={onDelete}>
-        {appStrings.contextMenu.delete}
-      </button>
-      <div className="part-origin-fields">
-        <label>
-          X (mm)
-          <input
-            aria-label={appStrings.inspector.textX}
-            type="number"
-            step=".01"
-            value={draft.xMm}
-            onChange={(event) => setDraft({ ...draft, xMm: event.target.value })}
-            onBlur={commit}
-          />
-        </label>
-        <label>
-          Y (mm)
-          <input
-            aria-label={appStrings.inspector.textY}
-            type="number"
-            step=".01"
-            value={draft.yMm}
-            onChange={(event) => setDraft({ ...draft, yMm: event.target.value })}
-            onBlur={commit}
-          />
-        </label>
+      <div className="detail-row">
+        <span>{appStrings.inspector.kind}</span>
+        <strong>{appStrings.toolNames.freeText}</strong>
       </div>
-      <label>
-        {appStrings.inspector.fontSize}
+      <input
+        aria-label={appStrings.inspector.textContent}
+        placeholder={appStrings.inspector.content}
+        value={draft.content}
+        onChange={(event) => setDraft({ ...draft, content: event.target.value })}
+        onBlur={() => commit()}
+      />
+      <div className="part-origin-fields">
         <input
-          aria-label={appStrings.inspector.fontSize}
+          aria-label={appStrings.inspector.textX}
+          placeholder="X (mm)"
           type="number"
-          min=".1"
-          step=".1"
-          value={draft.fontSizeMm}
-          onChange={(event) => setDraft({ ...draft, fontSizeMm: event.target.value })}
+          step=".01"
+          value={draft.xMm}
+          onChange={(event) => setDraft({ ...draft, xMm: event.target.value })}
           onBlur={commit}
         />
-      </label>
+        <input
+          aria-label={appStrings.inspector.textY}
+          placeholder="Y (mm)"
+          type="number"
+          step=".01"
+          value={draft.yMm}
+          onChange={(event) => setDraft({ ...draft, yMm: event.target.value })}
+          onBlur={commit}
+        />
+      </div>
+      <input
+        aria-label={appStrings.inspector.fontSize}
+        placeholder={appStrings.inspector.fontSize}
+        type="number"
+        min=".1"
+        step=".1"
+        value={draft.fontSizeMm}
+        onChange={(event) => setDraft({ ...draft, fontSizeMm: event.target.value })}
+        onBlur={commit}
+      />
+      <button className="inspector-destructive-button" onClick={onDelete}>
+        <Trash2 aria-hidden="true" />
+        {appStrings.contextMenu.delete}
+      </button>
     </div>
   );
 }
@@ -335,9 +332,13 @@ export function ParameterEditor({
   parameter: Props["parameters"][number];
   onCommand: Props["onCommand"];
 }) {
-  const [draft, setDraft] = useState({ name: parameter.name, value: String(parameter.valueMm), memo: parameter.memo });
+  const [draft, setDraft] = useState({
+    name: parameter.name,
+    value: formatInspectorNumber(parameter.valueMm),
+    memo: parameter.memo,
+  });
   useEffect(
-    () => setDraft({ name: parameter.name, value: String(parameter.valueMm), memo: parameter.memo }),
+    () => setDraft({ name: parameter.name, value: formatInspectorNumber(parameter.valueMm), memo: parameter.memo }),
     [parameter],
   );
   const commit = () => {
@@ -352,32 +353,35 @@ export function ParameterEditor({
         appStrings.inspector.parameterUpdated(name),
       );
   };
+  const usageCount = parameterUsageCount(parameter);
   return (
-    <div className="inspector-card parameter-editor">
-      <div className="row">
-        <label>
-          {appStrings.inspector.name}
+    <InspectorEditorSurface className="parameter-editor">
+      <div className="parameter-editor-heading">
+        <div className="parameter-name-field">
           <input
             aria-label={appStrings.inspector.nameOf(parameter.name)}
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
             onBlur={commit}
           />
-        </label>
-        <label>
-          {appStrings.inspector.millimeters}
-          <input
-            aria-label={appStrings.inspector.valueOf(parameter.name)}
-            type="number"
-            min="0"
-            step=".01"
-            value={draft.value}
-            onChange={(event) => setDraft({ ...draft, value: event.target.value })}
-            onBlur={commit}
-          />
-        </label>
+          <small>
+            {usageCount === 0 ? appStrings.inspector.parameterUnused : appStrings.inspector.parameterUsage(usageCount)}
+          </small>
+        </div>
+        <input
+          className="parameter-value-field"
+          aria-label={appStrings.inspector.valueOf(parameter.name)}
+          type="number"
+          min="0"
+          step=".01"
+          value={draft.value}
+          onChange={(event) => setDraft({ ...draft, value: event.target.value })}
+          onBlur={commit}
+        />
+        <span className="parameter-unit">{parameter.unit === "millimeter" ? "mm" : parameter.unit}</span>
         <button
-          className="inspector-icon-destructive-button"
+          type="button"
+          className="inspector-icon-button inspector-icon-destructive-button"
           aria-label={appStrings.inspector.deleteParameter(parameter.name)}
           onClick={() =>
             onCommand(
@@ -387,24 +391,25 @@ export function ParameterEditor({
             )
           }
         >
-          {appStrings.contextMenu.delete}
+          <Trash2 aria-hidden="true" />
         </button>
       </div>
-      <label>
-        {appStrings.inspector.parameterMemo}
-        <input
-          aria-label={appStrings.inspector.memoOf(parameter.name)}
-          value={draft.memo}
-          onChange={(event) => setDraft({ ...draft, memo: event.target.value })}
-          onBlur={commit}
-        />
-      </label>
-      <small className={parameterUsageCount(parameter) === 0 ? "parameter-usage-warning" : "inspector-help"}>
-        {parameterUsageCount(parameter) === 0
-          ? appStrings.inspector.parameterUnusedHint
-          : appStrings.inspector.parameterUsedHint(parameterUsageCount(parameter))}
-      </small>
-    </div>
+      <input
+        aria-label={appStrings.inspector.memoOf(parameter.name)}
+        placeholder={appStrings.inspector.parameterMemo}
+        value={draft.memo}
+        onChange={(event) => setDraft({ ...draft, memo: event.target.value })}
+        onBlur={commit}
+      />
+      <div className={usageCount === 0 ? "parameter-usage-warning" : "inspector-help"}>
+        {usageCount === 0 ? <CircleAlert aria-hidden="true" /> : <Link2 aria-hidden="true" />}
+        <span>
+          {usageCount === 0
+            ? appStrings.inspector.parameterUnusedHint
+            : appStrings.inspector.parameterUsedHint(usageCount)}
+        </span>
+      </div>
+    </InspectorEditorSurface>
   );
 }
 
@@ -543,14 +548,10 @@ export function colorFromHex(color: string, alpha: number): LineStyle["stroke"] 
 
 export function DerivedElementEditor({
   derivedElement,
-  layers,
-  sharedStyles,
   parameters,
   onCommand,
 }: {
   derivedElement: DerivedElement;
-  layers: Props["layers"];
-  sharedStyles: Props["sharedStyles"];
   parameters: Props["parameters"];
   onCommand: Props["onCommand"];
 }) {
@@ -582,69 +583,30 @@ export function DerivedElementEditor({
       );
   };
   return (
-    <div className="inspector-card derived-element-editor">
-      <strong>{kind}</strong>
-      <div className="detail-list">
-        <span>{appStrings.inspector.sourceElements(sourceEntityIds.length)}</span>
+    <div className="derived-element-editor">
+      <div className="detail-row">
+        <span>{appStrings.inspector.derivedElement}</span>
+        <strong>{kind}</strong>
       </div>
-      <label>
-        {appStrings.inspector.layer}
-        <select
-          value={derivedElement.layerId ?? ""}
-          onChange={(event) =>
-            onCommand(
-              "setDerivedLayer",
-              { derivedElementId: derivedElement.id, layerId: event.target.value || null },
-              appStrings.inspector.operationMessage.derivedLayerUpdated,
-            )
-          }
-        >
-          <option value="">{appStrings.inspector.noValue}</option>
-          {layers.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        {appStrings.inspector.sharedStyles}
-        <select
-          value={derivedElement.styleId ?? ""}
-          onChange={(event) =>
-            onCommand(
-              "setDerivedSharedStyle",
-              { derivedElementId: derivedElement.id, styleId: event.target.value || null },
-              appStrings.inspector.operationMessage.derivedStyleUpdated,
-            )
-          }
-        >
-          <option value="">{appStrings.inspector.noValue}</option>
-          {sharedStyles.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        {label}
-        <input
-          aria-label={appStrings.inspector.derivedValue(kind, label)}
-          type="number"
-          min=".01"
-          step=".01"
-          value={draftValue}
-          onChange={(event) => {
-            setDraftValue(event.target.value);
-            setDraftDirty(true);
-          }}
-          onBlur={() => commit()}
-        />
-      </label>
+      <div className="detail-row">
+        <span>{appStrings.inspector.sourceCount}</span>
+        <strong>{sourceEntityIds.length}</strong>
+      </div>
+      <NumericField
+        label={fieldLabel(label)}
+        ariaLabel={appStrings.inspector.derivedValue(kind, label)}
+        unit="mm"
+        min=".01"
+        value={draftValue}
+        onChange={(value) => {
+          setDraftValue(value);
+          setDraftDirty(true);
+        }}
+        onBlur={() => commit()}
+      />
       {parameters.length > 0 && (
-        <label>
-          {appStrings.inspector.parameter}
+        <label className="inspector-picker-row">
+          <span>{appStrings.inspector.parameter}</span>
           <select
             value={value.parameter ?? ""}
             onChange={(event) => {
@@ -669,8 +631,8 @@ export function DerivedElementEditor({
       )}
       {offset && (
         <>
-          <label>
-            {appStrings.inspector.direction}
+          <label className="inspector-picker-row">
+            <span>{appStrings.inspector.direction}</span>
             <select
               value={offset.direction}
               onChange={(event) =>
@@ -688,6 +650,7 @@ export function DerivedElementEditor({
             </select>
           </label>
           <button
+            className="inspector-wide-button"
             onClick={() =>
               onCommand(
                 "setDerivedDirection",
@@ -696,6 +659,7 @@ export function DerivedElementEditor({
               )
             }
           >
+            <ArrowLeftRight aria-hidden="true" />
             {appStrings.inspector.reverseDirection}
           </button>
         </>
@@ -721,6 +685,7 @@ export function EntityEditor({
   roundHole,
   onCommand,
   onConstrainSegmentLength,
+  onDelete,
 }: {
   entity: RawEntity;
   derivedElement?: DerivedElement;
@@ -730,31 +695,33 @@ export function EntityEditor({
   roundHole?: Props["roundHoles"][number];
   onCommand: Props["onCommand"];
   onConstrainSegmentLength?: Props["onConstrainSegmentLength"];
+  onDelete: Props["onDeleteSelection"];
 }) {
-  if (derivedElement)
-    return (
-      <DerivedElementEditor
-        derivedElement={derivedElement}
-        layers={layers}
-        sharedStyles={sharedStyles}
-        parameters={parameters}
-        onCommand={onCommand}
-      />
-    );
   const geometry = geometryOf(entity);
+  const selectedLayerID = derivedElement ? (derivedElement.layerId ?? "") : (entity.layerId ?? "");
+  const selectedStyleID = derivedElement ? (derivedElement.styleId ?? "") : (entity.styleId ?? "");
   return (
-    <div className="inspector-card">
-      <strong>{geometryDisplayName(entity)}</strong>
-      <label>
-        {appStrings.inspector.layer}
+    <div className="inspector-card selection-entity-editor">
+      <div className="detail-row">
+        <span>{appStrings.inspector.kind}</span>
+        <strong>{geometryDisplayName(entity)}</strong>
+      </div>
+      <label className="inspector-picker-row">
+        <span>{appStrings.inspector.layer}</span>
         <select
-          value={entity.layerId ?? ""}
+          value={selectedLayerID}
           onChange={(event) =>
-            onCommand(
-              "setEntityLayer",
-              { entityId: entity.id, layerId: event.target.value || null },
-              appStrings.inspector.operationMessage.geometryLayerUpdated,
-            )
+            derivedElement
+              ? onCommand(
+                  "setDerivedLayer",
+                  { derivedElementId: derivedElement.id, layerId: event.target.value || null },
+                  appStrings.inspector.operationMessage.derivedLayerUpdated,
+                )
+              : onCommand(
+                  "setEntityLayer",
+                  { entityId: entity.id, layerId: event.target.value || null },
+                  appStrings.inspector.operationMessage.geometryLayerUpdated,
+                )
           }
         >
           <option value="">{appStrings.inspector.noValue}</option>
@@ -765,16 +732,22 @@ export function EntityEditor({
           ))}
         </select>
       </label>
-      <label>
-        {appStrings.inspector.sharedStyles}
+      <label className="inspector-picker-row">
+        <span>{appStrings.inspector.sharedStyles}</span>
         <select
-          value={entity.styleId ?? ""}
+          value={selectedStyleID}
           onChange={(event) =>
-            onCommand(
-              "setEntitySharedStyle",
-              { entityId: entity.id, styleId: event.target.value || null },
-              appStrings.inspector.operationMessage.geometryStyleUpdated,
-            )
+            derivedElement
+              ? onCommand(
+                  "setDerivedSharedStyle",
+                  { derivedElementId: derivedElement.id, styleId: event.target.value || null },
+                  appStrings.inspector.operationMessage.derivedStyleUpdated,
+                )
+              : onCommand(
+                  "setEntitySharedStyle",
+                  { entityId: entity.id, styleId: event.target.value || null },
+                  appStrings.inspector.operationMessage.geometryStyleUpdated,
+                )
           }
         >
           <option value="">{appStrings.inspector.noValue}</option>
@@ -785,28 +758,25 @@ export function EntityEditor({
           ))}
         </select>
       </label>
-      {geometry && geometry.tag !== "point" && (
-        <EntityGeometryEditor
-          entityId={entity.id}
-          geometry={geometry}
-          onCommand={onCommand}
-          onConstrainSegmentLength={onConstrainSegmentLength}
-        />
+      {derivedElement ? (
+        <DerivedElementEditor derivedElement={derivedElement} parameters={parameters} onCommand={onCommand} />
+      ) : (
+        <>
+          {roundHole && <RoundHoleEditor entity={entity} roundHole={roundHole} onCommand={onCommand} />}
+          {geometry && geometry.tag !== "point" && (
+            <EntityGeometryEditor
+              entityId={entity.id}
+              geometry={geometry}
+              onCommand={onCommand}
+              onConstrainSegmentLength={onConstrainSegmentLength}
+            />
+          )}
+        </>
       )}
-      {geometry?.tag === "arc" && (
-        <button
-          onClick={() =>
-            onCommand(
-              "smoothArcTangencies",
-              { arcEntityId: entity.id },
-              appStrings.inspector.operationMessage.arcTangenciesUpdated,
-            )
-          }
-        >
-          {appStrings.inspector.smoothArcTangencies}
-        </button>
-      )}
-      {roundHole && <RoundHoleEditor entity={entity} roundHole={roundHole} onCommand={onCommand} />}
+      <button className="inspector-destructive-button" onClick={onDelete}>
+        <Trash2 aria-hidden="true" />
+        {appStrings.contextMenu.delete}
+      </button>
     </div>
   );
 }
@@ -852,9 +822,9 @@ export function RoundHoleEditor({
       );
   };
   return (
-    <>
-      <label>
-        {appStrings.inspector.roundHoleKind}
+    <div className="round-hole-fields">
+      <label className="inspector-picker-row">
+        <span>{appStrings.inspector.roundHoleKind}</span>
         <select
           value={roundHole.kind}
           onChange={(event) =>
@@ -871,19 +841,16 @@ export function RoundHoleEditor({
           <option value="decorative">{appStrings.palette.roundHoleKinds.decorative}</option>
         </select>
       </label>
-      <label>
-        {appStrings.inspector.diameter}
-        <input
-          aria-label={appStrings.palette.roundHoleDiameter}
-          type="number"
-          min=".01"
-          step=".01"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onBlur={commit}
-        />
-      </label>
-    </>
+      <NumericField
+        label={fieldLabel(appStrings.inspector.diameter)}
+        ariaLabel={appStrings.palette.roundHoleDiameter}
+        unit="mm"
+        min=".01"
+        value={draft}
+        onChange={setDraft}
+        onBlur={commit}
+      />
+    </div>
   );
 }
 
@@ -958,19 +925,28 @@ export function EntityGeometryEditor({
       {(geometry.tag === "lineSegment" || geometry.tag === "centerLine") && (
         <>
           <NumericField
-            label={appStrings.inspector.segmentLength}
+            label={fieldLabel(appStrings.inspector.segmentLength)}
+            ariaLabel={appStrings.inspector.segmentLength}
+            unit="mm"
             value={draft.lengthMm}
             onChange={(lengthMm) => setDraft({ ...draft, lengthMm })}
             onBlur={commit}
           />
-          <button onClick={() => onConstrainSegmentLength?.(entityId)}>
+          <button className="inspector-wide-button" onClick={() => onConstrainSegmentLength?.(entityId)}>
+            <Link2 aria-hidden="true" />
             {appStrings.inspector.setCurrentLengthConstraint}
           </button>
+          <div className="detail-row">
+            <span>{appStrings.inspector.endPoint}</span>
+            <strong>{formatPoint(geometry.end)}</strong>
+          </div>
         </>
       )}
       {geometry.tag === "circle" && (
         <NumericField
-          label={appStrings.inspector.radius}
+          label={fieldLabel(appStrings.inspector.radius)}
+          ariaLabel={appStrings.inspector.radius}
+          unit="mm"
           value={draft.radiusMm}
           onChange={(radiusMm) => setDraft({ ...draft, radiusMm })}
           onBlur={commit}
@@ -979,21 +955,27 @@ export function EntityGeometryEditor({
       {geometry.tag === "arc" && (
         <>
           <NumericField
-            label={appStrings.inspector.radius}
+            label={fieldLabel(appStrings.inspector.radius)}
+            ariaLabel={appStrings.inspector.radius}
+            unit="mm"
             value={draft.radiusMm}
             onChange={(radiusMm) => setDraft({ ...draft, radiusMm })}
             onBlur={commit}
           />
           <NumericField
-            label={appStrings.inspector.startAngle}
-            value={draft.startDegrees}
-            onChange={(startDegrees) => setDraft({ ...draft, startDegrees })}
+            label={fieldLabel(appStrings.inspector.sweepAngle)}
+            ariaLabel={appStrings.inspector.sweepAngle}
+            unit="°"
+            value={draft.sweepDegrees}
+            onChange={(sweepDegrees) => setDraft({ ...draft, sweepDegrees })}
             onBlur={commit}
           />
           <NumericField
-            label={appStrings.inspector.sweepAngle}
-            value={draft.sweepDegrees}
-            onChange={(sweepDegrees) => setDraft({ ...draft, sweepDegrees })}
+            label={fieldLabel(appStrings.inspector.startAngle)}
+            ariaLabel={appStrings.inspector.startAngle}
+            unit="°"
+            value={draft.startDegrees}
+            onChange={(startDegrees) => setDraft({ ...draft, startDegrees })}
             onBlur={commit}
           />
         </>
@@ -1026,26 +1008,44 @@ export function geometryFields(geometry: NonNullable<ReturnType<typeof geometryO
 
 export function NumericField({
   label,
+  ariaLabel,
+  unit,
+  min,
   value,
   onChange,
   onBlur,
 }: {
   label: string;
+  ariaLabel?: string;
+  unit: string;
+  min?: string;
   value?: string;
   onChange: (value: string) => void;
   onBlur: () => void;
 }) {
   return (
-    <label>
-      {label}
-      <input
-        aria-label={label}
-        type="number"
-        step=".01"
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-        onBlur={onBlur}
-      />
+    <label className="inspector-numeric-row">
+      <span>{label}</span>
+      <span className="inspector-numeric-control">
+        <input
+          aria-label={ariaLabel ?? label}
+          type="number"
+          min={min}
+          step=".01"
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
+        />
+        <span>{unit}</span>
+      </span>
     </label>
   );
+}
+
+function fieldLabel(label: string) {
+  return label.replace(/ \([^)]*\)$/u, "");
+}
+
+function formatPoint(point: PointMm) {
+  return `${point.xMm.toFixed(2)}, ${point.yMm.toFixed(2)}`;
 }

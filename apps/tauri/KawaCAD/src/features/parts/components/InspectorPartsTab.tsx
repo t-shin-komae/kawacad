@@ -1,5 +1,17 @@
 import { useState, type ReactNode } from "react";
-import { BookOpen, Package } from "lucide-react";
+import {
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  BookOpen,
+  CopyPlus,
+  Package,
+  PackagePlus,
+  Trash2,
+} from "lucide-react";
 import { appStrings } from "@/localization";
 import type { Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import { InspectorDisclosureRow, InspectorSection } from "@/shared/components/InspectorPrimitives";
@@ -17,6 +29,15 @@ type InspectorPartsTabProps = {
   onRemovePartFromLibrary: (entry: PartLibraryEntry) => void;
   renderPartEditor: (part: Part) => ReactNode;
 };
+
+const alignmentControls = [
+  ["left", appStrings.inspector.alignLeft, AlignHorizontalJustifyStart],
+  ["horizontalCenter", appStrings.inspector.alignCenter, AlignHorizontalJustifyCenter],
+  ["right", appStrings.inspector.alignRight, AlignHorizontalJustifyEnd],
+  ["bottom", appStrings.inspector.alignBottom, AlignVerticalJustifyEnd],
+  ["verticalCenter", appStrings.inspector.alignVerticalCenter, AlignVerticalJustifyCenter],
+  ["top", appStrings.inspector.alignTop, AlignVerticalJustifyStart],
+] as const;
 
 export function InspectorPartsTab({
   selectedCount,
@@ -59,22 +80,21 @@ export function InspectorPartsTab({
         )}
         {parts.length > 0 && (
           <div className="arrangement-controls">
+            <div className="inspector-divider" />
             <small>{appStrings.inspector.alignDescription}</small>
-            <div className="button-row">
-              {[
-                ["left", appStrings.inspector.alignLeft],
-                ["horizontalCenter", appStrings.inspector.alignCenter],
-                ["right", appStrings.inspector.alignRight],
-                ["bottom", appStrings.inspector.alignBottom],
-                ["verticalCenter", appStrings.inspector.alignVerticalCenter],
-                ["top", appStrings.inspector.alignTop],
-              ].map(([alignment, label]) => (
-                <button key={alignment} disabled={arrangementPartIds.size < 2} onClick={() => onAlignParts(alignment)}>
-                  {label}
+            <div className="arrangement-align-buttons">
+              {alignmentControls.map(([alignment, label, Icon]) => (
+                <button
+                  key={alignment}
+                  aria-label={label}
+                  disabled={arrangementPartIds.size < 2}
+                  onClick={() => onAlignParts(alignment)}
+                >
+                  <Icon aria-hidden="true" />
                 </button>
               ))}
             </div>
-            <div className="button-row">
+            <div className="arrangement-distribute-buttons">
               <button disabled={arrangementPartIds.size < 3} onClick={() => onDistributeParts("horizontal")}>
                 {appStrings.inspector.distributeHorizontal}
               </button>
@@ -84,21 +104,38 @@ export function InspectorPartsTab({
             </div>
           </div>
         )}
-        <button className="inspector-add-button" disabled={!selectedCount} onClick={onCreatePart}>
+        <button
+          className="inspector-add-button inspector-prominent-button"
+          disabled={!selectedCount}
+          onClick={onCreatePart}
+        >
+          <PackagePlus aria-hidden="true" />
           {appStrings.inspector.createPartFromSelection}
         </button>
       </InspectorSection>
       <InspectorSection title={appStrings.inspector.partLibrary} icon={BookOpen}>
         {partLibrary.length ? (
           partLibrary.map((item) => (
-            <div className="row" key={item.id}>
+            <div className="part-library-row" key={item.id}>
               <span>
-                {item.name}
+                <strong>{item.name}</strong>
                 <small>{appStrings.inspector.partLibraryQuantity(item.sourcePart.quantity)}</small>
               </span>
-              <div className="button-row">
-                <button onClick={() => onInsertPartFromLibrary(item)}>{appStrings.inspector.place}</button>
-                <button onClick={() => onRemovePartFromLibrary(item)}>{appStrings.contextMenu.delete}</button>
+              <div className="inspector-editor-actions">
+                <button
+                  className="inspector-icon-button"
+                  aria-label={appStrings.inspector.place}
+                  onClick={() => onInsertPartFromLibrary(item)}
+                >
+                  <CopyPlus aria-hidden="true" />
+                </button>
+                <button
+                  className="inspector-icon-button inspector-icon-destructive-button"
+                  aria-label={appStrings.contextMenu.delete}
+                  onClick={() => onRemovePartFromLibrary(item)}
+                >
+                  <Trash2 aria-hidden="true" />
+                </button>
               </div>
             </div>
           ))
