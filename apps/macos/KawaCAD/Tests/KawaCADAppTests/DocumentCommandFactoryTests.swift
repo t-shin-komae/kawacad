@@ -746,7 +746,31 @@ func command_service_builds_add_layer_command() {
   #expect((payload["id"] as? String) == "layer:user-layer-id")
   #expect((payload["name"] as? String) == "レイヤー 3")
   #expect((payload["kind"] as? String) == "cutLine")
+  #expect((payload["visible"] as? Bool) == true)
   #expect((payload["printable"] as? Bool) == true)
+  let style = unwrap(payload["style"] as? [String: Any])
+  #expect((style["strokeWidthMm"] as? Double) == 0.2)
+  #expect((style["pattern"] as? String) == "solid")
+  let stroke = unwrap(style["stroke"] as? [String: Double])
+  #expect(stroke["red"] == 0.0)
+  #expect(stroke["green"] == 0.0)
+  #expect(stroke["blue"] == 0.0)
+  #expect(stroke["alpha"] == 1.0)
+}
+
+@Test("CommandFactory はパラメータ追加コマンドにSwift版と同じ初期値を設定する")
+func command_service_builds_add_parameter_command() {
+  let service = DocumentCommandFactory(uuidProvider: { "parameter-id" })
+
+  let request = service.makeAddParameterCommand(number: 2)
+
+  #expect((request.payload["kind"] as? String) == "addParameter")
+  let payload = unwrap(request.payload["payload"] as? [String: Any])
+  #expect((payload["id"] as? String) == "parameter:param-parameter-id")
+  #expect((payload["name"] as? String) == "param_2")
+  #expect((payload["valueMm"] as? Double) == 10.0)
+  #expect((payload["unit"] as? String) == "millimeter")
+  #expect((payload["memo"] as? String) == "")
 }
 
 @Test("CommandFactory はレイヤースタイル更新コマンドを生成する")

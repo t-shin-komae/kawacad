@@ -1697,6 +1697,81 @@ describe("React workspace shortcuts", () => {
     fireEvent.click(screen.getByRole("button", { name: "基本ツールだけを表示" }));
     expect(screen.queryByTitle("一致")).not.toBeInTheDocument();
   });
+  it("uses Swift-compatible initial values when adding layers and parameters", async () => {
+    let currentState = state;
+    mocks.invoke.mockImplementation(async (command: string, args?: unknown) => {
+      if (command === "document_state") return currentState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      if (command === "apply_command") {
+        const request = args as { command: { kind: string; payload: Record<string, unknown> } };
+        if (request.command.kind === "addLayer")
+          currentState = {
+            ...currentState,
+            layers: [...currentState.layers, request.command.payload] as typeof state.layers,
+          };
+        if (request.command.kind === "addParameter")
+          currentState = {
+            ...currentState,
+            parameters: [...currentState.parameters, request.command.payload] as typeof state.parameters,
+          };
+        return currentState;
+      }
+      return currentState;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+
+    fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
+    fireEvent.click(screen.getByRole("button", { name: "レイヤーを追加" }));
+    let dialog = await screen.findByRole("dialog", { name: "レイヤーを追加" });
+    expect(within(dialog).getByRole("textbox", { name: "レイヤー名" })).toHaveValue("レイヤー 2");
+    fireEvent.click(within(dialog).getByRole("button", { name: "適用" }));
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith(
+        "apply_command",
+        expect.objectContaining({
+          command: {
+            kind: "addLayer",
+            payload: expect.objectContaining({
+              name: "レイヤー 2",
+              kind: "cutLine",
+              visible: true,
+              printable: true,
+              style: {
+                stroke: { red: 0, green: 0, blue: 0, alpha: 1 },
+                strokeWidthMm: 0.2,
+                pattern: "solid",
+              },
+            }),
+          },
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "パラメータ" }));
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    dialog = await screen.findByRole("dialog", { name: "パラメータを追加" });
+    expect(within(dialog).getByRole("textbox", { name: "パラメータ名" })).toHaveValue("param_1");
+    expect(within(dialog).getByRole("textbox", { name: "値 (mm)" })).toHaveValue("10");
+    fireEvent.click(within(dialog).getByRole("button", { name: "適用" }));
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith(
+        "apply_command",
+        expect.objectContaining({
+          command: {
+            kind: "addParameter",
+            payload: expect.objectContaining({
+              name: "param_1",
+              valueMm: 10,
+              unit: "millimeter",
+              memo: "",
+            }),
+          },
+        }),
+      ),
+    );
+  });
   it("applies a bulk style through owner commands for resolved derived entities", async () => {
     const styleState = {
       ...state,

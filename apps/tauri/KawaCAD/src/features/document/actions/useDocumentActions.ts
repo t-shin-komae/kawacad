@@ -14,6 +14,12 @@ import type { PastePlacementMode } from "@/features/document/components/PasteOpt
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import { useDocumentActionCallbacks } from "@/features/document/actions/useDocumentActionCallbacks";
 import type { DocumentActionContext } from "@/app/actions/useActionRuntime";
+import {
+  defaultLayerName,
+  defaultParameter,
+  defaultParameterName,
+  defaultUserLayer,
+} from "@/features/document/domain/documentDefaults";
 
 export function useDocumentActions(context: DocumentActionContext, resetInspectorPresentation: () => void) {
   const {
@@ -132,27 +138,25 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     resetLoadedDocumentPresentation,
   });
   const addLayer = useCallback(() => {
+    const number = (state?.layers.length ?? 0) + 1;
+    const layer = defaultUserLayer(id("layer"), number);
     openTextEntry(
       appStrings.app.addLayerTitle,
-      [{ id: "name", label: appStrings.app.layerName, initialValue: appStrings.app.newLayer }],
+      [{ id: "name", label: appStrings.app.layerName, initialValue: defaultLayerName(number) }],
       (values) => {
         const name = values.name.trim();
         if (!name) return;
         void command(
           "addLayer",
           {
-            id: id("layer"),
+            ...layer,
             name,
-            kind: "construction",
-            visible: true,
-            printable: false,
-            style: { stroke: { red: 0.42, green: 0.45, blue: 0.5, alpha: 1 }, strokeWidthMm: 0.13, pattern: "dashed" },
           },
           appStrings.app.layerAdded,
         );
       },
     );
-  }, [command, openTextEntry]);
+  }, [command, openTextEntry, state?.layers.length]);
   const deleteLayer = useCallback(
     async (layer: { id: string; name: string }) => {
       if ((state?.layers.length ?? 0) <= 1) {
@@ -180,25 +184,28 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     [command, state?.layers.length],
   );
   const addParameter = useCallback(() => {
+    const number = (state?.parameters.length ?? 0) + 1;
+    const parameter = defaultParameter(id("parameter"), number);
     openTextEntry(
       appStrings.app.addParameterTitle,
       [
-        { id: "name", label: appStrings.app.parameterName, initialValue: appStrings.app.parameterWidth },
-        { id: "value", label: appStrings.dialog.value.millimeters, initialValue: "10", inputMode: "decimal" },
+        { id: "name", label: appStrings.app.parameterName, initialValue: defaultParameterName(number) },
+        {
+          id: "value",
+          label: appStrings.dialog.value.millimeters,
+          initialValue: String(parameter.valueMm),
+          inputMode: "decimal",
+        },
       ],
       (values) => {
         const name = values.name.trim();
         const parsed = parseDecimal(values.value);
         const valueMm = parsed.ok ? parsed.value : undefined;
         if (name && typeof valueMm === "number" && Number.isFinite(valueMm) && valueMm > 0)
-          void command(
-            "addParameter",
-            { id: id("parameter"), name, valueMm, unit: "millimeter", memo: "" },
-            appStrings.app.parameterAdded,
-          );
+          void command("addParameter", { ...parameter, name, valueMm }, appStrings.app.parameterAdded);
       },
     );
-  }, [command, openTextEntry]);
+  }, [command, openTextEntry, state?.parameters.length]);
   const renameLayer = useCallback(
     (layerId: string, requestedName: string) => {
       const name = requestedName.trim();
