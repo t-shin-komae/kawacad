@@ -84,29 +84,12 @@ struct WindowLayoutPolicy: Equatable {
   }
 
   static let toolWidthColumnSwitchThreshold: CGFloat = 220
-  static let toolWidthColumnHysteresis: CGFloat = 12
 
-  /// Keep the palette at one of two stable widths while resizing. The extra
-  /// margin on the way back to one column prevents a drag from oscillating at
-  /// the layout boundary.
-  static func snappedToolWidth(
-    _ proposedWidth: CGFloat,
-    for mode: WindowLayoutMode,
-    previousWidth: CGFloat? = nil
-  ) -> CGFloat {
+  /// Keep the palette at one of two stable widths while resizing.
+  static func snappedToolWidth(_ proposedWidth: CGFloat, for mode: WindowLayoutMode) -> CGFloat {
     let range = toolWidthRange(for: mode)
     let clampedWidth = clamp(proposedWidth, within: range, defaultValue: range.lowerBound)
-    let wasTwoColumn: Bool
-    if let previousWidth, previousWidth.isFinite {
-      wasTwoColumn = previousWidth >= toolWidthColumnSwitchThreshold
-    } else {
-      wasTwoColumn = clampedWidth >= toolWidthColumnSwitchThreshold
-    }
-    let threshold =
-      wasTwoColumn
-      ? toolWidthColumnSwitchThreshold - toolWidthColumnHysteresis
-      : toolWidthColumnSwitchThreshold
-    return clampedWidth >= threshold ? range.upperBound : range.lowerBound
+    return clampedWidth >= toolWidthColumnSwitchThreshold ? range.upperBound : range.lowerBound
   }
 
   static func toolWidthAfterKeyboardAdjustment(

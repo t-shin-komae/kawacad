@@ -94,8 +94,7 @@ struct WorkspaceView: View {
               actions.setToolPanelWidth(
                 WindowLayoutPolicy.snappedToolWidth(
                   proposedWidth,
-                  for: policy.mode,
-                  previousWidth: base
+                  for: policy.mode
                 )
               )
             }
