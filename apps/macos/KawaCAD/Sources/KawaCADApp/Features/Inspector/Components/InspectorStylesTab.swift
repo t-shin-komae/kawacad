@@ -1,40 +1,40 @@
 import SwiftUI
 
 struct InspectorStylesTab: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: StyleInspectorModel
 
   var body: some View {
     InspectorSection(title: AppStrings.tr("inspector.shared_styles"), symbolName: "paintbrush") {
-      if appState.shouldShowSharedStyleInspectorSearch {
+      if appState.data.shouldShowSharedStyleInspectorSearch {
         TextField(
           AppStrings.tr("inspector.search_placeholder"),
           text: Binding(
-            get: { appState.inspectorSharedStyleSearchQuery },
-            set: appState.setInspectorSharedStyleSearchQuery
+            get: { appState.data.inspectorSharedStyleSearchQuery },
+            set: appState.actions.setInspectorSharedStyleSearchQuery
           )
         )
         .textFieldStyle(.roundedBorder)
       }
 
-      if appState.filteredInspectorSharedStyles.isEmpty {
+      if appState.data.filteredInspectorSharedStyles.isEmpty {
         Text(AppStrings.tr("inspector.no_shared_styles"))
           .font(.system(size: 12))
           .foregroundStyle(LeatherColors.secondaryInk)
       } else {
-        ForEach(appState.filteredInspectorSharedStyles) { style in
+        ForEach(appState.data.filteredInspectorSharedStyles) { style in
           InspectorDisclosureRow(
             title: style.name,
             subtitle: style.linePattern.displayName,
             metadata: style.colorHex,
-            isSelected: appState.inspectorSelectedSharedStyleID == style.id,
-            onSelect: { appState.setInspectorSelectedSharedStyleID(style.id) }
+            isSelected: appState.data.inspectorSelectedSharedStyleID == style.id,
+            onSelect: { appState.actions.setInspectorSelectedSharedStyleID(style.id) }
           ) {
             StyleEditorRow(
               style: style,
               namePlaceholder: AppStrings.tr("inspector.shared_style_name_placeholder"),
-              onChange: { appState.updateSharedStyle($0) },
+              onChange: { appState.actions.updateSharedStyle($0) },
               accessoryButtons: EmptyView(),
-              deleteButton: Button(action: { appState.deleteSharedStyle(style) }) {
+              deleteButton: Button(action: { appState.actions.deleteSharedStyle(style) }) {
                 Image(systemName: "trash")
                   .frame(width: 24, height: 24)
               }
@@ -46,7 +46,7 @@ struct InspectorStylesTab: View {
       }
 
       Button {
-        appState.addSharedStyle()
+        appState.actions.addSharedStyle()
       } label: {
         Label(AppStrings.tr("inspector.add_shared_style"), systemImage: "plus")
           .frame(maxWidth: .infinity)

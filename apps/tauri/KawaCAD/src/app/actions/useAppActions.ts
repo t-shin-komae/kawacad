@@ -4,172 +4,27 @@ import { useInspectorActions } from "@/features/inspector/actions/useInspectorAc
 import { useOutputActions } from "@/features/output/actions/useOutputActions";
 import { usePartActions } from "@/features/parts/actions/usePartActions";
 import { useWorkspaceActions } from "@/features/workspace/actions/useWorkspaceActions";
-import type {
-  AppActionContext,
-  CanvasActionContext,
-  DocumentActionContext,
-  InspectorActionContext,
-  OutputActionContext,
-  PartActionContext,
-  WorkspaceActionContext,
-} from "@/app/actions/useActionRuntime";
-
-export type { AppActionContext } from "@/app/actions/useActionRuntime";
-
 export type AppActionSurface = ReturnType<typeof useAppActions>;
+type CanvasCompositionInput = Omit<
+  Parameters<typeof useCanvasActions>[1],
+  "clearTransientCanvasState" | "setDocumentViewMode"
+>;
 
-/** Composition root for typed feature action surfaces. */
-export function useAppActions(context: AppActionContext) {
-  const inspectorContext: InspectorActionContext = pickContext(context, [
-    "setInspectorRevision",
-    "setSelected",
-    "setSelectedConstraintId",
-    "setSelectedFreeTextId",
-    "setSelectedStitchStartPointId",
-    "setSelectedMeasurementId",
-    "setInspectorSelectedPartId",
-  ]);
-  const documentContext: DocumentActionContext = pickContext(context, [
-    "state",
-    "run",
-    "command",
-    "clearCanvasPreview",
-    "layerDeletionConfirmation",
-    "cursorPoint",
-    "setLayerDeletionConfirmation",
-    "presentOperationFailure",
-    "setSelected",
-    "clearAnnotationSelection",
-    "setEditingFreeTextId",
-    "setHoveredConstraintId",
-    "setSnapSuppressed",
-    "setSnapActive",
-    "setDragDuplicating",
-    "setMarqueeCurrent",
-    "setHoveredTargetEntityId",
-    "setPendingTargets",
-    "setPendingConstraintValue",
-    "setPendingDerivedValue",
-    "setPendingTextEntry",
-    "setDraft",
-    "setCursorPoint",
-    "setPasteOptions",
-    "setInspectorSelectedPartId",
-    "setSettingPartOriginId",
-    "setCompactDrawer",
-    "setActiveLayer",
-    "setActiveStyle",
-    "setTool",
-    "setMessage",
-    "documentHeader",
-    "documentNameForFileDialog",
-    "requestDocumentSaveConfirmation",
-    "activeStyle",
-    "selected",
-    "clipboard",
-    "setClipboard",
-    "pasteOptions",
-    "pasteSequence",
-    "setPasteSequence",
-    "selectedFreeTextId",
-    "selectedConstraintId",
-    "selectedMeasurementId",
-    "selectedStitchStartPointId",
-    "setSelectedFreeTextId",
-    "setSelectedConstraintId",
-    "setSelectedMeasurementId",
-    "setSelectedStitchStartPointId",
-    "arcSweepAngle",
-    "lineStartSnap",
-  ]);
-  const canvasContext: CanvasActionContext = pickContext(context, [
-    "state",
-    "command",
-    "applyState",
-    "clearCanvasPreview",
-    "previewCommand",
-    "tool",
-    "setViewport",
-    "cursorPoint",
-    "setSelected",
-    "setHoveredConstraintId",
-    "setSnapSuppressed",
-    "setSnapActive",
-    "setDragDuplicating",
-    "setMarqueeCurrent",
-    "setHoveredTargetEntityId",
-    "setPendingTargets",
-    "setPendingConstraintValue",
-    "setPendingDerivedValue",
-    "setDraft",
-    "setCursorPoint",
-    "setContextMenu",
-    "setSelectedFreeTextId",
-    "setSelectedConstraintId",
-    "setSelectedMeasurementId",
-    "setSelectedStitchStartPointId",
-    "setEditingFreeTextId",
-    "setInspectorSelectedPartId",
-    "setSettingPartOriginId",
-    "setTool",
-    "setMessage",
-    "presentOperationFailure",
-    "activeLayer",
-    "activeStyle",
-    "snapEnabled",
-    "pointSnapEnabled",
-    "visibleEntities",
-    "selected",
-    "viewport",
-    "pendingTargets",
-    "pendingDerivedValue",
-    "roundDiameter",
-    "roundKind",
-    "canvasProjection",
-    "measurementLabels",
-    "measurementLabelOffsets",
-    "dimensionLabels",
-    "dimensionLabelOffsets",
-    "settingPartOriginId",
-    "pan",
-    "marquee",
-    "move",
-    "controlMove",
-    "measurementMove",
-    "dimensionMove",
-    "freeTextMove",
-    "arcSweepAngle",
-    "lineStartSnap",
-    "draft",
-  ]);
-  const partContext: PartActionContext = pickContext(context, [
-    "state",
-    "cursorPoint",
-    "command",
-    "selected",
-    "setSelected",
-    "setSelectedFreeTextId",
-    "setSelectedConstraintId",
-    "setInspectorSelectedPartId",
-    "setMessage",
-    "partLibrary",
-    "updatePartLibrary",
-    "presentOperationFailure",
-    "arrangementPartIds",
-    "setArrangementPartIds",
-    "setSettingPartOriginId",
-  ]);
-  const outputContext: OutputActionContext = pickContext(context, ["state", "a4Landscape", "run", "setTool"]);
-  const workspaceContext: WorkspaceActionContext = pickContext(context, [
-    "setViewport",
-    "resetWorkspacePreferences",
-    "resetWorkspaceLayout",
-    "setMessage",
-  ]);
+/** Composition root for explicitly named feature action surfaces. */
+export function useAppActions(
+  documentContext: Parameters<typeof useDocumentActions>[0],
+  canvasPresentation: Parameters<typeof useCanvasActions>[0],
+  canvasContext: CanvasCompositionInput,
+  inspectorContext: Parameters<typeof useInspectorActions>[0],
+  outputContext: Parameters<typeof useOutputActions>[0],
+  partContext: Parameters<typeof usePartActions>[0],
+  workspaceContext: Parameters<typeof useWorkspaceActions>[0],
+) {
   const inspectorActions = useInspectorActions(inspectorContext);
   const documentActions = useDocumentActions(documentContext, inspectorActions.resetInspectorPresentation);
   const outputActions = useOutputActions(outputContext, documentActions.clearTransientCanvasState);
-  const canvasActions = useCanvasActions(canvasContext, {
+  const canvasActions = useCanvasActions(canvasPresentation, {
+    ...canvasContext,
     clearTransientCanvasState: documentActions.clearTransientCanvasState,
     setDocumentViewMode: outputActions.setDocumentViewMode,
   });
@@ -177,18 +32,11 @@ export function useAppActions(context: AppActionContext) {
   const workspaceActions = useWorkspaceActions(workspaceContext);
 
   return {
-    ...documentActions,
-    ...canvasActions,
-    ...partActions,
-    ...outputActions,
-    ...inspectorActions,
-    ...workspaceActions,
+    document: documentActions,
+    canvas: canvasActions,
+    parts: partActions,
+    output: outputActions,
+    inspector: inspectorActions,
+    workspace: workspaceActions,
   };
-}
-
-function pickContext<Key extends keyof AppActionContext>(
-  context: AppActionContext,
-  keys: readonly Key[],
-): Pick<AppActionContext, Key> {
-  return Object.fromEntries(keys.map((key) => [key, context[key]])) as Pick<AppActionContext, Key>;
 }

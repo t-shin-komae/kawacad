@@ -166,7 +166,8 @@ extension LeatherCanvasView {
   }
 
   func drawSelectionMarquee() {
-    guard case .marquee(let startPoint, let currentPoint, _) = dragState else {
+    guard case .marquee(let startPoint, let currentPoint, _) = interactionSnapshot().dragState
+    else {
       return
     }
     let rect = CanvasInteractionState.normalizedRect(from: startPoint, to: currentPoint)
@@ -231,7 +232,10 @@ extension LeatherCanvasView {
   }
 
   func drawDragFeedback() {
-    guard case .entities(let entityIDs, _, _, let currentPoint, let duplicating) = dragState else {
+    guard
+      case .entities(let entityIDs, _, _, let currentPoint, let duplicating) = interactionSnapshot()
+        .dragState
+    else {
       return
     }
     let label =
@@ -347,8 +351,13 @@ extension LeatherCanvasView {
         return false
       }
       let canvasPoint = canvasPoint(for: position, in: pageRect)
-      return CGRect(x: canvasPoint.x - 8, y: canvasPoint.y - 8, width: 16, height: 16).contains(
-        point)
+      let tolerance = CanvasMetrics.stitchStartPointHitTolerancePx
+      return CGRect(
+        x: canvasPoint.x - tolerance,
+        y: canvasPoint.y - tolerance,
+        width: tolerance * 2,
+        height: tolerance * 2
+      ).contains(point)
     }
   }
 
@@ -562,13 +571,13 @@ extension LeatherCanvasView {
       drawConstraintTarget(target, selected: true, in: pageRect)
     }
 
-    if let hoveredConstraintTarget,
+    if let hoveredConstraintTarget = interactionSnapshot().hoveredConstraintTarget,
       !pendingConstraintTargets.contains(hoveredConstraintTarget)
     {
       drawConstraintTarget(hoveredConstraintTarget, selected: false, in: pageRect)
     }
 
-    if let constraintHoverPoint {
+    if let constraintHoverPoint = interactionSnapshot().constraintHoverPoint {
       drawConstraintGuidanceBadge(near: constraintHoverPoint)
     }
   }

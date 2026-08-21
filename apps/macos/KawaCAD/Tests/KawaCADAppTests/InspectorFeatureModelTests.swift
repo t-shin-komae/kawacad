@@ -28,9 +28,9 @@ func inspector_feature_model_keeps_presentation_state_and_actions_separate() {
   )
 
   #expect(model.inspectorTab == .selection)
-  #expect(model.layers == appState.actions.document.layers)
+  #expect(model.layers.data.layers == appState.actions.document.layers)
 
-  model.setInspectorLayerSearchQuery("outline")
+  model.layers.actions.setInspectorLayerSearchQuery("outline")
   #expect(appState.actions.inspector.inspectorLayerSearchQuery == "outline")
 
   model.setInspectorTab(.layers)

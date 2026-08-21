@@ -26,17 +26,11 @@ extension LeatherCanvasView {
   }
 
   func pageRect(in rect: CGRect, zoomScale: Double, panOffset: CGSize) -> CGRect {
-    let boundedZoomScale = min(max(zoomScale, 0.5), 3.0)
-    let basePageSize = basePageSizeForA4ReferenceOrientation()
-    let pageSize = CGSize(
-      width: basePageSize.width * boundedZoomScale,
-      height: basePageSize.height * boundedZoomScale
-    )
-    return CGRect(
-      x: rect.midX - pageSize.width / 2 + panOffset.width,
-      y: rect.midY - pageSize.height / 2 + panOffset.height,
-      width: pageSize.width,
-      height: pageSize.height
+    CanvasLayout.pageRect(
+      in: rect,
+      zoomScale: zoomScale,
+      panOffset: panOffset,
+      orientation: a4ReferenceOrientation
     )
   }
 
@@ -74,8 +68,7 @@ extension LeatherCanvasView {
     {
       snapped = nearest
     }
-    snapIndicatorPoint = snapped
-    snapSuppressionPoint = nil
+    interactionController.updateSnap(indicator: snapped, suppression: nil)
     return snapped
   }
 
@@ -87,8 +80,7 @@ extension LeatherCanvasView {
   ) -> ModelPoint {
     guard !modifiers.suppressesSnap else {
       let rawPoint = modelPoint(for: point, in: pageRect)
-      snapIndicatorPoint = nil
-      snapSuppressionPoint = rawPoint
+      interactionController.updateSnap(indicator: nil, suppression: rawPoint)
       return rawPoint
     }
     return snappedModelPoint(for: point, in: pageRect, excluding: excludedTarget)
@@ -100,10 +92,10 @@ extension LeatherCanvasView {
     modifiers: CanvasPlacementModifiers
   ) -> ModelPoint {
     let rawPoint = modelPoint(for: point, in: pageRect)
-    snapSuppressionPoint = modifiers.suppressesSnap ? rawPoint : nil
-    if modifiers.suppressesSnap {
-      snapIndicatorPoint = nil
-    }
+    interactionController.updateSnap(
+      indicator: modifiers.suppressesSnap ? nil : interactionSnapshot().snapIndicatorPoint,
+      suppression: modifiers.suppressesSnap ? rawPoint : nil
+    )
     return rawPoint
   }
 
@@ -202,13 +194,13 @@ extension LeatherCanvasView {
   }
 
   func drawSnapIndicator(in pageRect: CGRect) {
-    if let snapSuppressionPoint,
+    if let snapSuppressionPoint = interactionSnapshot().snapSuppressionPoint,
       gridSnapEnabled || pointSnapEnabled
     {
       drawSnapSuppressionBadge(at: snapSuppressionPoint, in: pageRect)
       return
     }
-    guard let snapIndicatorPoint,
+    guard let snapIndicatorPoint = interactionSnapshot().snapIndicatorPoint,
       gridSnapEnabled || pointSnapEnabled
     else {
       return

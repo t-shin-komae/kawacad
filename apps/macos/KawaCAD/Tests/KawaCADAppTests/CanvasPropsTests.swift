@@ -37,20 +37,21 @@ func canvas_props_keep_render_state_and_effects_separate() {
   appState.actions.inspector.inspectorSelectedPartID = "part:canvas"
   appState.actions.inspector.isSettingPartOrigin = true
 
-  let state = appState.actions.canvas.canvasState
-  #expect(state.entities.map(\.id) == ["entity:preview"])
-  #expect(state.selectedTool == .line)
-  #expect(state.freeTextInlineEditRequestID == "request:active")
-  #expect(state.selectedPartOrigin == ModelPoint(xMM: 3, yMM: 4))
-  #expect(state.isSettingPartOrigin)
+  let renderInput = appState.actions.canvas.canvasRenderInput
+  #expect(renderInput.document.entities.map(\.id) == ["entity:preview"])
+  #expect(renderInput.draft.selectedTool == .line)
+  #expect(
+    appState.actions.canvas.canvasInteractionInput.freeTextInlineEditRequestID == "request:active")
+  #expect(renderInput.draft.selectedPartOrigin == ModelPoint(xMM: 3, yMM: 4))
+  #expect(appState.actions.canvas.canvasInteractionInput.isSettingPartOrigin)
 
-  let actions = appState.actions.canvas.canvasActions
-  actions.freeTextInlineEditRequestHandled("request:stale")
+  let actions = appState.actions.canvas.canvasActionGroups
+  actions.editing.freeTextInlineEditRequestHandled("request:stale")
   #expect(appState.actions.canvas.freeTextInlineEditRequestID == "request:active")
-  actions.freeTextInlineEditRequestHandled("request:active")
+  actions.editing.freeTextInlineEditRequestHandled("request:active")
   #expect(appState.actions.canvas.freeTextInlineEditRequestID == nil)
 
-  actions.activateTool(.circle)
+  actions.editing.activateTool(.circle)
   #expect(appState.actions.canvas.selectedTool == .circle)
 }
 @Test("パーツ選択は通常図形と解決済み派生図形を強調対象にし原点を表示する")
@@ -85,11 +86,17 @@ func part_selection_expands_canvas_highlight_and_origin() {
 
   #expect(appState.actions.canvas.selectedEntityIDs == [base.id, resolved.id])
   #expect(appState.actions.inspector.inspectorSelectedPartID == part.id)
-  #expect(appState.actions.canvas.canvasState.selectedPartOrigin == part.originMM)
-  #expect(appState.actions.canvas.canvasState.highlightedPartEntityIDs == [base.id, resolved.id])
-  #expect(appState.actions.canvas.canvasState.highlightedPartFreeTextIDs == ["free-text:note"])
+  #expect(appState.actions.canvas.canvasRenderInput.draft.selectedPartOrigin == part.originMM)
   #expect(
-    appState.actions.canvas.canvasState.highlightedPartMeasurementAnnotationIDs == [
+    appState.actions.canvas.canvasRenderInput.selection.highlightedPartEntityIDs == [
+      base.id, resolved.id,
+    ])
+  #expect(
+    appState.actions.canvas.canvasRenderInput.selection.highlightedPartFreeTextIDs == [
+      "free-text:note"
+    ])
+  #expect(
+    appState.actions.canvas.canvasRenderInput.selection.highlightedPartMeasurementAnnotationIDs == [
       "measurement:width"
     ])
 }

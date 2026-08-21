@@ -11,15 +11,18 @@ import {
   matchingLayerStrokeWidthPreset,
 } from "@/features/inspector/domain/stylePresets";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
+import type { Constraint, DerivedElement, LineStyle, Part } from "@/shared/domain/coreWireTypes";
 import type {
-  Constraint,
-  DerivedElement,
-  LineStyle,
+  ConstraintInspectorActions,
+  DerivedElementInspectorActions,
+  EntityEditorActions,
+  EntityInspectorActions,
+  FreeTextInspectorActions,
   Measurement,
-  Part,
-  PendingTextEntry,
-  Props,
-} from "@/features/inspector/components/InspectorPanel";
+  MeasurementInspectorActions,
+  RoundHoleInspectorActions,
+  SelectionInspectorModel as Props,
+} from "@/features/inspector/domain/inspectorViewModel";
 import { InspectorEditorSurface, InspectorSection } from "@/shared/components/InspectorPrimitives";
 import { defaultSharedStyle } from "@/features/inspector/domain/sharedStyleDefaults";
 import { formatInspectorNumber, resolveInspectorValue } from "@/features/inspector/domain/inspectorValueFormatting";
@@ -57,7 +60,7 @@ export function MultiSelectionSummary({
   geometryLabels: string[];
   layerLabels: string[];
   sharedStyles: Props["sharedStyles"];
-  onApplyStyle: Props["onApplyStyle"];
+  onApplyStyle: Props["actions"]["applyStyle"];
 }) {
   const [styleID, setStyleID] = useState("");
 
@@ -93,13 +96,13 @@ export function MultiSelectionSummary({
 export function SelectedConstraintEditor({
   constraint,
   parameters,
-  onCommand,
+  actions,
   onDelete,
 }: {
   constraint: Constraint;
   parameters: Props["parameters"];
-  onCommand: Props["onCommand"];
-  onDelete: Props["onDeleteSelection"];
+  actions: ConstraintInspectorActions;
+  onDelete: ConstraintInspectorActions["deleteConstraint"];
 }) {
   const degrees = typeof constraint.value?.fixedDegrees === "number";
   const fixedValue = degrees ? constraint.value?.fixedDegrees : constraint.value?.fixedMm;
@@ -118,8 +121,7 @@ export function SelectedConstraintEditor({
     const valid = value !== undefined && Number.isFinite(value) && (degrees ? true : value > 0);
     const changed = forceFixed || (parameterID ? value !== resolvedValue : value !== fixedValue);
     if (valid && changed)
-      onCommand(
-        "setConstraintValue",
+      actions.setConstraintValue(
         {
           constraintId: constraint.id,
           value: degrees ? { fixedDegrees: value as number } : { fixedMm: value as number },
@@ -157,8 +159,7 @@ export function SelectedConstraintEditor({
             value={typeof constraint.value?.parameter === "string" ? constraint.value.parameter : ""}
             onChange={(event) => {
               if (event.target.value)
-                onCommand(
-                  "setConstraintParameter",
+                actions.setConstraintParameter(
                   { constraintId: constraint.id, parameterId: event.target.value },
                   appStrings.inspector.operationMessage.constraintParameterUpdated,
                 );
@@ -174,7 +175,10 @@ export function SelectedConstraintEditor({
           </select>
         </label>
       )}
-      <button className="inspector-destructive-button" onClick={onDelete}>
+      <button
+        className="inspector-destructive-button"
+        onClick={() => onDelete(constraint.id, appStrings.inspector.operationMessage.constraintDeleted)}
+      >
         {appStrings.contextMenu.delete}
       </button>
     </div>
@@ -187,8 +191,8 @@ export function SelectedMeasurementEditor({
   onDelete,
 }: {
   measurement: Measurement;
-  onConvert?: (id: string) => void;
-  onDelete: Props["onDeleteSelection"];
+  onConvert: MeasurementInspectorActions["convertMeasurement"];
+  onDelete: MeasurementInspectorActions["deleteMeasurement"];
 }) {
   return (
     <div className="inspector-card">
@@ -196,8 +200,11 @@ export function SelectedMeasurementEditor({
         {appStrings.measurementKindNames[measurement.kind as keyof typeof appStrings.measurementKindNames] ??
           measurement.kind}
       </strong>
-      <button onClick={() => onConvert?.(measurement.id)}>{appStrings.inspector.measurementConstraint}</button>
-      <button className="inspector-destructive-button" onClick={onDelete}>
+      <button onClick={() => onConvert(measurement.id)}>{appStrings.inspector.measurementConstraint}</button>
+      <button
+        className="inspector-destructive-button"
+        onClick={() => onDelete(measurement.id, appStrings.inspector.operationMessage.annotationDeleted)}
+      >
         {appStrings.contextMenu.delete}
       </button>
     </div>
@@ -218,12 +225,12 @@ export function SelectedStitchStartPointEditor({ targetEntity }: { targetEntity?
 
 export function FreeTextEditor({
   freeText,
-  onCommand,
+  actions,
   onDelete,
 }: {
   freeText: NonNullable<Props["selectedFreeText"]>;
-  onCommand: Props["onCommand"];
-  onDelete: Props["onDeleteSelection"];
+  actions: FreeTextInspectorActions;
+  onDelete: FreeTextInspectorActions["deleteFreeText"];
 }) {
   const [draft, setDraft] = useState({
     content: freeText.content,
@@ -266,8 +273,7 @@ export function FreeTextEditor({
       yMm !== freeText.positionMm.yMm ||
       fontSizeMm !== freeText.fontSizeMm
     )
-      onCommand(
-        "updateFreeText",
+      actions.updateFreeText(
         { id: freeText.id, content, positionMm: { xMm, yMm }, fontSizeMm },
         appStrings.inspector.operationMessage.textUpdated,
       );
@@ -315,7 +321,10 @@ export function FreeTextEditor({
         onChange={(event) => setDraft({ ...draft, fontSizeMm: event.target.value })}
         onBlur={commit}
       />
-      <button className="inspector-destructive-button" onClick={onDelete}>
+      <button
+        className="inspector-destructive-button"
+        onClick={() => onDelete(freeText.id, appStrings.inspector.operationMessage.textDeleted)}
+      >
         <Trash2 aria-hidden="true" />
         {appStrings.contextMenu.delete}
       </button>
@@ -325,10 +334,10 @@ export function FreeTextEditor({
 
 export function ParameterEditor({
   parameter,
-  onCommand,
+  actions,
 }: {
   parameter: Props["parameters"][number];
-  onCommand: Props["onCommand"];
+  actions: import("@/features/inspector/domain/inspectorViewModel").ParameterInspectorActions;
 }) {
   const [draft, setDraft] = useState({
     name: parameter.name,
@@ -345,8 +354,7 @@ export function ParameterEditor({
     const valueMm = parsed.ok ? parsed.value : undefined;
     if (!name || typeof valueMm !== "number" || !Number.isFinite(valueMm) || valueMm < 0) return;
     if (name !== parameter.name || valueMm !== parameter.valueMm || draft.memo !== parameter.memo)
-      onCommand(
-        "updateParameter",
+      actions.update(
         { id: parameter.id, name, valueMm, unit: parameter.unit, memo: draft.memo },
         appStrings.inspector.parameterUpdated(name),
       );
@@ -382,8 +390,7 @@ export function ParameterEditor({
           className="inspector-icon-button inspector-icon-destructive-button"
           aria-label={appStrings.inspector.deleteParameter(parameter.name)}
           onClick={() =>
-            onCommand(
-              "deleteParameter",
+            actions.delete(
               { parameterId: parameter.id, replacementValueMm: parameter.valueMm },
               appStrings.inspector.operationMessage.parameterDeleted(parameter.name),
             )
@@ -547,19 +554,19 @@ export function colorFromHex(color: string, alpha: number): LineStyle["stroke"] 
 export function DerivedElementEditor({
   derivedElement,
   parameters,
-  onCommand,
+  actions,
 }: {
   derivedElement: DerivedElement;
   parameters: Props["parameters"];
-  onCommand: Props["onCommand"];
+  actions: DerivedElementInspectorActions;
 }) {
   const offset = derivedElement.kind.offsetCurve;
   const fillet = derivedElement.kind.fillet;
   const kind = offset ? appStrings.inspector.offsetElement : appStrings.inspector.filletElement;
   const sourceEntityIds = offset?.sourceEntityIds ?? fillet?.sourceEntityIds ?? [];
   const value = offset?.distance ?? fillet?.radius ?? {};
-  const commandKind = offset ? "setDerivedDistance" : "setDerivedRadius";
   const label = offset ? appStrings.inspector.distance : appStrings.inspector.radius;
+  const setValue = offset ? actions.setDerivedDistance : actions.setDerivedRadius;
   const parameterID = typeof value.parameter === "string" ? value.parameter : undefined;
   const resolvedValue = resolveInspectorValue(value, parameters);
   const [draftValue, setDraftValue] = useState(formatInspectorNumber(resolvedValue));
@@ -574,8 +581,7 @@ export function DerivedElementEditor({
     const fixedMm = parsed.ok ? parsed.value : undefined;
     const changed = forceFixed || (parameterID ? fixedMm !== resolvedValue : fixedMm !== value.fixedMm);
     if (typeof fixedMm === "number" && Number.isFinite(fixedMm) && fixedMm > 0 && changed)
-      onCommand(
-        commandKind,
+      setValue(
         { derivedElementId: derivedElement.id, value: { fixedMm } },
         appStrings.inspector.operationUpdated(kind),
       );
@@ -610,8 +616,7 @@ export function DerivedElementEditor({
             onChange={(event) => {
               const parameter = event.target.value;
               if (parameter)
-                onCommand(
-                  commandKind,
+                setValue(
                   { derivedElementId: derivedElement.id, value: { parameter } },
                   appStrings.inspector.parameterLinked(kind),
                 );
@@ -634,8 +639,7 @@ export function DerivedElementEditor({
             <select
               value={offset.direction}
               onChange={(event) =>
-                onCommand(
-                  "setDerivedDirection",
+                actions.setDerivedDirection(
                   { derivedElementId: derivedElement.id, direction: event.target.value },
                   appStrings.inspector.operationMessage.offsetDirectionUpdated,
                 )
@@ -650,8 +654,7 @@ export function DerivedElementEditor({
           <button
             className="inspector-wide-button"
             onClick={() =>
-              onCommand(
-                "setDerivedDirection",
+              actions.setDerivedDirection(
                 { derivedElementId: derivedElement.id, direction: reverseOffsetDirection(offset.direction) },
                 appStrings.inspector.operationMessage.offsetDirectionUpdated,
               )
@@ -681,8 +684,7 @@ export function EntityEditor({
   sharedStyles,
   parameters,
   roundHole,
-  onCommand,
-  onConstrainSegmentLength,
+  actions,
   onDelete,
 }: {
   entity: RawEntity;
@@ -691,9 +693,8 @@ export function EntityEditor({
   sharedStyles: Props["sharedStyles"];
   parameters: Props["parameters"];
   roundHole?: Props["roundHoles"][number];
-  onCommand: Props["onCommand"];
-  onConstrainSegmentLength?: Props["onConstrainSegmentLength"];
-  onDelete: Props["onDeleteSelection"];
+  actions: EntityEditorActions;
+  onDelete: EntityEditorActions["deleteEntity"];
 }) {
   const geometry = geometryOf(entity);
   const selectedLayerID = derivedElement ? (derivedElement.layerId ?? "") : (entity.layerId ?? "");
@@ -710,13 +711,11 @@ export function EntityEditor({
           value={selectedLayerID}
           onChange={(event) =>
             derivedElement
-              ? onCommand(
-                  "setDerivedLayer",
+              ? actions.setDerivedLayer(
                   { derivedElementId: derivedElement.id, layerId: event.target.value || null },
                   appStrings.inspector.operationMessage.derivedLayerUpdated,
                 )
-              : onCommand(
-                  "setEntityLayer",
+              : actions.setEntityLayer(
                   { entityId: entity.id, layerId: event.target.value || null },
                   appStrings.inspector.operationMessage.geometryLayerUpdated,
                 )
@@ -736,13 +735,11 @@ export function EntityEditor({
           value={selectedStyleID}
           onChange={(event) =>
             derivedElement
-              ? onCommand(
-                  "setDerivedSharedStyle",
+              ? actions.setDerivedStyle(
                   { derivedElementId: derivedElement.id, styleId: event.target.value || null },
                   appStrings.inspector.operationMessage.derivedStyleUpdated,
                 )
-              : onCommand(
-                  "setEntitySharedStyle",
+              : actions.setEntityStyle(
                   { entityId: entity.id, styleId: event.target.value || null },
                   appStrings.inspector.operationMessage.geometryStyleUpdated,
                 )
@@ -757,21 +754,19 @@ export function EntityEditor({
         </select>
       </label>
       {derivedElement ? (
-        <DerivedElementEditor derivedElement={derivedElement} parameters={parameters} onCommand={onCommand} />
+        <DerivedElementEditor derivedElement={derivedElement} parameters={parameters} actions={actions} />
       ) : (
         <>
-          {roundHole && <RoundHoleEditor entity={entity} roundHole={roundHole} onCommand={onCommand} />}
+          {roundHole && <RoundHoleEditor entity={entity} roundHole={roundHole} actions={actions} />}
           {geometry && geometry.tag !== "point" && (
-            <EntityGeometryEditor
-              entityId={entity.id}
-              geometry={geometry}
-              onCommand={onCommand}
-              onConstrainSegmentLength={onConstrainSegmentLength}
-            />
+            <EntityGeometryEditor entityId={entity.id} geometry={geometry} actions={actions} />
           )}
         </>
       )}
-      <button className="inspector-destructive-button" onClick={onDelete}>
+      <button
+        className="inspector-destructive-button"
+        onClick={() => onDelete(entity.id, appStrings.contextMenu.delete)}
+      >
         <Trash2 aria-hidden="true" />
         {appStrings.contextMenu.delete}
       </button>
@@ -799,11 +794,11 @@ export function geometryDisplayName(entity: RawEntity) {
 export function RoundHoleEditor({
   entity,
   roundHole,
-  onCommand,
+  actions,
 }: {
   entity: RawEntity;
   roundHole: NonNullable<Props["roundHoles"]>[number];
-  onCommand: Props["onCommand"];
+  actions: RoundHoleInspectorActions;
 }) {
   const geometry = geometryOf(entity);
   const diameter = geometry?.tag === "circle" ? geometry.radiusMm * 2 : undefined;
@@ -813,8 +808,7 @@ export function RoundHoleEditor({
     const parsed = parseDecimal(draft);
     const value = parsed.ok ? parsed.value : undefined;
     if (typeof value === "number" && Number.isFinite(value) && value > 0 && value !== diameter)
-      onCommand(
-        "setRoundHoleDiameter",
+      actions.setRoundHoleDiameter(
         { roundHoleId: roundHole.id, diameterMm: value },
         appStrings.inspector.operationMessage.roundHoleDiameterUpdated,
       );
@@ -826,8 +820,7 @@ export function RoundHoleEditor({
         <select
           value={roundHole.kind}
           onChange={(event) =>
-            onCommand(
-              "setRoundHoleKind",
+            actions.setRoundHoleKind(
               { roundHoleId: roundHole.id, kind: event.target.value },
               appStrings.inspector.operationMessage.roundHoleKindUpdated,
             )
@@ -855,13 +848,11 @@ export function RoundHoleEditor({
 export function EntityGeometryEditor({
   entityId,
   geometry,
-  onCommand,
-  onConstrainSegmentLength,
+  actions,
 }: {
   entityId: string;
   geometry: NonNullable<ReturnType<typeof geometryOf>>;
-  onCommand: Props["onCommand"];
-  onConstrainSegmentLength?: Props["onConstrainSegmentLength"];
+  actions: Pick<EntityInspectorActions, "setEntityMetric" | "constrainSegmentLength">;
 }) {
   const initial = geometryFields(geometry);
   const [draft, setDraft] = useState(initial);
@@ -877,8 +868,7 @@ export function EntityGeometryEditor({
     if (geometry.tag === "lineSegment" || geometry.tag === "centerLine") {
       const valueMm = values.lengthMm;
       if (typeof valueMm === "number" && valueMm > 0 && valueMm !== Number(initial.lengthMm))
-        onCommand(
-          "setEntityMetric",
+        actions.setEntityMetric(
           { entityId, metric: { kind: "segmentLength", valueMm } },
           appStrings.inspector.operationMessage.segmentLengthUpdated,
         );
@@ -887,8 +877,7 @@ export function EntityGeometryEditor({
     if (geometry.tag === "circle") {
       const valueMm = values.radiusMm;
       if (typeof valueMm === "number" && valueMm > 0 && valueMm !== Number(initial.radiusMm))
-        onCommand(
-          "setEntityMetric",
+        actions.setEntityMetric(
           { entityId, metric: { kind: "circleRadius", valueMm } },
           appStrings.inspector.operationMessage.circleRadiusUpdated,
         );
@@ -904,8 +893,7 @@ export function EntityGeometryEditor({
     const startChanged = values.startDegrees !== Number(initial.startDegrees);
     const sweepChanged = values.sweepDegrees !== Number(initial.sweepDegrees);
     if (radiusMm > 0 && Math.abs(sweepAngleRad) > 0.0001 && (radiusChanged || startChanged || sweepChanged))
-      onCommand(
-        "setEntityMetric",
+      actions.setEntityMetric(
         {
           entityId,
           metric: {
@@ -930,7 +918,7 @@ export function EntityGeometryEditor({
             onChange={(lengthMm) => setDraft({ ...draft, lengthMm })}
             onBlur={commit}
           />
-          <button className="inspector-wide-button" onClick={() => onConstrainSegmentLength?.(entityId)}>
+          <button className="inspector-wide-button" onClick={() => actions.constrainSegmentLength(entityId)}>
             <Link2 aria-hidden="true" />
             {appStrings.inspector.setCurrentLengthConstraint}
           </button>

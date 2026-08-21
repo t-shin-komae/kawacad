@@ -3,10 +3,11 @@ import { Eye, EyeOff, Layers3, Plus, Printer, Trash2 } from "lucide-react";
 import {
   matchesInspectorLayerSearch,
   setInspectorLayerSearchQuery,
-  type InspectorFeatureState,
+  type LayerTabState,
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
-import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
+import type { InspectorLayer, LayerInspectorModel } from "@/features/inspector/domain/inspectorViewModel";
+import type { LineStyle } from "@/shared/domain/coreWireTypes";
 import {
   InspectorDisclosureRow,
   InspectorEditorSurface,
@@ -14,38 +15,38 @@ import {
 } from "@/shared/components/InspectorPrimitives";
 
 type InspectorLayerTabProps = {
-  props: Props;
-  feature: InspectorFeatureState;
-  updateFeature: (update: (state: InspectorFeatureState) => InspectorFeatureState) => void;
+  model: LayerInspectorModel;
+  state: LayerTabState;
+  updateState: (update: (state: LayerTabState) => LayerTabState) => void;
   renderStyleFields: (style: LineStyle, onChange: (style: LineStyle) => void) => ReactNode;
 };
 
-export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFields }: InspectorLayerTabProps) {
+export function InspectorLayerTab({ model, state, updateState, renderStyleFields }: InspectorLayerTabProps) {
   const [selectedLayerId, setSelectedLayerId] = useState<string>();
   return (
     <InspectorSection title={appStrings.inspector.layer} icon={Layers3}>
       <label>
         {appStrings.inspector.drawingLayer}
-        <select value={props.activeLayerId} onChange={(event) => props.onActiveLayerChange(event.target.value)}>
-          {props.layers.map((layer) => (
+        <select value={model.activeLayerId} onChange={(event) => model.actions.changeActiveLayer(event.target.value)}>
+          {model.layers.map((layer) => (
             <option key={layer.id} value={layer.id}>
               {layer.name}
             </option>
           ))}
         </select>
       </label>
-      {(props.layers.length >= 8 || feature.layerSearchVisible || feature.layerSearchQuery) && (
+      {(model.layers.length >= 8 || state.searchVisible || state.layerSearchQuery) && (
         <label className="inspector-search">
           {appStrings.inspector.layerSearch}
           <input
             type="search"
-            value={feature.layerSearchQuery}
-            onChange={(event) => updateFeature((state) => setInspectorLayerSearchQuery(state, event.target.value))}
+            value={state.layerSearchQuery}
+            onChange={(event) => updateState((current) => setInspectorLayerSearchQuery(current, event.target.value))}
           />
         </label>
       )}
-      {props.layers
-        .filter((item) => matchesInspectorLayerSearch(item.name, feature.layerSearchQuery))
+      {model.layers
+        .filter((item) => matchesInspectorLayerSearch(item.name, state.layerSearchQuery))
         .map((item) => {
           const colorHex =
             "#" +
@@ -68,7 +69,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
               expanded={selectedLayerId === item.id}
               onToggle={() => {
                 setSelectedLayerId(item.id);
-                props.onActiveLayerChange(item.id);
+                model.actions.changeActiveLayer(item.id);
               }}
             >
               <InspectorEditorSurface>
@@ -84,7 +85,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                     defaultValue={item.name}
                     onBlur={(event) => {
                       const name = event.target.value.trim();
-                      if (name && name !== item.name) props.onRenameLayer(item.id, name);
+                      if (name && name !== item.name) model.actions.renameLayer(item.id, name);
                     }}
                   />
                   <div className="inspector-editor-actions">
@@ -94,8 +95,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                       aria-label={item.visible ? appStrings.inspector.layerVisible : appStrings.inspector.hidden}
                       aria-pressed={item.visible}
                       onClick={() =>
-                        props.onCommand(
-                          "setLayerVisibility",
+                        model.actions.setVisibility(
                           { layerId: item.id, visible: !item.visible },
                           appStrings.inspector.operationMessage.layerVisibleUpdated,
                         )
@@ -109,8 +109,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                       aria-label={appStrings.inspector.includeInOutput(item.name)}
                       aria-pressed={item.printable}
                       onClick={() =>
-                        props.onCommand(
-                          "setLayerPrintable",
+                        model.actions.setPrintable(
                           { layerId: item.id, printable: !item.printable },
                           appStrings.inspector.operationMessage.layerOutputUpdated,
                         )
@@ -122,16 +121,15 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
                       type="button"
                       className="inspector-icon-button inspector-icon-destructive-button"
                       aria-label={appStrings.contextMenu.delete}
-                      disabled={props.layers.length <= 1}
-                      onClick={() => props.onDeleteLayer(item)}
+                      disabled={model.layers.length <= 1}
+                      onClick={() => model.actions.deleteLayer(item)}
                     >
                       <Trash2 aria-hidden="true" />
                     </button>
                   </div>
                 </div>
                 {renderStyleFields(item.style, (style) =>
-                  props.onCommand(
-                    "setLayerStyle",
+                  model.actions.setStyle(
                     { layerId: item.id, style },
                     appStrings.inspector.operationMessage.layerStyleUpdated,
                   ),
@@ -140,7 +138,7 @@ export function InspectorLayerTab({ props, feature, updateFeature, renderStyleFi
             </InspectorDisclosureRow>
           );
         })}
-      <button className="inspector-add-button" onClick={props.onAddLayer}>
+      <button className="inspector-add-button" onClick={model.actions.addLayer}>
         <Plus aria-hidden="true" />
         {appStrings.inspector.addLayer}
       </button>

@@ -4,8 +4,8 @@ import SwiftUI
 /// The parent owns the surrounding chrome and transient presentations; this view
 /// owns only inspector sizing while its layout is visible.
 struct WorkspaceCanvasLayout<CanvasColumn: View, InspectorPanel: View>: View {
-  let state: WorkspaceViewState
-  let actions: WorkspaceViewActions
+  let state: WorkspaceCanvasLayoutState
+  let actions: WorkspaceCanvasLayoutActions
   let policy: WindowLayoutPolicy
   let canvasColumn: CanvasColumn
   let inspectorPanel: (CGFloat) -> InspectorPanel

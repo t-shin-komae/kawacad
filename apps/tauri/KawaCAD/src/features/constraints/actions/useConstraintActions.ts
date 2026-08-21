@@ -4,10 +4,10 @@ import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { appStrings } from "@/localization";
 import { selectedSourceArcId } from "@/features/canvas/selectors/canvasProjection";
 import { id } from "@/features/canvas/domain/workspaceTools";
-import type { ConstraintActionContext } from "@/app/actions/useActionRuntime";
+import type { ConstraintActionInput } from "@/features/constraints/actions/constraintActionTypes";
 
 /** Constraint, measurement, and derived-element actions. */
-export function useConstraintActions(context: ConstraintActionContext, selectTool: (tool: Tool) => void) {
+export function useConstraintActions(context: ConstraintActionInput, selectTool: (tool: Tool) => void) {
   const callbacks = useConstraintActionCallbacks({ ...context, selectTool });
   const smoothSelectedArcTangencies = useCallback(() => {
     const arcEntityId = selectedSourceArcId(

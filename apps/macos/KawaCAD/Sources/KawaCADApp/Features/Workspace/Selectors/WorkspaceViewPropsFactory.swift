@@ -72,11 +72,12 @@ struct WorkspaceViewPropsFactory {
       toolbarState: toolbarState,
       documentHeaderState: documentHeaderState,
       toolPaletteState: toolPaletteState,
-      canvasState: actions.canvas.canvasState,
+      canvasRenderInput: actions.canvas.canvasRenderInput,
+      canvasInteractionInput: actions.canvas.canvasInteractionInput,
       constraintEntryHUDState: constraintEntryHUDState,
       canvasStatusBarState: canvasStatusBarState,
       bottomWorkbenchState: bottomWorkbenchState,
-      inspectorFeatureModel: InspectorFeatureModelFactory.make(
+      inspectorPanelModel: InspectorFeatureModelFactory.make(
         actionHandlers: actions,
         inspectorPresentation: inspectorPresentation,
         canvasPresentation: canvasPresentation
@@ -100,7 +101,7 @@ struct WorkspaceViewPropsFactory {
       toolbarActions: toolbarActions,
       documentHeaderActions: documentHeaderActions,
       toolPaletteActions: toolPaletteActions,
-      canvasActions: actions.canvas.canvasActions,
+      canvasActionGroups: actions.canvas.canvasActionGroups,
       constraintEntryHUDActions: constraintEntryHUDActions,
       canvasStatusBarActions: canvasStatusBarActions,
       layerDeletionDialogActions: layerDeletionDialogActions,

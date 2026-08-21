@@ -31,6 +31,12 @@ import {
   supportsOffsetTarget,
   type RawEntity,
 } from "@/features/canvas/domain/cad";
+import {
+  annotationArcLayout,
+  annotationLabelLayout,
+  constraintMarkerLayout,
+} from "@/features/canvas/domain/canvasLayout";
+import { canvasMetrics } from "@/features/canvas/domain/canvasMetrics";
 
 const line: RawEntity = { id: "line", kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 20, yMm: 0 } } } };
 const circle: RawEntity = { id: "circle", kind: { circle: { center: { xMm: 30, yMm: 10 }, radiusMm: 5 } } };
@@ -41,6 +47,40 @@ const arc: RawEntity = {
 const viewport = { zoom: 3, panX: 11, panY: -4 };
 
 describe("CAD geometry helpers", () => {
+  it("shares marker placement metrics for short and long labels", () => {
+    const short = constraintMarkerLayout({ positionMm: { xMm: 10, yMm: 5 }, label: "H", stackIndex: 2 });
+    const long = constraintMarkerLayout({
+      positionMm: { xMm: 10, yMm: 5 },
+      label: "perpendicular",
+      stackIndex: 2,
+    });
+
+    expect(short.offsetX).toBe(long.offsetX);
+    expect(short.offsetY).toBe(long.offsetY);
+    expect(long.width).toBeGreaterThan(short.width);
+  });
+
+  it("never lets a measured marker label shrink below its measured text", () => {
+    const layout = constraintMarkerLayout({
+      positionMm: { xMm: 10, yMm: 5 },
+      label: "水平",
+      measuredTextWidthPx: 80,
+    });
+
+    expect(layout.width).toBeGreaterThanOrEqual(90);
+  });
+
+  it("keeps annotation hit boxes centered while zoom changes their size", () => {
+    const midpoint = { xMm: 20, yMm: 10 };
+    const zoomedOut = annotationLabelLayout(midpoint, "1234.56 mm", undefined, 2);
+    const zoomedIn = annotationLabelLayout(midpoint, "1234.56 mm", undefined, 8);
+
+    expect((zoomedOut.centerMm.xMm - midpoint.xMm) * 2).toBeCloseTo((zoomedIn.centerMm.xMm - midpoint.xMm) * 8);
+    expect((zoomedOut.centerMm.yMm - midpoint.yMm) * 2).toBeCloseTo((zoomedIn.centerMm.yMm - midpoint.yMm) * 8);
+    expect(zoomedOut.halfWidthMm).toBeGreaterThan(zoomedIn.halfWidthMm);
+    expect(zoomedOut.halfHeightMm).toBeGreaterThan(zoomedIn.halfHeightMm);
+  });
+
   it("opens the drawing at the SwiftUI document scale", () => {
     expect(defaultViewport.zoom).toBe(1);
   });
@@ -148,6 +188,43 @@ describe("CAD geometry helpers", () => {
       hitProjectedAnnotationDetail({ xMm: 50, yMm: 50 }, [item], { zoom: 1, panX: 0, panY: 0 }, {}, {}),
     ).toBeUndefined();
   });
+  it("uses the rendered direction for clockwise and counterclockwise long-arc labels", () => {
+    const center = { xMm: 0, yMm: 0 };
+    const start = { xMm: 10, yMm: 0 };
+    const end = { xMm: -9.396926207859085, yMm: -3.4202014332566866 };
+    const viewport = { zoom: 1, panX: 0, panY: 0 };
+    const counterclockwise = {
+      id: "arc:ccw",
+      visible: true,
+      arc: true,
+      centerMm: center,
+      startMm: start,
+      endMm: end,
+      arcCounterclockwise: true,
+    };
+    const clockwise = { ...counterclockwise, id: "arc:cw", arcCounterclockwise: false };
+    const counterMidpoint = annotationArcLayout({ ...counterclockwise, counterclockwise: true }).midpointMm;
+    const clockwiseMidpoint = annotationArcLayout({ ...clockwise, counterclockwise: false }).midpointMm;
+    const counterLabelCenter = annotationLabelLayout(
+      counterMidpoint,
+      "200°",
+      undefined,
+      displayPointsPerMillimeter,
+    ).centerMm;
+    const clockwiseLabelCenter = annotationLabelLayout(
+      clockwiseMidpoint,
+      "200°",
+      undefined,
+      displayPointsPerMillimeter,
+    ).centerMm;
+
+    expect(
+      hitProjectedAnnotationDetail(counterLabelCenter, [counterclockwise], viewport, { "arc:ccw": "200°" }, {}),
+    ).toEqual({ id: "arc:ccw", labelOnly: true });
+    expect(hitProjectedAnnotationDetail(clockwiseLabelCenter, [clockwise], viewport, { "arc:cw": "200°" }, {})).toEqual(
+      { id: "arc:cw", labelOnly: true },
+    );
+  });
   it("round-trips display and model coordinates", () => {
     const display = screenPoint({ xMm: 12, yMm: -7 }, 800, 600, viewport);
     const decoded = modelPoint(display, 800, 600, viewport);
@@ -159,6 +236,20 @@ describe("CAD geometry helpers", () => {
     expect(hitEntity({ xMm: 35, yMm: 10 }, [circle], viewport)).toBe("circle");
     expect(hitEntity({ xMm: -10, yMm: 5 }, [arc], viewport)).toBe("arc");
     expect(hitEntity({ xMm: -10, yMm: -5 }, [arc], viewport)).toBeUndefined();
+  });
+  it("applies the entity line tolerance exactly once", () => {
+    const viewport = { zoom: 1, panX: 0, panY: 0 };
+    const toleranceMm = canvasMetrics.entityHitTolerancePx / displayPointsPerMillimeter;
+    expect(hitEntity({ xMm: 10, yMm: toleranceMm }, [line], viewport)).toBe("line");
+    expect(hitEntity({ xMm: 10, yMm: toleranceMm + 0.01 }, [line], viewport)).toBeUndefined();
+  });
+
+  it("uses the annotation tolerance boundary for a rendered dimension line", () => {
+    const viewport = { zoom: 1, panX: 0, panY: 0 };
+    const toleranceMm = canvasMetrics.annotationLineHitTolerancePx / displayPointsPerMillimeter;
+    const item = [{ id: "dimension:boundary", visible: true, startMm: { xMm: 0, yMm: 0 }, endMm: { xMm: 20, yMm: 0 } }];
+    expect(hitProjectedAnnotation({ xMm: 10, yMm: toleranceMm }, item, viewport)).toBe("dimension:boundary");
+    expect(hitProjectedAnnotation({ xMm: 10, yMm: toleranceMm + 0.01 }, item, viewport)).toBeUndefined();
   });
   it("supports grid, entity-point and crossing-window selection", () => {
     expect(snapToGrid({ xMm: 7.4, yMm: -7.4 }, true)).toEqual({ xMm: 5, yMm: -5 });

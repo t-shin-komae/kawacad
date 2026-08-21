@@ -5,6 +5,21 @@ import Testing
 
 struct CanvasInteractionStateTests {
   @Test
+  func keyboard_command_cancels_existing_interaction_before_deleting() {
+    let command = CanvasInteractionController.keyboardCommand(
+      for: CanvasKeyboardInput(
+        isEscape: true,
+        isPlainTextSelectShortcut: false,
+        isDelete: false,
+        selectedTool: .line,
+        hasCancellationTarget: true
+      )
+    )
+
+    #expect(command == .cancelInteraction)
+  }
+
+  @Test
   func cancellation_target_is_true_while_dragging() {
     let interaction = CanvasInteractionState(
       dragState: .entities(
@@ -53,5 +68,66 @@ struct CanvasInteractionStateTests {
         to: ModelPoint(xMM: 0.001, yMM: 0.0)
       )
     )
+  }
+
+  @Test
+  func selection_reducer_owns_blank_click_transition_and_commands() {
+    var controller = CanvasInteractionController()
+    let result = controller.selectionResult(
+      for: CanvasSelectionInput(
+        point: CGPoint(x: 12, y: 18),
+        modelPoint: .zero,
+        clickCount: 1,
+        togglesSelection: false,
+        modifiers: CanvasPlacementModifiers(),
+        selectedEntityIDs: [],
+        measurementHit: nil,
+        dimensionHit: nil,
+        controlPointTarget: nil,
+        constraintMarkerID: nil,
+        stitchStartPointID: nil,
+        freeTextID: nil,
+        entityID: nil
+      )
+    )
+
+    #expect(controller.snapshot.dragState != nil)
+    #expect(result.commands.count == 4)
+    #expect(result.inlineFreeTextID == nil)
+  }
+
+  @Test
+  func mouse_down_reducer_consumes_selection_hit_input_without_view_routing() {
+    var controller = CanvasInteractionController()
+    let result = controller.mouseDownResult(
+      for: CanvasMouseDownInput(
+        isInsideCanvas: true,
+        selectedTool: .select,
+        isSettingPartOrigin: false,
+        modifiers: CanvasPlacementModifiers(),
+        placementPoint: .zero,
+        linePoint: .zero,
+        constraintTarget: nil,
+        selectionInput: CanvasSelectionInput(
+          point: CGPoint(x: 12, y: 18),
+          modelPoint: .zero,
+          clickCount: 1,
+          togglesSelection: false,
+          modifiers: CanvasPlacementModifiers(),
+          selectedEntityIDs: [],
+          measurementHit: nil,
+          dimensionHit: nil,
+          controlPointTarget: nil,
+          constraintMarkerID: nil,
+          stitchStartPointID: nil,
+          freeTextID: nil,
+          entityID: nil
+        )
+      )
+    )
+
+    #expect(result.command == nil)
+    #expect(result.selectionCommands.count == 4)
+    #expect(controller.snapshot.dragState != nil)
   }
 }

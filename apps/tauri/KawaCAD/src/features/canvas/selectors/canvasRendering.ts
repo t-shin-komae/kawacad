@@ -2,6 +2,11 @@ import { appStrings } from "@/localization";
 import type { CanvasProjection } from "@/shared/domain/coreWireTypes";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import {
+  annotationArcLayout,
+  annotationLabelLayout,
+  constraintMarkerLayout,
+} from "@/features/canvas/domain/canvasLayout";
+import {
   controlPointsOf,
   displayScale,
   geometryOf,
@@ -78,6 +83,8 @@ export type CanvasRenderOptions = {
   snapActive: boolean;
   snapSuppressed: boolean;
 };
+
+export type CanvasRenderModel = Omit<CanvasRenderOptions, "context" | "width" | "height">;
 
 type CanvasLayer = { id: string; style: DisplayStyle; visible?: boolean };
 type CanvasSharedStyle = { id: string; style: DisplayStyle };
@@ -838,25 +845,28 @@ function drawConstraintMarker(
   viewport: Viewport,
 ) {
   const point = screenPoint(marker.positionMm, width, height, viewport);
-  const label = marker.label ?? appStrings.canvas.constraint;
-  const stackIndex = marker.stackIndex ?? 0;
-  const x = point.x + 10 + stackIndex * 5;
-  const y = point.y - 20 - stackIndex * 5;
+  const layout = constraintMarkerLayout({ ...marker, label: marker.label ?? appStrings.canvas.constraint });
+  const x = point.x + layout.offsetX;
+  const y = point.y + layout.offsetY;
   context.save();
   context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
-  const markerText = marker.icon ? `${marker.icon} ${label}` : label;
-  const markerWidth = Math.max(22, context.measureText(markerText).width + 10);
+  const measuredWidth = context.measureText(layout.text).width;
+  const measuredLayout = constraintMarkerLayout({
+    ...marker,
+    label: marker.label ?? appStrings.canvas.constraint,
+    measuredTextWidthPx: measuredWidth,
+  });
   context.fillStyle = hovered ? "rgba(32, 74, 179, .95)" : "rgba(4, 129, 116, .92)";
   context.strokeStyle = hovered ? "#204ab3" : "rgba(4, 129, 116, .72)";
   context.lineWidth = hovered ? 1.5 : 1;
   context.beginPath();
-  context.roundRect(x, y, markerWidth, 16, 4);
+  context.roundRect(x, y, measuredLayout.width, measuredLayout.height, 4);
   context.fill();
   context.stroke();
   context.fillStyle = "#fff";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(markerText, x + markerWidth / 2, y + 8);
+  context.fillText(layout.text, x + measuredLayout.width / 2, y + measuredLayout.height / 2);
   context.beginPath();
   context.arc(point.x, point.y, hovered ? 4.5 : 3.5, 0, Math.PI * 2);
   context.fill();
@@ -908,21 +918,29 @@ function drawAnnotation(
   if (label) {
     const midpoint =
       item.arc && item.centerMm
-        ? arcMidpoint(item.centerMm, item.startMm, item.endMm, arcCounterclockwise)
+        ? annotationArcLayout({
+            centerMm: item.centerMm,
+            startMm: item.startMm,
+            endMm: item.endMm,
+            counterclockwise: arcCounterclockwise,
+          }).midpointMm
         : {
             xMm: (item.startMm.xMm + item.endMm.xMm) / 2,
             yMm: (item.startMm.yMm + item.endMm.yMm) / 2,
           };
-    const labelPoint = screenPoint(
-      {
-        xMm: midpoint.xMm + (labelOffsetMm?.xMm ?? 0),
-        yMm: midpoint.yMm + (labelOffsetMm?.yMm ?? 0),
-      },
-      width,
-      height,
-      viewport,
+    context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
+    const labelLayout = annotationLabelLayout(
+      midpoint,
+      label,
+      labelOffsetMm,
+      Math.max(displayScale(viewport), 0.01),
+      context.measureText(label).width,
     );
-    drawAnnotationLabel(context, label, labelPoint.x + 5, labelPoint.y - 5, color);
+    const labelPoint = screenPoint(labelLayout.centerMm, width, height, viewport);
+    drawAnnotationLabel(context, label, labelPoint.x, labelPoint.y, color, {
+      halfWidthPx: labelLayout.halfWidthMm * displayScale(viewport),
+      halfHeightPx: labelLayout.halfHeightMm * displayScale(viewport),
+    });
   }
   context.restore();
 }
@@ -964,43 +982,31 @@ function drawArcArrowhead(
   drawLinearArrowhead(context, start, { x: start.x + startTangent.x, y: start.y + startTangent.y }, color);
 }
 
-function drawAnnotationLabel(context: CanvasRenderingContext2D, label: string, x: number, y: number, color: string) {
+function drawAnnotationLabel(
+  context: CanvasRenderingContext2D,
+  label: string,
+  x: number,
+  y: number,
+  color: string,
+  layout?: { halfWidthPx: number; halfHeightPx: number },
+) {
   context.save();
   context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
   context.textBaseline = "middle";
   const metrics = context.measureText(label);
-  const paddingX = 4;
-  const paddingY = 3;
+  const measuredHalfWidth = metrics.width / 2 + 4;
+  const halfWidth = Math.max(layout?.halfWidthPx ?? 0, measuredHalfWidth);
+  const halfHeight = layout?.halfHeightPx ?? 8;
   context.fillStyle = "rgba(255,255,255,.82)";
   context.strokeStyle = color;
   context.lineWidth = 1;
   context.beginPath();
-  context.roundRect(
-    x - paddingX,
-    y - metrics.actualBoundingBoxAscent / 2 - paddingY,
-    metrics.width + paddingX * 2,
-    metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + paddingY * 2,
-    3,
-  );
+  context.roundRect(x - halfWidth, y - halfHeight, halfWidth * 2, halfHeight * 2, 3);
   context.fill();
   context.stroke();
   context.fillStyle = color;
   context.fillText(label, x, y);
   context.restore();
-}
-
-function arcMidpoint(center: PointMm, start: PointMm, end: PointMm, counterclockwise?: boolean) {
-  const radius = Math.hypot(start.xMm - center.xMm, start.yMm - center.yMm);
-  if (radius <= 0.0001) return start;
-  const startAngle = Math.atan2(start.yMm - center.yMm, start.xMm - center.xMm);
-  const endAngle = Math.atan2(end.yMm - center.yMm, end.xMm - center.xMm);
-  let sweep = endAngle - startAngle;
-  while (sweep <= -Math.PI) sweep += Math.PI * 2;
-  while (sweep > Math.PI) sweep -= Math.PI * 2;
-  if (counterclockwise === false && sweep > 0) sweep -= Math.PI * 2;
-  if (counterclockwise === true && sweep < 0) sweep += Math.PI * 2;
-  const angle = startAngle + sweep / 2;
-  return { xMm: center.xMm + radius * Math.cos(angle), yMm: center.yMm + radius * Math.sin(angle) };
 }
 
 /** Canvas coordinates invert model-space Y, so a positive model angle uses

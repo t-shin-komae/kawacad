@@ -23,112 +23,32 @@ struct FreeTextDragState {
 }
 
 final class LeatherCanvasView: NSView {
-  var entities: [CanvasEntity] = []
-  var canvasProjection: LeatherCanvasProjection = .empty
-  var documentConstraints: [ProjectConstraint] = []
-  var freeTexts: [ProjectFreeText] = []
-  var stitchStartPoints: [ProjectStitchStartPoint] = []
-  var measurementAnnotations: [ProjectMeasurementAnnotation] = []
-  var measurementEvaluations: [MeasurementEvaluation] = []
-  var dimensionConstraintAnnotations: [ProjectDimensionConstraintAnnotation] = []
-  var parameters: [ProjectParameter] = []
-  var derivedElements: [ProjectDerivedElement] = []
-  var layers: [ProjectLayer] = []
-  var sharedStyles: [ProjectSharedStyle] = []
-  var coincidentPointGroups: [CoincidentPointGroup] = []
-  var selectedEntityID: String?
-  var selectedEntityIDs: Set<String> = []
-  var filletDraftEntityIDs: Set<String> = []
-  var filletDraftClosed: Bool?
-  var selectedConstraintID: String?
-  var selectedMeasurementAnnotationID: String?
-  var selectedFreeTextID: String?
-  var selectedStitchStartPointID: String?
-  var selectedPartOrigin: ModelPoint?
-  var highlightedPartEntityIDs: Set<String> = []
-  var highlightedPartFreeTextIDs: Set<String> = []
-  var highlightedPartMeasurementAnnotationIDs: Set<String> = []
-  var highlightedPartStitchStartPointIDs: Set<String> = []
-  var isSettingPartOrigin: Bool = false
-  var freeTextInlineEditRequestID: String?
-  var hoveredConstraintID: String?
-  var pendingConstraintTargets: [CanvasSelectionTarget] = []
-  var hoveredConstraintTarget: CanvasSelectionTarget?
-  var constraintHoverPoint: CGPoint?
-  var viewMode: CanvasViewMode = .editDisplay
-  var selectedTool: CanvasTool = .select
-  var draftStartPoint: ModelPoint?
-  var draftArcStartPoint: ModelPoint?
-  var draftCurrentPoint: ModelPoint?
-  var draftArcSweepAngleRad: Double?
-  var gridVisible: Bool = true
-  var a4ReferenceVisible: Bool = true
-  var a4ReferenceOrientation: OutputPrintOrientation = .portrait
-  var gridSnapEnabled: Bool = true
-  var pointSnapEnabled: Bool = true
-  var outputPreviewModel: OutputDocumentModel?
-  var zoomScale: Double = 1.0
-  var panOffset: CGSize = .zero
-  var onSelectEntity: ((String?) -> Void)?
-  var onToggleEntitySelection: ((String?) -> Void)?
-  var onSelectEntities: ((Set<String>, Bool) -> Void)?
-  var onSelectConstraint: ((String?) -> Void)?
-  var onSelectMeasurementAnnotation: ((String?) -> Void)?
-  var onSelectFreeText: ((String?) -> Void)?
-  var onSelectStitchStartPoint: ((String?) -> Void)?
-  var onSetPartOrigin: ((ModelPoint) -> Void)?
-  var onUpdateFreeText: ((ProjectFreeText) -> Bool)?
-  var onFreeTextInlineEditRequestHandled: ((String) -> Void)?
-  var onHoverConstraint: ((String?) -> Void)?
-  var onSelectTarget: ((CanvasSelectionTarget?) -> Void)?
-  var onPlacePoint: ((ModelPoint, CanvasPlacementModifiers) -> Void)?
-  var onHoverPoint: ((ModelPoint, CanvasPlacementModifiers) -> Void)?
-  var onCursorPoint: ((ModelPoint?, CGPoint?) -> Void)?
-  var onPreviewMoveEntity: ((String, ModelPoint) -> Void)?
-  var onPreviewMoveEntities: ((Set<String>, ModelPoint, Bool) -> Void)?
-  var onPreviewMoveControlPoint: ((CanvasSelectionTarget, ModelPoint) -> Void)?
-  var onCancelMovePreview: (() -> Void)?
-  var onMoveEntity: ((String, ModelPoint) -> Void)?
-  var onMoveEntities: ((Set<String>, ModelPoint, Bool) -> Void)?
-  var onMoveControlPoint: ((CanvasSelectionTarget, ModelPoint) -> Void)?
-  var onMoveMeasurementAnnotation: ((String, ModelPoint, Bool) -> Void)?
-  var onMoveDimensionConstraintAnnotation: ((String, ModelPoint, Bool) -> Void)?
-  var onConvertMeasurementAnnotationToConstraint: ((String) -> Void)?
-  var onSmoothSelectedArcTangenciesPrototype: (() -> Void)?
-  var onCancelInteraction: (() -> Void)?
-  var onActivateTool: ((CanvasTool) -> Void)?
-  var onDeleteSelection: (() -> Void)?
-  var onPanCanvas: ((CGSize) -> Void)?
-  var onSetCanvasViewport: ((Double, CGSize, String) -> Void)?
-  var onCopySelection: (() -> Void)?
-  var onPasteCopiedEntity: (() -> Void)?
-  var onPasteCopiedEntityAtPoint: ((ModelPoint) -> Void)?
-  var onDuplicateSelection: (() -> Void)?
-  var onSelectAllEntities: (() -> Void)?
-
+  private(set) var renderInput: LeatherCanvasRenderInput
+  private(set) var interactionInput: LeatherCanvasInteractionInput
+  var commandExecutor: CanvasInteractionCommandExecutor
+  var interactionController = CanvasInteractionController()
   var trackingArea: NSTrackingArea?
-  var interactionState = CanvasInteractionState()
-  var dragState: CanvasDragState? {
-    get { interactionState.dragState }
-    set { interactionState.dragState = newValue }
-  }
-  var snapIndicatorPoint: ModelPoint?
-  var snapSuppressionPoint: ModelPoint?
-  var contextMenuModelPoint: ModelPoint?
-  var contextMenuFreeTextID: String?
-  var measurementDragState: MeasurementAnnotationDragState?
-  var dimensionConstraintDragState: DimensionConstraintAnnotationDragState?
-  var freeTextDragState: FreeTextDragState?
   let inlineFreeTextEditor = CanvasInlineTextEditorController()
 
-  override init(frame frameRect: NSRect) {
+  func interactionSnapshot() -> CanvasInteractionSnapshot {
+    interactionController.snapshot
+  }
+
+  init(
+    frame frameRect: NSRect,
+    renderInput: LeatherCanvasRenderInput,
+    interactionInput: LeatherCanvasInteractionInput,
+    actionGroups: LeatherCanvasActionGroups
+  ) {
+    self.renderInput = renderInput
+    self.interactionInput = interactionInput
+    self.commandExecutor = CanvasInteractionCommandExecutor(actions: actionGroups)
     super.init(frame: frameRect)
     configureAccessibility()
   }
 
   required init?(coder: NSCoder) {
-    super.init(coder: coder)
-    configureAccessibility()
+    return nil
   }
 
   override var isFlipped: Bool { true }
@@ -158,7 +78,7 @@ final class LeatherCanvasView: NSView {
   }
 
   private var canvasInteractionDescription: String {
-    if case .marquee(let startPoint, let currentPoint, _) = dragState {
+    if case .marquee(let startPoint, let currentPoint, _) = interactionSnapshot().dragState {
       let mode = CanvasMarqueeSelectionMode(startPoint: startPoint, currentPoint: currentPoint)
       return AppStrings.tr(
         mode == .contained
@@ -206,35 +126,15 @@ final class LeatherCanvasView: NSView {
   override func draw(_ dirtyRect: NSRect) {
     super.draw(dirtyRect)
 
-    NSColor.underPageBackgroundColor.setFill()
-    dirtyRect.fill()
-
     let pageRect = pageRect(in: bounds)
-    drawA4Page(in: bounds)
-    if gridVisible && !isOutputPreviewMode {
-      drawGrid(in: bounds, pageRect: pageRect)
-    }
-    if !isOutputPreviewMode {
-      drawCoordinateReference(in: pageRect)
-    }
-    drawEntities(in: pageRect)
-    drawStitchStartPoints(in: pageRect)
-    drawFreeTexts(in: pageRect)
-    drawSelectedPartOrigin(in: pageRect)
-    drawOutputPreviewTexts(in: pageRect)
-    drawOutputPreviewPages()
-    if !isOutputPreviewMode {
-      drawSelectedConstraintTargets(in: pageRect)
-      drawConstraintTargetFeedback(in: pageRect)
-      drawCoincidentPointGroups(in: pageRect)
-      drawDimensionConstraints(in: pageRect)
-      drawMeasurementAnnotations(in: pageRect)
-      drawConstraintMarkers(in: pageRect)
-      drawDraftPreview(in: pageRect)
-      drawSelectionMarquee()
-      drawDragFeedback()
-      drawSnapIndicator(in: pageRect)
-    }
+    let plan = CanvasRenderPlan(gridVisible: gridVisible, outputPreview: isOutputPreviewMode)
+    CanvasRenderer().draw(
+      plan: plan,
+      pageRect: pageRect,
+      dirtyRect: dirtyRect,
+      canvasBounds: bounds,
+      on: self
+    )
   }
 
   func outputPreviewPageRects(in rect: CGRect) -> [CGRect] {
@@ -272,45 +172,47 @@ final class LeatherCanvasView: NSView {
       inlineFreeTextEditor.endEditing(commit: true, in: self)
     }
     window?.makeFirstResponder(self)
-    let point = convert(event.locationInWindow, from: nil)
+    let pointerInput = CanvasInteraction.pointerInput(for: event, in: self)
+    let point = pointerInput.point
     let pageRect = pageRect(in: bounds)
     updateCursorPoint(for: point, in: pageRect)
     updateHoveredConstraintMarker(for: point, in: pageRect)
     updateHoveredConstraintTarget(for: point, in: pageRect)
-    guard canvasBoundsRect(in: pageRect).contains(point) else {
-      return
-    }
-    if isSettingPartOrigin {
-      let modifiers = CanvasPlacementModifiers(event: event)
-      onSetPartOrigin?(placementModelPoint(for: point, in: pageRect, modifiers: modifiers))
-      needsDisplay = true
-      return
-    }
-
-    switch selectedTool {
-    case .select:
-      let togglesSelection = event.modifierFlags.contains(.shift)
-      beginSelectInteraction(
-        at: point,
-        in: pageRect,
-        togglesSelection: togglesSelection,
-        modifiers: CanvasPlacementModifiers(event: event),
-        clickCount: event.clickCount
+    let interactionResult = interactionController.mouseDownResult(
+      for: CanvasMouseDownInput(
+        isInsideCanvas: canvasBoundsRect(in: pageRect).contains(point),
+        selectedTool: selectedTool,
+        isSettingPartOrigin: isSettingPartOrigin,
+        modifiers: pointerInput.modifiers,
+        placementPoint: placementModelPoint(
+          for: point,
+          in: pageRect,
+          modifiers: pointerInput.modifiers
+        ),
+        linePoint: lineToolModelPoint(
+          for: point,
+          in: pageRect,
+          modifiers: pointerInput.modifiers
+        ),
+        constraintTarget: preferredConstraintTarget(at: point, in: pageRect),
+        selectionInput: selectedTool == .select
+          ? selectionInput(
+            at: point,
+            in: pageRect,
+            togglesSelection: pointerInput.togglesSelection,
+            modifiers: pointerInput.modifiers,
+            clickCount: pointerInput.clickCount
+          )
+          : nil
       )
-    case .line:
-      let modifiers = CanvasPlacementModifiers(event: event)
-      onPlacePoint?(lineToolModelPoint(for: point, in: pageRect, modifiers: modifiers), modifiers)
-    case .point, .circle, .roundHole, .stitchStartPoint, .arc, .freeText, .centerLine,
-      .horizontalCenterLine, .verticalCenterLine:
-      let modifiers = CanvasPlacementModifiers(event: event)
-      onPlacePoint?(placementModelPoint(for: point, in: pageRect, modifiers: modifiers), modifiers)
-    case .offset, .fillet, .horizontal, .vertical, .distance, .horizontalDistance,
-      .verticalDistance, .lineLineDistance, .segmentLength,
-      .coincident, .symmetric, .diameter, .radius, .fixed,
-      .parallel, .perpendicular, .tangent, .equalLength, .angle, .pointOnLine,
-      .measureDistance, .measureSegmentLength, .measureAngle, .measureRadius, .measureDiameter,
-      .measureArcSweepAngle:
-      onSelectTarget?(preferredConstraintTarget(at: point, in: pageRect))
+    )
+
+    commandExecutor.execute(interactionResult)
+    if let freeTextID = interactionResult.inlineFreeTextID {
+      beginInlineFreeTextEditor(id: freeTextID, in: pageRect)
+    }
+    if interactionResult.shouldRedraw {
+      needsDisplay = true
     }
   }
 
@@ -324,43 +226,37 @@ final class LeatherCanvasView: NSView {
   }
 
   override func keyDown(with event: NSEvent) {
-    if event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}" {
-      if selectedTool != .select && !hasCanvasCancellationTarget {
-        onActivateTool?(.select)
-      } else {
-        dragState = nil
-        measurementDragState = nil
-        dimensionConstraintDragState = nil
-        freeTextDragState = nil
-        snapIndicatorPoint = nil
-        onCancelInteraction?()
-      }
+    let command = CanvasInteractionController.keyboardCommand(
+      for: CanvasKeyboardInput(
+        isEscape: event.keyCode == 53 || event.charactersIgnoringModifiers == "\u{1B}",
+        isPlainTextSelectShortcut: event.isPlainTextShortcut("v"),
+        isDelete: event.keyCode == 51 || event.keyCode == 117,
+        selectedTool: selectedTool,
+        hasCancellationTarget: hasCanvasCancellationTarget
+      )
+    )
+    switch command {
+    case .activateSelectTool:
+      commandExecutor.execute(command)
+    case .cancelInteraction:
+      interactionController.handleKeyboardCommand(command)
+      commandExecutor.execute(command)
       needsDisplay = true
-      return
+    case .deleteSelection:
+      commandExecutor.execute(command)
+    case .unhandled:
+      super.keyDown(with: event)
     }
-    if event.isPlainTextShortcut("v") {
-      onActivateTool?(.select)
+    if command != .unhandled {
       needsDisplay = true
-      return
     }
-    if event.keyCode == 51 || event.keyCode == 117 {
-      onDeleteSelection?()
-      return
-    }
-    super.keyDown(with: event)
   }
 
   private var hasCanvasCancellationTarget: Bool {
-    if isSettingPartOrigin { return true }
-    if measurementDragState != nil
-      || dimensionConstraintDragState != nil
-      || freeTextDragState != nil
-      || selectedMeasurementAnnotationID != nil
-      || selectedFreeTextID != nil
-    {
-      return true
-    }
-    return interactionState.hasCancellationTarget(
+    interactionController.hasCancellationTarget(
+      isSettingPartOrigin: isSettingPartOrigin,
+      measurementAnnotationSelected: selectedMeasurementAnnotationID != nil,
+      freeTextSelected: selectedFreeTextID != nil,
       draftStartPoint: draftStartPoint,
       draftCurrentPoint: draftCurrentPoint,
       draftArcStartPoint: draftArcStartPoint,
@@ -371,7 +267,7 @@ final class LeatherCanvasView: NSView {
     )
   }
 
-  private func drawSelectedPartOrigin(in pageRect: CGRect) {
+  func drawSelectedPartOrigin(in pageRect: CGRect) {
     guard !isOutputPreviewMode, let selectedPartOrigin else { return }
     let point = coordinateSpace(in: pageRect).canvasPoint(for: selectedPartOrigin)
     let radius: CGFloat = isSettingPartOrigin ? 8 : 6
@@ -396,35 +292,25 @@ final class LeatherCanvasView: NSView {
   }
 
   override func mouseDragged(with event: NSEvent) {
-    if let measurementDragState {
+    if interactionSnapshot().measurementDragState != nil {
       let point = convert(event.locationInWindow, from: nil)
       let pageRect = pageRect(in: bounds)
       let modelPoint = placementModelPoint(
         for: point, in: pageRect, modifiers: CanvasPlacementModifiers(event: event))
-      self.measurementDragState = MeasurementAnnotationDragState(
-        annotationID: measurementDragState.annotationID,
-        labelOnly: measurementDragState.labelOnly,
-        startPoint: measurementDragState.startPoint,
-        currentPoint: modelPoint
-      )
+      interactionController.updateMeasurementDrag(to: modelPoint)
       needsDisplay = true
       return
     }
-    if let dimensionConstraintDragState {
+    if interactionSnapshot().dimensionConstraintDragState != nil {
       let point = convert(event.locationInWindow, from: nil)
       let pageRect = pageRect(in: bounds)
       let modelPoint = placementModelPoint(
         for: point, in: pageRect, modifiers: CanvasPlacementModifiers(event: event))
-      self.dimensionConstraintDragState = DimensionConstraintAnnotationDragState(
-        constraintID: dimensionConstraintDragState.constraintID,
-        labelOnly: dimensionConstraintDragState.labelOnly,
-        startPoint: dimensionConstraintDragState.startPoint,
-        currentPoint: modelPoint
-      )
+      interactionController.updateDimensionDrag(to: modelPoint)
       needsDisplay = true
       return
     }
-    if freeTextDragState != nil {
+    if interactionSnapshot().freeTextDragState != nil {
       let point = convert(event.locationInWindow, from: nil)
       let pageRect = pageRect(in: bounds)
       dragFreeTextInteraction(
@@ -432,7 +318,7 @@ final class LeatherCanvasView: NSView {
       return
     }
 
-    guard selectedTool == .select, dragState != nil else {
+    guard selectedTool == .select, interactionSnapshot().dragState != nil else {
       return
     }
     let point = convert(event.locationInWindow, from: nil)
@@ -442,44 +328,22 @@ final class LeatherCanvasView: NSView {
   }
 
   override func mouseUp(with event: NSEvent) {
-    if let measurementDragState {
-      self.measurementDragState = nil
-      let delta = CanvasInteractionState.delta(
-        from: measurementDragState.startPoint,
-        to: measurementDragState.currentPoint
-      )
-      if abs(delta.xMM) > 0.0001 || abs(delta.yMM) > 0.0001 {
-        onMoveMeasurementAnnotation?(
-          measurementDragState.annotationID,
-          delta,
-          measurementDragState.labelOnly
-        )
-      }
+    if interactionSnapshot().measurementDragState != nil {
+      commandExecutor.execute(interactionController.finishMeasurementDragResult())
       needsDisplay = true
       return
     }
-    if let dimensionConstraintDragState {
-      self.dimensionConstraintDragState = nil
-      let delta = CanvasInteractionState.delta(
-        from: dimensionConstraintDragState.startPoint,
-        to: dimensionConstraintDragState.currentPoint
-      )
-      if abs(delta.xMM) > 0.0001 || abs(delta.yMM) > 0.0001 {
-        onMoveDimensionConstraintAnnotation?(
-          dimensionConstraintDragState.constraintID,
-          delta,
-          dimensionConstraintDragState.labelOnly
-        )
-      }
+    if interactionSnapshot().dimensionConstraintDragState != nil {
+      commandExecutor.execute(interactionController.finishDimensionDragResult())
       needsDisplay = true
       return
     }
-    if let freeTextDragState {
-      endFreeTextInteraction(freeTextDragState)
+    if interactionSnapshot().freeTextDragState != nil {
+      endFreeTextInteraction()
       return
     }
 
-    guard dragState != nil else {
+    guard interactionSnapshot().dragState != nil else {
       return
     }
     let point = convert(event.locationInWindow, from: nil)
@@ -493,27 +357,25 @@ final class LeatherCanvasView: NSView {
       return
     }
     let delta = CGSize(width: event.scrollingDeltaX, height: event.scrollingDeltaY)
-    guard abs(delta.width) > 0.01 || abs(delta.height) > 0.01 else {
-      return
-    }
-    onPanCanvas?(delta)
+    guard let command = CanvasInteractionController.panCommand(delta: delta) else { return }
+    commandExecutor.execute(command)
   }
 
   override func magnify(with event: NSEvent) {
     let anchorPoint = convert(event.locationInWindow, from: nil)
     let oldPageRect = pageRect(in: bounds)
     let anchorModelPoint = modelPoint(for: anchorPoint, in: oldPageRect)
-    let nextScale = min(max(zoomScale * (1.0 + Double(event.magnification)), 0.5), 3.0)
-    let basePageRect = pageRect(in: bounds, zoomScale: nextScale, panOffset: .zero)
-    let baseAnchorPoint = CanvasCoordinateSpace(
-      pageRect: basePageRect,
-      orientation: a4ReferenceOrientation
-    ).canvasPoint(for: anchorModelPoint)
-    let nextPanOffset = CGSize(
-      width: anchorPoint.x - baseAnchorPoint.x,
-      height: anchorPoint.y - baseAnchorPoint.y
-    )
-    onSetCanvasViewport?(nextScale, nextPanOffset, AppStrings.tr("canvas.status.changed_zoom"))
+    commandExecutor.execute(
+      CanvasInteractionController.magnifyCommand(
+        for: CanvasMagnifyInput(
+          currentScale: zoomScale,
+          magnification: event.magnification,
+          anchorPoint: anchorPoint,
+          anchorModelPoint: anchorModelPoint,
+          canvasBounds: bounds,
+          orientation: a4ReferenceOrientation,
+          message: AppStrings.tr("canvas.status.changed_zoom")
+        )))
   }
 
   override func rightMouseDown(with event: NSEvent) {
@@ -527,9 +389,12 @@ final class LeatherCanvasView: NSView {
       return
     }
 
-    contextMenuFreeTextID = nil
+    interactionController.setContextMenu(modelPoint: nil, freeTextID: nil)
     selectContextMenuTarget(at: point, in: pageRect)
-    contextMenuModelPoint = modelPoint(for: point, in: pageRect)
+    interactionController.setContextMenu(
+      modelPoint: modelPoint(for: point, in: pageRect),
+      freeTextID: interactionSnapshot().contextMenuFreeTextID
+    )
     let items = contextMenuItems(at: point, in: pageRect)
     guard !items.isEmpty else {
       return
@@ -568,29 +433,31 @@ final class LeatherCanvasView: NSView {
     guard !isOutputPreviewMode else {
       return
     }
-    if let hit = measurementAnnotationHit(at: point, in: pageRect) {
-      let modelPoint = placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
-      measurementDragState = MeasurementAnnotationDragState(
-        annotationID: hit.annotation.id,
-        labelOnly: hit.labelOnly,
-        startPoint: modelPoint,
-        currentPoint: modelPoint
+    let result = interactionController.selectionResult(
+      for: selectionInput(
+        at: point,
+        in: pageRect,
+        togglesSelection: togglesSelection,
+        modifiers: modifiers,
+        clickCount: clickCount
       )
-      onSelectMeasurementAnnotation?(hit.annotation.id)
-      return
+    )
+    commandExecutor.execute(result.commands)
+    if let freeTextID = result.inlineFreeTextID {
+      beginInlineFreeTextEditor(id: freeTextID, in: pageRect)
     }
-    if let hit = dimensionConstraintAnnotationHit(at: point, in: pageRect) {
-      let modelPoint = placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
-      dimensionConstraintDragState = DimensionConstraintAnnotationDragState(
-        constraintID: hit.constraint.id,
-        labelOnly: hit.labelOnly,
-        startPoint: modelPoint,
-        currentPoint: modelPoint
-      )
-      onSelectConstraint?(hit.constraint.id)
-      return
-    }
+    refreshAccessibilityState()
+  }
 
+  private func selectionInput(
+    at point: CGPoint,
+    in pageRect: CGRect,
+    togglesSelection: Bool,
+    modifiers: CanvasPlacementModifiers,
+    clickCount: Int
+  ) -> CanvasSelectionInput {
+    let measurementHit = measurementAnnotationHit(at: point, in: pageRect)
+    let dimensionHit = dimensionConstraintAnnotationHit(at: point, in: pageRect)
     let controlPoint = controlPointTarget(at: point, in: pageRect, includeEditHandles: true)
     let constraintMarker = constraintMarker(at: point, in: pageRect)
     let stitchStartPointHit = stitchStartPoint(at: point, in: pageRect)
@@ -600,70 +467,35 @@ final class LeatherCanvasView: NSView {
       in: pageRect,
       preferring: selectedEntityIDs
     )?.entitySelectionTarget
-    if let target = controlPoint {
-      let modelPoint = placementModelPoint(
-        for: point, in: pageRect, modifiers: modifiers, excluding: target)
-      dragState = .controlPoint(target: target, startPoint: modelPoint, currentPoint: modelPoint)
-      if togglesSelection {
-        onToggleEntitySelection?(target.entityID)
-      } else {
-        onSelectEntity?(target.entityID)
-      }
-    } else if let constraintMarker {
-      dragState = nil
-      onSelectConstraint?(constraintMarker.constraintID)
-    } else if let stitchStartPointHit {
-      dragState = nil
-      onSelectStitchStartPoint?(stitchStartPointHit.id)
-    } else if let freeTextHit {
-      dragState = nil
-      onSelectFreeText?(freeTextHit.id)
-      if clickCount >= 2 {
-        inlineFreeTextEditor.beginEditing(
-          freeTextHit, context: inlineTextEditorContext(in: pageRect), in: self)
-      } else {
-        let modelPoint = placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
-        freeTextDragState = FreeTextDragState(
-          freeTextID: freeTextHit.id,
-          startPoint: modelPoint,
-          currentPoint: modelPoint
-        )
-      }
-    } else if let target = entityTarget {
-      let modelPoint = placementModelPoint(
-        for: point, in: pageRect, modifiers: modifiers, excluding: target)
-      let draggingIDs =
-        selectedEntityIDs.contains(target.entityID)
-        ? selectedEntityIDs
-        : [target.entityID]
-      dragState = .entities(
-        entityIDs: draggingIDs,
-        anchorEntityID: target.entityID,
-        startPoint: modelPoint,
-        currentPoint: modelPoint,
-        duplicating: modifiers.duplicatesOnDrag
-      )
-      if togglesSelection {
-        onToggleEntitySelection?(target.entityID)
-      } else if selectedEntityIDs.contains(target.entityID), selectedEntityIDs.count > 1 {
-        onSelectEntities?(selectedEntityIDs, false)
-      } else {
-        onSelectEntity?(target.entityID)
-      }
-    } else {
-      dragState = .marquee(
-        startPoint: point,
-        currentPoint: point,
-        extendingSelection: togglesSelection
-      )
-      refreshAccessibilityState()
-      if !togglesSelection {
-        onSelectEntity?(nil)
-        onSelectMeasurementAnnotation?(nil)
-        onSelectFreeText?(nil)
-        onSelectStitchStartPoint?(nil)
-      }
+    let modelPoint = placementModelPoint(
+      for: point,
+      in: pageRect,
+      modifiers: modifiers,
+      excluding: controlPoint ?? entityTarget
+    )
+    return CanvasSelectionInput(
+      point: point,
+      modelPoint: modelPoint,
+      clickCount: clickCount,
+      togglesSelection: togglesSelection,
+      modifiers: modifiers,
+      selectedEntityIDs: selectedEntityIDs,
+      measurementHit: measurementHit.map { ($0.annotation.id, $0.labelOnly) },
+      dimensionHit: dimensionHit.map { ($0.constraint.id, $0.labelOnly) },
+      controlPointTarget: controlPoint,
+      constraintMarkerID: constraintMarker?.constraintID,
+      stitchStartPointID: stitchStartPointHit?.id,
+      freeTextID: freeTextHit?.id,
+      entityID: entityTarget?.entityID
+    )
+  }
+
+  private func beginInlineFreeTextEditor(id: String, in pageRect: CGRect) {
+    guard let freeText = freeTexts.first(where: { $0.id == id }) else {
+      return
     }
+    inlineFreeTextEditor.beginEditing(
+      freeText, context: inlineTextEditorContext(in: pageRect), in: self)
   }
 
   func dragSelectInteraction(
@@ -679,35 +511,18 @@ final class LeatherCanvasView: NSView {
     guard canvasBoundsRect(in: pageRect).contains(point) else {
       return
     }
+    guard let dragState = interactionSnapshot().dragState else { return }
     let modelPoint = placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
-    switch dragState {
-    case .entities(let entityIDs, let anchorEntityID, let startPoint, _, _):
-      let duplicating = modifiers.duplicatesOnDrag
-      dragState = .entities(
-        entityIDs: entityIDs,
-        anchorEntityID: anchorEntityID,
-        startPoint: startPoint,
-        currentPoint: modelPoint,
-        duplicating: duplicating
-      )
-      let delta = CanvasInteractionState.delta(from: startPoint, to: modelPoint)
-      if let onPreviewMoveEntities {
-        onPreviewMoveEntities(entityIDs, delta, duplicating)
-      } else if entityIDs.count == 1, let entityID = entityIDs.first, !duplicating {
-        onPreviewMoveEntity?(entityID, delta)
-      }
-    case .controlPoint(let target, let startPoint, _):
-      dragState = .controlPoint(target: target, startPoint: startPoint, currentPoint: modelPoint)
-      onPreviewMoveControlPoint?(target, modelPoint)
-    case .marquee(let startPoint, _, let extendingSelection):
-      dragState = .marquee(
-        startPoint: startPoint,
+    let result = interactionController.dragResult(
+      for: CanvasDragInput(
+        state: dragState,
         currentPoint: point,
-        extendingSelection: extendingSelection
+        currentModelPoint: modelPoint,
+        modifiers: modifiers,
+        marqueeSelection: []
       )
-    case .none:
-      break
-    }
+    )
+    commandExecutor.execute(result)
     refreshAccessibilityState()
     needsDisplay = true
   }
@@ -717,37 +532,19 @@ final class LeatherCanvasView: NSView {
     in pageRect: CGRect,
     modifiers: CanvasPlacementModifiers = CanvasPlacementModifiers()
   ) {
-    guard !isOutputPreviewMode,
-      let freeTextDragState
-    else {
+    guard !isOutputPreviewMode, interactionSnapshot().freeTextDragState != nil else {
       return
     }
     updateCursorPoint(for: point, in: pageRect)
     let modelPoint = placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
-    self.freeTextDragState = FreeTextDragState(
-      freeTextID: freeTextDragState.freeTextID,
-      startPoint: freeTextDragState.startPoint,
-      currentPoint: modelPoint
-    )
+    interactionController.updateFreeTextDrag(to: modelPoint)
     needsDisplay = true
   }
 
-  private func endFreeTextInteraction(_ freeTextDragState: FreeTextDragState) {
-    self.freeTextDragState = nil
-    let delta = CanvasInteractionState.delta(
-      from: freeTextDragState.startPoint,
-      to: freeTextDragState.currentPoint
-    )
-    if CanvasInteractionState.hasMeaningfulModelMovement(
-      from: freeTextDragState.startPoint,
-      to: freeTextDragState.currentPoint
-    ), let freeText = freeTexts.first(where: { $0.id == freeTextDragState.freeTextID }) {
-      _ = onUpdateFreeText?(
-        freeText.withPosition(
-          freeText.positionMM.translatedBy(dxMM: delta.xMM, dyMM: delta.yMM)
-        )
-      )
-    }
+  private func endFreeTextInteraction() {
+    let draggedID = interactionSnapshot().freeTextDragState?.freeTextID
+    let freeText = draggedID.flatMap { id in freeTexts.first(where: { $0.id == id }) }
+    commandExecutor.execute(interactionController.finishFreeTextDragResult(freeText: freeText))
     needsDisplay = true
   }
 
@@ -759,39 +556,32 @@ final class LeatherCanvasView: NSView {
     guard !isOutputPreviewMode else {
       return
     }
-    guard let dragState else {
+    guard let dragState = interactionSnapshot().dragState else {
       return
     }
-    self.dragState = nil
-    snapIndicatorPoint = nil
+    interactionController.clearDragState()
+    interactionController.clearSnap()
     updateCursorPoint(for: point, in: pageRect)
-    switch dragState {
-    case .entities(let entityIDs, _, let startPoint, let currentPoint, _):
-      let duplicating = modifiers.duplicatesOnDrag
-      let delta = CanvasInteractionState.delta(from: startPoint, to: currentPoint)
-      if CanvasInteractionState.hasMeaningfulModelMovement(from: startPoint, to: currentPoint) {
-        if let onMoveEntities {
-          onMoveEntities(entityIDs, delta, duplicating)
-        } else if entityIDs.count == 1, let entityID = entityIDs.first, !duplicating {
-          onMoveEntity?(entityID, delta)
-        }
-      } else {
-        onCancelMovePreview?()
-      }
-    case .controlPoint(let target, let startPoint, let currentPoint):
-      if CanvasInteractionState.hasMeaningfulPointMovement(from: startPoint, to: currentPoint) {
-        onMoveControlPoint?(target, currentPoint)
-      } else {
-        onCancelMovePreview?()
-      }
-    case .marquee(let startPoint, let currentPoint, let extendingSelection):
-      let rect = CanvasInteractionState.normalizedRect(from: startPoint, to: currentPoint)
-      guard rect.width > 3 || rect.height > 3 else {
-        break
-      }
-      let selectedIDs = marqueeCandidateIDs(startPoint: startPoint, currentPoint: currentPoint)
-      onSelectEntities?(selectedIDs, extendingSelection)
+    let marqueeSelection: Set<String>
+    if case .marquee(let startPoint, let currentPoint, _) = dragState {
+      marqueeSelection = marqueeCandidateIDs(startPoint: startPoint, currentPoint: currentPoint)
+    } else {
+      marqueeSelection = []
     }
+    let result = interactionController.endDragResult(
+      for: CanvasDragInput(
+        state: dragState,
+        currentPoint: point,
+        currentModelPoint: placementModelPoint(
+          for: point,
+          in: pageRect,
+          modifiers: modifiers
+        ),
+        modifiers: modifiers,
+        marqueeSelection: marqueeSelection
+      )
+    )
+    commandExecutor.execute(result)
     refreshAccessibilityState()
     needsDisplay = true
   }
@@ -800,95 +590,43 @@ final class LeatherCanvasView: NSView {
     guard !isOutputPreviewMode else {
       return []
     }
-    if measurementAnnotationHit(at: point, in: pageRect) != nil {
-      return [
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.convert_measurement_to_constraint"),
-          action: .convertMeasurementToConstraint),
-        CanvasContextMenuItem.separator,
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.delete_measurement_annotation"),
-          action: .deleteSelection, isDestructive: true),
-      ]
-    }
-    if dimensionConstraintAnnotationHit(at: point, in: pageRect) != nil {
-      return [
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.delete_constraint"), action: .deleteSelection,
-          isDestructive: true)
-      ]
-    }
-    if constraintMarker(at: point, in: pageRect) != nil {
-      return [
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.delete_constraint"), action: .deleteSelection,
-          isDestructive: true)
-      ]
-    }
-    if freeText(at: point, in: pageRect) != nil {
-      return [
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.edit_free_text"), action: .editFreeText),
-        CanvasContextMenuItem.separator,
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.delete_free_text"), action: .deleteSelection,
-          isDestructive: true),
-      ]
-    }
-    if entity(at: point, in: pageRect) != nil {
-      var items = [
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.copy_selection"), action: .copySelection),
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.duplicate_selection"), action: .duplicateSelection),
-        CanvasContextMenuItem.separator,
-        CanvasContextMenuItem(
-          title: AppStrings.tr("canvas.menu.delete_selection"), action: .deleteSelection,
-          isDestructive: true),
-      ]
-      if selectedSingleEntityIsArc {
-        items.insert(CanvasContextMenuItem.separator, at: 2)
-        items.insert(
-          CanvasContextMenuItem(
-            title: AppStrings.tr("canvas.menu.smooth_arc_tangencies_prototype"),
-            action: .smoothArcTangenciesPrototype
-          ),
-          at: 2
-        )
-      }
-      return items
-    }
-    return [
-      CanvasContextMenuItem(
-        title: AppStrings.tr("canvas.menu.paste_copied"), action: .pasteCopiedEntity),
-      CanvasContextMenuItem(
-        title: AppStrings.tr("canvas.menu.select_all"), action: .selectAllEntities),
-    ]
+    return CanvasContextMenuResolver.items(
+      for: CanvasContextMenuAvailability(
+        hasMeasurement: measurementAnnotationHit(at: point, in: pageRect) != nil,
+        hasDimensionConstraint: dimensionConstraintAnnotationHit(at: point, in: pageRect) != nil,
+        hasConstraintMarker: constraintMarker(at: point, in: pageRect) != nil,
+        hasFreeText: freeText(at: point, in: pageRect) != nil,
+        hasEntity: entity(at: point, in: pageRect) != nil,
+        selectedSingleEntityIsArc: selectedSingleEntityIsArc
+      ))
   }
 
   private func selectContextMenuTarget(at point: CGPoint, in pageRect: CGRect) {
     if let hit = measurementAnnotationHit(at: point, in: pageRect) {
-      onSelectMeasurementAnnotation?(hit.annotation.id)
+      commandExecutor.selectMeasurementAnnotation(hit.annotation.id)
       return
     }
     if let hit = dimensionConstraintAnnotationHit(at: point, in: pageRect) {
-      onSelectConstraint?(hit.constraint.id)
+      commandExecutor.selectConstraint(hit.constraint.id)
       return
     }
     if let marker = constraintMarker(at: point, in: pageRect) {
-      onSelectConstraint?(marker.constraintID)
+      commandExecutor.selectConstraint(marker.constraintID)
       return
     }
     if let freeText = freeText(at: point, in: pageRect) {
-      contextMenuFreeTextID = freeText.id
-      onSelectFreeText?(freeText.id)
+      interactionController.setContextMenu(
+        modelPoint: interactionSnapshot().contextMenuModelPoint,
+        freeTextID: freeText.id
+      )
+      commandExecutor.selectFreeText(freeText.id)
       return
     }
     guard let target = entity(at: point, in: pageRect)?.entitySelectionTarget else {
       return
     }
     if !selectedEntityIDs.contains(target.entityID), selectedEntityID != target.entityID {
-      onSelectEntity?(target.entityID)
+      commandExecutor.selectEntity(target.entityID)
     }
   }
 
@@ -898,35 +636,23 @@ final class LeatherCanvasView: NSView {
     else {
       return
     }
-    switch action {
-    case .copySelection:
-      onCopySelection?()
-    case .pasteCopiedEntity:
-      if let contextMenuModelPoint {
-        onPasteCopiedEntityAtPoint?(contextMenuModelPoint)
-      } else {
-        onPasteCopiedEntity?()
-      }
-      self.contextMenuModelPoint = nil
-    case .duplicateSelection:
-      onDuplicateSelection?()
-    case .deleteSelection:
-      onDeleteSelection?()
-      contextMenuFreeTextID = nil
-    case .editFreeText:
-      if let freeText = contextMenuFreeText ?? selectedFreeText {
-        inlineFreeTextEditor.beginEditing(
-          freeText, context: inlineTextEditorContext(in: pageRect(in: bounds)), in: self)
-      }
-      contextMenuFreeTextID = nil
-    case .convertMeasurementToConstraint:
-      if let selectedMeasurementAnnotationID {
-        onConvertMeasurementAnnotationToConstraint?(selectedMeasurementAnnotationID)
-      }
-    case .smoothArcTangenciesPrototype:
-      onSmoothSelectedArcTangenciesPrototype?()
-    case .selectAllEntities:
-      onSelectAllEntities?()
+    guard
+      let execution = interactionController.contextMenuExecution(
+        for: action,
+        selectedMeasurementID: selectedMeasurementAnnotationID,
+        selectedFreeTextID: selectedFreeTextID
+      )
+    else { return }
+    switch execution {
+    case .command(let command):
+      commandExecutor.execute(command)
+    case .editFreeText(let id):
+      guard let id, let freeText = freeTexts.first(where: { $0.id == id }) else { return }
+      inlineFreeTextEditor.beginEditing(
+        freeText,
+        context: inlineTextEditorContext(in: pageRect(in: bounds)),
+        in: self
+      )
     }
   }
 
@@ -964,52 +690,47 @@ final class LeatherCanvasView: NSView {
       selectedTool == .line
       ? lineToolModelPoint(for: point, in: pageRect, modifiers: modifiers)
       : placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
-    onHoverPoint?(modelPoint, modifiers)
+    commandExecutor.hoverPoint(modelPoint, modifiers: modifiers)
   }
 
   override func mouseExited(with event: NSEvent) {
-    onHoverConstraint?(nil)
-    onCursorPoint?(nil, nil)
-    hoveredConstraintTarget = nil
-    constraintHoverPoint = nil
+    commandExecutor.clearHoverConstraint()
+    commandExecutor.updateCursorPoint(nil, nil)
+    interactionController.clearHover()
     needsDisplay = true
   }
 
   private func updateCursorPoint(for point: CGPoint, in pageRect: CGRect) {
     guard canvasBoundsRect(in: pageRect).contains(point) else {
-      snapIndicatorPoint = nil
-      snapSuppressionPoint = nil
-      onCursorPoint?(nil, nil)
-      hoveredConstraintTarget = nil
-      constraintHoverPoint = nil
+      interactionController.clearSnap()
+      commandExecutor.updateCursorPoint(nil, nil)
+      interactionController.clearHover()
       needsDisplay = true
       return
     }
 
-    onCursorPoint?(snappedModelPoint(for: point, in: pageRect), point)
+    commandExecutor.updateCursorPoint(snappedModelPoint(for: point, in: pageRect), point)
     needsDisplay = true
   }
 
   private func updateHoveredConstraintTarget(for point: CGPoint, in pageRect: CGRect) {
     guard !isOutputPreviewMode else {
-      hoveredConstraintTarget = nil
-      constraintHoverPoint = nil
+      interactionController.clearHover()
       needsDisplay = true
       return
     }
     guard selectedTool.isConstraintTool || selectedTool.isMeasurementTool,
       canvasBoundsRect(in: pageRect).contains(point)
     else {
-      hoveredConstraintTarget = nil
-      constraintHoverPoint = nil
+      interactionController.clearHover()
       needsDisplay = true
       return
     }
     let target = preferredConstraintTarget(at: point, in: pageRect)
-    hoveredConstraintTarget = target.flatMap {
+    let resolvedTarget = target.flatMap {
       isValidConstraintTarget($0, for: selectedTool) ? $0 : nil
     }
-    constraintHoverPoint = hoveredConstraintTarget == nil ? nil : point
+    interactionController.updateHover(target: resolvedTarget, at: point)
     needsDisplay = true
   }
 
@@ -1024,6 +745,24 @@ final class LeatherCanvasView: NSView {
     ).isValidConstraintTarget(target, pendingTargetCount: pendingConstraintTargets.count)
   }
 
+  func configure(
+    renderInput: LeatherCanvasRenderInput,
+    interactionInput: LeatherCanvasInteractionInput,
+    actionGroups: LeatherCanvasActionGroups
+  ) {
+    self.renderInput = renderInput
+    self.interactionInput = interactionInput
+    self.commandExecutor = CanvasInteractionCommandExecutor(actions: actionGroups)
+  }
+
+}
+
+extension LeatherCanvasView: CanvasRenderPassDrawing {
+  func drawCanvasBackground(dirtyRect: CGRect, canvasBounds: CGRect) {
+    NSColor.underPageBackgroundColor.setFill()
+    dirtyRect.fill()
+    drawA4Page(in: canvasBounds)
+  }
 }
 
 extension CGPoint {

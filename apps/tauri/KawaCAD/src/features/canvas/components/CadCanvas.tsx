@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  drawCanvasFrame,
-  entityIsVisible,
-  type DisplayStyle,
-  type OutputPreviewPage,
-  type ResolvedCanvasGeometry,
-} from "@/features/canvas/selectors/canvasRendering";
+import { type CanvasRenderModel, entityIsVisible } from "@/features/canvas/selectors/canvasRendering";
+import { useCanvasRenderer } from "@/features/canvas/components/useCanvasRenderer";
 import { canvasInteractionDescription } from "@/features/canvas/selectors/canvasAccessibility";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
-import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import {
   displayScale,
   modelPointInA4Grid,
@@ -17,8 +11,6 @@ import {
   constraintTargetEntityId,
   screenPoint,
   type PointMm,
-  type RawEntity,
-  type Viewport,
 } from "@/features/canvas/domain/cad";
 
 export {
@@ -31,63 +23,20 @@ export {
 } from "@/features/canvas/selectors/canvasRendering";
 export type { OutputPreviewPage } from "@/features/canvas/selectors/canvasRendering";
 
-type Props = {
-  entities: RawEntity[];
-  layers: Array<{ id: string; style: DisplayStyle; visible?: boolean }>;
-  sharedStyles: Array<{ id: string; style: DisplayStyle }>;
-  freeTexts: Array<{ id: string; content: string; positionMm: PointMm; fontSizeMm: number }>;
+export type CanvasInteractionModel = {
   editingFreeText?: { id: string; content: string; positionMm: PointMm; fontSizeMm: number };
-  highlightedFreeTextIds?: Set<string>;
-  highlightedMeasurementAnnotationIds?: Set<string>;
-  highlightedStitchStartPointIds?: Set<string>;
-  selectedIds: Set<string>;
-  selectedMeasurementAnnotationId?: string;
-  selectedStitchStartPointId?: string;
-  viewport: Viewport;
-  gridVisible: boolean;
-  a4Visible: boolean;
-  a4Landscape: boolean;
-  outputPreview: boolean;
-  outputPages: OutputPreviewPage[];
-  pendingTargetCount: number;
+  settingPartOrigin?: boolean;
   filletDraftEntityCount?: number;
   filletDraftClosed?: boolean;
-  settingPartOrigin?: boolean;
-  selectedPartOrigin?: PointMm;
-  draftPoints: PointMm[];
-  cursorPoint?: PointMm;
-  arcSweepAngleRad?: number;
-  hoveredConstraintId?: string;
-  hoveredTargetEntityId?: string;
-  pendingTargetEntityIds?: Set<string>;
-  marqueeStart?: PointMm;
-  marqueeCurrent?: PointMm;
+  pendingTargetCount: number;
+  draftPointCount: number;
   dragDuplicating?: boolean;
   dragging?: boolean;
-  snapActive?: boolean;
   snapSuppressed?: boolean;
-  coincidentPointGroups?: Array<{ id: string; representative: PointMm; targets: unknown[] }>;
-  tool: Tool;
   toolName: string;
-  projection: {
-    stitchStartPoints: Array<{ id: string; positionMm: PointMm; visible: boolean }>;
-    measurementAnnotations: ResolvedCanvasGeometry[];
-    dimensionConstraints: ResolvedCanvasGeometry[];
-    constraintMarkers: Array<{
-      id: string;
-      positionMm: PointMm;
-      visible: boolean;
-      label?: string;
-      icon?: string;
-      stackIndex?: number;
-    }>;
-  };
-  measurementLabels: Record<string, string>;
-  measurementLabelOffsets: Record<string, PointMm>;
-  measurementArcCounterclockwise?: Record<string, boolean>;
-  dimensionLabels: Record<string, string>;
-  dimensionLabelOffsets: Record<string, PointMm>;
-  dimensionArcCounterclockwise?: Record<string, boolean>;
+};
+
+export type CanvasEventHandlers = {
   onPointerDown: (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => void;
   onPointerMove: (event: React.PointerEvent<HTMLCanvasElement>, point: PointMm) => void;
   onPointerLeave?: () => void;
@@ -99,168 +48,55 @@ type Props = {
   onContextMenu: (event: React.MouseEvent<HTMLCanvasElement>, point: PointMm) => void;
 };
 
-export function CADCanvas({
-  entities,
-  layers,
-  sharedStyles,
-  freeTexts,
-  editingFreeText,
-  highlightedFreeTextIds = new Set(),
-  highlightedMeasurementAnnotationIds = new Set(),
-  highlightedStitchStartPointIds = new Set(),
-  selectedIds,
-  selectedMeasurementAnnotationId,
-  selectedStitchStartPointId,
-  viewport,
-  gridVisible,
-  a4Visible,
-  a4Landscape,
-  outputPreview,
-  outputPages,
-  pendingTargetCount,
-  filletDraftEntityCount = 0,
-  filletDraftClosed = false,
-  settingPartOrigin = false,
-  selectedPartOrigin,
-  draftPoints,
-  cursorPoint,
-  arcSweepAngleRad,
-  hoveredConstraintId,
-  hoveredTargetEntityId,
-  pendingTargetEntityIds = new Set(),
-  marqueeStart,
-  marqueeCurrent,
-  dragDuplicating = false,
-  dragging = false,
-  snapActive = false,
-  snapSuppressed = false,
-  coincidentPointGroups = [],
-  tool,
-  toolName,
-  projection,
-  measurementLabels,
-  measurementLabelOffsets,
-  measurementArcCounterclockwise = {},
-  dimensionLabels,
-  dimensionLabelOffsets,
-  dimensionArcCounterclockwise = {},
-  onPointerDown,
-  onPointerMove,
-  onPointerLeave,
-  onPointerUp,
-  onDoubleClick,
-  onCommitFreeText,
-  onCancelFreeText,
-  onWheel,
-  onContextMenu,
-}: Props) {
+export type CADCanvasProps = {
+  renderModel: CanvasRenderModel;
+  interactionModel: CanvasInteractionModel;
+  events: CanvasEventHandlers;
+};
+
+export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const cancelledInlineEdit = useRef(false);
-  const [editingContent, setEditingContent] = useState(editingFreeText?.content ?? "");
+  const [editingContent, setEditingContent] = useState(interactionModel.editingFreeText?.content ?? "");
+  const {
+    viewport,
+    a4Landscape,
+    outputPreview,
+    entities,
+    layers,
+    tool,
+    selectedIds,
+    draftPoints,
+    marqueeStart,
+    marqueeCurrent,
+  } = renderModel;
+  const {
+    editingFreeText,
+    settingPartOrigin = false,
+    filletDraftEntityCount = 0,
+    filletDraftClosed = false,
+    pendingTargetCount,
+    dragDuplicating = false,
+    dragging = false,
+    snapSuppressed = false,
+    toolName,
+  } = interactionModel;
+  const {
+    onContextMenu,
+    onPointerDown,
+    onPointerMove,
+    onPointerLeave,
+    onPointerUp,
+    onDoubleClick,
+    onCommitFreeText,
+    onCancelFreeText,
+    onWheel,
+  } = events;
   useEffect(() => {
     cancelledInlineEdit.current = false;
     setEditingContent(editingFreeText?.content ?? "");
   }, [editingFreeText?.content, editingFreeText?.id]);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const draw = () => {
-      const rect = canvas.getBoundingClientRect(),
-        pixelRatio = window.devicePixelRatio || 1;
-      canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
-      canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
-      const context = canvas.getContext("2d");
-      if (!context) return;
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      context.clearRect(0, 0, rect.width, rect.height);
-      drawCanvasFrame({
-        context,
-        width: rect.width,
-        height: rect.height,
-        viewport,
-        outputPreview,
-        gridVisible,
-        a4Visible,
-        a4Landscape,
-        outputPages,
-        entities,
-        layers,
-        sharedStyles,
-        selectedIds,
-        freeTexts,
-        editingFreeTextId: editingFreeText?.id,
-        highlightedFreeTextIds,
-        highlightedMeasurementAnnotationIds,
-        highlightedStitchStartPointIds,
-        projection,
-        selectedMeasurementAnnotationId,
-        selectedStitchStartPointId,
-        measurementLabels,
-        measurementLabelOffsets,
-        measurementArcCounterclockwise,
-        dimensionLabels,
-        dimensionLabelOffsets,
-        dimensionArcCounterclockwise,
-        selectedPartOrigin,
-        coincidentPointGroups,
-        tool,
-        draftPoints,
-        cursorPoint,
-        arcSweepAngleRad,
-        hoveredConstraintId,
-        hoveredTargetEntityId,
-        pendingTargetEntityIds,
-        marqueeStart,
-        marqueeCurrent,
-        dragDuplicating,
-        dragging,
-        snapActive,
-        snapSuppressed,
-      });
-    };
-    draw();
-    const observer = new ResizeObserver(draw);
-    observer.observe(canvas);
-    return () => observer.disconnect();
-  }, [
-    a4Landscape,
-    arcSweepAngleRad,
-    a4Visible,
-    cursorPoint,
-    coincidentPointGroups,
-    dimensionLabels,
-    dimensionArcCounterclockwise,
-    editingFreeText?.id,
-    draftPoints,
-    entities,
-    freeTexts,
-    highlightedFreeTextIds,
-    highlightedMeasurementAnnotationIds,
-    highlightedStitchStartPointIds,
-    hoveredConstraintId,
-    hoveredTargetEntityId,
-    marqueeCurrent,
-    marqueeStart,
-    dragDuplicating,
-    dragging,
-    pendingTargetEntityIds,
-    snapActive,
-    snapSuppressed,
-    gridVisible,
-    layers,
-    measurementLabels,
-    outputPreview,
-    measurementArcCounterclockwise,
-    outputPages,
-    projection,
-    selectedIds,
-    selectedMeasurementAnnotationId,
-    selectedPartOrigin,
-    selectedStitchStartPointId,
-    sharedStyles,
-    tool,
-    viewport,
-  ]);
+  useCanvasRenderer(ref, renderModel);
   const pointAt = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return modelPointInA4Grid(

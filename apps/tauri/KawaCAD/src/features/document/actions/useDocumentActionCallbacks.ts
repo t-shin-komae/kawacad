@@ -5,14 +5,14 @@ import { dialogAdapter } from "@/adapters/dialogAdapter";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import type { State } from "@/shared/domain/coreWireTypes";
-import type { DocumentActionContext } from "@/app/actions/useActionRuntime";
+import type { DocumentActionInput } from "@/features/document/actions/documentActionTypes";
 import { normalizeProjectSavePath } from "@/features/document/domain/projectFilePath";
 
 type DocumentActionDependencies = Pick<
-  DocumentActionContext,
+  DocumentActionInput,
   "state" | "run" | "command" | "documentHeader" | "documentNameForFileDialog" | "requestDocumentSaveConfirmation"
 > & {
-  clearTransientCanvasState: () => void;
+  onHistoryRestored: () => void;
   openTextEntry: (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
   resetLoadedDocumentPresentation: (next: State) => void;
 };
@@ -25,7 +25,7 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     documentHeader,
     documentNameForFileDialog,
     requestDocumentSaveConfirmation,
-    clearTransientCanvasState,
+    onHistoryRestored,
     openTextEntry,
     resetLoadedDocumentPresentation,
   } = dependencies;
@@ -141,11 +141,11 @@ export function useDocumentActionCallbacks(dependencies: DocumentActionDependenc
     (action: "undo" | "redo") => {
       void run(() => documentAdapter.command<State>(action), appStrings.app.undoRedo(action === "undo")).then(
         (next) => {
-          if (next) clearTransientCanvasState();
+          if (next) onHistoryRestored();
         },
       );
     },
-    [clearTransientCanvasState, run],
+    [onHistoryRestored, run],
   );
 
   return {

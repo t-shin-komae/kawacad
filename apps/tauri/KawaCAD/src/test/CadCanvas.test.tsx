@@ -36,40 +36,70 @@ function canvas(
 ) {
   return (
     <CADCanvas
-      entities={[]}
-      layers={[]}
-      sharedStyles={[]}
-      freeTexts={[]}
-      selectedIds={new Set(["selected"])}
-      viewport={{ zoom: 1, panX: 0, panY: 0 }}
-      gridVisible
-      a4Visible
-      a4Landscape={false}
-      outputPreview={false}
-      outputPages={[]}
-      pendingTargetCount={pendingTargetCount}
-      {...options}
-      draftPoints={draftPoints}
-      tool={tool}
-      toolName={tool === "line" ? "線分" : tool === "arc" ? "円弧" : "フィレット"}
-      projection={{
-        stitchStartPoints: [],
-        measurementAnnotations: [],
-        dimensionConstraints: [],
-        constraintMarkers: [],
+      renderModel={{
+        entities: options.entities ?? [],
+        layers: options.layers ?? [],
+        sharedStyles: [],
+        freeTexts: [],
+        editingFreeTextId: undefined,
+        highlightedFreeTextIds: new Set(),
+        highlightedMeasurementAnnotationIds: new Set(),
+        highlightedStitchStartPointIds: new Set(),
+        selectedIds: new Set(["selected"]),
+        selectedMeasurementAnnotationId: undefined,
+        selectedStitchStartPointId: undefined,
+        viewport: { zoom: 1, panX: 0, panY: 0 },
+        gridVisible: true,
+        a4Visible: true,
+        a4Landscape: false,
+        outputPreview: false,
+        outputPages: [],
+        selectedPartOrigin: undefined,
+        draftPoints,
+        cursorPoint: undefined,
+        arcSweepAngleRad: undefined,
+        hoveredConstraintId: undefined,
+        hoveredTargetEntityId: undefined,
+        pendingTargetEntityIds: new Set(),
+        marqueeStart: options.marqueeStart,
+        marqueeCurrent: options.marqueeCurrent,
+        dragDuplicating: false,
+        dragging: false,
+        snapActive: false,
+        snapSuppressed: false,
+        coincidentPointGroups: [],
+        tool,
+        projection: {
+          stitchStartPoints: [],
+          measurementAnnotations: [],
+          dimensionConstraints: [],
+          constraintMarkers: [],
+        },
+        measurementLabels: {},
+        measurementLabelOffsets: {},
+        measurementArcCounterclockwise: {},
+        dimensionLabels: {},
+        dimensionLabelOffsets: {},
+        dimensionArcCounterclockwise: {},
       }}
-      measurementLabels={{}}
-      measurementLabelOffsets={{}}
-      dimensionLabels={{}}
-      dimensionLabelOffsets={{}}
-      onPointerDown={vi.fn()}
-      onPointerMove={vi.fn()}
-      onPointerUp={vi.fn()}
-      onDoubleClick={vi.fn()}
-      onCommitFreeText={vi.fn()}
-      onCancelFreeText={vi.fn()}
-      onWheel={vi.fn()}
-      onContextMenu={vi.fn()}
+      interactionModel={{
+        pendingTargetCount,
+        draftPointCount: draftPoints.length,
+        settingPartOrigin: options.settingPartOrigin,
+        filletDraftEntityCount: options.filletDraftEntityCount,
+        filletDraftClosed: options.filletDraftClosed,
+        toolName: tool === "line" ? "線分" : tool === "arc" ? "円弧" : "フィレット",
+      }}
+      events={{
+        onPointerDown: vi.fn(),
+        onPointerMove: vi.fn(),
+        onPointerUp: vi.fn(),
+        onDoubleClick: vi.fn(),
+        onCommitFreeText: vi.fn(),
+        onCancelFreeText: vi.fn(),
+        onWheel: vi.fn(),
+        onContextMenu: vi.fn(),
+      }}
     />
   );
 }

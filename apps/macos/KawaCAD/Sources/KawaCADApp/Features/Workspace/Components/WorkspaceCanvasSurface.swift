@@ -1,12 +1,16 @@
 import SwiftUI
 
 struct WorkspaceCanvasSurface: View {
-  let state: WorkspaceViewState
-  let actions: WorkspaceViewActions
+  let state: WorkspaceCanvasSurfaceState
+  let actions: WorkspaceCanvasSurfaceActions
 
   var body: some View {
     ZStack(alignment: .topLeading) {
-      CADCanvas(state: state.canvasState, actions: actions.canvasActions)
+      CADCanvas(
+        renderInput: state.canvasRenderInput,
+        interactionInput: state.canvasInteractionInput,
+        actions: actions.canvasActionGroups
+      )
 
       ValueEntryDialogPresenter(
         state: state.constraintEntryHUDState,

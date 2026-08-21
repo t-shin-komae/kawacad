@@ -36,17 +36,30 @@ export function useAnnotationSelection() {
     (id: string | undefined) => setSelectionId("stitchStartPoint", id),
     [setSelectionId],
   );
+  const clearSelectedFreeText = useCallback(() => setSelectedFreeTextId(undefined), [setSelectedFreeTextId]);
+  const clearSelectedConstraint = useCallback(() => setSelectedConstraintId(undefined), [setSelectedConstraintId]);
+  const clearSelectedMeasurement = useCallback(() => setSelectedMeasurementId(undefined), [setSelectedMeasurementId]);
+  const clearSelectedStitchStartPoint = useCallback(
+    () => setSelectedStitchStartPointId(undefined),
+    [setSelectedStitchStartPointId],
+  );
   const clearAnnotationSelection = useCallback(() => setSelection(undefined), []);
 
   return {
     selectedFreeTextId: selectionId(selection, "freeText"),
     setSelectedFreeTextId,
+    clearSelectedFreeText,
     selectedConstraintId: selectionId(selection, "constraint"),
     setSelectedConstraintId,
+    clearSelectedConstraint,
     selectedMeasurementId: selectionId(selection, "measurement"),
     setSelectedMeasurementId,
+    clearSelectedMeasurement,
     selectedStitchStartPointId: selectionId(selection, "stitchStartPoint"),
     setSelectedStitchStartPointId,
+    clearSelectedStitchStartPoint,
     clearAnnotationSelection,
   };
 }
+
+export type AnnotationSelectionPresentation = ReturnType<typeof useAnnotationSelection>;

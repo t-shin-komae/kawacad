@@ -22,7 +22,7 @@ import {
   type PointMm,
 } from "@/features/canvas/domain/cad";
 import { hitDerivedRadiusControl } from "@/features/canvas/selectors/canvasProjection";
-import type { State } from "@/shared/domain/coreWireTypes";
+import type { CanvasProjection, State } from "@/shared/domain/coreWireTypes";
 import {
   assistLine,
   constraintTools,
@@ -36,7 +36,7 @@ import {
 } from "@/features/canvas/domain/workspaceTools";
 import type { DerivedValue } from "@/features/constraints/components/DerivedValueDialog";
 import type { Part } from "@/shared/domain/coreWireTypes";
-import type { CanvasActionContext } from "@/app/actions/useActionRuntime";
+import type { CanvasPresentation } from "@/features/canvas/state/useCanvasPresentation";
 
 function partIDForDraggedEntities(state: State, entityIDs: string[]): string | undefined {
   const candidates = state.parts.filter((part) =>
@@ -49,7 +49,55 @@ function partIDForDraggedEntities(state: State, entityIDs: string[]): string | u
   return candidates.length === 1 ? candidates[0].id : undefined;
 }
 
-type CanvasPointActionDependencies = CanvasActionContext & {
+type CanvasPointActionDependencies = Pick<
+  CanvasPresentation,
+  | "tool"
+  | "viewport"
+  | "cursorPoint"
+  | "roundDiameter"
+  | "roundKind"
+  | "activeLayer"
+  | "pendingTargets"
+  | "pendingDerivedValue"
+  | "draft"
+  | "setPendingTargets"
+  | "setPendingDerivedValue"
+  | "setDraft"
+  | "setSnapSuppressed"
+  | "setDragDuplicating"
+  | "pan"
+  | "measurementMove"
+  | "dimensionMove"
+  | "freeTextMove"
+  | "controlMove"
+  | "move"
+  | "marquee"
+  | "setCursorPoint"
+  | "lineStartSnap"
+  | "arcSweepAngle"
+  | "selected"
+  | "setSelected"
+  | "setSelectedFreeTextId"
+  | "setSelectedConstraintId"
+  | "setSelectedMeasurementId"
+  | "setSelectedStitchStartPointId"
+> & {
+  state: State | undefined;
+  visibleEntities: import("@/features/canvas/domain/cad").RawEntity[];
+  canvasProjection: CanvasProjection;
+  measurementLabels: Record<string, string>;
+  measurementLabelOffsets: Record<string, PointMm>;
+  measurementArcCounterclockwise: Record<string, boolean>;
+  dimensionLabels: Record<string, string>;
+  dimensionLabelOffsets: Record<string, PointMm>;
+  dimensionArcCounterclockwise: Record<string, boolean>;
+  command: (kind: string, payload: unknown, success: string) => Promise<State | undefined>;
+  setMessage: (message: string) => void;
+  clearCanvasPreview: () => void;
+  settingPartOriginId: string | undefined;
+  clearPartOriginSelection: () => void;
+  beginFreeTextEdit: (id: string) => void;
+  clearInspectorSelectedPart: () => void;
   activeStyleId: string | null;
   snapWithTarget: (point: PointMm, enabled: boolean) => { point: PointMm; target?: ConstraintTarget };
   addGesture: (gesture: Record<string, unknown>, constraints?: Record<string, unknown>) => Promise<State | undefined>;
@@ -90,8 +138,10 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
     canvasProjection,
     measurementLabels,
     measurementLabelOffsets,
+    measurementArcCounterclockwise,
     dimensionLabels,
     dimensionLabelOffsets,
+    dimensionArcCounterclockwise,
     draft,
     cursorPoint,
     roundDiameter,
@@ -99,14 +149,14 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
     activeLayer,
     activeStyleId,
     settingPartOriginId,
-    setSettingPartOriginId,
+    clearPartOriginSelection,
     setSelected,
     setSelectedFreeTextId,
     setSelectedConstraintId,
     setSelectedMeasurementId,
     setSelectedStitchStartPointId,
-    setEditingFreeTextId,
-    setInspectorSelectedPartId,
+    beginFreeTextEdit,
+    clearInspectorSelectedPart,
     setMessage,
     setSnapSuppressed,
     setDragDuplicating,
@@ -141,7 +191,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       const point = placement.point;
       if (settingPartOriginId) {
         void command("setPartPosition", { partId: settingPartOriginId, position: point }, appStrings.app.partOriginSet);
-        setSettingPartOriginId(undefined);
+        clearPartOriginSelection();
         return;
       }
       if (event.button === 1 || event.button === 2) {
@@ -154,7 +204,10 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       if (tool === "select") {
         const measurementHit = hitProjectedAnnotationDetail(
           point,
-          canvasProjection.measurementAnnotations,
+          canvasProjection.measurementAnnotations.map((item) => ({
+            ...item,
+            arcCounterclockwise: measurementArcCounterclockwise[item.id],
+          })),
           viewport,
           measurementLabels,
           measurementLabelOffsets,
@@ -166,14 +219,17 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           setSelectedConstraintId(undefined);
           setSelectedMeasurementId(measurementHit.id);
           setSelectedStitchStartPointId(undefined);
-          setInspectorSelectedPartId(undefined);
+          clearInspectorSelectedPart();
           setMessage(appStrings.status.measurementSelected);
           event.currentTarget.setPointerCapture(event.pointerId);
           return;
         }
         const dimensionHit = hitProjectedAnnotationDetail(
           point,
-          canvasProjection.dimensionConstraints,
+          canvasProjection.dimensionConstraints.map((item) => ({
+            ...item,
+            arcCounterclockwise: dimensionArcCounterclockwise[item.id],
+          })),
           viewport,
           dimensionLabels,
           dimensionLabelOffsets,
@@ -185,7 +241,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           setSelectedConstraintId(dimensionHit.id);
           setSelectedMeasurementId(undefined);
           setSelectedStitchStartPointId(undefined);
-          setInspectorSelectedPartId(undefined);
+          clearInspectorSelectedPart();
           setMessage(appStrings.status.dimensionConstraintSelected);
           event.currentTarget.setPointerCapture(event.pointerId);
           return;
@@ -208,7 +264,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           setSelectedConstraintId(constraintId);
           setSelectedMeasurementId(undefined);
           setSelectedStitchStartPointId(undefined);
-          setInspectorSelectedPartId(undefined);
+          clearInspectorSelectedPart();
           setMessage(appStrings.status.constraintSelected);
           return;
         }
@@ -219,7 +275,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           setSelectedConstraintId(undefined);
           setSelectedMeasurementId(undefined);
           setSelectedStitchStartPointId(stitchStartPointId);
-          setInspectorSelectedPartId(undefined);
+          clearInspectorSelectedPart();
           setMessage(appStrings.status.stitchStartPointSelected);
           return;
         }
@@ -231,7 +287,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           setSelectedConstraintId(undefined);
           setSelectedMeasurementId(undefined);
           setSelectedStitchStartPointId(undefined);
-          setInspectorSelectedPartId(undefined);
+          clearInspectorSelectedPart();
           setMessage(appStrings.status.textSelected);
           event.currentTarget.setPointerCapture(event.pointerId);
           return;
@@ -240,7 +296,7 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
         setSelectedConstraintId(undefined);
         setSelectedMeasurementId(undefined);
         setSelectedStitchStartPointId(undefined);
-        setInspectorSelectedPartId(undefined);
+        clearInspectorSelectedPart();
         const selectionHit = preferredEntitySelectionHit(point, visibleEntities, viewport, selected);
         const radiusControl = hitDerivedRadiusControl(
           point,
@@ -392,8 +448,8 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           setSelectedConstraintId(undefined);
           setSelectedMeasurementId(undefined);
           setSelectedStitchStartPointId(undefined);
-          setInspectorSelectedPartId(undefined);
-          setEditingFreeTextId(freeTextId);
+          clearInspectorSelectedPart();
+          beginFreeTextEdit(freeTextId);
         });
         return;
       }
@@ -483,8 +539,8 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
       viewport,
       visibleEntities,
       setDragDuplicating,
-      setEditingFreeTextId,
-      setInspectorSelectedPartId,
+      beginFreeTextEdit,
+      clearInspectorSelectedPart,
       setSelected,
       setSelectedConstraintId,
       setSelectedFreeTextId,

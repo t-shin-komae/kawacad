@@ -1,58 +1,70 @@
 export type InspectorTab = "selection" | "layers" | "styles" | "parameters" | "parts";
 
-export type InspectorFeatureState = {
-  inspectorTab: InspectorTab;
+export type InspectorShellState = { inspectorTab: InspectorTab };
+export type LayerTabState = {
   layerSearchQuery: string;
+  searchVisible: boolean;
+};
+export type StylesTabState = {
   sharedStyleSearchQuery: string;
+  searchVisible: boolean;
+};
+export type ParametersTabState = {
   parameterSearchQuery: string;
-  layerSearchVisible: boolean;
-  sharedStyleSearchVisible: boolean;
-  parameterSearchVisible: boolean;
+  searchVisible: boolean;
 };
 
-export const initialInspectorFeatureState: InspectorFeatureState = {
+export const initialInspectorShellState: InspectorShellState = {
   inspectorTab: "selection",
+};
+export const initialLayerTabState: LayerTabState = {
   layerSearchQuery: "",
+  searchVisible: false,
+};
+export const initialStylesTabState: StylesTabState = {
   sharedStyleSearchQuery: "",
+  searchVisible: false,
+};
+export const initialParametersTabState: ParametersTabState = {
   parameterSearchQuery: "",
-  layerSearchVisible: false,
-  sharedStyleSearchVisible: false,
-  parameterSearchVisible: false,
+  searchVisible: false,
 };
 
-export function setInspectorTab(state: InspectorFeatureState, inspectorTab: InspectorTab): InspectorFeatureState {
+export function setInspectorTab(state: InspectorShellState, inspectorTab: InspectorTab): InspectorShellState {
   return { ...state, inspectorTab };
 }
 
-export function setInspectorLayerSearchQuery(
-  state: InspectorFeatureState,
-  layerSearchQuery: string,
-): InspectorFeatureState {
+export function setInspectorLayerSearchQuery(state: LayerTabState, layerSearchQuery: string): LayerTabState {
   return { ...state, layerSearchQuery };
 }
 
 export function setInspectorSharedStyleSearchQuery(
-  state: InspectorFeatureState,
+  state: StylesTabState,
   sharedStyleSearchQuery: string,
-): InspectorFeatureState {
+): StylesTabState {
   return { ...state, sharedStyleSearchQuery };
 }
 
 export function setInspectorParameterSearchQuery(
-  state: InspectorFeatureState,
+  state: ParametersTabState,
   parameterSearchQuery: string,
-): InspectorFeatureState {
+): ParametersTabState {
   return { ...state, parameterSearchQuery };
 }
 
-export function revealInspectorSearchForCurrentTab(state: InspectorFeatureState): InspectorFeatureState {
-  if (state.inspectorTab === "layers") return { ...state, layerSearchVisible: true };
-  if (state.inspectorTab === "styles") return { ...state, sharedStyleSearchVisible: true };
-  if (state.inspectorTab === "parameters") return { ...state, parameterSearchVisible: true };
-  return state;
+export function revealLayerSearch(state: LayerTabState): LayerTabState {
+  return { ...state, searchVisible: true };
 }
 
-export function revealInspectorSelectionTab(state: InspectorFeatureState): InspectorFeatureState {
+export function revealStylesSearch(state: StylesTabState): StylesTabState {
+  return { ...state, searchVisible: true };
+}
+
+export function revealParametersSearch(state: ParametersTabState): ParametersTabState {
+  return { ...state, searchVisible: true };
+}
+
+export function revealInspectorSelectionTab(state: InspectorShellState): InspectorShellState {
   return setInspectorTab(state, "selection");
 }
 

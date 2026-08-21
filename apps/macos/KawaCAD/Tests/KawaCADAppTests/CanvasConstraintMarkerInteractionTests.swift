@@ -11,8 +11,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let markerAnchor = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let markerClickPoint = CGPoint(x: markerAnchor.x + 21, y: markerAnchor.y - 15)
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -20,17 +21,17 @@ struct CanvasConstraintMarkerInteractionTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.documentConstraints = [
+    inputs.documentConstraints = [
       projectConstraint(
         id: "constraint:horizontal",
         rawKind: "horizontal",
         targetsJSON: #"[{"entity":"entity:line-a"}]"#
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     setConstraintMarkerProjection(
-      on: view,
+      on: inputs,
       id: "constraint:horizontal",
       position: ModelPoint(xMM: 10, yMM: 0)
     )
@@ -45,8 +46,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let markerAnchor = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let markerClickPoint = CGPoint(x: markerAnchor.x + 21, y: markerAnchor.y - 15)
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -54,18 +56,18 @@ struct CanvasConstraintMarkerInteractionTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.documentConstraints = [
+    inputs.documentConstraints = [
       projectConstraint(
         id: "constraint:horizontal",
         rawKind: "horizontal",
         targetsJSON: #"[{"entity":"entity:line-a"}]"#
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
-    view.viewMode = .outputPreview
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
+    inputs.viewMode = .outputPreview
     setConstraintMarkerProjection(
-      on: view,
+      on: inputs,
       id: "constraint:horizontal",
       position: ModelPoint(xMM: 10, yMM: 0)
     )
@@ -81,8 +83,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let markerAnchor = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let markerHoverPoint = CGPoint(x: markerAnchor.x + 21, y: markerAnchor.y - 15)
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -90,22 +93,22 @@ struct CanvasConstraintMarkerInteractionTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.documentConstraints = [
+    inputs.documentConstraints = [
       projectConstraint(
         id: "constraint:horizontal",
         rawKind: "horizontal",
         targetsJSON: #"[{"entity":"entity:line-a"}]"#
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     setConstraintMarkerProjection(
-      on: view,
+      on: inputs,
       id: "constraint:horizontal",
       position: ModelPoint(xMM: 10, yMM: 0)
     )
     var hoveredConstraintID: String?
-    view.onHoverConstraint = { constraintID in
+    inputs.onHoverConstraint = { constraintID in
       hoveredConstraintID = constraintID
     }
 
@@ -117,7 +120,8 @@ struct CanvasConstraintMarkerInteractionTests {
   @Test
   @MainActor
   func coincident_group_visibility_reads_core_target_objects() {
-    let view = LeatherCanvasView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
     let visibleGroup = CoincidentPointGroup(
       id: "group:visible",
       representative: .zero,
@@ -145,8 +149,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let markerPoint = CGPoint(x: markerAnchor.x + 21, y: markerAnchor.y - 15)
     let entityPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let blankPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: -80, yMM: -80))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -154,16 +159,16 @@ struct CanvasConstraintMarkerInteractionTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.documentConstraints = [
+    inputs.documentConstraints = [
       projectConstraint(
         id: "constraint:horizontal",
         rawKind: "horizontal",
         targetsJSON: #"[{"entity":"entity:line-a"}]"#
       )
     ]
-    view.layers = defaultLayers()
+    inputs.layers = defaultLayers()
     setConstraintMarkerProjection(
-      on: view,
+      on: inputs,
       id: "constraint:horizontal",
       position: ModelPoint(xMM: 10, yMM: 0)
     )
@@ -190,8 +195,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let pageRect = CGRect(x: 0, y: 0, width: 520, height: 736)
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let notePoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: -8))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.freeTexts = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.freeTexts = [
       ProjectFreeText(
         id: "free-text:note",
         content: "注記",
@@ -218,13 +224,14 @@ struct CanvasConstraintMarkerInteractionTests {
       positionMM: ModelPoint(xMM: 10, yMM: -8),
       fontSizeMM: 4.0
     )
-    let view = LeatherCanvasView(frame: pageRect)
-    view.freeTexts = [freeText]
-    view.freeTextInlineEditRequestID = freeText.id
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.freeTexts = [freeText]
+    inputs.freeTextInlineEditRequestID = freeText.id
     var handledRequestID: String?
     var updatedFreeText: ProjectFreeText?
-    view.onFreeTextInlineEditRequestHandled = { handledRequestID = $0 }
-    view.onUpdateFreeText = { update in
+    inputs.onFreeTextInlineEditRequestHandled = { handledRequestID = $0 }
+    inputs.onUpdateFreeText = { update in
       updatedFreeText = update
       return true
     }
@@ -254,10 +261,11 @@ struct CanvasConstraintMarkerInteractionTests {
       positionMM: ModelPoint(xMM: 10, yMM: -8),
       fontSizeMM: 4.0
     )
-    let view = LeatherCanvasView(frame: pageRect)
-    view.freeTexts = [freeText]
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.freeTexts = [freeText]
     var selectedFreeTextID: String?
-    view.onSelectFreeText = { selectedFreeTextID = $0 }
+    inputs.onSelectFreeText = { selectedFreeTextID = $0 }
 
     view.beginSelectInteraction(at: notePoint, in: pageRect, clickCount: 2)
 
@@ -281,15 +289,16 @@ struct CanvasConstraintMarkerInteractionTests {
       positionMM: startModelPoint,
       fontSizeMM: 4.0
     )
-    let view = LeatherCanvasView(frame: pageRect)
-    view.freeTexts = [freeText]
-    view.selectedTool = .select
-    view.gridSnapEnabled = false
-    view.pointSnapEnabled = false
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.freeTexts = [freeText]
+    inputs.selectedTool = .select
+    inputs.gridSnapEnabled = false
+    inputs.pointSnapEnabled = false
     var selectedFreeTextID: String?
     var updatedFreeText: ProjectFreeText?
-    view.onSelectFreeText = { selectedFreeTextID = $0 }
-    view.onUpdateFreeText = { update in
+    inputs.onSelectFreeText = { selectedFreeTextID = $0 }
+    inputs.onUpdateFreeText = { update in
       updatedFreeText = update
       return true
     }
@@ -313,15 +322,16 @@ struct CanvasConstraintMarkerInteractionTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let outsideEntityPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 320, yMM: -410))
     let outsideBlankPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: -320, yMM: 410))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       pointEntity(
         id: "entity:outside-a4",
         label: "Outside A4",
         point: ModelPoint(xMM: 320, yMM: -410)
       )
     ]
-    view.layers = defaultLayers()
+    inputs.layers = defaultLayers()
 
     #expect(
       view.contextMenuItems(at: outsideEntityPoint, in: pageRect).map(\.action) == [
@@ -344,8 +354,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let start = coordinateSpace.canvasPoint(for: .zero)
     let end = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 100, yMM: 0))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -353,7 +364,7 @@ struct CanvasConstraintMarkerInteractionTests {
         end: ModelPoint(xMM: 100, yMM: 0)
       )
     ]
-    view.documentConstraints = [
+    inputs.documentConstraints = [
       projectConstraint(
         id: "constraint:length",
         rawKind: "segmentLength",
@@ -361,10 +372,10 @@ struct CanvasConstraintMarkerInteractionTests {
         valueMM: 100.0
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     setDimensionProjection(
-      on: view,
+      on: inputs,
       id: "constraint:length",
       start: .zero,
       end: ModelPoint(xMM: 100, yMM: 0)
@@ -392,8 +403,9 @@ struct CanvasConstraintMarkerInteractionTests {
     let end = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 100, yMM: 0))
     let linePoint = CGPoint(x: start.x + (end.x - start.x) * 0.25, y: start.y + 12.0)
     let dropPoint = CGPoint(x: linePoint.x, y: linePoint.y + 24.0)
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -401,7 +413,7 @@ struct CanvasConstraintMarkerInteractionTests {
         end: ModelPoint(xMM: 100, yMM: 0)
       )
     ]
-    view.documentConstraints = [
+    inputs.documentConstraints = [
       projectConstraint(
         id: "constraint:length",
         rawKind: "segmentLength",
@@ -409,17 +421,17 @@ struct CanvasConstraintMarkerInteractionTests {
         valueMM: 100.0
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     setDimensionProjection(
-      on: view,
+      on: inputs,
       id: "constraint:length",
       start: .zero,
       end: ModelPoint(xMM: 100, yMM: 0)
     )
 
     var moved: (constraintID: String, labelOnly: Bool)?
-    view.onMoveDimensionConstraintAnnotation = { constraintID, _, labelOnly in
+    inputs.onMoveDimensionConstraintAnnotation = { constraintID, _, labelOnly in
       moved = (constraintID, labelOnly)
     }
 
@@ -434,23 +446,25 @@ struct CanvasConstraintMarkerInteractionTests {
   }
 }
 
+@MainActor
 private func setConstraintMarkerProjection(
-  on view: LeatherCanvasView,
+  on inputs: CanvasTestInputBuilder,
   id: String,
   position: ModelPoint
 ) {
-  view.canvasProjection = canvasProjection(
+  inputs.canvasProjection = canvasProjection(
     constraintMarkers: [resolvedCanvasPoint(id: id, position: position)]
   )
 }
 
+@MainActor
 private func setDimensionProjection(
-  on view: LeatherCanvasView,
+  on inputs: CanvasTestInputBuilder,
   id: String,
   start: ModelPoint,
   end: ModelPoint
 ) {
-  view.canvasProjection = canvasProjection(
+  inputs.canvasProjection = canvasProjection(
     dimensionConstraints: [
       resolvedCanvasGeometry(id: id, start: start, end: end)
     ]

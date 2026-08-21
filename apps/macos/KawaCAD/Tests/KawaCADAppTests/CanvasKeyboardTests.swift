@@ -8,15 +8,16 @@ struct CanvasKeyboardTests {
   @MainActor
   func part_origin_mode_routes_the_next_canvas_click_to_part_origin() {
     let frame = NSRect(x: 0, y: 0, width: 520, height: 736)
-    let view = LeatherCanvasView(frame: frame)
-    view.isSettingPartOrigin = true
-    view.selectedTool = .line
-    view.gridSnapEnabled = false
-    view.pointSnapEnabled = false
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: frame)
+    inputs.isSettingPartOrigin = true
+    inputs.selectedTool = .line
+    inputs.gridSnapEnabled = false
+    inputs.pointSnapEnabled = false
     var origin: ModelPoint?
     var placementCount = 0
-    view.onSetPartOrigin = { origin = $0 }
-    view.onPlacePoint = { _, _ in placementCount += 1 }
+    inputs.onSetPartOrigin = { origin = $0 }
+    inputs.onPlacePoint = { _, _ in placementCount += 1 }
 
     view.mouseDown(with: unwrap(mouseDownEvent(at: CGPoint(x: frame.midX, y: frame.midY))))
 
@@ -28,9 +29,10 @@ struct CanvasKeyboardTests {
   @Test
   @MainActor
   func escape_key_invokes_canvas_cancel_interaction_callback() {
-    let view = LeatherCanvasView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
     var cancelCount = 0
-    view.onCancelInteraction = {
+    inputs.onCancelInteraction = {
       cancelCount += 1
     }
     let event = NSEvent.keyEvent(
@@ -54,10 +56,11 @@ struct CanvasKeyboardTests {
   @Test
   @MainActor
   func v_key_activates_select_tool_from_canvas() {
-    let view = LeatherCanvasView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
-    view.selectedTool = .line
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
+    inputs.selectedTool = .line
     var activatedTools: [CanvasTool] = []
-    view.onActivateTool = { tool in
+    inputs.onActivateTool = { tool in
       activatedTools.append(tool)
     }
 
@@ -69,10 +72,11 @@ struct CanvasKeyboardTests {
   @Test
   @MainActor
   func modified_v_key_does_not_activate_select_tool_from_canvas() {
-    let view = LeatherCanvasView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
-    view.selectedTool = .line
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
+    inputs.selectedTool = .line
     var activatedTools: [CanvasTool] = []
-    view.onActivateTool = { tool in
+    inputs.onActivateTool = { tool in
       activatedTools.append(tool)
     }
 
@@ -84,14 +88,15 @@ struct CanvasKeyboardTests {
   @Test
   @MainActor
   func escape_key_activates_select_tool_when_no_canvas_interaction_is_active() {
-    let view = LeatherCanvasView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
-    view.selectedTool = .line
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
+    inputs.selectedTool = .line
     var cancelCount = 0
     var activatedTools: [CanvasTool] = []
-    view.onCancelInteraction = {
+    inputs.onCancelInteraction = {
       cancelCount += 1
     }
-    view.onActivateTool = { tool in
+    inputs.onActivateTool = { tool in
       activatedTools.append(tool)
     }
 
@@ -108,8 +113,9 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 25, yMM: 10))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -117,18 +123,18 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var cancelCount = 0
     var previewMoveCount = 0
     var committedMoveCount = 0
-    view.onCancelInteraction = {
+    inputs.onCancelInteraction = {
       cancelCount += 1
     }
-    view.onPreviewMoveEntity = { _, _ in
+    inputs.onPreviewMoveEntity = { _, _ in
       previewMoveCount += 1
     }
-    view.onMoveEntity = { _, _ in
+    inputs.onMoveEntity = { _, _ in
       committedMoveCount += 1
     }
 
@@ -149,8 +155,9 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 4, yMM: 6))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 4, yMM: 10))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -163,19 +170,19 @@ struct CanvasKeyboardTests {
         point: ModelPoint(xMM: 4, yMM: 6)
       ),
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
-    view.selectedEntityIDs = ["entity:point-a"]
-    view.gridSnapEnabled = false
-    view.pointSnapEnabled = false
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
+    inputs.selectedEntityIDs = ["entity:point-a"]
+    inputs.gridSnapEnabled = false
+    inputs.pointSnapEnabled = false
     var movedEntityID: String?
     var movedDelta: ModelPoint?
     var movedControlPoint: CanvasSelectionTarget?
-    view.onMoveEntity = { entityID, delta in
+    inputs.onMoveEntity = { entityID, delta in
       movedEntityID = entityID
       movedDelta = delta
     }
-    view.onMoveControlPoint = { target, _ in
+    inputs.onMoveControlPoint = { target, _ in
       movedControlPoint = target
     }
 
@@ -196,8 +203,9 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 4, yMM: 6))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 4, yMM: 10))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       pointEntity(
         id: "entity:point-a",
         label: "Point A",
@@ -210,17 +218,17 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 6)
       ),
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
-    view.selectedEntityIDs = ["entity:point-a"]
-    view.gridSnapEnabled = false
-    view.pointSnapEnabled = false
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
+    inputs.selectedEntityIDs = ["entity:point-a"]
+    inputs.gridSnapEnabled = false
+    inputs.pointSnapEnabled = false
     var movedEntityID: String?
     var movedControlPoint: CanvasSelectionTarget?
-    view.onMoveEntity = { entityID, _ in
+    inputs.onMoveEntity = { entityID, _ in
       movedEntityID = entityID
     }
-    view.onMoveControlPoint = { target, _ in
+    inputs.onMoveControlPoint = { target, _ in
       movedControlPoint = target
     }
 
@@ -239,8 +247,9 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 25, yMM: 10))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -248,15 +257,15 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
-    view.viewMode = .outputPreview
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
+    inputs.viewMode = .outputPreview
     var selectedEntityIDs: [String?] = []
     var previewMoveCount = 0
     var committedMoveCount = 0
-    view.onSelectEntity = { selectedEntityIDs.append($0) }
-    view.onPreviewMoveEntity = { _, _ in previewMoveCount += 1 }
-    view.onMoveEntity = { _, _ in committedMoveCount += 1 }
+    inputs.onSelectEntity = { selectedEntityIDs.append($0) }
+    inputs.onPreviewMoveEntity = { _, _ in previewMoveCount += 1 }
+    inputs.onMoveEntity = { _, _ in committedMoveCount += 1 }
 
     view.beginSelectInteraction(at: startPoint, in: pageRect)
     view.dragSelectInteraction(to: draggedPoint, in: pageRect)
@@ -274,8 +283,9 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 0))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 25, yMM: 10))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Line A",
@@ -283,10 +293,10 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var committedDuplicating: Bool?
-    view.onMoveEntities = { _, _, duplicating in
+    inputs.onMoveEntities = { _, _, duplicating in
       committedDuplicating = duplicating
     }
 
@@ -309,7 +319,8 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 5, yMM: 0))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 10, yMM: 5))
-    let view = LeatherCanvasView(frame: pageRect)
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
     let sourceLine = lineEntity(
       id: "entity:line-a",
       label: "Source Line",
@@ -322,11 +333,11 @@ struct CanvasKeyboardTests {
       start: .zero,
       end: ModelPoint(xMM: 20, yMM: 0)
     )
-    view.entities = [sourceLine, derivedLine]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.entities = [sourceLine, derivedLine]
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var movedEntityID: String?
-    view.onMoveEntity = { entityID, _ in
+    inputs.onMoveEntity = { entityID, _ in
       movedEntityID = entityID
     }
 
@@ -343,7 +354,8 @@ struct CanvasKeyboardTests {
     let pageRect = CGRect(x: 0, y: 0, width: 520, height: 736)
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let clickPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 5, yMM: 0))
-    let view = LeatherCanvasView(frame: pageRect)
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
     let sourceLine = lineEntity(
       id: "entity:line-a",
       label: "Source Line",
@@ -356,11 +368,11 @@ struct CanvasKeyboardTests {
       start: .zero,
       end: ModelPoint(xMM: 20, yMM: 0)
     )
-    view.entities = [sourceLine, derivedLine]
-    view.layers = defaultLayers()
-    view.selectedTool = .segmentLength
+    inputs.entities = [sourceLine, derivedLine]
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .segmentLength
     var selectedTarget: CanvasSelectionTarget?
-    view.onSelectTarget = { target in
+    inputs.onSelectTarget = { target in
       selectedTarget = target
     }
 
@@ -376,8 +388,9 @@ struct CanvasKeyboardTests {
       origin: .zero, size: CanvasCoordinateSpace.referencePageSize(for: .portrait))
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let clickPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 19, yMM: 1))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:bottom",
         label: "Bottom",
@@ -399,7 +412,7 @@ struct CanvasKeyboardTests {
         sweepAngleRad: .pi / 2
       ),
     ]
-    view.derivedElements = [
+    inputs.derivedElements = [
       ProjectDerivedElement(
         id: "derived:fillet-a",
         layerID: "layer:cut-line",
@@ -412,10 +425,10 @@ struct CanvasKeyboardTests {
         filletClosed: true
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .offset
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .offset
     var selectedTarget: CanvasSelectionTarget?
-    view.onSelectTarget = { target in
+    inputs.onSelectTarget = { target in
       selectedTarget = target
     }
 
@@ -431,8 +444,9 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let startPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 20, yMM: 0))
     let draggedPoint = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 25, yMM: 5))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Source Line",
@@ -446,10 +460,10 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       ),
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var movedTarget: CanvasSelectionTarget?
-    view.onMoveControlPoint = { target, _ in
+    inputs.onMoveControlPoint = { target, _ in
       movedTarget = target
     }
 
@@ -466,8 +480,9 @@ struct CanvasKeyboardTests {
   func marquee_selection_excludes_fillet_derived_results() {
     let pageRect = CGRect(x: 0, y: 0, width: 520, height: 736)
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:line-a",
         label: "Source Line",
@@ -481,8 +496,8 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       ),
     ]
-    view.layers = defaultLayers()
-    view.derivedElements = [
+    inputs.layers = defaultLayers()
+    inputs.derivedElements = [
       ProjectDerivedElement(
         id: "derived:fillet-a",
         layerID: "layer:cut-line",
@@ -494,9 +509,9 @@ struct CanvasKeyboardTests {
         radiusParameterID: nil
       )
     ]
-    view.selectedTool = .select
+    inputs.selectedTool = .select
     var selectedIDs = Set<String>()
-    view.onSelectEntities = { ids, _ in
+    inputs.onSelectEntities = { ids, _ in
       selectedIDs = ids
     }
 
@@ -521,8 +536,9 @@ struct CanvasKeyboardTests {
   func marquee_selection_keeps_offset_derived_results_selectable() {
     let pageRect = CGRect(x: 0, y: 0, width: 520, height: 736)
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "derived:offset-a:resolved:0",
         label: "Offset Line",
@@ -530,7 +546,7 @@ struct CanvasKeyboardTests {
         end: ModelPoint(xMM: 20, yMM: 0)
       )
     ]
-    view.derivedElements = [
+    inputs.derivedElements = [
       ProjectDerivedElement(
         id: "derived:offset-a",
         layerID: "layer:cut-line",
@@ -540,10 +556,10 @@ struct CanvasKeyboardTests {
         distanceParameterID: nil
       )
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var selectedIDs = Set<String>()
-    view.onSelectEntities = { ids, _ in
+    inputs.onSelectEntities = { ids, _ in
       selectedIDs = ids
     }
 
@@ -571,18 +587,19 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let left = coordinateSpace.canvasPoint(for: ModelPoint(xMM: -12, yMM: 20))
     let right = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 12, yMM: -20))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:inside", start: ModelPoint(xMM: -10, yMM: 0), end: ModelPoint(xMM: 10, yMM: 0)),
       centerLineEntity(
         id: "entity:crossing", start: ModelPoint(xMM: -20, yMM: 0), end: ModelPoint(xMM: 20, yMM: 0)
       ),
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var selections: [Set<String>] = []
-    view.onSelectEntities = { ids, _ in selections.append(ids) }
+    inputs.onSelectEntities = { ids, _ in selections.append(ids) }
 
     view.beginSelectInteraction(at: left, in: pageRect)
     view.dragSelectInteraction(to: right, in: pageRect)
@@ -613,18 +630,20 @@ struct CanvasKeyboardTests {
     let coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
     let left = coordinateSpace.canvasPoint(for: ModelPoint(xMM: -12, yMM: 20))
     let right = coordinateSpace.canvasPoint(for: ModelPoint(xMM: 12, yMM: -20))
-    let view = LeatherCanvasView(frame: pageRect)
-    view.entities = [
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: pageRect)
+    inputs.entities = [
       lineEntity(
         id: "entity:inside", start: ModelPoint(xMM: -10, yMM: 0), end: ModelPoint(xMM: 10, yMM: 0)),
       centerLineEntity(
         id: "entity:crossing", start: ModelPoint(xMM: -20, yMM: 0), end: ModelPoint(xMM: 20, yMM: 0)
       ),
     ]
-    view.layers = defaultLayers()
-    view.selectedTool = .select
+    inputs.layers = defaultLayers()
+    inputs.selectedTool = .select
     var callbacks: [(Set<String>, Bool)] = []
-    view.onSelectEntities = { ids, extendingSelection in callbacks.append((ids, extendingSelection))
+    inputs.onSelectEntities = { ids, extendingSelection in
+      callbacks.append((ids, extendingSelection))
     }
 
     view.beginSelectInteraction(at: left, in: pageRect, togglesSelection: true)

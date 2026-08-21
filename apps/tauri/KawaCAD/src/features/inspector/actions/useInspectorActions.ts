@@ -1,66 +1,42 @@
 import { useCallback } from "react";
-import type { InspectorActionContext } from "@/app/actions/useActionRuntime";
+import type { InspectorActionInput } from "@/features/inspector/actions/inspectorActionTypes";
 
 /** Inspector presentation state is owned by its feature hook; actions only invalidate it. */
-export function useInspectorActions(context: InspectorActionContext) {
-  const { setInspectorRevision } = context;
-  const resetInspectorPresentation = useCallback(
-    () => setInspectorRevision((revision) => revision + 1),
-    [setInspectorRevision],
-  );
+export function useInspectorActions(context: InspectorActionInput) {
+  const { invalidate, selection, clearInspectorSelectedPart } = context;
+  const resetInspectorPresentation = useCallback(() => invalidate(), [invalidate]);
   const selectMeasurement = useCallback(
     (measurementId: string) => {
-      context.setSelected(new Set());
-      context.setSelectedConstraintId(undefined);
-      context.setSelectedFreeTextId(undefined);
-      context.setSelectedStitchStartPointId(undefined);
-      context.setSelectedMeasurementId(measurementId);
-      context.setInspectorSelectedPartId(undefined);
+      selection.clearEntities();
+      selection.selectConstraint(undefined);
+      selection.selectFreeText(undefined);
+      selection.selectStitchStartPoint(undefined);
+      selection.selectMeasurement(measurementId);
+      clearInspectorSelectedPart();
     },
-    [
-      context.setInspectorSelectedPartId,
-      context.setSelected,
-      context.setSelectedConstraintId,
-      context.setSelectedFreeTextId,
-      context.setSelectedMeasurementId,
-      context.setSelectedStitchStartPointId,
-    ],
+    [clearInspectorSelectedPart, selection],
   );
   const selectConstraint = useCallback(
     (constraintId: string) => {
-      context.setSelected(new Set());
-      context.setSelectedFreeTextId(undefined);
-      context.setSelectedMeasurementId(undefined);
-      context.setSelectedStitchStartPointId(undefined);
-      context.setSelectedConstraintId(constraintId);
-      context.setInspectorSelectedPartId(undefined);
+      selection.clearEntities();
+      selection.selectFreeText(undefined);
+      selection.selectMeasurement(undefined);
+      selection.selectStitchStartPoint(undefined);
+      selection.selectConstraint(constraintId);
+      clearInspectorSelectedPart();
     },
-    [
-      context.setInspectorSelectedPartId,
-      context.setSelected,
-      context.setSelectedConstraintId,
-      context.setSelectedFreeTextId,
-      context.setSelectedMeasurementId,
-      context.setSelectedStitchStartPointId,
-    ],
+    [clearInspectorSelectedPart, selection],
   );
   const selectFreeText = useCallback(
     (freeTextId: string) => {
-      context.setSelected(new Set());
-      context.setSelectedConstraintId(undefined);
-      context.setSelectedMeasurementId(undefined);
-      context.setSelectedStitchStartPointId(undefined);
-      context.setSelectedFreeTextId(freeTextId);
-      context.setInspectorSelectedPartId(undefined);
+      selection.clearEntities();
+      selection.selectConstraint(undefined);
+      selection.selectMeasurement(undefined);
+      selection.selectStitchStartPoint(undefined);
+      selection.selectFreeText(freeTextId);
+      clearInspectorSelectedPart();
     },
-    [
-      context.setInspectorSelectedPartId,
-      context.setSelected,
-      context.setSelectedConstraintId,
-      context.setSelectedFreeTextId,
-      context.setSelectedMeasurementId,
-      context.setSelectedStitchStartPointId,
-    ],
+    [clearInspectorSelectedPart, selection],
   );
   return { resetInspectorPresentation, selectConstraint, selectFreeText, selectMeasurement };
 }

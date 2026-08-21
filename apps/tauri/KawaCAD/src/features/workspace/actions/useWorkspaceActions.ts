@@ -1,10 +1,10 @@
 import { useCallback } from "react";
 import { defaultViewport } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
-import type { WorkspaceActionContext } from "@/app/actions/useActionRuntime";
+import type { WorkspaceActionInput } from "@/features/workspace/actions/workspaceActionTypes";
 
 /** Workspace reset coordinates the two workspace state owners. */
-export function useWorkspaceActions(context: WorkspaceActionContext) {
+export function useWorkspaceActions(context: WorkspaceActionInput) {
   const { setViewport, resetWorkspacePreferences, resetWorkspaceLayout, setMessage } = context;
   const resetWorkspace = useCallback(() => {
     setViewport(defaultViewport);

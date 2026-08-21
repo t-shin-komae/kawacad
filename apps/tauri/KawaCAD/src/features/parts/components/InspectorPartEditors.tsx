@@ -22,8 +22,7 @@ import {
 import type { Constraint, Part } from "@/shared/domain/coreWireTypes";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import { formatInspectorNumber } from "@/features/inspector/domain/inspectorValueFormatting";
-
-type CommandHandler = (kind: string, payload: unknown, success: string) => void;
+import type { PartInspectorActions, SelectionInspectorActions } from "@/features/inspector/domain/inspectorViewModel";
 type OpenTextEntry = (
   title: string,
   fields: TextEntryField[],
@@ -32,7 +31,7 @@ type OpenTextEntry = (
 export function PartEditor({
   part,
   arrangementSelected,
-  onCommand,
+  actions,
   onSelect,
   onToggleArrangement,
   onAddToLibrary,
@@ -40,7 +39,7 @@ export function PartEditor({
 }: {
   part: Part;
   arrangementSelected: boolean;
-  onCommand: CommandHandler;
+  actions: PartInspectorActions;
   onSelect: () => void;
   onToggleArrangement: () => void;
   onAddToLibrary: () => void;
@@ -63,7 +62,7 @@ export function PartEditor({
   const commitName = () => {
     const name = draftName.trim();
     if (name && name !== part.name)
-      onCommand("renamePart", { partId: part.id, name }, appStrings.inspector.operationMessage.partNameUpdated);
+      actions.rename({ partId: part.id, name }, appStrings.inspector.operationMessage.partNameUpdated);
   };
   const commitOrigin = () => {
     const xParsed = parseDecimal(draftOrigin.xMm);
@@ -77,8 +76,7 @@ export function PartEditor({
       Number.isFinite(yMm) &&
       (xMm !== part.originMm.xMm || yMm !== part.originMm.yMm)
     )
-      onCommand(
-        "setPartPosition",
+      actions.setPosition(
         { partId: part.id, position: { xMm, yMm } },
         appStrings.inspector.operationMessage.partOriginUpdated,
       );
@@ -95,8 +93,7 @@ export function PartEditor({
             type="checkbox"
             checked={part.visible}
             onChange={(event) =>
-              onCommand(
-                "setPartVisibility",
+              actions.setVisibility(
                 { partId: part.id, visible: event.target.checked },
                 appStrings.inspector.operationMessage.partVisibilityUpdated,
               )
@@ -110,8 +107,7 @@ export function PartEditor({
             aria-label={appStrings.inspector.outputOf(part.name)}
             checked={part.printable}
             onChange={(event) =>
-              onCommand(
-                "setPartPrintable",
+              actions.setPrintable(
                 { partId: part.id, printable: event.target.checked },
                 appStrings.inspector.operationMessage.partOutputUpdated,
               )
@@ -132,7 +128,7 @@ export function PartEditor({
           onChange={(event) => {
             const quantity = Number(event.target.value);
             if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 999)
-              onCommand("setPartQuantity", { partId: part.id, quantity }, appStrings.app.partQuantityUpdated);
+              actions.setQuantity({ partId: part.id, quantity }, appStrings.app.partQuantityUpdated);
           }}
         />
       </label>
@@ -190,8 +186,7 @@ export function PartEditor({
         <button
           aria-label="←"
           onClick={() =>
-            onCommand(
-              "movePart",
+            actions.move(
               { partId: part.id, delta: { xMm: -10, yMm: 0 } },
               appStrings.inspector.operationMessage.partMoved,
             )
@@ -202,8 +197,7 @@ export function PartEditor({
         <button
           aria-label="↑"
           onClick={() =>
-            onCommand(
-              "movePart",
+            actions.move(
               { partId: part.id, delta: { xMm: 0, yMm: 10 } },
               appStrings.inspector.operationMessage.partMoved,
             )
@@ -214,8 +208,7 @@ export function PartEditor({
         <button
           aria-label="↓"
           onClick={() =>
-            onCommand(
-              "movePart",
+            actions.move(
               { partId: part.id, delta: { xMm: 0, yMm: -10 } },
               appStrings.inspector.operationMessage.partMoved,
             )
@@ -226,8 +219,7 @@ export function PartEditor({
         <button
           aria-label="→"
           onClick={() =>
-            onCommand(
-              "movePart",
+            actions.move(
               { partId: part.id, delta: { xMm: 10, yMm: 0 } },
               appStrings.inspector.operationMessage.partMoved,
             )
@@ -240,8 +232,7 @@ export function PartEditor({
         className="inspector-wide-button inspector-prominent-button"
         aria-label={appStrings.contextMenu.duplicate}
         onClick={() =>
-          onCommand(
-            "duplicatePart",
+          actions.duplicate(
             {
               partId: part.id,
               newPartId: "part:" + crypto.randomUUID(),
@@ -265,7 +256,7 @@ export function PartEditor({
       <button
         className="inspector-destructive-button"
         aria-label={appStrings.inspector.detach}
-        onClick={() => onCommand("deletePart", part.id, appStrings.inspector.operationMessage.partDetached)}
+        onClick={() => actions.delete(part.id, appStrings.inspector.operationMessage.partDetached)}
       >
         <Ungroup aria-hidden="true" />
         {appStrings.inspector.detachPart}
@@ -276,7 +267,7 @@ export function PartEditor({
 
 export function openConstraintValueEntry(
   item: Constraint,
-  onCommand: CommandHandler,
+  setConstraintValue: SelectionInspectorActions["setConstraintValue"],
   openTextEntry: OpenTextEntry,
   parameters: readonly { id: string; valueMm: number }[] = [],
 ) {
@@ -300,8 +291,7 @@ export function openConstraintValueEntry(
     (values) => {
       const value = Number(values.value.replace(",", "."));
       if (Number.isFinite(value) && value > 0)
-        onCommand(
-          "setConstraintValue",
+        setConstraintValue(
           { constraintId: item.id, value: degrees ? { fixedDegrees: value } : { fixedMm: value } },
           appStrings.inspector.operationMessage.constraintUpdated,
         );

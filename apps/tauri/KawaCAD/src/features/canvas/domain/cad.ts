@@ -1,6 +1,12 @@
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { appStrings } from "@/localization";
 import type { ConstraintTarget, PointMm, RawEntity, Viewport } from "@/shared/domain/coreWireTypes";
+import {
+  annotationArcLayout,
+  annotationLabelLayout,
+  constraintMarkerLayout,
+} from "@/features/canvas/domain/canvasLayout";
+import { canvasMetrics } from "@/features/canvas/domain/canvasMetrics";
 
 export type { ConstraintTarget, PointMm, RawEntity, Viewport } from "@/shared/domain/coreWireTypes";
 
@@ -85,7 +91,7 @@ export function hitProjectedPoint(
   point: PointMm,
   items: Array<{ id: string; positionMm: PointMm; visible?: boolean }>,
   viewport: Viewport,
-  tolerancePx = 8,
+  tolerancePx = canvasMetrics.stitchStartPointHitTolerancePx,
 ) {
   const toleranceMm = tolerancePx / Math.max(displayScale(viewport), 0.01);
   return [...items]
@@ -112,14 +118,15 @@ export function hitConstraintMarker(
     stackIndex?: number;
   }>,
   viewport: Viewport,
-  tolerancePx = 8,
+  tolerancePx = canvasMetrics.constraintMarkerHitTolerancePx,
+  measuredTextWidths: Record<string, number> = {},
 ) {
   for (const item of [...items].reverse()) {
     if (item.visible === false) continue;
-    const stackIndex = item.stackIndex ?? 0;
-    const markerWidthPx = Math.max(22, ((item.label?.length ?? 2) + (item.icon ? 2 : 0)) * 6 + 10);
-    const x = 10 + stackIndex * 5;
-    const y = -20 - stackIndex * 5;
+    const layout = constraintMarkerLayout({
+      ...item,
+      measuredTextWidthPx: measuredTextWidths[item.id],
+    });
     // The marker is anchored at the item's model position. Compare the
     // screen-space offset after translating to that anchor.
     const offset = {
@@ -127,10 +134,10 @@ export function hitConstraintMarker(
       y: -(point.yMm - item.positionMm.yMm) * displayScale(viewport),
     };
     const labelHit =
-      offset.x >= x - tolerancePx &&
-      offset.x <= x + markerWidthPx + tolerancePx &&
-      offset.y >= y - tolerancePx &&
-      offset.y <= y + 16 + tolerancePx;
+      offset.x >= layout.offsetX - tolerancePx &&
+      offset.x <= layout.offsetX + layout.width + tolerancePx &&
+      offset.y >= layout.offsetY - tolerancePx &&
+      offset.y <= layout.offsetY + layout.height + tolerancePx;
     if (labelHit || Math.hypot(offset.x, offset.y) <= tolerancePx) return item.id;
   }
   return undefined;
@@ -143,33 +150,51 @@ export function hitProjectedAnnotation(
   point: PointMm,
   items: Array<{ id: string; visible: boolean; startMm?: PointMm; endMm?: PointMm }>,
   viewport: Viewport,
-  tolerancePx = 8,
+  tolerancePx = canvasMetrics.annotationLineHitTolerancePx,
+  measuredTextWidths: Record<string, number> = {},
 ) {
-  return hitProjectedAnnotationDetail(point, items, viewport, {}, {}, tolerancePx)?.id;
+  return hitProjectedAnnotationDetail(point, items, viewport, {}, {}, tolerancePx, measuredTextWidths)?.id;
 }
 
 /** Distinguishes a label hit from a dimension line hit so Core can persist
  * either a label-only offset or an overall annotation offset. */
 export function hitProjectedAnnotationDetail(
   point: PointMm,
-  items: Array<{ id: string; visible: boolean; arc?: boolean; centerMm?: PointMm; startMm?: PointMm; endMm?: PointMm }>,
+  items: Array<{
+    id: string;
+    visible: boolean;
+    arc?: boolean;
+    centerMm?: PointMm;
+    startMm?: PointMm;
+    endMm?: PointMm;
+    arcCounterclockwise?: boolean;
+  }>,
   viewport: Viewport,
   labels: Record<string, string>,
   labelOffsets: Record<string, PointMm>,
-  tolerancePx = 8,
+  tolerancePx = canvasMetrics.annotationLineHitTolerancePx,
+  measuredTextWidths: Record<string, number> = {},
 ) {
-  const toleranceMm = tolerancePx / Math.max(displayScale(viewport), 0.01);
   for (const item of [...items].reverse()) {
     const startMm = item.startMm;
     const endMm = item.endMm;
     if (!item.visible || !startMm || !endMm) continue;
+    const annotationToleranceMm =
+      (item.arc ? canvasMetrics.annotationArcHitTolerancePx : tolerancePx) / Math.max(displayScale(viewport), 0.01);
     if (
       labelContains(
         point,
-        { startMm, endMm, arc: item.arc, centerMm: item.centerMm },
+        {
+          startMm,
+          endMm,
+          arc: item.arc,
+          centerMm: item.centerMm,
+          arcCounterclockwise: item.arcCounterclockwise,
+        },
         viewport,
         labels[item.id],
         labelOffsets[item.id],
+        measuredTextWidths[item.id],
       )
     )
       return { id: item.id, labelOnly: true };
@@ -180,9 +205,9 @@ export function hitProjectedAnnotationDetail(
             item.centerMm,
             startMm,
             endMm,
-            Boolean(arcDirectionFromEndpoints(item.centerMm, startMm, endMm)),
-          ) <= toleranceMm
-        : distanceToSegment(point, startMm, endMm) <= toleranceMm
+            item.arcCounterclockwise ?? arcDirectionFromEndpoints(item.centerMm, startMm, endMm),
+          ) <= annotationToleranceMm
+        : distanceToSegment(point, startMm, endMm) <= annotationToleranceMm
     )
       return { id: item.id, labelOnly: false };
   }
@@ -221,40 +246,43 @@ function distanceToArc(point: PointMm, center: PointMm, start: PointMm, end: Poi
 
 function labelContains(
   point: PointMm,
-  item: { startMm: PointMm; endMm: PointMm; arc?: boolean; centerMm?: PointMm },
+  item: {
+    startMm: PointMm;
+    endMm: PointMm;
+    arc?: boolean;
+    centerMm?: PointMm;
+    arcCounterclockwise?: boolean;
+  },
   viewport: Viewport,
   label: string | undefined,
   labelOffset: PointMm | undefined,
+  measuredTextWidthPx?: number,
 ) {
   if (!label) return false;
   const offset = labelOffset ?? { xMm: 0, yMm: 0 };
   const midpoint =
     item.arc && item.centerMm
-      ? annotationArcMidpoint(item.centerMm, item.startMm, item.endMm)
+      ? annotationArcLayout({
+          centerMm: item.centerMm,
+          startMm: item.startMm,
+          endMm: item.endMm,
+          counterclockwise: item.arcCounterclockwise,
+        }).midpointMm
       : {
           xMm: (item.startMm.xMm + item.endMm.xMm) / 2,
           yMm: (item.startMm.yMm + item.endMm.yMm) / 2,
         };
-  const center = {
-    xMm: midpoint.xMm + offset.xMm + 5 / displayScale(viewport),
-    yMm: midpoint.yMm + offset.yMm + 5 / displayScale(viewport),
-  };
-  return (
-    Math.abs(point.xMm - center.xMm) <= (label.length * 3.5 + 4) / displayScale(viewport) &&
-    Math.abs(point.yMm - center.yMm) <= 8 / displayScale(viewport)
+  const layout = annotationLabelLayout(
+    midpoint,
+    label,
+    offset,
+    Math.max(displayScale(viewport), 0.01),
+    measuredTextWidthPx,
   );
-}
-
-function annotationArcMidpoint(center: PointMm, start: PointMm, end: PointMm) {
-  const radius = Math.hypot(start.xMm - center.xMm, start.yMm - center.yMm);
-  if (radius <= 0.0001) return start;
-  const startAngle = Math.atan2(start.yMm - center.yMm, start.xMm - center.xMm);
-  const endAngle = Math.atan2(end.yMm - center.yMm, end.xMm - center.xMm);
-  let sweep = endAngle - startAngle;
-  while (sweep <= -Math.PI) sweep += Math.PI * 2;
-  while (sweep > Math.PI) sweep -= Math.PI * 2;
-  const angle = startAngle + sweep / 2;
-  return { xMm: center.xMm + radius * Math.cos(angle), yMm: center.yMm + radius * Math.sin(angle) };
+  return (
+    Math.abs(point.xMm - layout.centerMm.xMm) <= layout.halfWidthMm &&
+    Math.abs(point.yMm - layout.centerMm.yMm) <= layout.halfHeightMm
+  );
 }
 
 function distanceToSegment(point: PointMm, start: PointMm, end: PointMm) {
@@ -435,7 +463,7 @@ export function constraintMarkerIcon(kind: string): string | undefined {
 
 /** Returns the closest exposed control point in screen-space tolerance. */
 export function snapToEntityPoint(point: PointMm, entities: RawEntity[], viewport: Viewport): PointMm {
-  const tolerance = 9 / displayScale(viewport);
+  const tolerance = canvasMetrics.constraintTargetHitTolerancePx / displayScale(viewport);
   let closest: PointMm | undefined;
   let closestDistance = tolerance;
   for (const entity of entities) {
@@ -453,7 +481,7 @@ export function snapToEntityPoint(point: PointMm, entities: RawEntity[], viewpor
 }
 
 export function hitEntity(point: PointMm, entities: RawEntity[], viewport: Viewport): string | undefined {
-  const tolerance = 7 / displayScale(viewport);
+  const tolerance = canvasMetrics.entityHitTolerancePx / displayScale(viewport);
   let derivedHit: string | undefined;
   for (const entity of [...entities].reverse()) {
     if (!isEntityHit(point, entity, tolerance)) continue;
@@ -485,7 +513,7 @@ export function preferredEntitySelectionHit(
 }
 
 function hitOffsetEntity(point: PointMm, entities: RawEntity[], viewport: Viewport): string | undefined {
-  const tolerance = 7 / displayScale(viewport);
+  const tolerance = canvasMetrics.entityDerivedHitTolerancePx / displayScale(viewport);
   let baseHit: string | undefined;
   let derivedHit: string | undefined;
   for (const entity of [...entities].reverse()) {
@@ -521,7 +549,7 @@ export function hitConstraintTarget(
   entities: RawEntity[],
   viewport: Viewport,
 ): ConstraintTarget | undefined {
-  const tolerance = 9 / displayScale(viewport);
+  const tolerance = canvasMetrics.constraintTargetHitTolerancePx / displayScale(viewport);
   let closest: { target: ConstraintTarget; distance: number } | undefined;
   for (const entity of [...entities].reverse()) {
     const geometry = geometryOf(entity);
@@ -607,7 +635,7 @@ export function preferredConstraintTarget(
 }
 
 function closestControlTarget(point: PointMm, entities: RawEntity[], viewport: Viewport): ConstraintTarget | undefined {
-  const tolerance = 9 / displayScale(viewport);
+  const tolerance = canvasMetrics.constraintTargetHitTolerancePx / displayScale(viewport);
   let closest: { target: ConstraintTarget; distance: number; derived: boolean } | undefined;
   for (const entity of entities) {
     const geometry = geometryOf(entity);

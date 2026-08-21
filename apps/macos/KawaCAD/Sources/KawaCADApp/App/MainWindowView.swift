@@ -106,8 +106,17 @@ struct WorkspaceView: View {
             .zIndex(1)
           ZStack(alignment: .top) {
             WorkspaceCanvasLayout(
-              state: state,
-              actions: actions,
+              state: WorkspaceCanvasLayoutState(
+                inspectorPanelWidth: state.inspectorPanelWidth,
+                inspectorPanelVisible: state.inspectorPanelVisible,
+                compactDrawer: state.compactDrawer,
+                toolPaletteState: state.toolPaletteState
+              ),
+              actions: WorkspaceCanvasLayoutActions(
+                setInspectorPanelWidth: actions.setInspectorPanelWidth,
+                showCompactDrawer: actions.showCompactDrawer,
+                toolPaletteActions: actions.toolPaletteActions
+              ),
               policy: policy,
               canvasColumn: canvasColumn,
               inspectorPanel: { inspectorPanel(width: $0) }
@@ -176,8 +185,21 @@ struct WorkspaceView: View {
 
   private var canvasColumn: some View {
     VStack(spacing: 0) {
-      WorkspaceCanvasSurface(state: state, actions: actions)
-        .frame(minWidth: 640, minHeight: 480)
+      WorkspaceCanvasSurface(
+        state: WorkspaceCanvasSurfaceState(
+          canvasRenderInput: state.canvasRenderInput,
+          canvasInteractionInput: state.canvasInteractionInput,
+          constraintEntryHUDState: state.constraintEntryHUDState,
+          pasteOptionsPresentation: state.pasteOptionsPresentation
+        ),
+        actions: WorkspaceCanvasSurfaceActions(
+          canvasActionGroups: actions.canvasActionGroups,
+          constraintEntryHUDActions: actions.constraintEntryHUDActions,
+          selectPastePlacement: actions.selectPastePlacement,
+          dismissPasteOptions: actions.dismissPasteOptions
+        )
+      )
+      .frame(minWidth: 640, minHeight: 480)
 
       if state.bottomWorkbenchVisible {
         BottomWorkbench(state: state.bottomWorkbenchState)
@@ -188,7 +210,7 @@ struct WorkspaceView: View {
   }
 
   private func inspectorPanel(width: CGFloat) -> some View {
-    WorkspaceInspector(appState: state.inspectorFeatureModel, width: width)
+    WorkspaceInspector(model: state.inspectorPanelModel, width: width)
   }
 
   private func clamp(_ value: CGFloat, within range: ClosedRange<CGFloat>) -> CGFloat {
