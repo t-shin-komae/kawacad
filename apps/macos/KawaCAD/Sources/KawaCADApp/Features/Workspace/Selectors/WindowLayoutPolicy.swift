@@ -83,14 +83,40 @@ struct WindowLayoutPolicy: Equatable {
     }
   }
 
-  /// Keep the one-column palette at its stable minimum while resizing. The
-  /// second column appears only after the fixed threshold, so SwiftUI does not
-  /// repeatedly remeasure rows around the transition.
-  static func snappedToolWidth(_ proposedWidth: CGFloat, for mode: WindowLayoutMode) -> CGFloat {
+  static let toolWidthColumnSwitchThreshold: CGFloat = 220
+  static let toolWidthColumnHysteresis: CGFloat = 12
+
+  /// Keep the palette at one of two stable widths while resizing. The extra
+  /// margin on the way back to one column prevents a drag from oscillating at
+  /// the layout boundary.
+  static func snappedToolWidth(
+    _ proposedWidth: CGFloat,
+    for mode: WindowLayoutMode,
+    previousWidth: CGFloat? = nil
+  ) -> CGFloat {
     let range = toolWidthRange(for: mode)
     let clampedWidth = clamp(proposedWidth, within: range, defaultValue: range.lowerBound)
-    guard clampedWidth >= 220 else { return range.lowerBound }
-    return range.upperBound
+    let wasTwoColumn: Bool
+    if let previousWidth, previousWidth.isFinite {
+      wasTwoColumn = previousWidth >= toolWidthColumnSwitchThreshold
+    } else {
+      wasTwoColumn = clampedWidth >= toolWidthColumnSwitchThreshold
+    }
+    let threshold =
+      wasTwoColumn
+      ? toolWidthColumnSwitchThreshold - toolWidthColumnHysteresis
+      : toolWidthColumnSwitchThreshold
+    return clampedWidth >= threshold ? range.upperBound : range.lowerBound
+  }
+
+  static func toolWidthAfterKeyboardAdjustment(
+    currentWidth: CGFloat,
+    delta: CGFloat,
+    for mode: WindowLayoutMode
+  ) -> CGFloat {
+    let range = toolWidthRange(for: mode)
+    guard delta != 0 else { return snappedToolWidth(currentWidth, for: mode) }
+    return delta > 0 ? range.upperBound : range.lowerBound
   }
 
   static let inspectorDockWidthRange: ClosedRange<CGFloat> =

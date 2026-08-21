@@ -85,6 +85,58 @@ func window_layout_policy_snaps_tool_width_for_stable_palette_layout() {
   #expect(WindowLayoutPolicy.snappedToolWidth(220, for: .regular) == 240)
 }
 
+@Test("WindowLayoutPolicy はツール幅の列切替にヒステリシスを持つ")
+func window_layout_policy_keeps_tool_column_count_stable_near_boundary() {
+  #expect(
+    WindowLayoutPolicy.snappedToolWidth(
+      219,
+      for: .wide,
+      previousWidth: 176
+    ) == 176
+  )
+  #expect(
+    WindowLayoutPolicy.snappedToolWidth(
+      WindowLayoutPolicy.toolWidthColumnSwitchThreshold,
+      for: .wide,
+      previousWidth: 176
+    ) == 260
+  )
+  #expect(
+    WindowLayoutPolicy.snappedToolWidth(
+      WindowLayoutPolicy.toolWidthColumnSwitchThreshold
+        - WindowLayoutPolicy.toolWidthColumnHysteresis + 1,
+      for: .wide,
+      previousWidth: 260
+    ) == 260
+  )
+  #expect(
+    WindowLayoutPolicy.snappedToolWidth(
+      WindowLayoutPolicy.toolWidthColumnSwitchThreshold
+        - WindowLayoutPolicy.toolWidthColumnHysteresis - 1,
+      for: .wide,
+      previousWidth: 260
+    ) == 176
+  )
+}
+
+@Test("WindowLayoutPolicy はキーボードの幅調整でも2段階の幅を維持する")
+func window_layout_policy_snaps_keyboard_tool_width_adjustments() {
+  #expect(
+    WindowLayoutPolicy.toolWidthAfterKeyboardAdjustment(
+      currentWidth: 176,
+      delta: 8,
+      for: .wide
+    ) == 260
+  )
+  #expect(
+    WindowLayoutPolicy.toolWidthAfterKeyboardAdjustment(
+      currentWidth: 260,
+      delta: -8,
+      for: .wide
+    ) == 176
+  )
+}
+
 @Test("WindowLayoutPolicy は画面より広いウィンドウを画面幅へ収める")
 func window_layout_policy_constrains_window_width_to_visible_screen() {
   #expect(WindowLayoutPolicy.constrainedWindowWidth(1280, visibleScreenWidth: 1352) == 1280)

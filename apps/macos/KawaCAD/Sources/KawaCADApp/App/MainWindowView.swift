@@ -67,6 +67,7 @@ struct WorkspaceView: View {
   let state: WorkspaceViewState
   let actions: WorkspaceViewActions
   @State private var toolResizeBaseWidth: CGFloat?
+  @State private var toolResizePreviousWidth: CGFloat?
 
   var body: some View {
     GeometryReader { geometry in
@@ -86,18 +87,27 @@ struct WorkspaceView: View {
           )
           .zIndex(10)
           PanelResizeHandle(alignment: .trailing) { translation in
-            let base = toolResizeBaseWidth ?? state.toolPanelWidth
+            let base = toolResizeBaseWidth ?? policy.toolDockWidth
             toolResizeBaseWidth = toolResizeBaseWidth ?? base
-            let range = WindowLayoutPolicy.toolWidthRange(for: policy.mode)
-            actions.setToolPanelWidth(clamp(base + translation.width, within: range))
+            let previousWidth = toolResizePreviousWidth ?? policy.toolDockWidth
+            let width = WindowLayoutPolicy.snappedToolWidth(
+              base + translation.width,
+              for: policy.mode,
+              previousWidth: previousWidth
+            )
+            toolResizePreviousWidth = width
+            actions.setToolPanelWidth(width)
           } onEnded: {
             toolResizeBaseWidth = nil
+            toolResizePreviousWidth = nil
           } onKeyboardAdjust: { delta in
             actions.setToolPanelWidth(
-              clamp(
-                state.toolPanelWidth + delta,
-                within: WindowLayoutPolicy.toolWidthRange(for: policy.mode)
-              ))
+              WindowLayoutPolicy.toolWidthAfterKeyboardAdjustment(
+                currentWidth: policy.toolDockWidth,
+                delta: delta,
+                for: policy.mode
+              )
+            )
           }
         }
 
