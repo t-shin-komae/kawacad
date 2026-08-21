@@ -1,5 +1,5 @@
-import { appStrings } from "@/localization";
 import { defaultSharedStyle } from "@/features/inspector/domain/sharedStyleDefaults";
+import { appStrings } from "@/localization";
 import type { PointMm } from "@/features/canvas/domain/cad";
 import type { Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import type {
@@ -71,12 +71,12 @@ export function inspectorActionModelsFor(input: InspectorActionModelsInput) {
     update: (value, success) =>
       execute("updateSharedStyle", { id: value.styleId, name: value.name, style: value.style }, success),
     delete: (id, success) => execute("deleteSharedStyle", id, success),
-    add: () =>
+    add: (name) =>
       execute(
         "addSharedStyle",
         {
           id: `style:${crypto.randomUUID()}`,
-          name: appStrings.inspector.tab.sharedStyles,
+          name,
           style: defaultSharedStyle,
         },
         appStrings.inspector.operationMessage.sharedStyleAdded,

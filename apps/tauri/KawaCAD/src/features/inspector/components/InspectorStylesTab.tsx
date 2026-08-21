@@ -109,7 +109,10 @@ export function InspectorStylesTab({
           </InspectorDisclosureRow>
         );
       })}
-      <button className="inspector-add-button" onClick={() => model.actions.add()}>
+      <button
+        className="inspector-add-button"
+        onClick={() => model.actions.add(sharedStyleDefaultName(model.sharedStyles.length + 1))}
+      >
         <Plus aria-hidden="true" />
         {appStrings.inspector.addSharedStyle}
       </button>

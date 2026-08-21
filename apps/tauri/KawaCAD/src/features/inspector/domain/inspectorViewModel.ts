@@ -102,7 +102,7 @@ export type LayerInspectorActions = {
 export type StyleInspectorActions = {
   update: InspectorOperation<{ styleId: string; name: string; style: LineStyle }>;
   delete: InspectorOperation<string>;
-  add: () => void;
+  add: (name: string) => void;
 };
 
 export type ParameterInspectorActions = {

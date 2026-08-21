@@ -78,7 +78,7 @@ describe("Inspector management tabs", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "共有スタイル追加" }));
-    expect(actions.add).toHaveBeenCalledOnce();
+    expect(actions.add).toHaveBeenCalledWith("共有スタイル 2");
   });
 
   it("renders the parameter tab from only a parameter model", () => {
