@@ -21,10 +21,10 @@ import type { PointMm, ConstraintTarget } from "@/features/canvas/domain/cad";
 import type { State } from "@/shared/domain/coreWireTypes";
 import type { DerivedValue, OffsetSourceOption } from "@/features/constraints/components/DerivedValueDialog";
 import { derivedValueInitialText } from "@/features/constraints/domain/derivedValueDefaults";
-import type { ConstraintActionContext } from "@/app/actions/useActionRuntime";
+import type { ConstraintActionInput } from "@/features/constraints/actions/constraintActionTypes";
 
 type ConstraintActionDependencies = Pick<
-  ConstraintActionContext,
+  ConstraintActionInput,
   | "state"
   | "command"
   | "applyState"

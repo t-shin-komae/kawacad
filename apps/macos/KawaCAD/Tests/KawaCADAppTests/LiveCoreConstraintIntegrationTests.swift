@@ -378,7 +378,9 @@ func live_core_part_editing_workflow_round_trips_through_swift_boundary() {
   appState.actions.parts.setSelectedPartOrigin(ModelPoint(xMM: 123, yMM: -45))
   #expect(!appState.actions.inspector.isSettingPartOrigin)
   #expect(liveSelectedInspectorPart(appState)?.originMM == ModelPoint(xMM: 123, yMM: -45))
-  #expect(appState.actions.canvas.canvasState.selectedPartOrigin == ModelPoint(xMM: 123, yMM: -45))
+  #expect(
+    appState.actions.canvas.canvasRenderInput.draft.selectedPartOrigin
+      == ModelPoint(xMM: 123, yMM: -45))
   let afterPositionEntity = unwrap(
     appState.actions.document.entities.first { $0.id == moved.outlineEntityIDs[0] })
   #expect(afterPositionEntity.geometry != beforePositionEntity.geometry)
@@ -2868,6 +2870,7 @@ private final class LiveCoreCanvasHarness {
   private let appState: AppCoordinator
   private let pageRect = CGRect(x: 0, y: 0, width: 520, height: 736)
   private let coordinateSpace: CanvasCoordinateSpace
+  private let inputs: CanvasTestInputBuilder
   let view: LeatherCanvasView
   private(set) var selectedTargets: [CanvasSelectionTarget] = []
 
@@ -2875,64 +2878,67 @@ private final class LiveCoreCanvasHarness {
     _ = NSApplication.shared
     self.appState = appState
     self.coordinateSpace = CanvasCoordinateSpace(pageRect: pageRect)
-    self.view = LeatherCanvasView(frame: pageRect)
+    let inputs = CanvasTestInputBuilder()
+    self.inputs = inputs
+    self.view = inputs.makeView(frame: pageRect)
+    let view = self.view
     appState.actions.canvas.selectedTool = selectedTool
-    view.onSelectEntity = { [weak appState, weak view] entityID in
+    inputs.onSelectEntity = { [weak appState, weak view] entityID in
       guard let appState else {
         return
       }
       appState.actions.canvas.selectEntity(entityID)
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    view.onPreviewMoveEntities = { [weak appState, weak view] entityIDs, delta, duplicating in
+    inputs.onPreviewMoveEntities = { [weak appState, weak view] entityIDs, delta, duplicating in
       guard let appState else {
         return
       }
       appState.actions.document.previewMoveEntities(
         entityIDs, delta: delta, duplicating: duplicating)
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    view.onMoveEntities = { [weak appState, weak view] entityIDs, delta, duplicating in
+    inputs.onMoveEntities = { [weak appState, weak view] entityIDs, delta, duplicating in
       guard let appState else {
         return
       }
       appState.actions.document.moveEntities(entityIDs, delta: delta, duplicating: duplicating)
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    view.onPreviewMoveControlPoint = { [weak appState, weak view] target, point in
+    inputs.onPreviewMoveControlPoint = { [weak appState, weak view] target, point in
       guard let appState else {
         return
       }
       appState.actions.document.previewMoveControlPoint(target, to: point)
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    view.onMoveControlPoint = { [weak appState, weak view] target, point in
+    inputs.onMoveControlPoint = { [weak appState, weak view] target, point in
       guard let appState else {
         return
       }
       appState.actions.document.moveControlPoint(target, to: point)
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    view.onCancelMovePreview = { [weak appState, weak view] in
+    inputs.onCancelMovePreview = { [weak appState, weak view] in
       guard let appState else {
         return
       }
       appState.actions.document.cancelMovePreview()
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    view.onSelectTarget = { [weak appState, weak view] target in
+    inputs.onSelectTarget = { [weak appState, weak view] target in
       guard let appState else {
         return
       }
@@ -2941,10 +2947,10 @@ private final class LiveCoreCanvasHarness {
       }
       appState.actions.constraints.handleConstraintTargetSelection(target)
       if let view {
-        syncLiveCoreCanvasView(view, appState: appState)
+        syncLiveCoreCanvasView(inputs, appState: appState)
       }
     }
-    syncLiveCoreCanvasView(view, appState: appState)
+    syncLiveCoreCanvasView(inputs, appState: appState)
   }
 
   func click(_ modelPoint: ModelPoint) {
@@ -2986,24 +2992,24 @@ private func makeLiveCoreCanvasHarness(appState: AppCoordinator, selectedTool: C
 }
 
 @MainActor
-private func syncLiveCoreCanvasView(_ view: LeatherCanvasView, appState: AppCoordinator) {
-  view.entities = appState.actions.document.entities
-  view.documentConstraints = appState.actions.document.constraints
-  view.measurementAnnotations = appState.actions.document.measurementAnnotations
-  view.parameters = appState.actions.document.parameters
-  view.derivedElements = appState.actions.document.derivedElements
-  view.layers = appState.actions.document.layers
-  view.coincidentPointGroups = appState.actions.document.coincidentPointGroups
-  view.selectedEntityID = appState.actions.canvas.selectedEntityID
-  view.selectedEntityIDs = appState.actions.canvas.selectedEntityIDs
-  view.selectedConstraintID = appState.actions.canvas.selectedConstraintID
-  view.selectedMeasurementAnnotationID = appState.actions.canvas.selectedMeasurementAnnotationID
-  view.stitchStartPoints = appState.actions.document.stitchStartPoints
-  view.selectedStitchStartPointID = appState.actions.canvas.selectedStitchStartPointID
-  view.pendingConstraintTargets = appState.actions.canvas.pendingConstraintTargets
-  view.selectedTool = appState.actions.canvas.selectedTool
-  view.gridSnapEnabled = false
-  view.pointSnapEnabled = true
+private func syncLiveCoreCanvasView(_ inputs: CanvasTestInputBuilder, appState: AppCoordinator) {
+  inputs.entities = appState.actions.document.entities
+  inputs.documentConstraints = appState.actions.document.constraints
+  inputs.measurementAnnotations = appState.actions.document.measurementAnnotations
+  inputs.parameters = appState.actions.document.parameters
+  inputs.derivedElements = appState.actions.document.derivedElements
+  inputs.layers = appState.actions.document.layers
+  inputs.coincidentPointGroups = appState.actions.document.coincidentPointGroups
+  inputs.selectedEntityID = appState.actions.canvas.selectedEntityID
+  inputs.selectedEntityIDs = appState.actions.canvas.selectedEntityIDs
+  inputs.selectedConstraintID = appState.actions.canvas.selectedConstraintID
+  inputs.selectedMeasurementAnnotationID = appState.actions.canvas.selectedMeasurementAnnotationID
+  inputs.stitchStartPoints = appState.actions.document.stitchStartPoints
+  inputs.selectedStitchStartPointID = appState.actions.canvas.selectedStitchStartPointID
+  inputs.pendingConstraintTargets = appState.actions.canvas.pendingConstraintTargets
+  inputs.selectedTool = appState.actions.canvas.selectedTool
+  inputs.gridSnapEnabled = false
+  inputs.pointSnapEnabled = true
 }
 
 private func liveCoreMouseDownEvent(at point: CGPoint) -> NSEvent? {

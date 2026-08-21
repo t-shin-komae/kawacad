@@ -27,6 +27,15 @@ export function useWorkspaceLayout() {
     setToolPaletteWidth(toolPaletteWidthRange.min);
     setCompactDrawer(undefined);
   }, []);
+  const closeCompactDrawer = useCallback(() => setCompactDrawer(undefined), []);
 
-  return { layout, toolPaletteWidth, setToolPaletteWidth, compactDrawer, setCompactDrawer, resetWorkspaceLayout };
+  return {
+    layout,
+    toolPaletteWidth,
+    setToolPaletteWidth,
+    compactDrawer,
+    setCompactDrawer,
+    closeCompactDrawer,
+    resetWorkspaceLayout,
+  };
 }

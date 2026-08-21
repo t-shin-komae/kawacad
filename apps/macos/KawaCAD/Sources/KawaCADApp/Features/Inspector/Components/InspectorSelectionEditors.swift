@@ -1,7 +1,88 @@
 import SwiftUI
 
+struct SelectionDocumentOverviewModel {
+  let viewMode: CanvasViewMode
+  let activeLayerID: String
+  let layers: [ProjectLayer]
+  let entities: [CanvasEntity]
+  let constraints: [ProjectConstraint]
+  let parameters: [ProjectParameter]
+}
+
+struct SelectionMeasurementEditorModel {
+  let convert: (String) -> Void
+  let delete: (ProjectMeasurementAnnotation) -> Void
+}
+
+struct SelectionStitchPointEditorModel {
+  let entities: [CanvasEntity]
+  let delete: () -> Void
+}
+
+struct SelectionFreeTextEditorModel {
+  let update: (ProjectFreeText) -> Bool
+  let delete: () -> Void
+}
+
+struct SelectionConstraintEditorModel {
+  let parameters: [ProjectParameter]
+  let delete: (ProjectConstraint) -> Void
+  let hover: (String?) -> Void
+  let setDegrees: (ProjectConstraint, Double) -> Bool
+  let setValue: (ProjectConstraint, Double) -> Bool
+  let setParameter: (ProjectConstraint, ProjectParameter) -> Bool
+}
+
+struct SelectionMultiSelectionEditorModel {
+  let selectedEntities: [CanvasEntity]
+  let sharedStyles: [ProjectSharedStyle]
+  let layers: [ProjectLayer]
+  let canConstrainSelectedLineLengthsEqual: Bool
+  let setSharedStyle: (String?) -> Bool
+  let delete: () -> Void
+  let constrainSelectedLineLengthsEqual: () -> Void
+}
+
+struct SelectionDerivedElementEditorModel {
+  let parameters: [ProjectParameter]
+  let setDirection: (ProjectDerivedElement, OffsetDirection) -> Bool
+  let reverseDirection: (ProjectDerivedElement) -> Bool
+  let setDistance: (ProjectDerivedElement, Double) -> Bool
+  let setParameter: (ProjectDerivedElement, ProjectParameter) -> Bool
+}
+
+struct SelectionRoundHoleEditorModel {
+  let selectedRoundHole: ProjectRoundHole?
+  let selectedEntity: CanvasEntity?
+  let setKind: (ProjectRoundHoleKind) -> Bool
+  let setDiameter: (Double) -> Bool
+}
+
+struct SelectionEntityGeometryEditorModel {
+  let selectedEntity: CanvasEntity?
+  let constrainLineLength: () -> Void
+  let setLineLength: (Double) -> Bool
+  let setCircleRadius: (Double) -> Bool
+  let setArc: (Double, Double, Double) -> Bool
+}
+
+struct SelectionEntityEditorModel {
+  let layers: [ProjectLayer]
+  let sharedStyles: [ProjectSharedStyle]
+  let selectedDerivedElement: ProjectDerivedElement?
+  let selectedRoundHole: ProjectRoundHole?
+  let selectedEntity: CanvasEntity?
+  let setLayer: (String) -> Void
+  let setSharedStyle: (String?) -> Bool
+  let delete: () -> Void
+  let parameters: [ProjectParameter]
+  let derived: SelectionDerivedElementEditorModel
+  let roundHole: SelectionRoundHoleEditorModel
+  let geometry: SelectionEntityGeometryEditorModel
+}
+
 struct DocumentOverview: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionDocumentOverviewModel
 
   var body: some View {
     InspectorSection(title: AppStrings.tr("inspector.document_overview"), symbolName: "doc.text") {
@@ -24,7 +105,7 @@ struct DocumentOverview: View {
 }
 
 struct SelectedMeasurementEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionMeasurementEditorModel
   let measurement: ProjectMeasurementAnnotation
 
   var body: some View {
@@ -32,14 +113,14 @@ struct SelectedMeasurementEditor: View {
       DetailRow(label: AppStrings.tr("inspector.kind"), value: measurement.kind)
       HStack(spacing: 8) {
         Button {
-          appState.convertMeasurementAnnotationToConstraint(measurement.id)
+          appState.convert(measurement.id)
         } label: {
           Text(AppStrings.tr("canvas.menu.convert_measurement_to_constraint"))
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
         Button(role: .destructive) {
-          appState.deleteMeasurementAnnotation(measurement)
+          appState.delete(measurement)
         } label: {
           Image(systemName: "trash")
         }
@@ -50,7 +131,7 @@ struct SelectedMeasurementEditor: View {
 }
 
 struct SelectedStitchStartPointEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionStitchPointEditorModel
   let stitchStartPoint: ProjectStitchStartPoint
 
   var body: some View {
@@ -59,7 +140,7 @@ struct SelectedStitchStartPointEditor: View {
         label: AppStrings.tr("inspector.kind"), value: AppStrings.tr("tool.stitch_start_point"))
       DetailRow(label: AppStrings.tr("inspector.stitch_target"), value: targetLabel)
       Button(role: .destructive) {
-        appState.deleteSelectedEntity()
+        appState.delete()
       } label: {
         Label(AppStrings.tr("common.delete"), systemImage: "trash")
           .frame(maxWidth: .infinity)
@@ -75,7 +156,7 @@ struct SelectedStitchStartPointEditor: View {
 }
 
 struct EntityEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionEntityEditorModel
   let entity: CanvasEntity
 
   var body: some View {
@@ -84,7 +165,7 @@ struct EntityEditor: View {
       AppStrings.tr("inspector.layer"),
       selection: Binding(
         get: { entity.layerID ?? "" },
-        set: { appState.setSelectedEntityLayer($0) }
+        set: { appState.setLayer($0) }
       )
     ) {
       ForEach(appState.layers) { layer in
@@ -97,23 +178,23 @@ struct EntityEditor: View {
       SharedStyleSelectionField(
         selectedStyleID: derivedElement.styleID,
         sharedStyles: appState.sharedStyles,
-        onChange: { appState.setSelectedEntitiesSharedStyle($0) }
+        onChange: { appState.setSharedStyle($0) }
       )
-      DerivedElementEditor(derivedElement: derivedElement)
+      DerivedElementEditor(appState: appState.derived, derivedElement: derivedElement)
     } else {
       SharedStyleSelectionField(
         selectedStyleID: entity.styleID,
         sharedStyles: appState.sharedStyles,
-        onChange: { appState.setSelectedEntitiesSharedStyle($0) }
+        onChange: { appState.setSharedStyle($0) }
       )
       if let roundHole = appState.selectedRoundHole {
-        RoundHoleEditor(roundHole: roundHole, entity: entity)
+        RoundHoleEditor(appState: appState.roundHole, roundHole: roundHole, entity: entity)
       }
-      EntityGeometryEditor(entity: entity)
+      EntityGeometryEditor(appState: appState.geometry, entity: entity)
     }
 
     Button(role: .destructive) {
-      appState.deleteSelectedEntity()
+      appState.delete()
     } label: {
       Label(AppStrings.tr("common.delete"), systemImage: "trash")
         .frame(maxWidth: .infinity)
@@ -123,16 +204,16 @@ struct EntityEditor: View {
 }
 
 struct PartEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
   let part: ProjectPart
+  let appState: PartInspectorModel
 
   var body: some View {
     VStack(alignment: .leading, spacing: 9) {
       Toggle(
         AppStrings.tr("inspector.part_arrangement_target"),
         isOn: Binding(
-          get: { appState.arrangementSelectedPartIDs.contains(part.id) },
-          set: { _ in appState.togglePartArrangementSelection(part) }
+          get: { appState.data.arrangementSelectedPartIDs.contains(part.id) },
+          set: { _ in appState.actions.togglePartArrangementSelection(part) }
         )
       )
       .toggleStyle(.checkbox)
@@ -142,14 +223,17 @@ struct PartEditor: View {
           AppStrings.tr("inspector.part_visible"),
           isOn: Binding(
             get: { part.visible },
-            set: { _ in _ = appState.updatePartSettings(part.withSettings(visible: !part.visible)) }
+            set: {
+              _ in
+              _ = appState.actions.updatePartSettings(part.withSettings(visible: !part.visible))
+            }
           ))
         Toggle(
           AppStrings.tr("inspector.part_printable"),
           isOn: Binding(
             get: { part.printable },
             set: { _ in
-              _ = appState.updatePartSettings(part.withSettings(printable: !part.printable))
+              _ = appState.actions.updatePartSettings(part.withSettings(printable: !part.printable))
             }
           ))
       }
@@ -160,7 +244,7 @@ struct PartEditor: View {
         AppStrings.tr("inspector.part_quantity", part.quantity),
         value: Binding(
           get: { part.quantity },
-          set: { _ = appState.updatePartSettings(part.withSettings(quantity: $0)) }
+          set: { _ = appState.actions.updatePartSettings(part.withSettings(quantity: $0)) }
         ),
         in: 1...999
       )
@@ -170,7 +254,7 @@ struct PartEditor: View {
         placeholder: AppStrings.tr("inspector.part_name"),
         sourceValue: part.name,
         onCommit: { value in
-          appState.updatePart(part.withMetadata(name: value, originMM: part.originMM))
+          appState.actions.updatePart(part.withMetadata(name: value, originMM: part.originMM))
         },
         font: .system(size: 12, weight: .medium)
       )
@@ -178,14 +262,14 @@ struct PartEditor: View {
       HStack(spacing: 8) {
         partCoordinateField(AppStrings.tr("inspector.part_origin_x_mm"), value: part.originMM.xMM) {
           value in
-          _ = appState.movePart(
+          _ = appState.actions.movePart(
             part,
             ModelPoint(xMM: value - part.originMM.xMM, yMM: 0)
           )
         }
         partCoordinateField(AppStrings.tr("inspector.part_origin_y_mm"), value: part.originMM.yMM) {
           value in
-          _ = appState.movePart(
+          _ = appState.actions.movePart(
             part,
             ModelPoint(xMM: 0, yMM: value - part.originMM.yMM)
           )
@@ -193,11 +277,11 @@ struct PartEditor: View {
       }
 
       Button {
-        appState.beginSettingPartOrigin(part)
+        appState.actions.beginSettingPartOrigin(part)
       } label: {
         Label(
           AppStrings.tr(
-            appState.isSettingPartOrigin
+            appState.data.isSettingPartOrigin
               ? "inspector.cancel_part_origin_setting"
               : "inspector.set_part_origin_on_canvas"),
           systemImage: "scope"
@@ -216,7 +300,7 @@ struct PartEditor: View {
         value: "\(part.measurementAnnotationIDs.count)")
 
       Button {
-        appState.selectPartContents(part)
+        appState.actions.selectPartContents(part)
       } label: {
         Label(AppStrings.tr("inspector.select_part_contents"), systemImage: "cursorarrow.rays")
           .frame(maxWidth: .infinity)
@@ -225,22 +309,22 @@ struct PartEditor: View {
 
       HStack(spacing: 8) {
         Button {
-          _ = appState.movePart(part, ModelPoint(xMM: -10, yMM: 0))
+          _ = appState.actions.movePart(part, ModelPoint(xMM: -10, yMM: 0))
         } label: {
           Image(systemName: "arrow.left")
         }
         Button {
-          _ = appState.movePart(part, ModelPoint(xMM: 0, yMM: 10))
+          _ = appState.actions.movePart(part, ModelPoint(xMM: 0, yMM: 10))
         } label: {
           Image(systemName: "arrow.up")
         }
         Button {
-          _ = appState.movePart(part, ModelPoint(xMM: 0, yMM: -10))
+          _ = appState.actions.movePart(part, ModelPoint(xMM: 0, yMM: -10))
         } label: {
           Image(systemName: "arrow.down")
         }
         Button {
-          _ = appState.movePart(part, ModelPoint(xMM: 10, yMM: 0))
+          _ = appState.actions.movePart(part, ModelPoint(xMM: 10, yMM: 0))
         } label: {
           Image(systemName: "arrow.right")
         }
@@ -249,7 +333,7 @@ struct PartEditor: View {
       .help(AppStrings.tr("inspector.move_part_10mm"))
 
       Button {
-        appState.duplicatePart(part)
+        appState.actions.duplicatePart(part)
       } label: {
         Label(AppStrings.tr("inspector.duplicate_part"), systemImage: "plus.square.on.square")
           .frame(maxWidth: .infinity)
@@ -257,7 +341,7 @@ struct PartEditor: View {
       .buttonStyle(.borderedProminent)
 
       Button {
-        appState.addPartToLibrary(part)
+        appState.actions.addPartToLibrary(part)
       } label: {
         Label(AppStrings.tr("inspector.add_part_to_library"), systemImage: "books.vertical.fill")
           .frame(maxWidth: .infinity)
@@ -271,7 +355,7 @@ struct PartEditor: View {
         .foregroundStyle(LeatherColors.secondaryInk)
 
       Button(role: .destructive) {
-        appState.deletePart(part)
+        appState.actions.deletePart(part)
       } label: {
         Label(AppStrings.tr("inspector.ungroup_part"), systemImage: "square.stack.3d.down.right")
           .frame(maxWidth: .infinity)
@@ -350,7 +434,7 @@ struct InspectorDisclosureRow<Content: View>: View {
 }
 
 struct FreeTextEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionFreeTextEditorModel
   let freeText: ProjectFreeText
 
   var body: some View {
@@ -360,7 +444,7 @@ struct FreeTextEditor: View {
         placeholder: AppStrings.tr("inspector.free_text_content"),
         sourceValue: freeText.content,
         onCommit: { value in
-          appState.updateFreeText(freeText.withContent(value))
+          appState.update(freeText.withContent(value))
         },
         font: .system(size: 12, weight: .medium)
       )
@@ -370,7 +454,7 @@ struct FreeTextEditor: View {
           AppStrings.tr("inspector.x_mm"),
           value: freeText.positionMM.xMM,
           onCommit: { xMM in
-            appState.updateFreeText(
+            appState.update(
               freeText.withPosition(ModelPoint(xMM: xMM, yMM: freeText.positionMM.yMM))
             )
           }
@@ -379,7 +463,7 @@ struct FreeTextEditor: View {
           AppStrings.tr("inspector.y_mm"),
           value: freeText.positionMM.yMM,
           onCommit: { yMM in
-            appState.updateFreeText(
+            appState.update(
               freeText.withPosition(ModelPoint(xMM: freeText.positionMM.xMM, yMM: yMM))
             )
           }
@@ -390,12 +474,12 @@ struct FreeTextEditor: View {
         AppStrings.tr("inspector.font_size_mm"),
         value: freeText.fontSizeMM,
         onCommit: { fontSizeMM in
-          appState.updateFreeText(freeText.withFontSize(fontSizeMM))
+          appState.update(freeText.withFontSize(fontSizeMM))
         }
       )
 
       Button(role: .destructive) {
-        appState.deleteSelectedFreeText()
+        appState.delete()
       } label: {
         Label(AppStrings.tr("common.delete"), systemImage: "trash")
           .frame(maxWidth: .infinity)
@@ -425,7 +509,7 @@ struct FreeTextEditor: View {
 }
 
 struct SelectedConstraintEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionConstraintEditorModel
   let constraint: ProjectConstraint
 
   var body: some View {
@@ -436,11 +520,11 @@ struct SelectedConstraintEditor: View {
         .foregroundStyle(LeatherColors.secondaryInk)
 
       if constraint.isDimensionConstraint {
-        ConstraintValueEditor(constraint: constraint)
+        ConstraintValueEditor(appState: appState, constraint: constraint)
       }
 
       Button(role: .destructive) {
-        appState.deleteConstraint(constraint)
+        appState.delete(constraint)
       } label: {
         Label(AppStrings.tr("common.delete"), systemImage: "trash")
           .frame(maxWidth: .infinity)
@@ -448,13 +532,13 @@ struct SelectedConstraintEditor: View {
       .buttonStyle(.bordered)
     }
     .onAppear {
-      appState.hoverConstraint(nil)
+      appState.hover(nil)
     }
   }
 }
 
 struct MultiSelectionSummary: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionMultiSelectionEditorModel
 
   var body: some View {
     let selectedEntities = appState.selectedEntities
@@ -472,7 +556,7 @@ struct MultiSelectionSummary: View {
       SharedStyleSelectionField(
         selectedStyleID: nil,
         sharedStyles: appState.sharedStyles,
-        onChange: { appState.setSelectedEntitiesSharedStyle($0) }
+        onChange: { appState.setSharedStyle($0) }
       )
 
       Text(AppStrings.tr("inspector.batch_actions"))
@@ -481,7 +565,7 @@ struct MultiSelectionSummary: View {
 
       HStack(spacing: 8) {
         Button(role: .destructive) {
-          appState.deleteSelectedEntity()
+          appState.delete()
         } label: {
           Label(AppStrings.tr("common.delete"), systemImage: "trash")
             .frame(maxWidth: .infinity)
@@ -528,7 +612,7 @@ struct MultiSelectionSummary: View {
 }
 
 struct ConstraintValueEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionConstraintEditorModel
   let constraint: ProjectConstraint
 
   var body: some View {
@@ -570,9 +654,9 @@ struct ConstraintValueEditor: View {
       return false
     }
     if constraint.rawKind == "angle" {
-      return appState.setConstraintDegrees(constraint, value)
+      return appState.setDegrees(constraint, value)
     }
-    return appState.setConstraintValue(constraint, value)
+    return appState.setValue(constraint, value)
   }
 
   private func assignParameter(_ parameterID: String) {
@@ -583,12 +667,12 @@ struct ConstraintValueEditor: View {
     guard let parameter = appState.parameters.first(where: { $0.id == parameterID }) else {
       return
     }
-    _ = appState.setConstraintParameter(constraint, parameter)
+    _ = appState.setParameter(constraint, parameter)
   }
 }
 
 struct DerivedElementEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionDerivedElementEditorModel
   let derivedElement: ProjectDerivedElement
 
   var body: some View {
@@ -627,7 +711,7 @@ struct DerivedElementEditor: View {
           AppStrings.tr("inspector.direction"),
           selection: Binding(
             get: { derivedElement.direction },
-            set: { _ = appState.setDerivedElementDirection(derivedElement, $0) }
+            set: { _ = appState.setDirection(derivedElement, $0) }
           )
         ) {
           ForEach(OffsetDirection.allCases) { direction in
@@ -637,7 +721,7 @@ struct DerivedElementEditor: View {
         .font(.system(size: 12))
 
         Button {
-          _ = appState.reverseDerivedElementDirection(derivedElement)
+          _ = appState.reverseDirection(derivedElement)
         } label: {
           Label(AppStrings.tr("inspector.reverse_direction"), systemImage: "arrow.left.arrow.right")
             .frame(maxWidth: .infinity)
@@ -671,7 +755,7 @@ struct DerivedElementEditor: View {
     guard let value = Double(valueText) else {
       return false
     }
-    return appState.setDerivedElementDistance(derivedElement, value)
+    return appState.setDistance(derivedElement, value)
   }
 
   private func assignParameter(_ parameterID: String) {
@@ -682,12 +766,12 @@ struct DerivedElementEditor: View {
     guard let parameter = appState.parameters.first(where: { $0.id == parameterID }) else {
       return
     }
-    _ = appState.setDerivedElementParameter(derivedElement, parameter)
+    _ = appState.setParameter(derivedElement, parameter)
   }
 }
 
 struct RoundHoleEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionRoundHoleEditorModel
   let roundHole: ProjectRoundHole
   let entity: CanvasEntity
 
@@ -697,7 +781,7 @@ struct RoundHoleEditor: View {
         AppStrings.tr("inspector.round_hole_kind"),
         selection: Binding(
           get: { currentRoundHole.kind },
-          set: { _ = appState.setSelectedRoundHoleKind($0) }
+          set: { _ = appState.setKind($0) }
         )
       ) {
         ForEach(ProjectRoundHoleKind.allCases) { kind in
@@ -739,12 +823,12 @@ struct RoundHoleEditor: View {
     guard let value = Double(text) else {
       return false
     }
-    return appState.setSelectedRoundHoleDiameter(value)
+    return appState.setDiameter(value)
   }
 }
 
 struct EntityGeometryEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: SelectionEntityGeometryEditorModel
   let entity: CanvasEntity
 
   var body: some View {
@@ -758,7 +842,7 @@ struct EntityGeometryEditor: View {
           onCommit: commitLineLength
         )
         Button {
-          appState.constrainSelectedLineLength()
+          appState.constrainLineLength()
         } label: {
           Label(AppStrings.tr("inspector.constrain_current_length"), systemImage: "link")
             .frame(maxWidth: .infinity)
@@ -854,7 +938,7 @@ struct EntityGeometryEditor: View {
     guard let value = Double(text) else {
       return false
     }
-    return appState.setSelectedLineLength(value)
+    return appState.setLineLength(value)
   }
 
   private func commitCircleRadius(_ text: String) -> Bool {
@@ -864,7 +948,7 @@ struct EntityGeometryEditor: View {
     guard let value = Double(text) else {
       return false
     }
-    return appState.setSelectedCircleRadius(value)
+    return appState.setCircleRadius(value)
   }
 
   private func commitArcRadius(_ text: String) -> Bool {
@@ -874,7 +958,7 @@ struct EntityGeometryEditor: View {
     guard let value = Double(text), let currentArcValues else {
       return false
     }
-    return appState.setSelectedArc(value, currentArcValues.start, currentArcValues.sweep)
+    return appState.setArc(value, currentArcValues.start, currentArcValues.sweep)
   }
 
   private func commitArcSweep(_ text: String) -> Bool {
@@ -884,7 +968,7 @@ struct EntityGeometryEditor: View {
     guard let value = Double(text), let currentArcValues else {
       return false
     }
-    return appState.setSelectedArc(
+    return appState.setArc(
       currentArcValues.radius, currentArcValues.start, degreesToRadians(value))
   }
 
@@ -895,7 +979,7 @@ struct EntityGeometryEditor: View {
     guard let value = Double(text), let currentArcValues else {
       return false
     }
-    return appState.setSelectedArc(
+    return appState.setArc(
       currentArcValues.radius, degreesToRadians(value), currentArcValues.sweep)
   }
 

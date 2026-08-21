@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct WorkspaceInspector: View {
-  let appState: InspectorFeatureModel
+  let model: InspectorPanelModel
   let width: CGFloat
 
   var body: some View {
-    InspectorPanel(appState: appState)
+    InspectorPanel(model: model)
       .frame(width: width)
       .background(MacVisualEffectBackground(style: .sidebar))
       .overlay(alignment: .leading) {

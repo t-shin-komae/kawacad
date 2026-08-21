@@ -161,11 +161,12 @@ struct WorkspaceViewState {
   let toolbarState: CADToolbarState
   let documentHeaderState: DocumentHeaderState
   let toolPaletteState: ToolPaletteState
-  let canvasState: LeatherCanvasState
+  let canvasRenderInput: LeatherCanvasRenderInput
+  let canvasInteractionInput: LeatherCanvasInteractionInput
   let constraintEntryHUDState: ConstraintEntryHUDState
   let canvasStatusBarState: CanvasStatusBarState
   let bottomWorkbenchState: BottomWorkbenchState
-  let inspectorFeatureModel: InspectorFeatureModel
+  let inspectorPanelModel: InspectorPanelModel
   let layerDeletionDialogState: LayerDeletionDialogState
   let outputRequestSheetState: OutputRequestSheetState
   let recoveryChooserState: RecoveryChooserState
@@ -188,7 +189,7 @@ struct WorkspaceViewActions {
   let toolbarActions: CADToolbarActions
   let documentHeaderActions: DocumentHeaderActions
   let toolPaletteActions: ToolPaletteActions
-  let canvasActions: LeatherCanvasActions
+  let canvasActionGroups: LeatherCanvasActionGroups
   let constraintEntryHUDActions: ConstraintEntryHUDActions
   let canvasStatusBarActions: CanvasStatusBarActions
   let layerDeletionDialogActions: LayerDeletionDialogActions
@@ -208,4 +209,31 @@ struct WorkspaceViewActions {
   let dismissPresentedError: () -> Void
   let selectPastePlacement: (PastePlacementMode) -> Void
   let dismissPasteOptions: () -> Void
+}
+
+struct WorkspaceCanvasSurfaceState {
+  let canvasRenderInput: LeatherCanvasRenderInput
+  let canvasInteractionInput: LeatherCanvasInteractionInput
+  let constraintEntryHUDState: ConstraintEntryHUDState
+  let pasteOptionsPresentation: PasteOptionsPresentation?
+}
+
+struct WorkspaceCanvasSurfaceActions {
+  let canvasActionGroups: LeatherCanvasActionGroups
+  let constraintEntryHUDActions: ConstraintEntryHUDActions
+  let selectPastePlacement: (PastePlacementMode) -> Void
+  let dismissPasteOptions: () -> Void
+}
+
+struct WorkspaceCanvasLayoutState {
+  let inspectorPanelWidth: CGFloat
+  let inspectorPanelVisible: Bool
+  let compactDrawer: CompactDrawer?
+  let toolPaletteState: ToolPaletteState
+}
+
+struct WorkspaceCanvasLayoutActions {
+  let setInspectorPanelWidth: (CGFloat) -> Void
+  let showCompactDrawer: (CompactDrawer?) -> Void
+  let toolPaletteActions: ToolPaletteActions
 }

@@ -26,10 +26,12 @@ export function useDocumentPresentation() {
     confirmationResolver.current = undefined;
     setDocumentSaveConfirmation(undefined);
   }, []);
+  const clearLayerDeletionConfirmation = useCallback(() => setLayerDeletionConfirmation(undefined), []);
 
   return {
     layerDeletionConfirmation,
     setLayerDeletionConfirmation,
+    clearLayerDeletionConfirmation,
     documentWarning,
     setDocumentWarning,
     allowWindowClose,

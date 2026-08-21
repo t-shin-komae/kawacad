@@ -14,58 +14,78 @@ import {
   type PointMm,
 } from "@/features/canvas/domain/cad";
 import { toolNames as names } from "@/features/canvas/domain/workspaceTools";
+import { canvasMetrics } from "@/features/canvas/domain/canvasMetrics";
 import { useCanvasPointerActionCallbacks } from "@/features/canvas/actions/useCanvasPointerActionCallbacks";
 import { useCanvasPointActionCallbacks } from "@/features/canvas/actions/useCanvasPointActionCallbacks";
 import { useConstraintActions } from "@/features/constraints/actions/useConstraintActions";
-import type { CanvasActionContext } from "@/app/actions/useActionRuntime";
+import type { CanvasProjection, State } from "@/shared/domain/coreWireTypes";
+import type { CanvasPresentation } from "@/features/canvas/state/useCanvasPresentation";
 
 type SetDocumentViewMode = (viewMode: CanvasViewMode, activeTool?: Tool) => void;
 
-type CanvasActionDependencies = {
+export type CanvasActionDependencies = {
+  document: {
+    state: State | undefined;
+    command: (kind: string, payload: unknown, success: string) => Promise<State | undefined>;
+    applyState: (next: State) => State;
+    presentOperationFailure: (error: unknown, operation: string, commandKind?: string) => void;
+    clearCanvasPreview: () => void;
+    previewCommand: (command: unknown, success: string) => void;
+    setMessage: (message: string) => void;
+  };
+  render: {
+    snapEnabled: boolean;
+    pointSnapEnabled: boolean;
+    visibleEntities: import("@/features/canvas/domain/cad").RawEntity[];
+    canvasProjection: CanvasProjection;
+    measurementLabels: Record<string, string>;
+    measurementLabelOffsets: Record<string, PointMm>;
+    measurementArcCounterclockwise: Record<string, boolean>;
+    dimensionLabels: Record<string, string>;
+    dimensionLabelOffsets: Record<string, PointMm>;
+    dimensionArcCounterclockwise: Record<string, boolean>;
+  };
+  externalSelection: {
+    clearInspectorSelectedPart: () => void;
+    clearPartOriginSelection: () => void;
+    settingPartOriginId: string | undefined;
+    inspectorSelectedPartId: string | undefined;
+  };
   clearTransientCanvasState: () => void;
   setDocumentViewMode: SetDocumentViewMode;
 };
 
 /** Canvas actions compose selection, snapping, pointer input, and drawing. */
-export function useCanvasActions(context: CanvasActionContext, dependencies: CanvasActionDependencies) {
+export function useCanvasActions(canvas: CanvasPresentation, dependencies: CanvasActionDependencies) {
   const {
-    state,
-    clearCanvasPreview,
+    beginFreeTextEdit,
     tool,
+    setTool,
+    selected,
+    setSelected,
+    selectedFreeTextId,
+    setSelectedFreeTextId,
+    selectedConstraintId,
+    setSelectedConstraintId,
+    selectedMeasurementId,
+    setSelectedMeasurementId,
+    selectedStitchStartPointId,
+    setSelectedStitchStartPointId,
+    viewport,
     setViewport,
     cursorPoint,
-    setSelected,
-    setHoveredConstraintId,
-    setPendingTargets,
-    setPendingConstraintValue,
-    setPendingDerivedValue,
-    setDraft,
     setCursorPoint,
-    setContextMenu,
-    setSelectedFreeTextId,
-    setSelectedConstraintId,
-    setSelectedMeasurementId,
-    setSelectedStitchStartPointId,
-    setEditingFreeTextId,
-    setInspectorSelectedPartId,
-    setTool,
-    setMessage,
     activeLayer,
     activeStyle,
-    snapEnabled,
-    pointSnapEnabled,
-    visibleEntities,
-    selected,
-    pendingTargets,
-    pendingDerivedValue,
     roundDiameter,
     roundKind,
-    canvasProjection,
-    measurementLabels,
-    measurementLabelOffsets,
-    dimensionLabels,
-    dimensionLabelOffsets,
-    settingPartOriginId,
+    setContextMenu,
+    setHoveredConstraintId,
+    setSnapSuppressed,
+    setSnapActive,
+    setDragDuplicating,
+    setMarqueeCurrent,
+    setHoveredTargetEntityId,
     pan,
     marquee,
     move,
@@ -73,10 +93,34 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
     measurementMove,
     dimensionMove,
     freeTextMove,
+    pendingTargets,
+    setPendingTargets,
+    pendingConstraintValue,
+    setPendingConstraintValue,
+    pendingDerivedValue,
+    setPendingDerivedValue,
+    draft,
+    setDraft,
     arcSweepAngle,
     lineStartSnap,
-    draft,
-  } = context;
+  } = canvas;
+  const { document: documentInput, render: renderInput, externalSelection } = dependencies;
+  const { command, applyState, presentOperationFailure, clearCanvasPreview, previewCommand, setMessage } =
+    documentInput;
+  const {
+    snapEnabled,
+    pointSnapEnabled,
+    visibleEntities,
+    canvasProjection,
+    measurementLabels,
+    measurementLabelOffsets,
+    measurementArcCounterclockwise,
+    dimensionLabels,
+    dimensionLabelOffsets,
+    dimensionArcCounterclockwise,
+  } = renderInput;
+  const { clearInspectorSelectedPart, clearPartOriginSelection, settingPartOriginId } = externalSelection;
+  const state = documentInput.state;
   const { clearTransientCanvasState, setDocumentViewMode } = dependencies;
 
   const selectTool = useCallback(
@@ -110,22 +154,22 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
   const snap = useCallback(
     (point: PointMm) => {
       const gridPoint = snapToGrid(point, snapEnabled);
-      return pointSnapEnabled ? snapToEntityPoint(gridPoint, visibleEntities, context.viewport) : gridPoint;
+      return pointSnapEnabled ? snapToEntityPoint(gridPoint, visibleEntities, viewport) : gridPoint;
     },
-    [context.viewport, pointSnapEnabled, snapEnabled, visibleEntities],
+    [pointSnapEnabled, snapEnabled, viewport, visibleEntities],
   );
   const snapWithTarget = useCallback(
     (point: PointMm, enabled: boolean) => {
       if (!enabled) return { point, target: undefined };
       const snapped = snap(point);
-      const target = pointSnapEnabled ? hitConstraintTarget(snapped, visibleEntities, context.viewport) : undefined;
+      const target = pointSnapEnabled ? hitConstraintTarget(snapped, visibleEntities, viewport) : undefined;
       return { point: snapped, target: target && "controlPoint" in target ? target : undefined };
     },
-    [context.viewport, pointSnapEnabled, snap, visibleEntities],
+    [pointSnapEnabled, snap, viewport, visibleEntities],
   );
   const addGesture = useCallback(
     (gesture: Record<string, unknown>, gestureConstraints: Record<string, unknown> = {}) =>
-      context.command(
+      command(
         "createEntityFromGesture",
         {
           id: `entity:${crypto.randomUUID()}`,
@@ -136,13 +180,105 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
         },
         appStrings.app.entityCreated(names[tool]),
       ),
-    [activeLayer, activeStyle, context.command, tool],
+    [activeLayer, activeStyle, command, tool],
   );
 
-  const constraintActions = useConstraintActions(context, selectTool);
-  const pointerActions = useCanvasPointerActionCallbacks({ ...context, snap });
+  const constraintActions = useConstraintActions(
+    {
+      state,
+      command,
+      applyState,
+      presentOperationFailure,
+      setPendingConstraintValue,
+      setPendingDerivedValue,
+      setMessage,
+      setSelected,
+      activeLayer,
+      activeStyle,
+      selected,
+      tool,
+      pendingDerivedValue,
+    },
+    selectTool,
+  );
+  const pointerActions = useCanvasPointerActionCallbacks({
+    state,
+    tool,
+    draft,
+    canvasProjection,
+    viewport,
+    arcSweepAngle,
+    move,
+    controlMove,
+    pan,
+    marquee,
+    setHoveredConstraintId,
+    setSnapSuppressed,
+    setSnapActive,
+    setDragDuplicating,
+    setMarqueeCurrent,
+    setHoveredTargetEntityId,
+    setCursorPoint,
+    previewCommand,
+    clearCanvasPreview,
+    setViewport,
+    setMessage,
+    visibleEntities,
+    pendingTargets,
+    setSelected,
+    command,
+    measurementMove,
+    dimensionMove,
+    freeTextMove,
+    snap,
+  });
   const pointActions = useCanvasPointActionCallbacks({
-    ...context,
+    state,
+    command,
+    tool,
+    selected,
+    pendingTargets,
+    pendingDerivedValue,
+    visibleEntities,
+    viewport,
+    canvasProjection,
+    measurementLabels,
+    measurementLabelOffsets,
+    measurementArcCounterclockwise,
+    dimensionLabels,
+    dimensionLabelOffsets,
+    dimensionArcCounterclockwise,
+    draft,
+    cursorPoint,
+    roundDiameter,
+    roundKind,
+    activeLayer,
+    settingPartOriginId,
+    clearPartOriginSelection,
+    setSelected,
+    setSelectedFreeTextId,
+    setSelectedConstraintId,
+    setSelectedMeasurementId,
+    setSelectedStitchStartPointId,
+    beginFreeTextEdit,
+    clearInspectorSelectedPart,
+    setMessage,
+    setSnapSuppressed,
+    setDragDuplicating,
+    setPendingTargets,
+    setPendingDerivedValue,
+    setDraft,
+    setCursorPoint,
+    lineStartSnap,
+    arcSweepAngle,
+    pan,
+    measurementMove,
+    dimensionMove,
+    freeTextMove,
+    controlMove,
+    move,
+    marquee,
+    clearCanvasPreview,
     activeStyleId: activeStyle || null,
     snapWithTarget,
     addGesture,
@@ -157,12 +293,12 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
       setSelectedConstraintId(undefined);
       setSelectedMeasurementId(undefined);
       setSelectedStitchStartPointId(undefined);
-      setInspectorSelectedPartId(undefined);
-      setEditingFreeTextId(freeTextId);
+      clearInspectorSelectedPart();
+      beginFreeTextEdit(freeTextId);
     },
     [
-      setEditingFreeTextId,
-      setInspectorSelectedPartId,
+      beginFreeTextEdit,
+      clearInspectorSelectedPart,
       setSelected,
       setSelectedConstraintId,
       setSelectedFreeTextId,
@@ -174,8 +310,11 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
   const handleCanvasWheel = useCallback(
     (event: React.WheelEvent<HTMLCanvasElement>) => {
       event.preventDefault();
-      const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
-      setViewport((value) => ({ ...value, zoom: Math.max(0.5, Math.min(3, value.zoom * factor)) }));
+      const factor = event.deltaY < 0 ? canvasMetrics.zoomWheelFactor : 1 / canvasMetrics.zoomWheelFactor;
+      setViewport((value) => ({
+        ...value,
+        zoom: Math.max(canvasMetrics.zoomMinimum, Math.min(canvasMetrics.zoomMaximum, value.zoom * factor)),
+      }));
     },
     [setViewport],
   );
@@ -188,7 +327,7 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
         setSelectedConstraintId(undefined);
         setSelectedMeasurementId(undefined);
         setSelectedStitchStartPointId(undefined);
-        setInspectorSelectedPartId(undefined);
+        clearInspectorSelectedPart();
       };
       const position = (selectionKind: "measurement" | "constraint" | "freeText" | "entity" | "none") => ({
         x: event.nativeEvent.offsetX,
@@ -196,7 +335,14 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
         point,
         selectionKind,
       });
-      const measurementId = hitProjectedAnnotation(point, canvasProjection.measurementAnnotations, context.viewport);
+      const measurementId = hitProjectedAnnotation(
+        point,
+        canvasProjection.measurementAnnotations.map((item) => ({
+          ...item,
+          arcCounterclockwise: measurementArcCounterclockwise[item.id],
+        })),
+        viewport,
+      );
       if (measurementId) {
         clearSelection();
         setSelectedMeasurementId(measurementId);
@@ -205,11 +351,14 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
       }
       const dimensionConstraintId = hitProjectedAnnotation(
         point,
-        canvasProjection.dimensionConstraints,
-        context.viewport,
+        canvasProjection.dimensionConstraints.map((item) => ({
+          ...item,
+          arcCounterclockwise: dimensionArcCounterclockwise[item.id],
+        })),
+        viewport,
       );
       const constraintId =
-        dimensionConstraintId ?? hitConstraintMarker(point, canvasProjection.constraintMarkers, context.viewport);
+        dimensionConstraintId ?? hitConstraintMarker(point, canvasProjection.constraintMarkers, viewport);
       if (constraintId) {
         clearSelection();
         setSelectedConstraintId(constraintId);
@@ -223,7 +372,7 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
         setContextMenu(position("freeText"));
         return;
       }
-      const hit = hitEntity(point, visibleEntities, context.viewport);
+      const hit = hitEntity(point, visibleEntities, viewport);
       if (hit) {
         clearSelection();
         setSelected(new Set([hit]));
@@ -237,9 +386,11 @@ export function useCanvasActions(context: CanvasActionContext, dependencies: Can
       canvasProjection.constraintMarkers,
       canvasProjection.dimensionConstraints,
       canvasProjection.measurementAnnotations,
-      context.viewport,
+      viewport,
+      dimensionArcCounterclockwise,
+      measurementArcCounterclockwise,
       setContextMenu,
-      setInspectorSelectedPartId,
+      clearInspectorSelectedPart,
       setSelected,
       setSelectedConstraintId,
       setSelectedFreeTextId,

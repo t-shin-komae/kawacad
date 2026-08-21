@@ -2,28 +2,39 @@ import AppKit
 import KawaCADOutput
 import SwiftUI
 
-/// Rendering responsibilities extracted from the input-oriented canvas view.
-/// The view still owns lifecycle and callbacks; this extension owns the
-/// projection of the current immutable canvas snapshot into AppKit drawing.
-extension LeatherCanvasView {
-  func drawConstraintMarkers(in pageRect: CGRect) {
-    guard !isOutputPreviewMode else {
-      return
-    }
+/// Draws constraint markers from an immutable canvas snapshot.
+struct CanvasConstraintMarkerRenderer {
+  struct Input {
+    let constraints: [ProjectConstraint]
+    let anchors: [ResolvedCanvasPoint]
+    let coordinateSpace: CanvasCoordinateSpace
+    let selectedConstraintID: String?
+    let hoveredConstraintID: String?
+  }
+
+  let input: Input
+
+  func draw(in pageRect: CGRect) {
     let markers = ConstraintMarkerLayout.markers(
-      constraints: documentConstraints,
-      anchors: canvasProjection.constraintMarkers
+      constraints: input.constraints,
+      anchors: input.anchors
     )
     for marker in markers {
       let highlighted =
-        marker.constraintID == selectedConstraintID || marker.constraintID == hoveredConstraintID
+        marker.constraintID == input.selectedConstraintID
+        || marker.constraintID == input.hoveredConstraintID
       drawConstraintMarker(marker, highlighted: highlighted, in: pageRect)
     }
   }
 
   func drawConstraintMarker(_ marker: ConstraintMarker, highlighted: Bool, in pageRect: CGRect) {
-    let hitRect = constraintMarkerRect(marker, in: pageRect)
-    let visualRect = constraintMarkerVisualRect(marker, in: pageRect)
+    let hitRect = CanvasLayout.constraintMarkerRect(
+      position: marker.position,
+      stackIndex: marker.stackIndex,
+      in: input.coordinateSpace
+    )
+    let visualRect = hitRect.insetBy(
+      dx: CanvasLayout.constraintMarkerInset, dy: CanvasLayout.constraintMarkerInset)
 
     if highlighted {
       NSColor(calibratedRed: 0.867, green: 0.337, blue: 0.082, alpha: 0.90).setFill()
@@ -277,6 +288,24 @@ extension LeatherCanvasView {
     }
   }
 
+}
+
+extension LeatherCanvasView {
+  func drawConstraintMarkers(in pageRect: CGRect) {
+    guard !isOutputPreviewMode else {
+      return
+    }
+    CanvasConstraintMarkerRenderer(
+      input: CanvasConstraintMarkerRenderer.Input(
+        constraints: documentConstraints,
+        anchors: canvasProjection.constraintMarkers,
+        coordinateSpace: coordinateSpace(in: pageRect),
+        selectedConstraintID: selectedConstraintID,
+        hoveredConstraintID: hoveredConstraintID
+      )
+    ).draw(in: pageRect)
+  }
+
   func dimensionLabel(for constraint: ProjectConstraint) -> String? {
     func axisLabel(_ base: String) -> String {
       switch constraint.rawKind {
@@ -302,5 +331,4 @@ extension LeatherCanvasView {
     }
     return nil
   }
-
 }

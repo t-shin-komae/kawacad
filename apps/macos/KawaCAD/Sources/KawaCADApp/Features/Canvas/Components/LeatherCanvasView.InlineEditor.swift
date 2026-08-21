@@ -42,7 +42,7 @@ extension LeatherCanvasView {
   }
 
   func displayFreeText(_ freeText: ProjectFreeText) -> ProjectFreeText {
-    guard let dragState = freeTextDragState,
+    guard let dragState = interactionSnapshot().freeTextDragState,
       dragState.freeTextID == freeText.id
     else {
       return freeText
@@ -58,7 +58,7 @@ extension LeatherCanvasView {
   }
 
   var contextMenuFreeText: ProjectFreeText? {
-    contextMenuFreeTextID.flatMap { freeTextID in
+    interactionSnapshot().contextMenuFreeTextID.flatMap { freeTextID in
       freeTexts.first(where: { $0.id == freeTextID })
     }
   }
@@ -101,10 +101,10 @@ extension LeatherCanvasView {
         return max(9.0, freeText.fontSizeMM * self.coordinateSpace(in: pageRect).scale)
       },
       updateFreeText: { [weak self] freeText in
-        self?.onUpdateFreeText?(freeText) ?? false
+        self?.commandExecutor.updateFreeText(freeText) ?? false
       },
       requestHandled: { [weak self] requestID in
-        self?.onFreeTextInlineEditRequestHandled?(requestID)
+        self?.commandExecutor.freeTextInlineEditRequestHandled(requestID)
       }
     )
   }

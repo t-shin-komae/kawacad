@@ -13,7 +13,7 @@ import {
 import type { PastePlacementMode } from "@/features/document/components/PasteOptionsOverlay";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
 import { useDocumentActionCallbacks } from "@/features/document/actions/useDocumentActionCallbacks";
-import type { DocumentActionContext } from "@/app/actions/useActionRuntime";
+import type { DocumentActionInput } from "@/features/document/actions/documentActionTypes";
 import {
   defaultLayerName,
   defaultParameter,
@@ -21,119 +21,51 @@ import {
   defaultUserLayer,
 } from "@/features/document/domain/documentDefaults";
 
-export function useDocumentActions(context: DocumentActionContext, resetInspectorPresentation: () => void) {
+export function useDocumentActions(context: DocumentActionInput, resetInspectorPresentation: () => void) {
   const {
     state,
     run,
     command,
-    clearCanvasPreview,
-    cursorPoint,
-    setLayerDeletionConfirmation,
+    onDocumentLoaded,
+    onHistoryRestored,
+    canvas: { cursorPoint, activeStyle, startPastePlacement, clearPastePlacement, clearFreeTextEdit },
+    showLayerDeletionConfirmation,
+    clearLayerDeletionConfirmation,
     presentOperationFailure,
-    setSelected,
-    clearAnnotationSelection,
-    setEditingFreeTextId,
-    setHoveredConstraintId,
-    setSnapSuppressed,
-    setSnapActive,
-    setDragDuplicating,
-    setMarqueeCurrent,
-    setHoveredTargetEntityId,
-    setPendingTargets,
-    setPendingConstraintValue,
-    setPendingDerivedValue,
-    setPendingTextEntry,
-    setDraft,
-    setCursorPoint,
-    setPasteOptions,
-    setInspectorSelectedPartId,
-    setSettingPartOriginId,
-    setCompactDrawer,
-    setActiveLayer,
-    setActiveStyle,
-    setTool,
+    selection: {
+      entityIDs: selected,
+      replaceEntitySelection: selectEntities,
+      annotation: selectedAnnotation,
+      clearAnnotationSelection,
+    },
+    presentTextEntry,
+    clearPendingTextEntry,
     setMessage,
-    activeStyle,
-    selected,
     clipboard,
-    setClipboard,
+    storeSelectionExport,
     pasteOptions,
     pasteSequence,
-    setPasteSequence,
-    selectedFreeTextId,
-    selectedConstraintId,
-    selectedMeasurementId,
-    selectedStitchStartPointId,
-    setSelectedFreeTextId,
-    setSelectedConstraintId,
-    setSelectedMeasurementId,
-    setSelectedStitchStartPointId,
-    arcSweepAngle,
-    lineStartSnap,
+    advancePasteSequence,
     layerDeletionConfirmation,
   } = context;
-  const clearTransientCanvasState = useCallback(() => {
-    clearCanvasPreview();
-    setSelected(new Set());
-    clearAnnotationSelection();
-    setEditingFreeTextId(undefined);
-    setHoveredConstraintId(undefined);
-    setSnapSuppressed(false);
-    setSnapActive(false);
-    setDragDuplicating(false);
-    setMarqueeCurrent(undefined);
-    setHoveredTargetEntityId(undefined);
-    setPendingTargets([]);
-    setPendingConstraintValue(undefined);
-    setPendingDerivedValue(undefined);
-    setDraft([]);
-    lineStartSnap.current = undefined;
-    arcSweepAngle.current = undefined;
-  }, [clearAnnotationSelection, clearCanvasPreview]);
   const openTextEntry = useCallback(
     (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => {
-      setPendingTextEntry({ title, fields, onConfirm });
+      presentTextEntry({ title, fields, onConfirm });
     },
-    [],
+    [presentTextEntry],
   );
   const resetLoadedDocumentPresentation = useCallback(
     (next: State) => {
-      clearCanvasPreview();
-      setTool("select");
-      setSelected(new Set());
-      clearAnnotationSelection();
-      setEditingFreeTextId(undefined);
-      setHoveredConstraintId(undefined);
-      setSnapSuppressed(false);
-      setSnapActive(false);
-      setDragDuplicating(false);
-      setMarqueeCurrent(undefined);
-      setHoveredTargetEntityId(undefined);
-      setPendingTargets([]);
-      setPendingConstraintValue(undefined);
-      setPendingDerivedValue(undefined);
-      setPendingTextEntry(undefined);
-      setDraft([]);
-      setCursorPoint(undefined);
-      setPasteOptions(undefined);
-      setInspectorSelectedPartId(undefined);
-      setSettingPartOriginId(undefined);
-      setCompactDrawer(undefined);
-      setActiveLayer(
-        next.layers.some((layer) => layer.id === "layer:cut-line") ? "layer:cut-line" : (next.layers[0]?.id ?? ""),
-      );
-      setActiveStyle(
-        next.sharedStyles.some((style) => style.id === "style:outer-cut-line")
-          ? "style:outer-cut-line"
-          : (next.sharedStyles[0]?.id ?? ""),
-      );
+      onDocumentLoaded(next);
+      clearPendingTextEntry();
+      clearPastePlacement();
       resetInspectorPresentation();
     },
-    [clearAnnotationSelection, clearCanvasPreview, resetInspectorPresentation],
+    [clearPendingTextEntry, onDocumentLoaded, clearPastePlacement, resetInspectorPresentation],
   );
   const documentActions = useDocumentActionCallbacks({
     ...context,
-    clearTransientCanvasState,
+    onHistoryRestored,
     openTextEntry,
     resetLoadedDocumentPresentation,
   });
@@ -172,7 +104,7 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
         );
         const affectedCount = impact.entityCount + impact.derivedElementCount;
         if (affectedCount) {
-          setLayerDeletionConfirmation({ id: layer.id, name: layer.name, affectedCount });
+          showLayerDeletionConfirmation({ id: layer.id, name: layer.name, affectedCount });
           setMessage(appStrings.status.layerDeletionAffectsGeometry(layer.name));
         } else {
           void command("deleteLayer", layer.id, appStrings.app.layerDeleted);
@@ -181,7 +113,7 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
         presentOperationFailure(new Error(appStrings.status.layerDeletionCheckFailed(error)), "inspectLayerDeletion");
       }
     },
-    [command, state?.layers.length],
+    [command, showLayerDeletionConfirmation, state?.layers.length],
   );
   const addParameter = useCallback(() => {
     const number = (state?.parameters.length ?? 0) + 1;
@@ -258,24 +190,16 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     [activeStyleId, command, selected, state?.drawingEntityMetadata],
   );
   const deleteSelection = useCallback(() => {
-    if (selectedMeasurementId) {
-      void command("deleteMeasurementAnnotation", selectedMeasurementId, appStrings.app.measurementDeleted);
-      setSelectedMeasurementId(undefined);
-      return;
-    }
-    if (selectedStitchStartPointId) {
-      void command("deleteStitchStartPoint", selectedStitchStartPointId, appStrings.app.stitchStartPointDeleted);
-      setSelectedStitchStartPointId(undefined);
-      return;
-    }
-    if (selectedConstraintId) {
-      void command("deleteConstraint", selectedConstraintId, appStrings.app.constraintDeleted);
-      setSelectedConstraintId(undefined);
-      return;
-    }
-    if (selectedFreeTextId) {
-      void command("deleteFreeText", selectedFreeTextId, appStrings.app.textDeleted);
-      setSelectedFreeTextId(undefined);
+    if (selectedAnnotation) {
+      const commandByKind = {
+        measurement: ["deleteMeasurementAnnotation", appStrings.app.measurementDeleted],
+        stitchStartPoint: ["deleteStitchStartPoint", appStrings.app.stitchStartPointDeleted],
+        constraint: ["deleteConstraint", appStrings.app.constraintDeleted],
+        freeText: ["deleteFreeText", appStrings.app.textDeleted],
+      } as const;
+      const [kind, success] = commandByKind[selectedAnnotation.kind];
+      void command(kind, selectedAnnotation.id, success);
+      clearAnnotationSelection();
       return;
     }
     if (!selected.size) return;
@@ -292,39 +216,29 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
       return [{ kind: "deleteEntity", payload: entityId }];
     });
     void command("compound", commands, appStrings.app.geometryDeleted);
-    setSelected(new Set());
-  }, [
-    command,
-    selected,
-    selectedConstraintId,
-    selectedFreeTextId,
-    selectedMeasurementId,
-    selectedStitchStartPointId,
-    state?.drawingEntityMetadata,
-  ]);
+    selectEntities(new Set());
+  }, [command, selectEntities, selected, selectedAnnotation, clearAnnotationSelection, state?.drawingEntityMetadata]);
   const copySelection = useCallback(async () => {
     if (!selected.size) return setMessage(appStrings.status.selectGeometryToCopy);
     try {
       const result = await documentAdapter.command<SelectionExport>("export_selection", {
         selection: { entityIds: [...selected] },
       });
-      setClipboard(result);
-      setPasteSequence(0);
-      setPasteOptions(undefined);
+      storeSelectionExport(result);
+      clearPastePlacement();
       setMessage(appStrings.status.copiedGeometry(selected.size));
     } catch (error) {
       presentOperationFailure(new Error(appStrings.status.copyFailed(error)), "copySelection");
     }
-  }, [selected]);
+  }, [clearPastePlacement, selected, setMessage, storeSelectionExport]);
   const cutSelection = useCallback(async () => {
     if (!selected.size) return setMessage(appStrings.status.selectGeometryToCut);
     try {
       const result = await documentAdapter.command<SelectionExport>("export_selection", {
         selection: { entityIds: [...selected] },
       });
-      setClipboard(result);
-      setPasteSequence(0);
-      setPasteOptions(undefined);
+      storeSelectionExport(result);
+      clearPastePlacement();
       await run(
         () =>
           documentAdapter.command<State>("apply_command", {
@@ -335,11 +249,11 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
           }),
         appStrings.app.geometryCut,
       );
-      setSelected(new Set());
+      selectEntities(new Set());
     } catch (error) {
       presentOperationFailure(new Error(appStrings.status.cutFailed(error)), "cutSelection");
     }
-  }, [run, selected]);
+  }, [clearPastePlacement, run, selectEntities, selected, storeSelectionExport]);
   const pasteSelection = useCallback(
     async (
       requestedPoint: PointMm | undefined = cursorPoint,
@@ -369,10 +283,10 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
       );
       if (!next) return;
       const created = next.entities.filter((entity) => !before.has(entity.id)).map((entity) => entity.id);
-      if (created.length) setSelected(new Set(created));
-      if (!replacement && activeMode === "nearSource") setPasteSequence((sequence) => sequence + 1);
+      if (created.length) selectEntities(new Set(created));
+      if (!replacement && activeMode === "nearSource") advancePasteSequence();
       if (clipboard.anchorPoint)
-        setPasteOptions({
+        startPastePlacement({
           activeMode,
           anchorPoint: anchor,
           cursorPoint: requestedPoint,
@@ -380,13 +294,22 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
           namespace,
         });
     },
-    [clipboard, command, cursorPoint, pasteSequence, state?.entities],
+    [
+      advancePasteSequence,
+      clipboard,
+      command,
+      cursorPoint,
+      pasteSequence,
+      selectEntities,
+      startPastePlacement,
+      state?.entities,
+    ],
   );
   const selectPastePlacement = useCallback(
     async (mode: PastePlacementMode) => {
       if (!pasteOptions) return;
       if (mode === pasteOptions.activeMode) {
-        setPasteOptions(undefined);
+        clearPastePlacement();
         return;
       }
       const undone = await run(() => documentAdapter.command<State>("undo"), appStrings.app.pastePositionChanged);
@@ -398,11 +321,11 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
         namespace: pasteOptions.namespace,
       });
     },
-    [pasteOptions, pasteSelection, run],
+    [clearPastePlacement, pasteOptions, pasteSelection, run],
   );
   const duplicateSelection = useCallback(async () => {
     if (!selected.size) return setMessage(appStrings.status.selectGeometryToDuplicate);
-    setPasteOptions(undefined);
+    clearPastePlacement();
     const before = new Set(state?.entities.map((entity) => entity.id) ?? []);
     const next = await command(
       "duplicateSelection",
@@ -411,29 +334,29 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     );
     if (next) {
       const created = next.entities.filter((entity) => !before.has(entity.id)).map((entity) => entity.id);
-      if (created.length) setSelected(new Set(created));
+      if (created.length) selectEntities(new Set(created));
     }
-  }, [command, selected, state?.entities]);
+  }, [clearPastePlacement, command, selectEntities, selected, state?.entities]);
   const confirmDeleteLayer = useCallback(() => {
     if (!layerDeletionConfirmation) return;
     void command("deleteLayer", layerDeletionConfirmation.id, appStrings.app.layerDeleted);
-    setLayerDeletionConfirmation(undefined);
-  }, [command, layerDeletionConfirmation, setLayerDeletionConfirmation]);
+    clearLayerDeletionConfirmation();
+  }, [clearLayerDeletionConfirmation, command, layerDeletionConfirmation]);
   const cancelDeleteLayer = useCallback(() => {
     if (!layerDeletionConfirmation) return;
-    setLayerDeletionConfirmation(undefined);
+    clearLayerDeletionConfirmation();
     setMessage(appStrings.status.layerDeletionCancelled(layerDeletionConfirmation.name));
-  }, [layerDeletionConfirmation, setLayerDeletionConfirmation, setMessage]);
+  }, [clearLayerDeletionConfirmation, layerDeletionConfirmation, setMessage]);
   const commitFreeTextEdit = useCallback(
     (freeTextId: string, content: string) => {
       const freeText = state?.freeTexts.find((item) => item.id === freeTextId);
-      setEditingFreeTextId(undefined);
+      clearFreeTextEdit();
       if (freeText && content !== freeText.content)
         void command("updateFreeText", { ...freeText, content }, appStrings.inspector.operationMessage.textUpdated);
     },
-    [command, setEditingFreeTextId, state?.freeTexts],
+    [clearFreeTextEdit, command, state?.freeTexts],
   );
-  const cancelFreeTextEdit = useCallback(() => setEditingFreeTextId(undefined), [setEditingFreeTextId]);
+  const cancelFreeTextEdit = useCallback(() => clearFreeTextEdit(), [clearFreeTextEdit]);
   const executeCommand = useCallback(
     (kind: string, payload: unknown, success: string) => {
       void command(kind, payload, success);
@@ -441,7 +364,7 @@ export function useDocumentActions(context: DocumentActionContext, resetInspecto
     [command],
   );
   return {
-    clearTransientCanvasState,
+    clearTransientCanvasState: onHistoryRestored,
     ...documentActions,
     openTextEntry,
     resetLoadedDocumentPresentation,

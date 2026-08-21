@@ -14,7 +14,14 @@ struct CanvasHitTesting {
     let hits =
       displayEntities
       .reversed()
-      .filter { hitRect(for: $0).insetBy(dx: -6, dy: -6).contains(point) }
+      .filter {
+        hitRect(for: $0)
+          .insetBy(
+            dx: -CanvasMetrics.entityCandidatePaddingPx,
+            dy: -CanvasMetrics.entityCandidatePaddingPx
+          )
+          .contains(point)
+      }
     if selectedTool == .select,
       let preferred =
         hits
@@ -56,15 +63,20 @@ struct CanvasHitTesting {
       .filter { !includeEditHandles || $0.target.controlPoint != nil }
       .filter { item in
         let canvasPoint = coordinateSpace.canvasPoint(for: item.point)
-        return CGRect(x: canvasPoint.x - 8, y: canvasPoint.y - 8, width: 16, height: 16)
-          .contains(point)
+        let halfSize = CanvasMetrics.controlPointHitSizePx / 2
+        return CGRect(
+          x: canvasPoint.x - halfSize, y: canvasPoint.y - halfSize,
+          width: CanvasMetrics.controlPointHitSizePx,
+          height: CanvasMetrics.controlPointHitSizePx
+        )
+        .contains(point)
       }
       .map(\.target)
     return hits
   }
 
   func lineTarget(at point: CGPoint) -> CanvasSelectionTarget? {
-    let tolerance: CGFloat = 8
+    let tolerance = CanvasMetrics.entityLineHitTolerancePx
     let hits =
       displayEntities
       .reversed()
@@ -172,7 +184,7 @@ struct CanvasHitTesting {
         y: min(startPoint.y, endPoint.y),
         width: abs(endPoint.x - startPoint.x),
         height: abs(endPoint.y - startPoint.y)
-      ).insetBy(dx: -8, dy: -8)
+      )
 
     case .circle(let center, let radiusMM), .arc(let center, let radiusMM, _, _):
       return rect(forCircleAt: center, radiusMM: radiusMM)

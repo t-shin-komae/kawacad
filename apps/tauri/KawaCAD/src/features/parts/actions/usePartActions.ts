@@ -4,20 +4,13 @@ import { appStrings } from "@/localization";
 import type { Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
-import type { PartActionContext } from "@/app/actions/useActionRuntime";
+import type { PartActionInput } from "@/features/parts/actions/partActionTypes";
 
 type OpenTextEntry = (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
 
 /** Part and part-library operations are owned by the part action feature. */
-export function usePartActions(context: PartActionContext, openTextEntry: OpenTextEntry) {
+export function usePartActions(context: PartActionInput, openTextEntry: OpenTextEntry) {
   const callbacks = usePartActionCallbacks({ ...context, openTextEntry });
-  const toggleArrangementPart = useCallback(
-    (partId: string) =>
-      context.setArrangementPartIds((current) =>
-        current.has(partId) ? new Set([...current].filter((id) => id !== partId)) : new Set([...current, partId]),
-      ),
-    [context.setArrangementPartIds],
-  );
   const alignParts = useCallback(
     (alignment: string) =>
       void context.command(
@@ -42,14 +35,14 @@ export function usePartActions(context: PartActionContext, openTextEntry: OpenTe
   );
   const beginSetPartOrigin = useCallback(
     (part: Part) => {
-      context.setSettingPartOriginId(part.id);
+      context.inspector.beginPartOrigin(part.id);
       context.setMessage(appStrings.status.selectPartOrigin(part.name));
     },
-    [context.setMessage, context.setSettingPartOriginId],
+    [context.inspector, context.setMessage],
   );
   return {
     ...callbacks,
-    toggleArrangementPart,
+    toggleArrangementPart: context.toggleArrangementPart,
     alignParts,
     distributeParts,
     removePartFromLibrary,

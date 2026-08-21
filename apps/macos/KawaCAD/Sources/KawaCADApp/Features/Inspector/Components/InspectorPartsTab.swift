@@ -1,16 +1,16 @@
 import SwiftUI
 
 struct InspectorPartsTab: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
+  let appState: PartInspectorModel
 
   var body: some View {
     InspectorSection(title: AppStrings.tr("inspector.parts"), symbolName: "square.stack.3d.up") {
-      if appState.parts.isEmpty {
+      if appState.data.parts.isEmpty {
         Text(AppStrings.tr("inspector.no_parts"))
           .font(.system(size: 12))
           .foregroundStyle(LeatherColors.secondaryInk)
       } else {
-        ForEach(appState.parts) { part in
+        ForEach(appState.data.parts) { part in
           InspectorDisclosureRow(
             title: part.name,
             subtitle: AppStrings.tr(
@@ -18,15 +18,15 @@ struct InspectorPartsTab: View {
             ),
             metadata: AppStrings.tr(
               "inspector.part_quantity_members", part.quantity, part.entityIDs.count),
-            isSelected: appState.inspectorSelectedPartID == part.id,
-            onSelect: { appState.selectPartContents(part) }
+            isSelected: appState.data.inspectorSelectedPartID == part.id,
+            onSelect: { appState.actions.selectPartContents(part) }
           ) {
-            PartEditor(part: part)
+            PartEditor(part: part, appState: appState)
           }
         }
       }
 
-      if !appState.parts.isEmpty {
+      if !appState.data.parts.isEmpty {
         Divider()
         Text(AppStrings.tr("inspector.part_arrangement_help"))
           .font(.system(size: 10))
@@ -43,28 +43,28 @@ struct InspectorPartsTab: View {
             ], id: \.0
           ) { item in
             Button {
-              appState.alignSelectedParts(item.0)
+              appState.actions.alignSelectedParts(item.0)
             } label: {
               Image(systemName: item.1)
             }
           }
         }
         .buttonStyle(.bordered)
-        .disabled(appState.arrangementSelectedPartIDs.count < 2)
+        .disabled(appState.data.arrangementSelectedPartIDs.count < 2)
         HStack(spacing: 8) {
           Button(AppStrings.tr("inspector.distribute_horizontal")) {
-            appState.distributeSelectedParts("horizontal")
+            appState.actions.distributeSelectedParts("horizontal")
           }
           Button(AppStrings.tr("inspector.distribute_vertical")) {
-            appState.distributeSelectedParts("vertical")
+            appState.actions.distributeSelectedParts("vertical")
           }
         }
         .buttonStyle(.bordered)
-        .disabled(appState.arrangementSelectedPartIDs.count < 3)
+        .disabled(appState.data.arrangementSelectedPartIDs.count < 3)
       }
 
       Button {
-        appState.createPartFromSelection()
+        appState.actions.createPartFromSelection()
       } label: {
         Label(
           AppStrings.tr("inspector.create_part_from_selection"),
@@ -74,16 +74,16 @@ struct InspectorPartsTab: View {
       }
       .buttonStyle(.borderedProminent)
       .font(.system(size: 12, weight: .semibold))
-      .disabled(appState.selectedEntities.isEmpty)
+      .disabled(appState.data.selectedEntities.isEmpty)
     }
 
     InspectorSection(title: AppStrings.tr("inspector.part_library"), symbolName: "books.vertical") {
-      if appState.partLibraryEntries.isEmpty {
+      if appState.data.partLibraryEntries.isEmpty {
         Text(AppStrings.tr("inspector.part_library_empty"))
           .font(.system(size: 12))
           .foregroundStyle(LeatherColors.secondaryInk)
       } else {
-        ForEach(appState.partLibraryEntries) { entry in
+        ForEach(appState.data.partLibraryEntries) { entry in
           HStack {
             VStack(alignment: .leading, spacing: 2) {
               Text(entry.name).font(.system(size: 12, weight: .semibold))
@@ -93,12 +93,12 @@ struct InspectorPartsTab: View {
             }
             Spacer()
             Button {
-              appState.insertPartFromLibrary(entry)
+              appState.actions.insertPartFromLibrary(entry)
             } label: {
               Image(systemName: "plus.square.on.square")
             }
             Button(role: .destructive) {
-              appState.removePartLibraryEntry(entry)
+              appState.actions.removePartLibraryEntry(entry)
             } label: {
               Image(systemName: "trash")
             }

@@ -6,37 +6,25 @@ import { partCanvasHighlights } from "@/features/parts/selectors/partCanvasHighl
 import type { Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import type { PendingTextEntry } from "@/features/canvas/state/useCanvasPresentation";
 import type { TextEntryField } from "@/shared/components/TextEntryDialog";
-import type { PartActionContext } from "@/app/actions/useActionRuntime";
+import type { PartActionInput } from "@/features/parts/actions/partActionTypes";
 import { partDefaultName, partLibraryPlacement } from "@/features/parts/domain/partDefaults";
 
-type PartActionDependencies = Pick<
-  PartActionContext,
-  | "state"
-  | "cursorPoint"
-  | "command"
-  | "selected"
-  | "setSelected"
-  | "setSelectedFreeTextId"
-  | "setSelectedConstraintId"
-  | "setInspectorSelectedPartId"
-  | "setMessage"
-  | "partLibrary"
-  | "updatePartLibrary"
-  | "presentOperationFailure"
-> & {
+type PartActionDependencies = Omit<PartActionInput, "arrangementPartIds" | "toggleArrangementPart"> & {
   openTextEntry: (title: string, fields: TextEntryField[], onConfirm: PendingTextEntry["onConfirm"]) => void;
 };
 
 export function usePartActionCallbacks(dependencies: PartActionDependencies) {
   const {
     state,
-    cursorPoint,
+    canvas: { cursorPoint },
     command,
-    selected,
-    setSelected,
-    setSelectedFreeTextId,
-    setSelectedConstraintId,
-    setInspectorSelectedPartId,
+    selection: {
+      selected,
+      replace: setSelected,
+      clearFreeText: setSelectedFreeTextId,
+      clearConstraint: setSelectedConstraintId,
+    },
+    inspector: { selectPart: setInspectorSelectedPartId },
     setMessage,
     partLibrary,
     updatePartLibrary,
@@ -76,8 +64,8 @@ export function usePartActionCallbacks(dependencies: PartActionDependencies) {
     (part: Part) => {
       const highlights = partCanvasHighlights(part, state?.drawingEntityMetadata ?? [], state?.stitchStartPoints ?? []);
       setSelected(highlights.entityIds);
-      setSelectedFreeTextId(undefined);
-      setSelectedConstraintId(undefined);
+      setSelectedFreeTextId();
+      setSelectedConstraintId();
       setInspectorSelectedPartId(part.id);
       setMessage(appStrings.status.partContentsSelected(part.name));
     },

@@ -1,7 +1,255 @@
+import AppKit
 import Foundation
 import KawaCADOutput
 
 @testable import KawaCADApp
+
+@MainActor
+final class CanvasTestInputBuilder {
+  var entities: [CanvasEntity] = [] { didSet { sync() } }
+  var canvasProjection = LeatherCanvasProjection(
+    visibleFreeTextIDs: [],
+    stitchStartPoints: [],
+    measurementAnnotations: [],
+    dimensionConstraints: [],
+    constraintMarkers: []
+  ) { didSet { sync() } }
+  var documentConstraints: [ProjectConstraint] = [] { didSet { sync() } }
+  var freeTexts: [ProjectFreeText] = [] { didSet { sync() } }
+  var stitchStartPoints: [ProjectStitchStartPoint] = [] { didSet { sync() } }
+  var measurementAnnotations: [ProjectMeasurementAnnotation] = [] { didSet { sync() } }
+  var measurementEvaluations: [MeasurementEvaluation] = [] { didSet { sync() } }
+  var dimensionConstraintAnnotations: [ProjectDimensionConstraintAnnotation] = [] {
+    didSet { sync() }
+  }
+  var parameters: [ProjectParameter] = [] { didSet { sync() } }
+  var derivedElements: [ProjectDerivedElement] = [] { didSet { sync() } }
+  var layers: [ProjectLayer] = [] { didSet { sync() } }
+  var sharedStyles: [ProjectSharedStyle] = [] { didSet { sync() } }
+  var coincidentPointGroups: [CoincidentPointGroup] = [] { didSet { sync() } }
+  var selectedEntityID: String? { didSet { sync() } }
+  var selectedEntityIDs: Set<String> = [] { didSet { sync() } }
+  var selectedConstraintID: String? { didSet { sync() } }
+  var selectedMeasurementAnnotationID: String? { didSet { sync() } }
+  var selectedFreeTextID: String? { didSet { sync() } }
+  var selectedStitchStartPointID: String? { didSet { sync() } }
+  var highlightedPartEntityIDs: Set<String> = [] { didSet { sync() } }
+  var highlightedPartFreeTextIDs: Set<String> = [] { didSet { sync() } }
+  var highlightedPartMeasurementAnnotationIDs: Set<String> = [] { didSet { sync() } }
+  var highlightedPartStitchStartPointIDs: Set<String> = [] { didSet { sync() } }
+  var hoveredConstraintID: String? { didSet { sync() } }
+  var pendingConstraintTargets: [CanvasSelectionTarget] = [] { didSet { sync() } }
+  var filletDraftEntityIDs: Set<String> = [] { didSet { sync() } }
+  var filletDraftClosed: Bool? { didSet { sync() } }
+  var selectedPartOrigin: ModelPoint? { didSet { sync() } }
+  var selectedTool: CanvasTool = .select { didSet { sync() } }
+  var draftStartPoint: ModelPoint? { didSet { sync() } }
+  var draftArcStartPoint: ModelPoint? { didSet { sync() } }
+  var draftCurrentPoint: ModelPoint? { didSet { sync() } }
+  var draftArcSweepAngleRad: Double? { didSet { sync() } }
+  var isSettingPartOrigin = false { didSet { sync() } }
+  var freeTextInlineEditRequestID: String? { didSet { sync() } }
+  var viewMode: CanvasViewMode = .editDisplay { didSet { sync() } }
+  var gridVisible = true { didSet { sync() } }
+  var a4ReferenceVisible = true { didSet { sync() } }
+  var a4ReferenceOrientation: OutputPrintOrientation = .portrait { didSet { sync() } }
+  var gridSnapEnabled = true { didSet { sync() } }
+  var pointSnapEnabled = true { didSet { sync() } }
+  var outputPreviewModel: OutputDocumentModel? { didSet { sync() } }
+  var zoomScale = 1.0 { didSet { sync() } }
+  var panOffset = CGSize.zero { didSet { sync() } }
+
+  var onSelectEntity: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onToggleEntitySelection: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onSelectEntities: (Set<String>, Bool) -> Void = { _, _ in } { didSet { sync() } }
+  var onSelectConstraint: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onSelectMeasurementAnnotation: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onSelectFreeText: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onSelectStitchStartPoint: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onSetPartOrigin: (ModelPoint) -> Void = { _ in } { didSet { sync() } }
+  var onUpdateFreeText: (ProjectFreeText) -> Bool = { _ in false } { didSet { sync() } }
+  var onFreeTextInlineEditRequestHandled: (String) -> Void = { _ in } { didSet { sync() } }
+  var onHoverConstraint: (String?) -> Void = { _ in } { didSet { sync() } }
+  var onSelectTarget: (CanvasSelectionTarget?) -> Void = { _ in } { didSet { sync() } }
+  var onPlacePoint: (ModelPoint, CanvasPlacementModifiers) -> Void = { _, _ in } {
+    didSet { sync() }
+  }
+  var onHoverPoint: (ModelPoint, CanvasPlacementModifiers) -> Void = { _, _ in } {
+    didSet { sync() }
+  }
+  var onCursorPoint: (ModelPoint?, CGPoint?) -> Void = { _, _ in } { didSet { sync() } }
+  var onPreviewMoveEntity: (String, ModelPoint) -> Void = { _, _ in } { didSet { sync() } }
+  var onPreviewMoveEntities: (Set<String>, ModelPoint, Bool) -> Void = { _, _, _ in } {
+    didSet { sync() }
+  }
+  var onPreviewMoveControlPoint: (CanvasSelectionTarget, ModelPoint) -> Void = { _, _ in } {
+    didSet { sync() }
+  }
+  var onCancelMovePreview: () -> Void = {} { didSet { sync() } }
+  var onMoveEntity: (String, ModelPoint) -> Void = { _, _ in } { didSet { sync() } }
+  var onMoveEntities: (Set<String>, ModelPoint, Bool) -> Void = { _, _, _ in } {
+    didSet { sync() }
+  }
+  var onMoveControlPoint: (CanvasSelectionTarget, ModelPoint) -> Void = { _, _ in } {
+    didSet { sync() }
+  }
+  var onMoveMeasurementAnnotation: (String, ModelPoint, Bool) -> Void = { _, _, _ in } {
+    didSet { sync() }
+  }
+  var onMoveDimensionConstraintAnnotation: (String, ModelPoint, Bool) -> Void = { _, _, _ in } {
+    didSet { sync() }
+  }
+  var onConvertMeasurementAnnotationToConstraint: (String) -> Void = { _ in } {
+    didSet { sync() }
+  }
+  var onSmoothSelectedArcTangenciesPrototype: () -> Void = {} { didSet { sync() } }
+  var onCancelInteraction: () -> Void = {} { didSet { sync() } }
+  var onActivateTool: (CanvasTool) -> Void = { _ in } { didSet { sync() } }
+  var onDeleteSelection: () -> Void = {} { didSet { sync() } }
+  var onPanCanvas: (CGSize) -> Void = { _ in } { didSet { sync() } }
+  var onSetCanvasViewport: (Double, CGSize, String) -> Void = { _, _, _ in } {
+    didSet { sync() }
+  }
+  var onCopySelection: () -> Void = {} { didSet { sync() } }
+  var onPasteCopiedEntity: () -> Void = {} { didSet { sync() } }
+  var onPasteCopiedEntityAtPoint: (ModelPoint) -> Void = { _ in } { didSet { sync() } }
+  var onDuplicateSelection: () -> Void = {} { didSet { sync() } }
+  var onSelectAllEntities: () -> Void = {} { didSet { sync() } }
+
+  private weak var view: LeatherCanvasView?
+
+  func makeView(frame: NSRect) -> LeatherCanvasView {
+    let view = LeatherCanvasView(
+      frame: frame,
+      renderInput: renderInput,
+      interactionInput: interactionInput,
+      actionGroups: actionGroups
+    )
+    self.view = view
+    return view
+  }
+
+  private func sync() {
+    view?.configure(
+      renderInput: renderInput,
+      interactionInput: interactionInput,
+      actionGroups: actionGroups
+    )
+  }
+
+  private var renderInput: LeatherCanvasRenderInput {
+    LeatherCanvasRenderInput(
+      document: LeatherCanvasDocumentDisplay(
+        entities: entities,
+        canvasProjection: canvasProjection,
+        constraints: documentConstraints,
+        freeTexts: freeTexts,
+        stitchStartPoints: stitchStartPoints,
+        measurementAnnotations: measurementAnnotations,
+        measurementEvaluations: measurementEvaluations,
+        dimensionConstraintAnnotations: dimensionConstraintAnnotations,
+        parameters: parameters,
+        derivedElements: derivedElements,
+        layers: layers,
+        sharedStyles: sharedStyles,
+        coincidentPointGroups: coincidentPointGroups
+      ),
+      selection: LeatherCanvasSelectionDisplay(
+        selectedEntityID: selectedEntityID,
+        selectedEntityIDs: selectedEntityIDs,
+        selectedConstraintID: selectedConstraintID,
+        selectedMeasurementAnnotationID: selectedMeasurementAnnotationID,
+        selectedFreeTextID: selectedFreeTextID,
+        selectedStitchStartPointID: selectedStitchStartPointID,
+        highlightedPartEntityIDs: highlightedPartEntityIDs,
+        highlightedPartFreeTextIDs: highlightedPartFreeTextIDs,
+        highlightedPartMeasurementAnnotationIDs: highlightedPartMeasurementAnnotationIDs,
+        highlightedPartStitchStartPointIDs: highlightedPartStitchStartPointIDs,
+        hoveredConstraintID: hoveredConstraintID,
+        pendingConstraintTargets: pendingConstraintTargets
+      ),
+      draft: LeatherCanvasDraftDisplay(
+        filletDraftEntityIDs: filletDraftEntityIDs,
+        filletDraftClosed: filletDraftClosed,
+        selectedPartOrigin: selectedPartOrigin,
+        selectedTool: selectedTool,
+        draftStartPoint: draftStartPoint,
+        draftArcStartPoint: draftArcStartPoint,
+        draftCurrentPoint: draftCurrentPoint,
+        draftArcSweepAngleRad: draftArcSweepAngleRad
+      ),
+      viewport: LeatherCanvasViewportDisplay(
+        viewMode: viewMode,
+        gridVisible: gridVisible,
+        a4ReferenceVisible: a4ReferenceVisible,
+        a4ReferenceOrientation: a4ReferenceOrientation,
+        gridSnapEnabled: gridSnapEnabled,
+        pointSnapEnabled: pointSnapEnabled,
+        outputPreviewModel: outputPreviewModel,
+        zoomScale: zoomScale,
+        panOffset: panOffset
+      )
+    )
+  }
+
+  private var interactionInput: LeatherCanvasInteractionInput {
+    LeatherCanvasInteractionInput(
+      isSettingPartOrigin: isSettingPartOrigin,
+      freeTextInlineEditRequestID: freeTextInlineEditRequestID
+    )
+  }
+
+  private var actionGroups: LeatherCanvasActionGroups {
+    LeatherCanvasActionGroups(
+      selection: LeatherCanvasSelectionActions(
+        selectEntity: onSelectEntity,
+        toggleEntitySelection: onToggleEntitySelection,
+        selectEntities: onSelectEntities,
+        selectConstraint: onSelectConstraint,
+        selectMeasurementAnnotation: onSelectMeasurementAnnotation,
+        selectFreeText: onSelectFreeText,
+        selectStitchStartPoint: onSelectStitchStartPoint,
+        hoverConstraint: onHoverConstraint,
+        selectTarget: onSelectTarget,
+        deleteSelection: onDeleteSelection,
+        selectAllEntities: onSelectAllEntities
+      ),
+      placement: LeatherCanvasPlacementActions(
+        setPartOrigin: onSetPartOrigin,
+        placePoint: onPlacePoint,
+        hoverPoint: onHoverPoint,
+        cursorPoint: onCursorPoint
+      ),
+      move: LeatherCanvasMoveActions(
+        previewMoveEntity: onPreviewMoveEntity,
+        previewMoveEntities: onPreviewMoveEntities,
+        previewMoveControlPoint: onPreviewMoveControlPoint,
+        cancelMovePreview: onCancelMovePreview,
+        moveEntity: onMoveEntity,
+        moveEntities: onMoveEntities,
+        moveControlPoint: onMoveControlPoint,
+        moveMeasurementAnnotation: onMoveMeasurementAnnotation,
+        moveDimensionConstraintAnnotation: onMoveDimensionConstraintAnnotation
+      ),
+      viewport: LeatherCanvasViewportActions(
+        panCanvas: onPanCanvas,
+        setCanvasViewport: onSetCanvasViewport
+      ),
+      editing: LeatherCanvasEditingActions(
+        updateFreeText: onUpdateFreeText,
+        freeTextInlineEditRequestHandled: onFreeTextInlineEditRequestHandled,
+        convertMeasurementAnnotationToConstraint: onConvertMeasurementAnnotationToConstraint,
+        smoothSelectedArcTangenciesPrototype: onSmoothSelectedArcTangenciesPrototype,
+        cancelInteraction: onCancelInteraction,
+        activateTool: onActivateTool,
+        copySelection: onCopySelection,
+        pasteCopiedEntity: onPasteCopiedEntity,
+        pasteCopiedEntityAtPoint: onPasteCopiedEntityAtPoint,
+        duplicateSelection: onDuplicateSelection
+      )
+    )
+  }
+}
 
 extension ModelPoint {
   static let zero = ModelPoint(xMM: 0.0, yMM: 0.0)

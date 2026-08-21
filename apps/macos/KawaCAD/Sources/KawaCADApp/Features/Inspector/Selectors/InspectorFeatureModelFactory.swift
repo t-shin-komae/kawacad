@@ -1,12 +1,10 @@
-/// Composition boundary between the AppActionHandlers and the Inspector view model.
+/// Composition boundary for the Inspector shell and its focused tab models.
 enum InspectorFeatureModelFactory {
   static func make(
     actionHandlers: AppActionHandlers,
     inspectorPresentation: InspectorPresentationState,
     canvasPresentation: CanvasPresentationState
-  ) -> InspectorFeatureModel {
-    let state = InspectorFeatureViewStateBuilder()
-    let actions = InspectorFeatureActionsBuilder()
+  ) -> InspectorPanelModel {
     let selectionSignature = InspectorViewStateFactory.selectionSignature(
       primaryEntityID: actionHandlers.canvas.selectedEntityID,
       entityIDs: actionHandlers.canvas.selectedEntityIDs,
@@ -15,151 +13,184 @@ enum InspectorFeatureModelFactory {
       selectedFreeTextID: actionHandlers.canvas.selectedFreeTextID,
       selectedStitchStartPointID: actionHandlers.canvas.selectedStitchStartPointID
     )
-    state.inspectorTab = inspectorPresentation.tab
-    state.inspectorSelectedLayerID = inspectorPresentation.selectedLayerID
-    state.inspectorSelectedSharedStyleID = inspectorPresentation.selectedSharedStyleID
-    state.inspectorSelectedParameterID = inspectorPresentation.selectedParameterID
-    state.inspectorSelectedPartID = inspectorPresentation.selectedPartID
-    state.isSettingPartOrigin = inspectorPresentation.isSettingPartOrigin
-    state.inspectorLayerSearchQuery = inspectorPresentation.layerSearchQuery
-    state.inspectorSharedStyleSearchQuery = inspectorPresentation.sharedStyleSearchQuery
-    state.inspectorParameterSearchQuery = inspectorPresentation.parameterSearchQuery
-    state.inspectorHasPendingSelectionChange =
-      InspectorViewStateFactory.hasPendingSelectionChange(
-        tab: inspectorPresentation.tab,
-        selectionSignature: selectionSignature,
-        acknowledgedSelectionSignature:
-          inspectorPresentation.acknowledgedSelectionSignature
-      )
-    state.viewMode = canvasPresentation.viewMode
-    state.activeLayerID = canvasPresentation.activeLayerID
-    state.layers = actionHandlers.document.layers
-    state.sharedStyles = actionHandlers.document.sharedStyles
-    state.parameters = actionHandlers.document.parameters
-    state.parts = actionHandlers.document.parts
-    state.arrangementSelectedPartIDs = inspectorPresentation.arrangementSelectedPartIDs
-    state.partLibraryEntries = actionHandlers.parts.partLibraryEntries
-    state.entities = actionHandlers.document.entities
-    state.constraints = actionHandlers.document.constraints
-    state.measurementAnnotations = actionHandlers.document.measurementAnnotations
-    state.freeTexts = actionHandlers.document.freeTexts
-    state.selectedEntity = actionHandlers.canvas.selectedEntity
-    state.selectedEntities = actionHandlers.canvas.selectedEntities
-    state.selectedFreeText = actionHandlers.canvas.selectedFreeText
-    state.selectedStitchStartPoint = actionHandlers.canvas.selectedStitchStartPoint
-    state.selectedConstraintID = actionHandlers.canvas.selectedConstraintID
-    state.selectedMeasurementAnnotation = actionHandlers.canvas.selectedMeasurementAnnotation
-    state.selectedDerivedElement = WorkspaceViewStateFactory.selectedDerivedElement(
-      selectedEntities: actionHandlers.canvas.selectedEntities,
-      derivedElements: actionHandlers.document.derivedElements
+    let hasPendingSelectionChange = InspectorViewStateFactory.hasPendingSelectionChange(
+      tab: inspectorPresentation.tab,
+      selectionSignature: selectionSignature,
+      acknowledgedSelectionSignature: inspectorPresentation.acknowledgedSelectionSignature
     )
-    state.selectedRoundHole = actionHandlers.canvas.selectedRoundHole
-    state.filteredInspectorLayers = InspectorViewStateFactory.filteredLayers(
-      actionHandlers.document.layers,
+    let document = actionHandlers.document
+    let canvas = actionHandlers.canvas
+    let inspector = actionHandlers.inspector
+    let parts = actionHandlers.parts
+    let filteredLayers = InspectorViewStateFactory.filteredLayers(
+      document.layers,
       query: inspectorPresentation.layerSearchQuery
     )
-    state.filteredInspectorSharedStyles =
-      InspectorViewStateFactory.filteredSharedStyles(
-        actionHandlers.document.sharedStyles,
-        query: inspectorPresentation.sharedStyleSearchQuery
-      )
-    state.filteredInspectorParameters = InspectorViewStateFactory.filteredParameters(
-      actionHandlers.document.parameters,
+    let filteredStyles = InspectorViewStateFactory.filteredSharedStyles(
+      document.sharedStyles,
+      query: inspectorPresentation.sharedStyleSearchQuery
+    )
+    let filteredParameters = InspectorViewStateFactory.filteredParameters(
+      document.parameters,
       query: inspectorPresentation.parameterSearchQuery
     )
-    state.shouldShowLayerInspectorSearch = InspectorViewStateFactory.shouldShowSearch(
-      itemCount: actionHandlers.document.layers.count,
-      explicitlyVisible: inspectorPresentation.layerSearchVisible,
-      query: inspectorPresentation.layerSearchQuery
+    let selectedDerivedElement = WorkspaceViewStateFactory.selectedDerivedElement(
+      selectedEntities: canvas.selectedEntities,
+      derivedElements: document.derivedElements
     )
-    state.shouldShowSharedStyleInspectorSearch =
-      InspectorViewStateFactory.shouldShowSearch(
-        itemCount: actionHandlers.document.sharedStyles.count,
-        explicitlyVisible:
-          inspectorPresentation.sharedStyleSearchVisible,
-        query: inspectorPresentation.sharedStyleSearchQuery
+
+    let selection = SelectionInspectorModel(
+      data: SelectionInspectorData(
+        viewMode: canvasPresentation.viewMode,
+        activeLayerID: canvasPresentation.activeLayerID,
+        layers: document.layers,
+        sharedStyles: document.sharedStyles,
+        parameters: document.parameters,
+        entities: document.entities,
+        constraints: document.constraints,
+        measurementAnnotations: document.measurementAnnotations,
+        freeTexts: document.freeTexts,
+        selectedEntity: canvas.selectedEntity,
+        selectedEntities: canvas.selectedEntities,
+        selectedFreeText: canvas.selectedFreeText,
+        selectedStitchStartPoint: canvas.selectedStitchStartPoint,
+        selectedConstraintID: canvas.selectedConstraintID,
+        selectedMeasurementAnnotation: canvas.selectedMeasurementAnnotation,
+        selectedDerivedElement: selectedDerivedElement,
+        selectedRoundHole: canvas.selectedRoundHole,
+        canConstrainSelectedLineLengthsEqual: canvas.canConstrainSelectedLineLengthsEqual
+      ),
+      actions: SelectionInspectorActions(
+        setSelectedEntitiesSharedStyle: document.setSelectedEntitiesSharedStyle,
+        setSelectedEntityLayer: document.setSelectedEntityLayer,
+        deleteSelectedEntity: canvas.deleteSelectedEntity,
+        updateFreeText: canvas.updateFreeText,
+        deleteSelectedFreeText: canvas.deleteSelectedFreeText,
+        deleteConstraint: canvas.deleteConstraint,
+        selectConstraint: canvas.selectConstraint,
+        selectFreeText: canvas.selectFreeText,
+        selectMeasurementAnnotation: canvas.selectMeasurementAnnotation,
+        deleteMeasurementAnnotation: canvas.deleteMeasurementAnnotation,
+        convertMeasurementAnnotationToConstraint: canvas.convertMeasurementAnnotationToConstraint,
+        hoverConstraint: canvas.hoverConstraint,
+        constrainSelectedLineLengthsEqual: document.constrainSelectedLineLengthsEqual,
+        setConstraintDegrees: canvas.setConstraintDegrees,
+        setConstraintValue: canvas.setConstraintValue,
+        setConstraintParameter: canvas.setConstraintParameter,
+        setDerivedElementDirection: document.setDerivedElementDirection,
+        reverseDerivedElementDirection: document.reverseDerivedElementDirection,
+        setDerivedElementDistance: document.setDerivedElementDistance,
+        setDerivedElementParameter: document.setDerivedElementParameter,
+        setSelectedRoundHoleKind: document.setSelectedRoundHoleKind,
+        setSelectedRoundHoleDiameter: document.setSelectedRoundHoleDiameter,
+        constrainSelectedLineLength: document.constrainSelectedLineLength,
+        setSelectedLineLength: document.setSelectedLineLength,
+        setSelectedCircleRadius: document.setSelectedCircleRadius,
+        setSelectedArc: document.setSelectedArc
       )
-    state.shouldShowParameterInspectorSearch =
-      InspectorViewStateFactory.shouldShowSearch(
-        itemCount: actionHandlers.document.parameters.count,
-        explicitlyVisible:
-          inspectorPresentation.parameterSearchVisible,
-        query: inspectorPresentation.parameterSearchQuery
+    )
+    let layers = LayerInspectorModel(
+      data: LayerInspectorData(
+        activeLayerID: canvasPresentation.activeLayerID,
+        layers: document.layers,
+        inspectorSelectedLayerID: inspectorPresentation.selectedLayerID,
+        inspectorLayerSearchQuery: inspectorPresentation.layerSearchQuery,
+        filteredInspectorLayers: filteredLayers,
+        shouldShowLayerInspectorSearch: InspectorViewStateFactory.shouldShowSearch(
+          itemCount: document.layers.count,
+          explicitlyVisible: inspectorPresentation.layerSearchVisible,
+          query: inspectorPresentation.layerSearchQuery
+        )
+      ),
+      actions: LayerInspectorActions(
+        setInspectorSelectedLayerID: inspectorPresentation.setSelectedLayerID,
+        setInspectorLayerSearchQuery: inspectorPresentation.setLayerSearchQuery,
+        setActiveLayer: document.setActiveLayer,
+        renameLayer: document.renameLayer,
+        setLayerVisibility: document.setLayerVisibility,
+        setLayerPrintable: document.setLayerPrintable,
+        setLayerStyle: document.setLayerStyle,
+        deleteLayer: document.deleteLayer,
+        addLayer: document.addLayer
       )
-    state.canConstrainSelectedLineLengthsEqual =
-      actionHandlers.canvas.canConstrainSelectedLineLengthsEqual
-    actions.setInspectorTab = actionHandlers.inspector.setInspectorTab
-    actions.setInspectorSelectedLayerID = inspectorPresentation.setSelectedLayerID
-    actions.setInspectorSelectedSharedStyleID = inspectorPresentation.setSelectedSharedStyleID
-    actions.setInspectorSelectedParameterID = inspectorPresentation.setSelectedParameterID
-    actions.setInspectorLayerSearchQuery = inspectorPresentation.setLayerSearchQuery
-    actions.setInspectorSharedStyleSearchQuery = inspectorPresentation.setSharedStyleSearchQuery
-    actions.setInspectorParameterSearchQuery = inspectorPresentation.setParameterSearchQuery
-    actions.revealInspectorSelectionTab = actionHandlers.inspector.revealInspectorSelectionTab
-    actions.setSelectedEntitiesSharedStyle = actionHandlers.document.setSelectedEntitiesSharedStyle
-    actions.setSelectedEntityLayer = actionHandlers.document.setSelectedEntityLayer
-    actions.deleteSelectedEntity = actionHandlers.canvas.deleteSelectedEntity
-    actions.setActiveLayer = actionHandlers.document.setActiveLayer
-    actions.renameLayer = actionHandlers.document.renameLayer
-    actions.setLayerVisibility = actionHandlers.document.setLayerVisibility
-    actions.setLayerPrintable = actionHandlers.document.setLayerPrintable
-    actions.setLayerStyle = actionHandlers.document.setLayerStyle
-    actions.deleteLayer = actionHandlers.document.deleteLayer
-    actions.addLayer = actionHandlers.document.addLayer
-    actions.updateSharedStyle = actionHandlers.document.updateSharedStyle
-    actions.deleteSharedStyle = actionHandlers.document.deleteSharedStyle
-    actions.addSharedStyle = actionHandlers.document.addSharedStyle
-    actions.addParameter = actionHandlers.document.addParameter
-    actions.updateFreeText = actionHandlers.canvas.updateFreeText
-    actions.deleteSelectedFreeText = actionHandlers.canvas.deleteSelectedFreeText
-    actions.deleteConstraint = actionHandlers.canvas.deleteConstraint
-    actions.selectConstraint = actionHandlers.canvas.selectConstraint
-    actions.selectFreeText = actionHandlers.canvas.selectFreeText
-    actions.selectMeasurementAnnotation = actionHandlers.canvas.selectMeasurementAnnotation
-    actions.deleteMeasurementAnnotation = actionHandlers.canvas.deleteMeasurementAnnotation
-    actions.convertMeasurementAnnotationToConstraint =
-      actionHandlers.canvas.convertMeasurementAnnotationToConstraint
-    actions.hoverConstraint = actionHandlers.canvas.hoverConstraint
-    actions.constrainSelectedLineLengthsEqual =
-      actionHandlers.document.constrainSelectedLineLengthsEqual
-    actions.setConstraintDegrees = actionHandlers.canvas.setConstraintDegrees
-    actions.setConstraintValue = actionHandlers.canvas.setConstraintValue
-    actions.setConstraintParameter = actionHandlers.canvas.setConstraintParameter
-    actions.setDerivedElementDirection = actionHandlers.document.setDerivedElementDirection
-    actions.reverseDerivedElementDirection = actionHandlers.document.reverseDerivedElementDirection
-    actions.setDerivedElementDistance = actionHandlers.document.setDerivedElementDistance
-    actions.setDerivedElementParameter = actionHandlers.document.setDerivedElementParameter
-    actions.setSelectedRoundHoleKind = actionHandlers.document.setSelectedRoundHoleKind
-    actions.setSelectedRoundHoleDiameter = actionHandlers.document.setSelectedRoundHoleDiameter
-    actions.constrainSelectedLineLength = actionHandlers.document.constrainSelectedLineLength
-    actions.setSelectedLineLength = actionHandlers.document.setSelectedLineLength
-    actions.setSelectedCircleRadius = actionHandlers.document.setSelectedCircleRadius
-    actions.setSelectedArc = { radius, start, sweep in
-      actionHandlers.document.setSelectedArc(
-        radiusMM: radius, startAngleRad: start, sweepAngleRad: sweep)
-    }
-    actions.updateParameter = actionHandlers.document.updateParameter
-    actions.deleteParameter = actionHandlers.document.deleteParameter
-    actions.createPartFromSelection = actionHandlers.parts.createPartFromSelection
-    actions.updatePart = actionHandlers.parts.updatePart
-    actions.updatePartSettings = actionHandlers.parts.updatePartSettings
-    actions.deletePart = actionHandlers.parts.deletePart
-    actions.selectPartContents = actionHandlers.parts.selectPartContents
-    actions.movePart = { part, delta in actionHandlers.parts.movePart(part, delta: delta) }
-    actions.duplicatePart = { part in actionHandlers.parts.duplicatePart(part) }
-    actions.addSelectionToPart = actionHandlers.parts.addSelectionToPart
-    actions.removeSelectionFromPart = actionHandlers.parts.removeSelectionFromPart
-    actions.setPartBoundaryFromSelection = actionHandlers.parts.setPartBoundaryFromSelection
-    actions.beginSettingPartOrigin = actionHandlers.parts.beginSettingPartOrigin
-    actions.togglePartArrangementSelection = actionHandlers.parts.togglePartArrangementSelection
-    actions.alignSelectedParts = actionHandlers.parts.alignSelectedParts
-    actions.distributeSelectedParts = actionHandlers.parts.distributeSelectedParts
-    actions.addPartToLibrary = actionHandlers.parts.addPartToLibrary
-    actions.insertPartFromLibrary = actionHandlers.parts.insertPartFromLibrary
-    actions.removePartLibraryEntry = actionHandlers.parts.removePartLibraryEntry
-    return InspectorFeatureModel(
-      state: InspectorFeatureViewState(builder: state),
-      actions: InspectorFeatureActions(builder: actions)
+    )
+    let styles = StyleInspectorModel(
+      data: StyleInspectorData(
+        inspectorSelectedSharedStyleID: inspectorPresentation.selectedSharedStyleID,
+        inspectorSharedStyleSearchQuery: inspectorPresentation.sharedStyleSearchQuery,
+        filteredInspectorSharedStyles: filteredStyles,
+        shouldShowSharedStyleInspectorSearch: InspectorViewStateFactory.shouldShowSearch(
+          itemCount: document.sharedStyles.count,
+          explicitlyVisible: inspectorPresentation.sharedStyleSearchVisible,
+          query: inspectorPresentation.sharedStyleSearchQuery
+        )
+      ),
+      actions: StyleInspectorActions(
+        setInspectorSelectedSharedStyleID: inspectorPresentation.setSelectedSharedStyleID,
+        setInspectorSharedStyleSearchQuery: inspectorPresentation.setSharedStyleSearchQuery,
+        updateSharedStyle: document.updateSharedStyle,
+        deleteSharedStyle: document.deleteSharedStyle,
+        addSharedStyle: document.addSharedStyle
+      )
+    )
+    let parameters = ParameterInspectorModel(
+      data: ParameterInspectorData(
+        inspectorSelectedParameterID: inspectorPresentation.selectedParameterID,
+        inspectorParameterSearchQuery: inspectorPresentation.parameterSearchQuery,
+        filteredInspectorParameters: filteredParameters,
+        shouldShowParameterInspectorSearch: InspectorViewStateFactory.shouldShowSearch(
+          itemCount: document.parameters.count,
+          explicitlyVisible: inspectorPresentation.parameterSearchVisible,
+          query: inspectorPresentation.parameterSearchQuery
+        )
+      ),
+      actions: ParameterInspectorActions(
+        setInspectorSelectedParameterID: inspectorPresentation.setSelectedParameterID,
+        setInspectorParameterSearchQuery: inspectorPresentation.setParameterSearchQuery,
+        addParameter: document.addParameter,
+        updateParameter: document.updateParameter,
+        deleteParameter: document.deleteParameter
+      )
+    )
+    let partModel = PartInspectorModel(
+      data: PartInspectorData(
+        parts: document.parts,
+        inspectorSelectedPartID: inspectorPresentation.selectedPartID,
+        arrangementSelectedPartIDs: inspectorPresentation.arrangementSelectedPartIDs,
+        partLibraryEntries: parts.partLibraryEntries,
+        selectedEntities: canvas.selectedEntities,
+        isSettingPartOrigin: inspectorPresentation.isSettingPartOrigin
+      ),
+      actions: PartInspectorActions(
+        createPartFromSelection: parts.createPartFromSelection,
+        updatePart: parts.updatePart,
+        updatePartSettings: parts.updatePartSettings,
+        deletePart: parts.deletePart,
+        selectPartContents: parts.selectPartContents,
+        movePart: { part, delta in parts.movePart(part, delta: delta) },
+        duplicatePart: { part in parts.duplicatePart(part) },
+        addSelectionToPart: parts.addSelectionToPart,
+        removeSelectionFromPart: parts.removeSelectionFromPart,
+        setPartBoundaryFromSelection: parts.setPartBoundaryFromSelection,
+        beginSettingPartOrigin: parts.beginSettingPartOrigin,
+        togglePartArrangementSelection: parts.togglePartArrangementSelection,
+        alignSelectedParts: parts.alignSelectedParts,
+        distributeSelectedParts: parts.distributeSelectedParts,
+        addPartToLibrary: parts.addPartToLibrary,
+        insertPartFromLibrary: parts.insertPartFromLibrary,
+        removePartLibraryEntry: parts.removePartLibraryEntry
+      )
+    )
+    return InspectorPanelModel(
+      inspectorTab: inspectorPresentation.tab,
+      inspectorHasPendingSelectionChange: hasPendingSelectionChange,
+      setInspectorTab: inspector.setInspectorTab,
+      revealInspectorSelectionTab: inspector.revealInspectorSelectionTab,
+      selection: selection,
+      layers: layers,
+      styles: styles,
+      parameters: parameters,
+      parts: partModel
     )
   }
 }

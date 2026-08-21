@@ -1,13 +1,27 @@
-import { cloneElement } from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RawEntity } from "@/features/canvas/domain/cad";
 import { InspectorPanel, type DerivedElement, type Part } from "@/features/inspector/components/InspectorPanel";
+import type { InspectorViewModel } from "@/features/inspector/domain/inspectorViewModel";
 
 const style = {
   stroke: { red: 0.07, green: 0.09, blue: 0.15, alpha: 1 },
   strokeWidthMm: 0.2,
   pattern: "solid",
+};
+
+type PanelOptions = {
+  selectedStitchTargetEntity?: InspectorViewModel["selection"]["selectedStitchTargetEntity"];
+  constraints?: InspectorViewModel["selection"]["constraints"];
+  measurements?: InspectorViewModel["selection"]["measurements"];
+  freeTexts?: InspectorViewModel["selection"]["freeTexts"];
+  onActiveLayerChange?: InspectorViewModel["layers"]["actions"]["changeActiveLayer"];
+  onRenameLayer?: InspectorViewModel["layers"]["actions"]["renameLayer"];
+  onSelectConstraint?: InspectorViewModel["selection"]["actions"]["selectConstraint"];
+  onSelectFreeText?: InspectorViewModel["selection"]["actions"]["selectFreeText"];
+  onSelectMeasurement?: InspectorViewModel["selection"]["actions"]["selectMeasurement"];
+  onAddParameter?: InspectorViewModel["parameters"]["actions"]["add"];
+  onCreatePart?: InspectorViewModel["parts"]["actions"]["create"];
 };
 
 function panel(
@@ -28,57 +42,170 @@ function panel(
   selectedCount = 0,
   onCreatePart = vi.fn(),
   onApplyStyle = vi.fn(),
+  options: PanelOptions = {},
 ) {
-  return (
-    <InspectorPanel
-      selectedCount={selectedCount}
-      selectedEntityIds={selectedEntityIds}
-      selectedEntities={selectedEntities}
-      documentSummary={{
+  const onDeleteSelection = vi.fn();
+  const onAddParameter = vi.fn();
+  const onAddLayer = vi.fn();
+  const onActiveLayerChange = vi.fn();
+  const onRenameLayer = vi.fn();
+  const onDeleteLayer = vi.fn();
+  const onSelectPart = vi.fn();
+  const onToggleArrangementPart = vi.fn();
+  const onAlignParts = vi.fn();
+  const onDistributeParts = vi.fn();
+  const onAddPartToLibrary = vi.fn();
+  const onInsertPartFromLibrary = vi.fn();
+  const onRemovePartFromLibrary = vi.fn();
+  const onSelectConstraint = vi.fn();
+  const onSelectFreeText = vi.fn();
+  const onSelectMeasurement = vi.fn();
+  const selectionActions: InspectorViewModel["selection"]["actions"] = {
+    setConstraintValue: (input, success) => onCommand("setConstraintValue", input, success),
+    setConstraintParameter: (input, success) => onCommand("setConstraintParameter", input, success),
+    deleteConstraint: (id, success) => onCommand("deleteConstraint", id, success),
+    deleteMeasurement: (id, success) => onCommand("deleteMeasurementAnnotation", id, success),
+    deleteEntity: () => onDeleteSelection(),
+    updateFreeText: (input, success) => onCommand("updateFreeText", input, success),
+    deleteFreeText: (id, success) => onCommand("deleteFreeText", id, success),
+    setDerivedDistance: (input, success) => onCommand("setDerivedDistance", input, success),
+    setDerivedRadius: (input, success) => onCommand("setDerivedRadius", input, success),
+    setDerivedDirection: (input, success) => onCommand("setDerivedDirection", input, success),
+    setEntityLayer: (input, success) => onCommand("setEntityLayer", input, success),
+    setDerivedLayer: (input, success) => onCommand("setDerivedLayer", input, success),
+    setEntityStyle: (input, success) => onCommand("setEntitySharedStyle", input, success),
+    setDerivedStyle: (input, success) => onCommand("setDerivedSharedStyle", input, success),
+    setRoundHoleDiameter: (input, success) => onCommand("setRoundHoleDiameter", input, success),
+    setRoundHoleKind: (input, success) => onCommand("setRoundHoleKind", input, success),
+    setEntityMetric: (input, success) => onCommand("setEntityMetric", input, success),
+    applyStyle: onApplyStyle,
+    deleteSelection: onDeleteSelection,
+    constrainSegmentLength: vi.fn(),
+    selectConstraint: options.onSelectConstraint ?? onSelectConstraint,
+    selectFreeText: options.onSelectFreeText ?? onSelectFreeText,
+    selectMeasurement: options.onSelectMeasurement ?? onSelectMeasurement,
+    convertMeasurement: onConvertMeasurement,
+  };
+  const layerActions: InspectorViewModel["layers"]["actions"] = {
+    setVisibility: (input, success) => onCommand("setLayerVisibility", input, success),
+    setPrintable: (input, success) => onCommand("setLayerPrintable", input, success),
+    setStyle: (input, success) => onCommand("setLayerStyle", input, success),
+    addLayer: onAddLayer,
+    changeActiveLayer: options.onActiveLayerChange ?? onActiveLayerChange,
+    renameLayer: options.onRenameLayer ?? onRenameLayer,
+    deleteLayer: onDeleteLayer,
+  };
+  const model: InspectorViewModel = {
+    shell: { onTabChange: vi.fn() },
+    selection: {
+      selectedCount,
+      documentSummary: {
         viewMode: "編集表示",
         activeLayerName: "Outline",
         visibleEntityCount: 2,
         constraintCount: 1,
         parameterCount: parameters.length,
-      }}
-      constraints={[]}
-      selectedEntity={selectedEntity}
-      selectedDerivedElement={selectedDerivedElement}
-      selectedFreeText={selectedFreeText}
-      selectedConstraint={selectedConstraint}
-      selectedMeasurement={selectedMeasurement}
-      selectedStitchStartPoint={selectedStitchStartPoint}
-      measurements={[]}
-      freeTexts={[]}
-      parameters={parameters}
-      layers={[
+      },
+      selectedEntityIds,
+      selectedEntities,
+      selectedEntity,
+      selectedDerivedElement,
+      selectedFreeText,
+      selectedConstraint,
+      selectedMeasurement,
+      selectedStitchStartPoint,
+      selectedStitchTargetEntity: options.selectedStitchTargetEntity,
+      constraints: options.constraints ?? [],
+      measurements: options.measurements ?? [],
+      freeTexts: options.freeTexts ?? [],
+      parameters,
+      layers: [
         { id: "layer:outline", name: "Outline", visible: true, printable: true, kind: "cutLine", style },
         { id: "layer:stitch", name: "Stitch", visible: true, printable: true, kind: "cutLine", style },
-      ]}
-      activeLayerId="layer:outline"
-      sharedStyles={sharedStyles}
-      parts={parts}
-      arrangementPartIds={new Set()}
-      partLibrary={[]}
-      roundHoles={roundHoles}
-      onCommand={onCommand}
-      onApplyStyle={onApplyStyle}
-      onDeleteSelection={vi.fn()}
-      onCreatePart={onCreatePart}
-      onAddParameter={vi.fn()}
-      onAddLayer={vi.fn()}
-      onActiveLayerChange={vi.fn()}
-      onRenameLayer={vi.fn()}
-      onDeleteLayer={vi.fn()}
-      onSelectPart={vi.fn()}
-      onToggleArrangementPart={vi.fn()}
-      onAlignParts={vi.fn()}
-      onDistributeParts={vi.fn()}
-      onAddPartToLibrary={vi.fn()}
-      onInsertPartFromLibrary={vi.fn()}
-      onRemovePartFromLibrary={vi.fn()}
-      onConvertMeasurement={onConvertMeasurement}
-    />
+      ],
+      sharedStyles,
+      roundHoles,
+      actions: selectionActions,
+    },
+    layers: {
+      layers: [
+        { id: "layer:outline", name: "Outline", visible: true, printable: true, kind: "cutLine", style },
+        { id: "layer:stitch", name: "Stitch", visible: true, printable: true, kind: "cutLine", style },
+      ],
+      activeLayerId: "layer:outline",
+      actions: layerActions,
+    },
+    styles: {
+      sharedStyles,
+      actions: {
+        update: (input, success) =>
+          onCommand(
+            "updateSharedStyle",
+            { id: input.styleId, ...(input.name ? { name: input.name } : {}), style: input.style },
+            success,
+          ),
+        delete: (id, success) => onCommand("deleteSharedStyle", id, success),
+        add: vi.fn(),
+      },
+    },
+    parameters: {
+      parameters,
+      constraints: [],
+      actions: {
+        update: (input, success) => onCommand("updateParameter", input, success),
+        delete: (input, success) => onCommand("deleteParameter", input, success),
+        add: options.onAddParameter ?? onAddParameter,
+      },
+    },
+    parts: {
+      selectedCount,
+      parts,
+      arrangementPartIds: new Set(),
+      partLibrary: [],
+      actions: {
+        create: options.onCreatePart ?? onCreatePart,
+        select: onSelectPart,
+        toggleArrangement: onToggleArrangementPart,
+        align: onAlignParts,
+        distribute: onDistributeParts,
+        addToLibrary: onAddPartToLibrary,
+        insertFromLibrary: onInsertPartFromLibrary,
+        removeFromLibrary: onRemovePartFromLibrary,
+        beginSetOrigin: vi.fn(),
+        rename: (input, success) => onCommand("renamePart", input, success),
+        setPosition: (input, success) => onCommand("setPartPosition", input, success),
+        setVisibility: (input, success) => onCommand("setPartVisibility", input, success),
+        setPrintable: (input, success) => onCommand("setPartPrintable", input, success),
+        setQuantity: (input, success) => onCommand("setPartQuantity", input, success),
+        move: (input, success) => onCommand("movePart", input, success),
+        duplicate: (input, success) => onCommand("duplicatePart", input, success),
+        delete: (id, success) => onCommand("deletePart", id, success),
+      },
+    },
+  };
+  return <InspectorPanel {...model} />;
+}
+
+function panelWithOptions(options: PanelOptions, selectedStitchStartPoint?: { id: string; targetEntityId: string }) {
+  return panel(
+    vi.fn(),
+    [],
+    [],
+    [],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    selectedStitchStartPoint,
+    vi.fn(),
+    [],
+    [],
+    [],
+    0,
+    vi.fn(),
+    vi.fn(),
+    options,
   );
 }
 
@@ -191,7 +318,28 @@ describe("InspectorPanel", () => {
 
   it("makes a layer selected in the layer list the drawing target", () => {
     const onActiveLayerChange = vi.fn();
-    render(cloneElement(panel(), { onActiveLayerChange }));
+    render(
+      panel(
+        vi.fn(),
+        [],
+        [],
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        vi.fn(),
+        [],
+        [],
+        [],
+        0,
+        vi.fn(),
+        vi.fn(),
+        { onActiveLayerChange },
+      ),
+    );
 
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: /^Stitch/ }));
@@ -228,7 +376,7 @@ describe("InspectorPanel", () => {
     const onSelectMeasurement = vi.fn();
     const onSelectFreeText = vi.fn();
     render(
-      cloneElement(panel(), {
+      panelWithOptions({
         constraints: [{ id: "constraint:1", kind: "segmentLength", status: "fullyConstrained" }],
         measurements: [{ id: "measurement:1", kind: "distance", visible: true }],
         freeTexts: [{ id: "text:1", content: "注記", positionMm: { xMm: 0, yMm: 0 }, fontSizeMm: 3 }],
@@ -420,7 +568,28 @@ describe("InspectorPanel", () => {
 
   it("commits an inline layer name without opening another editor", () => {
     const onRenameLayer = vi.fn();
-    render(cloneElement(panel(), { onRenameLayer }));
+    render(
+      panel(
+        vi.fn(),
+        [],
+        [],
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        vi.fn(),
+        [],
+        [],
+        [],
+        0,
+        vi.fn(),
+        vi.fn(),
+        { onRenameLayer },
+      ),
+    );
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: /^Outline/ }));
     const name = screen.getByRole("textbox", { name: "Outline の名前" });
@@ -799,15 +968,7 @@ describe("InspectorPanel", () => {
       id: "line:1",
       kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 10, yMm: 0 } } },
     };
-    render(
-      cloneElement(
-        panel(vi.fn(), [], [], [], undefined, undefined, undefined, undefined, undefined, {
-          id: "stitch:1",
-          targetEntityId: "line:1",
-        }),
-        { selectedStitchTargetEntity: target },
-      ),
-    );
+    render(panelWithOptions({ selectedStitchTargetEntity: target }, { id: "stitch:1", targetEntityId: "line:1" }));
     expect(screen.getByText("縫い始め点")).toBeInTheDocument();
     expect(screen.getByText("線分")).toBeInTheDocument();
     expect(screen.queryByText("line:1")).not.toBeInTheDocument();
@@ -908,7 +1069,28 @@ describe("InspectorPanel", () => {
   it("shows management empty states and keeps add actions reachable", () => {
     const onAddParameter = vi.fn();
     const onCreatePart = vi.fn();
-    render(cloneElement(panel(), { onAddParameter, onCreatePart }));
+    render(
+      panel(
+        vi.fn(),
+        [],
+        [],
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        vi.fn(),
+        [],
+        [],
+        [],
+        0,
+        vi.fn(),
+        vi.fn(),
+        { onAddParameter, onCreatePart },
+      ),
+    );
 
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
     expect(screen.getByText("共有スタイルはまだありません")).toBeInTheDocument();

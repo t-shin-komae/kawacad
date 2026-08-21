@@ -1,32 +1,15 @@
 import { appStrings } from "@/localization";
+import type { InspectorTab } from "@/features/inspector/selectors/inspectorFeature";
 import type { State } from "@/shared/domain/coreWireTypes";
 import type { PartLibraryEntry } from "@/shared/domain/coreWireTypes";
-import type { InspectorViewModel } from "@/features/inspector/domain/inspectorViewModel";
-
-type CallbackKey =
-  | "onCommand"
-  | "onApplyStyle"
-  | "onDeleteSelection"
-  | "onCreatePart"
-  | "onAddParameter"
-  | "onAddLayer"
-  | "onActiveLayerChange"
-  | "onRenameLayer"
-  | "onDeleteLayer"
-  | "onSelectPart"
-  | "onToggleArrangementPart"
-  | "onAlignParts"
-  | "onDistributeParts"
-  | "onAddPartToLibrary"
-  | "onInsertPartFromLibrary"
-  | "onRemovePartFromLibrary"
-  | "onConstrainSegmentLength"
-  | "onSelectConstraint"
-  | "onSelectFreeText"
-  | "onSelectMeasurement"
-  | "onConvertMeasurement"
-  | "onBeginSetPartOrigin"
-  | "onTabChange";
+import type {
+  InspectorViewModel,
+  LayerInspectorActions,
+  ParameterInspectorActions,
+  PartInspectorActions,
+  SelectionInspectorActions,
+  StyleInspectorActions,
+} from "@/features/inspector/domain/inspectorViewModel";
 
 export type InspectorViewModelInput = {
   state: State | undefined;
@@ -41,7 +24,12 @@ export type InspectorViewModelInput = {
   selectedConstraintId?: string;
   selectedMeasurementId?: string;
   selectedStitchStartPointId?: string;
-  callbacks: Pick<InspectorViewModel, CallbackKey>;
+  shellActions: { onTabChange: (tab: InspectorTab) => void };
+  selectionActions: SelectionInspectorActions;
+  layerActions: LayerInspectorActions;
+  styleActions: StyleInspectorActions;
+  parameterActions: ParameterInspectorActions;
+  partActions: PartInspectorActions;
 };
 
 export function inspectorViewModelFor(input: InspectorViewModelInput): InspectorViewModel {
@@ -57,37 +45,73 @@ export function inspectorViewModelFor(input: InspectorViewModelInput): Inspector
   const selectedStitchStartPoint = state?.stitchStartPoints.find(
     (item) => item.id === input.selectedStitchStartPointId,
   );
-  return {
+  const layers = state?.layers ?? [];
+  const sharedStyles = state?.sharedStyles ?? [];
+  const parameters = state?.parameters ?? [];
+  const constraints = state?.constraints ?? [];
+  const selection = {
     selectedCount: selected.size,
     documentSummary: {
       viewMode: state?.viewMode === "outputPreview" ? appStrings.canvas.outputPreview : appStrings.canvas.editDisplay,
-      activeLayerName: state?.layers.find((layer) => layer.id === input.activeLayer)?.name ?? "—",
+      activeLayerName: layers.find((layer) => layer.id === input.activeLayer)?.name ?? "—",
       visibleEntityCount: input.visibleEntityCount,
-      constraintCount: state?.constraints.length ?? 0,
-      parameterCount: state?.parameters.length ?? 0,
+      constraintCount: constraints.length,
+      parameterCount: parameters.length,
     },
     selectedEntityIds: [...selected],
     selectedEntity,
     selectedEntities: (state?.entities ?? []).filter((entity) => selected.has(entity.id)),
     selectedDerivedElement,
     selectedFreeText: state?.freeTexts.find((item) => item.id === input.selectedFreeTextId),
-    selectedConstraint: state?.constraints.find((item) => item.id === input.selectedConstraintId),
+    selectedConstraint: constraints.find((item) => item.id === input.selectedConstraintId),
     selectedMeasurement: state?.measurementAnnotations.find((item) => item.id === input.selectedMeasurementId),
     selectedStitchStartPoint,
     selectedStitchTargetEntity: state?.entities.find(
       (entity) => entity.id === selectedStitchStartPoint?.targetEntityId,
     ),
-    constraints: state?.constraints ?? [],
+    constraints,
     measurements: state?.measurementAnnotations ?? [],
     freeTexts: state?.freeTexts ?? [],
-    parameters: state?.parameters ?? [],
-    layers: state?.layers ?? [],
-    activeLayerId: input.activeLayer,
-    sharedStyles: state?.sharedStyles ?? [],
-    parts: state?.parts ?? [],
-    arrangementPartIds: input.arrangementPartIds,
-    partLibrary: input.partLibrary,
+    parameters,
+    layers,
+    sharedStyles,
     roundHoles: state?.roundHoles ?? [],
-    ...input.callbacks,
+    actions: input.selectionActions,
+  };
+  return {
+    shell: input.shellActions,
+    selection,
+    layers: {
+      layers,
+      activeLayerId: input.activeLayer,
+      actions: input.layerActions,
+    },
+    styles: { sharedStyles, actions: input.styleActions },
+    parameters: {
+      parameters,
+      constraints,
+      actions: input.parameterActions,
+    },
+    parts: {
+      selectedCount: selected.size,
+      parts: state?.parts ?? [],
+      arrangementPartIds: input.arrangementPartIds,
+      partLibrary: input.partLibrary,
+      actions: input.partActions,
+    },
+  };
+}
+
+/** Applies the compact-workspace origin workflow without rebuilding unrelated Inspector tabs. */
+export function compactInspectorViewModelFor(
+  model: InspectorViewModel,
+  beginSetOrigin: (part: InspectorViewModel["parts"]["parts"][number]) => void,
+): InspectorViewModel {
+  return {
+    ...model,
+    parts: {
+      ...model.parts,
+      actions: { ...model.parts.actions, beginSetOrigin },
+    },
   };
 }

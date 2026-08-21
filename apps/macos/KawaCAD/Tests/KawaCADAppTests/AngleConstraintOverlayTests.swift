@@ -16,10 +16,11 @@ func uc205_angle_overlay_uses_target_order_for_signed_direction() {
     start: .zero,
     end: ModelPoint(xMM: 0.0, yMM: 20.0)
   )
-  let view = LeatherCanvasView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
-  view.entities = [first, second]
-  view.layers = defaultLayers()
-  view.canvasProjection = canvasProjection(dimensionConstraints: [
+  let inputs = CanvasTestInputBuilder()
+  let view = inputs.makeView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
+  inputs.entities = [first, second]
+  inputs.layers = defaultLayers()
+  inputs.canvasProjection = canvasProjection(dimensionConstraints: [
     resolvedCanvasGeometry(
       id: "constraint:angle",
       arc: false,
@@ -57,10 +58,11 @@ func uc205_angle_overlay_reflects_reversed_target_order() {
     start: .zero,
     end: ModelPoint(xMM: 0.0, yMM: 20.0)
   )
-  let view = LeatherCanvasView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
-  view.entities = [first, second]
-  view.layers = defaultLayers()
-  view.canvasProjection = canvasProjection(dimensionConstraints: [
+  let inputs = CanvasTestInputBuilder()
+  let view = inputs.makeView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
+  inputs.entities = [first, second]
+  inputs.layers = defaultLayers()
+  inputs.canvasProjection = canvasProjection(dimensionConstraints: [
     resolvedCanvasGeometry(
       id: "constraint:angle",
       arc: false,
@@ -98,10 +100,11 @@ func uc205_angle_overlay_keeps_zero_degree_label_and_baseline() {
     start: .zero,
     end: ModelPoint(xMM: 30.0, yMM: 0.0)
   )
-  let view = LeatherCanvasView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
-  view.entities = [first, second]
-  view.layers = defaultLayers()
-  view.canvasProjection = canvasProjection(dimensionConstraints: [
+  let inputs = CanvasTestInputBuilder()
+  let view = inputs.makeView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
+  inputs.entities = [first, second]
+  inputs.layers = defaultLayers()
+  inputs.canvasProjection = canvasProjection(dimensionConstraints: [
     resolvedCanvasGeometry(
       id: "constraint:zero-angle",
       arc: false,
@@ -136,10 +139,11 @@ func uc205_angle_overlay_supports_arc_sweep_angle() {
     startAngleRad: 0.0,
     sweepAngleRad: -.pi / 2.0
   )
-  let view = LeatherCanvasView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
-  view.entities = [arc]
-  view.layers = defaultLayers()
-  view.canvasProjection = canvasProjection(dimensionConstraints: [
+  let inputs = CanvasTestInputBuilder()
+  let view = inputs.makeView(frame: CGRect(x: 0, y: 0, width: 520, height: 736))
+  inputs.entities = [arc]
+  inputs.layers = defaultLayers()
+  inputs.canvasProjection = canvasProjection(dimensionConstraints: [
     resolvedCanvasGeometry(
       id: "constraint:arc-angle",
       arc: true,

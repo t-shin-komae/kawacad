@@ -12,12 +12,43 @@ import {
   selectionInRect,
   type ConstraintTarget,
   type PointMm,
-  type Viewport,
+  type RawEntity,
 } from "@/features/canvas/domain/cad";
-import type { CanvasActionContext } from "@/app/actions/useActionRuntime";
 import { constraintTools, measurementKinds } from "@/features/canvas/domain/workspaceTools";
+import type { CanvasProjection, State } from "@/shared/domain/coreWireTypes";
+import type { CanvasPresentation } from "@/features/canvas/state/useCanvasPresentation";
 
-type CanvasPointerActionDependencies = CanvasActionContext & {
+type CanvasPointerActionDependencies = Pick<
+  CanvasPresentation,
+  | "tool"
+  | "draft"
+  | "viewport"
+  | "setViewport"
+  | "arcSweepAngle"
+  | "move"
+  | "controlMove"
+  | "pan"
+  | "marquee"
+  | "setHoveredConstraintId"
+  | "setSnapSuppressed"
+  | "setSnapActive"
+  | "setDragDuplicating"
+  | "setMarqueeCurrent"
+  | "setHoveredTargetEntityId"
+  | "setCursorPoint"
+  | "pendingTargets"
+  | "setSelected"
+  | "measurementMove"
+  | "dimensionMove"
+  | "freeTextMove"
+> & {
+  state: State | undefined;
+  canvasProjection: CanvasProjection;
+  previewCommand: (command: unknown, success: string) => void;
+  clearCanvasPreview: () => void;
+  setMessage: (message: string) => void;
+  visibleEntities: RawEntity[];
+  command: (kind: string, payload: unknown, success: string) => Promise<State | undefined>;
   snap: (point: PointMm) => PointMm;
 };
 

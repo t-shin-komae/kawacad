@@ -458,8 +458,8 @@ struct LinePatternPreview: View {
 }
 
 struct ParameterEditor: View {
-  @EnvironmentObject private var appState: InspectorFeatureModel
   let parameter: ProjectParameter
+  let appState: ParameterInspectorModel
 
   var body: some View {
     InsetSurface {
@@ -492,7 +492,7 @@ struct ParameterEditor: View {
             .foregroundStyle(LeatherColors.secondaryInk)
 
           Button(role: .destructive) {
-            appState.deleteParameter(parameter)
+            appState.actions.deleteParameter(parameter)
           } label: {
             Image(systemName: "trash")
               .frame(width: 22, height: 22)
@@ -557,7 +557,7 @@ struct ParameterEditor: View {
   }
 
   private func commitParameter(name: String, valueMM: Double, memo: String) -> Bool {
-    appState.updateParameter(
+    appState.actions.updateParameter(
       ProjectParameter(
         id: parameter.id,
         name: name,

@@ -3,9 +3,9 @@ import { appStrings } from "@/localization";
 import { documentAdapter } from "@/adapters/documentAdapter";
 import type { CanvasViewMode, Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { State } from "@/shared/domain/coreWireTypes";
-import type { OutputActionContext } from "@/app/actions/useActionRuntime";
+import type { OutputActionInput } from "@/features/output/actions/outputActionTypes";
 
-type OutputActionDependencies = Pick<OutputActionContext, "state" | "a4Landscape" | "run" | "setTool"> & {
+type OutputActionDependencies = Pick<OutputActionInput, "state" | "a4Landscape" | "run" | "setTool"> & {
   clearTransientCanvasState: () => void;
 };
 

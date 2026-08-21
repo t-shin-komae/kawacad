@@ -449,6 +449,33 @@ struct CanvasSelectionResolverTests {
     #expect(resolver.isValidConstraintTarget(unwrap(target), pendingTargetCount: 0) == false)
   }
 
+  @Test
+  func entity_hit_uses_named_candidate_padding_once() {
+    let resolver = makeResolver(
+      selectedTool: .select,
+      entities: [
+        lineEntity(
+          id: "entity:line-boundary",
+          label: "Boundary",
+          start: .zero,
+          end: ModelPoint(xMM: 20, yMM: 0)
+        )
+      ]
+    )
+    let center = canvasPoint(ModelPoint(xMM: 10, yMM: 0))
+    let inside = CGPoint(
+      x: center.x,
+      y: center.y + CanvasMetrics.entityCandidatePaddingPx - 0.01
+    )
+    let outside = CGPoint(
+      x: center.x,
+      y: center.y + CanvasMetrics.entityCandidatePaddingPx + 0.01
+    )
+
+    #expect(resolver.entity(at: inside)?.id == "entity:line-boundary")
+    #expect(resolver.entity(at: outside) == nil)
+  }
+
   private func makeResolver(
     selectedTool: CanvasTool,
     entities: [CanvasEntity],

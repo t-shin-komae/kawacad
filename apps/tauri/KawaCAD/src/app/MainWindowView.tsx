@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { WorkspaceInspector } from "@/features/inspector/components/WorkspaceInspector";
 import { CADToolbar } from "@/features/canvas/components/CadToolbar";
@@ -23,16 +23,12 @@ import type { MenuAction } from "@/app/domain/nativeMenuTypes";
 import type { CSSProperties } from "react";
 import { appStrings } from "@/localization";
 import type { CanvasViewMode, Tool } from "@/features/canvas/domain/canvasDomainModels";
-import {
-  defaultViewport,
-  constraintTargetEntityId,
-  type PointMm,
-  type ConstraintTarget,
-} from "@/features/canvas/domain/cad";
-import { selectedSourceArcId } from "@/features/canvas/selectors/canvasProjection";
+import { defaultViewport, constraintTargetEntityId, type ConstraintTarget } from "@/features/canvas/domain/cad";
+import { canvasContextMenuModelFor } from "@/features/canvas/selectors/canvasContextMenuModel";
 import { canvasDisplayStateFor, visibleEntitiesFor } from "@/features/canvas/selectors/canvasDisplayState";
 import { partCanvasHighlights } from "@/features/parts/selectors/partCanvasHighlights";
-import { inspectorViewModelFor } from "@/features/inspector/selectors/inspectorViewModel";
+import { compactInspectorViewModelFor, inspectorViewModelFor } from "@/features/inspector/selectors/inspectorViewModel";
+import { inspectorActionModelsFor } from "@/features/inspector/selectors/inspectorActionModels";
 import { documentWindowPresentation } from "@/features/workspace/selectors/documentWindowPresentation";
 import {
   assistLine,
@@ -47,7 +43,6 @@ import {
 } from "@/features/canvas/domain/workspaceTools";
 import { useWorkspacePreferences } from "@/features/workspace/state/useWorkspacePreferences";
 import { useAppErrorPresentation } from "@/features/workspace/state/useAppErrorPresentation";
-import { useAnnotationSelection } from "@/features/canvas/state/useAnnotationSelection";
 import { useCadSession } from "@/features/document/state/useCadSession";
 import { usePartLibrary } from "@/features/parts/state/usePartLibrary";
 import { useRecoverySnapshot } from "@/features/recovery/state/useRecoverySnapshot";
@@ -62,16 +57,20 @@ import {
   type PendingDerivedValue,
   type SelectionExport,
 } from "@/features/canvas/state/useCanvasPresentation";
+import { useCanvasInteractionController } from "@/features/canvas/actions/useCanvasInteractionController";
 import { useDocumentPresentation } from "@/features/document/state/useDocumentPresentation";
 import { useInspectorPresentation } from "@/features/inspector/state/useInspectorPresentation";
 import { useOutputPresentation } from "@/features/output/state/useOutputPresentation";
 import { useLicensesPresentation } from "@/features/licenses/state/useLicensesPresentation";
 import { useAppActions } from "@/app/actions/useAppActions";
+import { useDocumentLifecycleComposition } from "@/app/actions/useDocumentLifecycleComposition";
 import { RecoveryChooserDialog } from "@/features/recovery/components/RecoveryChooserDialog";
 import { useActiveDrawingOptions } from "@/features/canvas/selectors/useActiveDrawingOptions";
 import { useWindowLifecycle } from "@/features/workspace/effects/useWindowLifecycle";
 import { useNativeMenuSynchronization } from "@/features/workspace/effects/useNativeMenuSynchronization";
 import { useGlobalCommands } from "@/features/workspace/effects/useGlobalCommands";
+import { useGlobalInteractionCancellation } from "@/features/workspace/effects/useGlobalInteractionCancellation";
+import { useCompactInspectorActions } from "@/features/workspace/effects/useCompactInspectorActions";
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
 import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSourceLicensesDialog";
 import { OutputDialog } from "@/features/output/components/OutputDialog";
@@ -88,6 +87,8 @@ export function MainWindowView() {
     setInspectorSelectedPartId,
     settingPartOriginId,
     setSettingPartOriginId,
+    clearInspectorSelectedPart,
+    clearPartOriginSelection,
     inspectorRevision,
     setInspectorRevision,
   } = useInspectorPresentation();
@@ -150,18 +151,20 @@ export function MainWindowView() {
     freeTextMove,
     arcSweepAngle,
     lineStartSnap,
-  } = canvasPresentation;
-  const {
     selectedFreeTextId,
     setSelectedFreeTextId,
+    clearSelectedFreeText,
     selectedConstraintId,
     setSelectedConstraintId,
+    clearSelectedConstraint,
     selectedMeasurementId,
     setSelectedMeasurementId,
+    clearSelectedMeasurement,
     selectedStitchStartPointId,
     setSelectedStitchStartPointId,
+    clearSelectedStitchStartPoint,
     clearAnnotationSelection,
-  } = useAnnotationSelection();
+  } = canvasPresentation;
   const {
     gridVisible,
     setGridVisible,
@@ -212,10 +215,20 @@ export function MainWindowView() {
     documentSaveConfirmation,
     requestDocumentSaveConfirmation,
     resolveDocumentSaveConfirmation,
+    clearLayerDeletionConfirmation,
   } = useDocumentPresentation();
-  const { layout, toolPaletteWidth, setToolPaletteWidth, compactDrawer, setCompactDrawer, resetWorkspaceLayout } =
-    useWorkspaceLayout();
+  const {
+    layout,
+    toolPaletteWidth,
+    setToolPaletteWidth,
+    compactDrawer,
+    setCompactDrawer,
+    closeCompactDrawer,
+    resetWorkspaceLayout,
+  } = useWorkspaceLayout();
   const canvasState = previewState ?? state;
+  const selectToolRef = useRef<(nextTool: Tool) => void>(() => undefined);
+  const rewindFilletDraftRef = useRef<() => void>(() => undefined);
   const {
     projection: canvasProjection,
     measurementLabels,
@@ -226,110 +239,133 @@ export function MainWindowView() {
     dimensionArcCounterclockwise,
   } = canvasDisplayStateFor(canvasState);
   const visibleEntities = useMemo(() => visibleEntitiesFor(state), [state]);
-
-  const actions = useAppActions({
-    state,
-    a4Landscape,
-    run,
-    command,
-    applyState,
-    clearCanvasPreview,
-    previewCommand,
+  const canvasInteraction = useCanvasInteractionController({
+    canvas: canvasPresentation.interaction,
     previewActive,
-    tool,
-    setViewport,
-    cursorPoint,
-    editingFreeTextId,
-    layerDeletionConfirmation,
-    setLayerDeletionConfirmation,
-    presentOperationFailure,
-    arcSweepAngle,
-    lineStartSnap,
-    setSelected,
-    clearAnnotationSelection,
-    setEditingFreeTextId,
-    setHoveredConstraintId,
-    setSnapSuppressed,
-    setSnapActive,
-    setDragDuplicating,
-    setMarqueeCurrent,
-    setHoveredTargetEntityId,
-    setPendingTargets,
-    setPendingConstraintValue,
-    setPendingDerivedValue,
-    setPendingTextEntry,
-    setDraft,
-    setCursorPoint,
-    setPasteOptions,
-    setContextMenu,
-    setArrangementPartIds,
-    setInspectorSelectedPartId,
-    setSettingPartOriginId,
-    setCompactDrawer,
-    setActiveLayer,
-    setActiveStyle,
-    setTool,
+    clearCanvasPreview,
     setMessage,
-    setInspectorRevision,
-    documentHeader,
-    documentNameForFileDialog,
-    requestDocumentSaveConfirmation,
-    resetWorkspacePreferences,
-    resetWorkspaceLayout,
-    activeLayer,
-    activeStyle,
-    selected,
-    viewport,
-    snapEnabled,
-    pointSnapEnabled,
-    visibleEntities,
-    clipboard,
-    setClipboard,
-    pasteOptions,
-    pasteSequence,
-    setPasteSequence,
-    pendingTargets,
-    pendingDerivedValue,
-    roundDiameter,
-    roundKind,
-    selectedFreeTextId,
-    selectedConstraintId,
-    selectedMeasurementId,
-    selectedStitchStartPointId,
-    setSelectedFreeTextId,
-    setSelectedConstraintId,
-    setSelectedMeasurementId,
-    setSelectedStitchStartPointId,
-    canvasProjection,
-    measurementLabels,
-    measurementLabelOffsets,
-    dimensionLabels,
-    dimensionLabelOffsets,
-    settingPartOriginId,
-    pan,
-    marquee,
-    move,
-    controlMove,
-    measurementMove,
-    dimensionMove,
-    freeTextMove,
-    draft,
-    partLibrary,
-    updatePartLibrary,
-    arrangementPartIds,
-    inspectorSelectedPartId,
+    selectTool: (nextTool) => selectToolRef.current(nextTool),
+    rewindFilletDraft: () => rewindFilletDraftRef.current(),
   });
-  const {
+  const { clearTransientCanvasState, resetCanvasPresentation } = canvasInteraction;
+  const documentLifecycle = useDocumentLifecycleComposition({
+    resetCanvasPresentation,
     clearTransientCanvasState,
-    setDocumentViewMode,
-    setOutputOrientation,
+    clearInspectorSelection: clearInspectorSelectedPart,
+    clearPartOriginSelection,
+    closeWorkspacePanels: closeCompactDrawer,
+  });
+
+  const actions = useAppActions(
+    {
+      state,
+      run,
+      command,
+      onDocumentLoaded: documentLifecycle.onDocumentLoaded,
+      onHistoryRestored: documentLifecycle.onHistoryRestored,
+      canvas: {
+        cursorPoint,
+        activeStyle,
+        startPastePlacement: canvasPresentation.setPastePlacement,
+        clearPastePlacement: () => canvasPresentation.setPastePlacement(undefined),
+        clearFreeTextEdit: canvasPresentation.clearFreeTextEdit,
+      },
+      layerDeletionConfirmation,
+      showLayerDeletionConfirmation: setLayerDeletionConfirmation,
+      clearLayerDeletionConfirmation,
+      presentOperationFailure,
+      selection: canvasPresentation.documentSelection,
+      presentTextEntry: canvasPresentation.setPendingTextEntry,
+      clearPendingTextEntry: canvasPresentation.clearPendingTextEntry,
+      setMessage,
+      documentHeader,
+      documentNameForFileDialog,
+      requestDocumentSaveConfirmation,
+      clipboard,
+      storeSelectionExport: canvasPresentation.storeSelectionExport,
+      pasteOptions,
+      pasteSequence,
+      advancePasteSequence: canvasPresentation.advancePasteSequence,
+    },
+    canvasPresentation,
+    {
+      document: {
+        state,
+        command,
+        applyState,
+        clearCanvasPreview,
+        previewCommand,
+        presentOperationFailure,
+        setMessage,
+      },
+      render: {
+        snapEnabled,
+        pointSnapEnabled,
+        visibleEntities,
+        canvasProjection,
+        measurementLabels,
+        measurementLabelOffsets,
+        measurementArcCounterclockwise,
+        dimensionLabels,
+        dimensionLabelOffsets,
+        dimensionArcCounterclockwise,
+      },
+      externalSelection: {
+        clearInspectorSelectedPart,
+        clearPartOriginSelection,
+        settingPartOriginId,
+        inspectorSelectedPartId,
+      },
+    },
+    {
+      invalidate: () => setInspectorRevision((revision) => revision + 1),
+      selection: {
+        clearEntities: () => setSelected(new Set()),
+        selectConstraint: setSelectedConstraintId,
+        selectFreeText: setSelectedFreeTextId,
+        selectStitchStartPoint: setSelectedStitchStartPointId,
+        selectMeasurement: setSelectedMeasurementId,
+      },
+      clearInspectorSelectedPart,
+    },
+    { state, a4Landscape, run, setTool },
+    {
+      state,
+      canvas: { cursorPoint },
+      command,
+      selection: {
+        selected,
+        replace: setSelected,
+        clearFreeText: clearSelectedFreeText,
+        clearConstraint: clearSelectedConstraint,
+      },
+      inspector: {
+        selectPart: setInspectorSelectedPartId,
+        beginPartOrigin: setSettingPartOriginId,
+      },
+      setMessage,
+      partLibrary,
+      updatePartLibrary,
+      presentOperationFailure,
+      arrangementPartIds,
+      toggleArrangementPart: (partId) =>
+        setArrangementPartIds((current) =>
+          current.has(partId) ? new Set([...current].filter((id) => id !== partId)) : new Set([...current, partId]),
+        ),
+    },
+    { setViewport, resetWorkspacePreferences, resetWorkspaceLayout, setMessage },
+  );
+  const documentActions = actions.document;
+  const canvasActions = actions.canvas;
+  const inspectorActions = actions.inspector;
+  const outputActions = actions.output;
+  const partActions = actions.parts;
+  const workspaceActions = actions.workspace;
+  const {
     renameDocument,
     commitPendingDocumentName,
     validatePendingDocumentName,
     openTextEntry,
-    selectTool,
-    resetInspectorPresentation,
-    resetLoadedDocumentPresentation,
     saveBeforeDestructiveAction,
     resolveDirtyReplacement,
     newDocument,
@@ -338,31 +374,11 @@ export function MainWindowView() {
     saveCurrentDocument,
     reloadDocument,
     restoreHistory,
-    smoothSelectedArcTangencies,
     addLayer,
     deleteLayer,
-    createPart,
     addParameter,
     renameLayer,
     applyActiveStyle,
-    snap,
-    snapWithTarget,
-    addGesture,
-    commitConstraint,
-    applyConstraint,
-    constrainSegmentLengthFromInspector,
-    applyMeasurement,
-    applyDerived,
-    commitDerived,
-    useSelectedTargets,
-    rewindFilletDraft,
-    handleCanvasPoint,
-    canvasMove,
-    canvasLeave,
-    canvasUp,
-    handleCanvasDoubleClick,
-    handleCanvasWheel,
-    handleCanvasContextMenu,
     deleteSelection,
     copySelection,
     cutSelection,
@@ -374,7 +390,36 @@ export function MainWindowView() {
     commitFreeTextEdit,
     cancelFreeTextEdit,
     executeCommand,
-    resetWorkspace,
+  } = documentActions;
+  const { setDocumentViewMode, setOutputOrientation } = outputActions;
+  const {
+    selectTool,
+    snap,
+    snapWithTarget,
+    addGesture,
+    commitConstraint,
+    applyConstraint,
+    constrainSegmentLengthFromInspector,
+    applyMeasurement,
+    applyDerived,
+    commitDerived,
+    useSelectedTargets,
+    rewindFilletDraft,
+    smoothSelectedArcTangencies,
+    handleCanvasPoint,
+    canvasMove,
+    canvasLeave,
+    canvasUp,
+    handleCanvasDoubleClick,
+    handleCanvasWheel,
+    handleCanvasContextMenu,
+    convertMeasurement,
+  } = canvasActions;
+  selectToolRef.current = selectTool;
+  rewindFilletDraftRef.current = rewindFilletDraft;
+  const { resetInspectorPresentation, selectConstraint, selectFreeText, selectMeasurement } = inspectorActions;
+  const {
+    createPart,
     selectPartContents,
     addPartToLibrary,
     insertPartFromLibrary,
@@ -383,70 +428,44 @@ export function MainWindowView() {
     distributeParts,
     removePartFromLibrary,
     beginSetPartOrigin,
-    selectConstraint,
-    selectFreeText,
-    selectMeasurement,
-    convertMeasurement,
-  } = actions;
+  } = partActions;
+  const { resetWorkspace } = workspaceActions;
+  const cancelCurrentInteraction = useGlobalInteractionCancellation({
+    cancelCanvasInteraction: canvasInteraction.cancelCurrentInteraction,
+    layerDeletionConfirmationOpen: Boolean(layerDeletionConfirmation),
+    dismissLayerDeletionConfirmation: clearLayerDeletionConfirmation,
+    compactDrawerOpen: Boolean(compactDrawer),
+    closeCompactDrawer,
+    partOriginSelectionActive: Boolean(settingPartOriginId),
+    clearPartOriginSelection,
+    inspectorPartSelectionActive: Boolean(inspectorSelectedPartId),
+    clearInspectorPartSelection: clearInspectorSelectedPart,
+    announceInspectorPartSelectionCleared: () => setMessage(appStrings.status.partSelectionCleared),
+  });
   useGlobalCommands({
-    actions,
-    state,
-    selected,
-    setSelected,
-    pasteOptions,
-    setPasteOptions,
-    pan,
-    marquee,
-    move,
-    controlMove,
-    measurementMove,
-    dimensionMove,
-    freeTextMove,
-    setSnapSuppressed,
-    setSnapActive,
-    setDragDuplicating,
-    setMarqueeCurrent,
-    setHoveredTargetEntityId,
-    setEditingFreeTextId,
-    setPendingConstraintValue,
-    setPendingDerivedValue,
-    setPendingTextEntry,
-    setPendingTargets,
-    setDraft,
-    setSettingPartOriginId,
-    setSelectedMeasurementId,
-    setSelectedConstraintId,
-    setSelectedFreeTextId,
-    setSelectedStitchStartPointId,
-    setInspectorSelectedPartId,
-    setLayerDeletionConfirmation,
-    setCompactDrawer,
-    compactDrawer,
-    pendingTargets,
-    draft,
-    settingPartOriginId,
-    selectedMeasurementId,
-    selectedConstraintId,
-    selectedFreeTextId,
-    selectedStitchStartPointId,
-    inspectorSelectedPartId,
-    editingFreeTextId,
-    pendingConstraintValue,
-    pendingDerivedValue,
-    pendingTextEntry,
-    layerDeletionConfirmation,
-    previewActive,
-    layoutMode: layout.mode,
-    a4Landscape,
-    setOutputDestination,
-    setOutputOrientation,
-    clearCanvasPreview,
-    setLicensesOpen,
-    setInspectorOpen,
-    setBottomWorkbenchVisible,
-    setViewport,
-    setMessage,
-    resetWorkspace,
+    document: {
+      documentActions,
+      selectAllEntities: () => setSelected(new Set(state?.entities.map((entity) => entity.id) ?? [])),
+    },
+    canvas: {
+      canvasActions,
+      cancelCurrentInteraction,
+      zoomToFit: () => setViewport(defaultViewport),
+    },
+    presentation: {
+      outputActions,
+      compactDrawer,
+      layoutMode: layout.mode,
+      a4Landscape,
+      setOutputDestination,
+      setOutputOrientation,
+      setLicensesOpen,
+      setInspectorOpen,
+      setBottomWorkbenchVisible,
+      setCompactDrawer,
+      setMessage,
+      resetWorkspace,
+    },
   });
   const recoverySnapshot = useRecoverySnapshot({
     execute: run,
@@ -498,6 +517,37 @@ export function MainWindowView() {
     state?.drawingEntityMetadata ?? [],
     state?.stitchStartPoints ?? [],
   );
+  const {
+    selectionActions,
+    layerActions,
+    styleActions,
+    parameterActions,
+    partActions: inspectorPartActions,
+  } = inspectorActionModelsFor({
+    executeCommand,
+    selection: {
+      applyStyle: applyActiveStyle,
+      deleteSelection,
+      constrainSegmentLength: (entityId) => void constrainSegmentLengthFromInspector(entityId),
+      selectConstraint,
+      selectFreeText,
+      selectMeasurement,
+      convertMeasurement: (id) => void convertMeasurement(id),
+    },
+    layers: { addLayer, changeActiveLayer: setActiveLayer, renameLayer, deleteLayer },
+    parameters: { add: addParameter },
+    parts: {
+      create: createPart,
+      select: selectPartContents,
+      align: alignParts,
+      distribute: distributeParts,
+      insertFromLibrary: insertPartFromLibrary,
+      removeFromLibrary: removePartFromLibrary,
+      addToLibrary: addPartToLibrary,
+      toggleArrangement: toggleArrangementPart,
+      beginSetOrigin: beginSetPartOrigin,
+    },
+  });
   const inspectorProps = inspectorViewModelFor({
     state,
     selected,
@@ -511,33 +561,19 @@ export function MainWindowView() {
     selectedConstraintId,
     selectedMeasurementId,
     selectedStitchStartPointId,
-    callbacks: {
-      onCommand: executeCommand,
-      onApplyStyle: applyActiveStyle,
-      onDeleteSelection: deleteSelection,
-      onCreatePart: createPart,
-      onAddParameter: addParameter,
-      onAddLayer: addLayer,
-      onActiveLayerChange: setActiveLayer,
-      onDeleteLayer: deleteLayer,
-      onRenameLayer: renameLayer,
-      onSelectPart: selectPartContents,
-      onToggleArrangementPart: toggleArrangementPart,
-      onAlignParts: alignParts,
-      onDistributeParts: distributeParts,
-      onAddPartToLibrary: (part) => void addPartToLibrary(part),
-      onInsertPartFromLibrary: insertPartFromLibrary,
-      onRemovePartFromLibrary: removePartFromLibrary,
-      onConstrainSegmentLength: (entityId) => void constrainSegmentLengthFromInspector(entityId),
-      onSelectConstraint: selectConstraint,
-      onSelectFreeText: selectFreeText,
-      onSelectMeasurement: selectMeasurement,
-      onConvertMeasurement: convertMeasurement,
-      onBeginSetPartOrigin: beginSetPartOrigin,
-      onTabChange: setInspectorTab,
-    },
+    shellActions: { onTabChange: setInspectorTab },
+    selectionActions,
+    layerActions,
+    styleActions,
+    parameterActions,
+    partActions: inspectorPartActions,
   });
-  const selectedEntity = inspectorProps.selectedEntity;
+  const selectedEntity = inspectorProps.selection.selectedEntity;
+  const compactInspectorActions = useCompactInspectorActions(setSettingPartOriginId, closeCompactDrawer);
+  const compactInspectorProps = compactInspectorViewModelFor(
+    inspectorProps,
+    compactInspectorActions.beginSetPartOrigin,
+  );
   const pasteOverlayProps = pasteOptions
     ? {
         activeMode: pasteOptions.activeMode,
@@ -551,31 +587,23 @@ export function MainWindowView() {
         onDismiss: () => setPasteOptions(undefined),
       }
     : undefined;
-  const contextMenuProps = contextMenu
-    ? {
-        position: contextMenu,
-        selectionKind: contextMenu.selectionKind,
-        hasSelection: contextMenu.selectionKind !== "none",
-        canPaste: Boolean(clipboard),
-        onCopy: () => void copySelection(),
-        onPaste: pasteSelection,
-        onDuplicate: duplicateSelection,
-        onDelete: deleteSelection,
-        onConvertMeasurement: () => {
-          if (selectedMeasurementId)
-            convertMeasurement(selectedMeasurementId, appStrings.app.measurementConvertedShort);
-        },
-        onEditFreeText: () => {
-          if (selectedFreeTextId) setEditingFreeTextId(selectedFreeTextId);
-        },
-        canSmoothArcTangencies: Boolean(
-          selectedSourceArcId(selected, state?.entities ?? [], state?.drawingEntityMetadata ?? []),
-        ),
-        onSmoothArcTangencies: smoothSelectedArcTangencies,
-        onSelectAll: () => setSelected(new Set(state?.entities.map((entity) => entity.id) ?? [])),
-        onDismiss: () => setContextMenu(undefined),
-      }
-    : undefined;
+  const contextMenuProps = canvasContextMenuModelFor({
+    contextMenu,
+    clipboardAvailable: Boolean(clipboard),
+    state,
+    selectedEntityIDs: selected,
+    selectedMeasurementID: selectedMeasurementId,
+    selectedFreeTextID: selectedFreeTextId,
+    copySelection: () => void copySelection(),
+    pasteSelection,
+    duplicateSelection,
+    deleteSelection,
+    convertMeasurement: (id) => convertMeasurement(id, appStrings.app.measurementConvertedShort),
+    beginFreeTextEdit: setEditingFreeTextId,
+    smoothSelectedArcTangencies,
+    selectAllEntities: setSelected,
+    dismiss: () => setContextMenu(undefined),
+  });
 
   return (
     <main
@@ -771,63 +799,74 @@ export function MainWindowView() {
           canvas={
             <WorkspaceCanvasSurface
               canvas={{
-                entities: canvasState?.entities ?? [],
-                layers: canvasState?.layers ?? [],
-                sharedStyles: canvasState?.sharedStyles ?? [],
-                freeTexts: canvasState?.freeTexts ?? [],
-                editingFreeText: state?.freeTexts.find((item) => item.id === editingFreeTextId),
-                highlightedFreeTextIds: selectedPartHighlights.freeTextIds,
-                highlightedMeasurementAnnotationIds: selectedPartHighlights.measurementAnnotationIds,
-                highlightedStitchStartPointIds: selectedPartHighlights.stitchStartPointIds,
-                selectedIds: selected,
-                selectedMeasurementAnnotationId: selectedMeasurementId,
-                selectedStitchStartPointId: selectedStitchStartPointId,
-                viewport: viewport,
-                gridVisible: gridVisible,
-                a4Visible: a4Visible,
-                a4Landscape: a4Landscape,
-                outputPreview: state?.viewMode === "outputPreview",
-                outputPages: state?.outputPreview?.pages ?? [],
-                pendingTargetCount: pendingTargets.length,
-                filletDraftEntityCount:
-                  pendingDerivedValue?.candidate === "fillet"
-                    ? pendingDerivedValue.preflight.sourceEntityIds.length
-                    : 0,
-                filletDraftClosed:
-                  pendingDerivedValue?.candidate === "fillet" ? pendingDerivedValue.preflight.closed : false,
-                settingPartOrigin: Boolean(settingPartOriginId),
-                selectedPartOrigin: selectedPart?.visible ? selectedPart.originMm : undefined,
-                draftPoints: draft,
-                cursorPoint: cursorPoint,
-                arcSweepAngleRad: arcSweepAngle.current,
-                hoveredConstraintId: hoveredConstraintId,
-                pendingTargetEntityIds: new Set(pendingTargets.map(constraintTargetEntityId)),
-                marqueeStart: marquee.current,
-                marqueeCurrent: marquee.current ? marqueeCurrent : undefined,
-                dragDuplicating: dragDuplicating,
-                dragging: Boolean(move.current),
-                snapActive: snapActive,
-                snapSuppressed: snapSuppressed,
-                hoveredTargetEntityId: hoveredTargetEntityId,
-                coincidentPointGroups: canvasState?.coincidentPointGroups,
-                tool: tool,
-                toolName: names[tool],
-                projection: canvasProjection,
-                measurementLabels: measurementLabels,
-                measurementLabelOffsets: measurementLabelOffsets,
-                dimensionLabels: dimensionLabels,
-                dimensionLabelOffsets: dimensionLabelOffsets,
-                measurementArcCounterclockwise: measurementArcCounterclockwise,
-                dimensionArcCounterclockwise: dimensionArcCounterclockwise,
-                onPointerDown: handleCanvasPoint,
-                onPointerMove: canvasMove,
-                onPointerLeave: canvasLeave,
-                onPointerUp: canvasUp,
-                onDoubleClick: handleCanvasDoubleClick,
-                onCommitFreeText: commitFreeTextEdit,
-                onCancelFreeText: cancelFreeTextEdit,
-                onWheel: handleCanvasWheel,
-                onContextMenu: handleCanvasContextMenu,
+                renderModel: {
+                  entities: canvasState?.entities ?? [],
+                  layers: canvasState?.layers ?? [],
+                  sharedStyles: canvasState?.sharedStyles ?? [],
+                  freeTexts: canvasState?.freeTexts ?? [],
+                  editingFreeTextId,
+                  highlightedFreeTextIds: selectedPartHighlights.freeTextIds,
+                  highlightedMeasurementAnnotationIds: selectedPartHighlights.measurementAnnotationIds,
+                  highlightedStitchStartPointIds: selectedPartHighlights.stitchStartPointIds,
+                  selectedIds: selected,
+                  selectedMeasurementAnnotationId: selectedMeasurementId,
+                  selectedStitchStartPointId,
+                  viewport,
+                  gridVisible,
+                  a4Visible,
+                  a4Landscape,
+                  outputPreview: state?.viewMode === "outputPreview",
+                  outputPages: state?.outputPreview?.pages ?? [],
+                  selectedPartOrigin: selectedPart?.visible ? selectedPart.originMm : undefined,
+                  draftPoints: draft,
+                  cursorPoint,
+                  arcSweepAngleRad: arcSweepAngle.current,
+                  hoveredConstraintId,
+                  pendingTargetEntityIds: new Set(pendingTargets.map(constraintTargetEntityId)),
+                  marqueeStart: marquee.current,
+                  marqueeCurrent: marquee.current ? marqueeCurrent : undefined,
+                  dragDuplicating,
+                  dragging: Boolean(move.current),
+                  snapActive,
+                  snapSuppressed,
+                  hoveredTargetEntityId,
+                  coincidentPointGroups: canvasState?.coincidentPointGroups ?? [],
+                  tool,
+                  projection: canvasProjection,
+                  measurementLabels,
+                  measurementLabelOffsets,
+                  measurementArcCounterclockwise,
+                  dimensionLabels,
+                  dimensionLabelOffsets,
+                  dimensionArcCounterclockwise,
+                },
+                interactionModel: {
+                  editingFreeText: state?.freeTexts.find((item) => item.id === editingFreeTextId),
+                  settingPartOrigin: Boolean(settingPartOriginId),
+                  filletDraftEntityCount:
+                    pendingDerivedValue?.candidate === "fillet"
+                      ? pendingDerivedValue.preflight.sourceEntityIds.length
+                      : 0,
+                  filletDraftClosed:
+                    pendingDerivedValue?.candidate === "fillet" ? pendingDerivedValue.preflight.closed : false,
+                  pendingTargetCount: pendingTargets.length,
+                  draftPointCount: draft.length,
+                  dragDuplicating,
+                  dragging: Boolean(move.current),
+                  snapSuppressed,
+                  toolName: names[tool],
+                },
+                events: {
+                  onPointerDown: handleCanvasPoint,
+                  onPointerMove: canvasMove,
+                  onPointerLeave: canvasLeave,
+                  onPointerUp: canvasUp,
+                  onDoubleClick: handleCanvasDoubleClick,
+                  onCommitFreeText: commitFreeTextEdit,
+                  onCancelFreeText: cancelFreeTextEdit,
+                  onWheel: handleCanvasWheel,
+                  onContextMenu: handleCanvasContextMenu,
+                },
               }}
               hudText={appStrings.app.hud(Math.round(viewport.zoom * 100), selected.size)}
               pasteOptions={pasteOverlayProps}
@@ -858,17 +897,7 @@ export function MainWindowView() {
             />
           }
           compactInspectorDrawer={
-            <WorkspaceInspector
-              mode="compact"
-              revision={inspectorRevision}
-              inspector={{
-                ...inspectorProps,
-                onBeginSetPartOrigin: (part) => {
-                  setSettingPartOriginId(part.id);
-                  setCompactDrawer(undefined);
-                },
-              }}
-            />
+            <WorkspaceInspector mode="compact" revision={inspectorRevision} inspector={compactInspectorProps} />
           }
           onDismissCompactDrawer={() => setCompactDrawer(undefined)}
         />

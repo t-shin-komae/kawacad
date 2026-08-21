@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import { ToolIcon } from "@/features/canvas/components/ToolIcon";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
+import { canvasMetrics } from "@/features/canvas/domain/canvasMetrics";
 import type { CanvasViewMode, ConstraintStatus, Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { Viewport } from "@/features/canvas/domain/cad";
 
@@ -140,8 +141,16 @@ export function CADToolbar({
   const constraintStatus = aggregateConstraintStatus(constraintStatuses);
   const constraintBadge = constraintStatusPresentation[constraintStatus];
   const zoomToFit = () => onViewportChange({ zoom: 1, panX: 0, panY: 0 });
-  const zoomOut = () => onViewportChange((value) => ({ ...value, zoom: Math.max(0.5, value.zoom / 1.25) }));
-  const zoomIn = () => onViewportChange((value) => ({ ...value, zoom: Math.min(3, value.zoom * 1.25) }));
+  const zoomOut = () =>
+    onViewportChange((value) => ({
+      ...value,
+      zoom: Math.max(canvasMetrics.zoomMinimum, value.zoom / 1.25),
+    }));
+  const zoomIn = () =>
+    onViewportChange((value) => ({
+      ...value,
+      zoom: Math.min(canvasMetrics.zoomMaximum, value.zoom * 1.25),
+    }));
 
   return (
     <nav className="cad-toolbar" aria-label={appStrings.accessibility.cadToolbar}>

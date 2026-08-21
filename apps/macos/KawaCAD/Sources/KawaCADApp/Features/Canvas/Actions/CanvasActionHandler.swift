@@ -167,7 +167,8 @@ extension CanvasActionHandler {
 
   private func setCanvasZoomScale(_ scale: Double, message: String) {
     canvasPresentation.setViewport(
-      zoomScale: min(max(scale, 0.5), 3.0), panOffset: canvasPresentation.panOffset)
+      zoomScale: min(max(scale, CanvasMetrics.zoomMinimum), CanvasMetrics.zoomMaximum),
+      panOffset: canvasPresentation.panOffset)
     statusMessage = AppStrings.tr(
       "status.zoom_with_percent", message, Int((canvasPresentation.zoomScale * 100).rounded()))
   }
@@ -186,7 +187,8 @@ extension CanvasActionHandler {
 
   func setCanvasViewport(scale: Double, panOffset: CGSize, message: String) {
     canvasPresentation.setViewport(
-      zoomScale: min(max(scale, 0.5), 3.0), panOffset: canvasPresentation.panOffset)
+      zoomScale: min(max(scale, CanvasMetrics.zoomMinimum), CanvasMetrics.zoomMaximum),
+      panOffset: canvasPresentation.panOffset)
     canvasPresentation.setViewport(zoomScale: canvasPresentation.zoomScale, panOffset: panOffset)
     statusMessage = AppStrings.tr(
       "status.zoom_with_percent", message, Int((canvasPresentation.zoomScale * 100).rounded()))

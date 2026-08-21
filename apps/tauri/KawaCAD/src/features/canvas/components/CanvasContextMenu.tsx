@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { PointMm } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
 
-type Props = {
+export type CanvasContextMenuProps = {
   position: { x: number; y: number; point: PointMm };
   selectionKind: "none" | "entity" | "constraint" | "measurement" | "freeText";
   hasSelection: boolean;
@@ -36,7 +36,7 @@ export function CanvasContextMenu({
   onSmoothArcTangencies,
   onSelectAll,
   onDismiss,
-}: Props) {
+}: CanvasContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

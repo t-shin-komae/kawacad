@@ -99,10 +99,11 @@ struct CanvasCoordinateSpaceTests {
   @Test
   @MainActor
   func portrait_and_landscape_reference_frames_keep_same_model_distance_scale() {
-    let view = LeatherCanvasView(frame: CGRect(x: 0, y: 0, width: 1_000, height: 1_000))
-    view.a4ReferenceOrientation = .portrait
+    let inputs = CanvasTestInputBuilder()
+    let view = inputs.makeView(frame: CGRect(x: 0, y: 0, width: 1_000, height: 1_000))
+    inputs.a4ReferenceOrientation = .portrait
     let portraitRect = view.pageRect(in: view.bounds, zoomScale: 1.0, panOffset: .zero)
-    view.a4ReferenceOrientation = .landscape
+    inputs.a4ReferenceOrientation = .landscape
     let landscapeRect = view.pageRect(in: view.bounds, zoomScale: 1.0, panOffset: .zero)
 
     let baseScale = CanvasCoordinateSpace.displayPointsPerMillimeter
@@ -117,7 +118,7 @@ struct CanvasCoordinateSpaceTests {
     #expect(abs(portrait.scale - baseScale) < 0.0001)
     #expect(abs(portrait.scale - landscape.scale) < 0.0001)
 
-    view.a4ReferenceOrientation = .portrait
+    inputs.a4ReferenceOrientation = .portrait
     let enlargedRect = view.pageRect(in: view.bounds, zoomScale: 2.5, panOffset: .zero)
     let enlarged = CanvasCoordinateSpace(pageRect: enlargedRect)
     #expect(abs(enlarged.scale - baseScale * 2.5) < 0.0001)

@@ -27,10 +27,15 @@ extension LeatherCanvasView {
             in: pageRect
           )
         else { continue }
-        if layout.labelRect.insetBy(dx: -4, dy: -4).contains(point) {
+        if layout.labelRect.insetBy(
+          dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+          dy: -CanvasMetrics.annotationLabelHitPaddingPx
+        ).contains(point) {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: true)
         }
-        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd) <= 5.0 {
+        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd)
+          <= CanvasMetrics.annotationLineHitTolerancePx
+        {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: false)
         }
       case "segmentLength":
@@ -45,10 +50,15 @@ extension LeatherCanvasView {
             in: pageRect
           )
         else { continue }
-        if layout.labelRect.insetBy(dx: -4, dy: -4).contains(point) {
+        if layout.labelRect.insetBy(
+          dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+          dy: -CanvasMetrics.annotationLabelHitPaddingPx
+        ).contains(point) {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: true)
         }
-        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd) <= 5.0 {
+        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd)
+          <= CanvasMetrics.annotationLineHitTolerancePx
+        {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: false)
         }
       case "diameter":
@@ -63,10 +73,15 @@ extension LeatherCanvasView {
             in: pageRect
           )
         else { continue }
-        if layout.labelRect.insetBy(dx: -4, dy: -4).contains(point) {
+        if layout.labelRect.insetBy(
+          dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+          dy: -CanvasMetrics.annotationLabelHitPaddingPx
+        ).contains(point) {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: true)
         }
-        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd) <= 5.0 {
+        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd)
+          <= CanvasMetrics.annotationLineHitTolerancePx
+        {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: false)
         }
       case "radius":
@@ -81,30 +96,37 @@ extension LeatherCanvasView {
             in: pageRect
           )
         else { continue }
-        if layout.labelRect.insetBy(dx: -4, dy: -4).contains(point) {
+        if layout.labelRect.insetBy(
+          dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+          dy: -CanvasMetrics.annotationLabelHitPaddingPx
+        ).contains(point) {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: true)
         }
-        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd) <= 5.0 {
+        if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd)
+          <= CanvasMetrics.annotationLineHitTolerancePx
+        {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: false)
         }
       case "angle", "arcSweepAngle":
         guard let overlay = measurementAngleOverlay(for: annotation) else {
           continue
         }
-        let scale = canvasScale(in: pageRect)
-        let overallOffset = canvasOffset(for: annotation.overallOffsetMM, scale: scale)
-        let labelOffset = canvasOffset(for: annotation.labelOffsetMM, scale: scale)
-        let centerPoint = canvasPoint(for: overlay.center, in: pageRect).offsetBy(
-          dx: overallOffset.x, dy: overallOffset.y)
-        let radius = max(24.0, min(44.0, CGFloat(abs(overlay.signedDegrees)) / 3.0 + 18.0))
-        let labelPoint = angleLabelPoint(
-          center: centerPoint,
-          startAngleRad: angleRadians(from: overlay.center, to: overlay.start),
-          sweepAngleRad: degreesToRadians(overlay.signedDegrees),
-          radius: radius
-        ).offsetBy(dx: labelOffset.x, dy: labelOffset.y)
-        let rect = measurementLabelRect(label: overlay.label, around: labelPoint)
-        if rect.insetBy(dx: -4, dy: -4).contains(point) {
+        guard
+          let layout = CanvasAnnotationLayout.angle(
+            overlay: overlay,
+            label: overlay.label,
+            labelOffsetMM: annotation.labelOffsetMM,
+            overallOffsetMM: annotation.overallOffsetMM,
+            in: pageRect,
+            orientation: a4ReferenceOrientation
+          )
+        else {
+          continue
+        }
+        if layout.labelRect.insetBy(
+          dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+          dy: -CanvasMetrics.annotationLabelHitPaddingPx
+        ).contains(point) {
           return MeasurementAnnotationHit(annotation: annotation, labelOnly: true)
         }
       default:
@@ -208,10 +230,15 @@ extension LeatherCanvasView {
     else {
       return nil
     }
-    if layout.labelRect.insetBy(dx: -4, dy: -4).contains(point) {
+    if layout.labelRect.insetBy(
+      dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+      dy: -CanvasMetrics.annotationLabelHitPaddingPx
+    ).contains(point) {
       return DimensionConstraintAnnotationHit(constraint: constraint, labelOnly: true)
     }
-    if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd) <= 5.0 {
+    if distanceFrom(point, toSegmentStart: layout.shiftedStart, end: layout.shiftedEnd)
+      <= CanvasMetrics.annotationLineHitTolerancePx
+    {
       return DimensionConstraintAnnotationHit(constraint: constraint, labelOnly: false)
     }
     return nil
@@ -227,39 +254,31 @@ extension LeatherCanvasView {
     point: CGPoint,
     in pageRect: CGRect
   ) -> DimensionConstraintAnnotationHit? {
-    let scale = canvasScale(in: pageRect)
-    let overallOffset = canvasOffset(for: annotation.overallOffsetMM, scale: scale)
-    let labelOffset = canvasOffset(for: annotation.labelOffsetMM, scale: scale)
-    let firstPoint = canvasPoint(for: first, in: pageRect)
-    let secondPoint = canvasPoint(for: second, in: pageRect)
-    let dimensionStart: CGPoint
-    let dimensionEnd: CGPoint
-    let labelPoint: CGPoint
-    switch axis {
-    case .horizontal:
-      guard abs(secondPoint.x - firstPoint.x) > 0.001 else { return nil }
-      let dimensionY = min(firstPoint.y, secondPoint.y) - 16.0 + overallOffset.y
-      dimensionStart = CGPoint(x: firstPoint.x, y: dimensionY)
-      dimensionEnd = CGPoint(x: secondPoint.x, y: dimensionY)
-      labelPoint = CGPoint(
-        x: (dimensionStart.x + dimensionEnd.x) / 2.0 + labelOffset.x,
-        y: dimensionY - 14.0 + labelOffset.y
+    let layoutAxis: CanvasAnnotationLayout.Axis =
+      axis == .horizontal ? .horizontal : .vertical
+    guard
+      let layout = CanvasAnnotationLayout.axis(
+        start: first,
+        end: second,
+        axis: layoutAxis,
+        label: label,
+        labelOffsetMM: annotation.labelOffsetMM,
+        overallOffsetMM: annotation.overallOffsetMM,
+        in: pageRect,
+        orientation: a4ReferenceOrientation
       )
-    case .vertical:
-      guard abs(secondPoint.y - firstPoint.y) > 0.001 else { return nil }
-      let dimensionX = max(firstPoint.x, secondPoint.x) + 16.0 + overallOffset.x
-      dimensionStart = CGPoint(x: dimensionX, y: firstPoint.y)
-      dimensionEnd = CGPoint(x: dimensionX, y: secondPoint.y)
-      labelPoint = CGPoint(
-        x: dimensionX + 8.0 + labelOffset.x,
-        y: (dimensionStart.y + dimensionEnd.y) / 2.0 + labelOffset.y
-      )
+    else {
+      return nil
     }
-    let labelRect = measurementLabelRect(label: label, around: labelPoint)
-    if labelRect.insetBy(dx: -4, dy: -4).contains(point) {
+    if layout.labelRect.insetBy(
+      dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+      dy: -CanvasMetrics.annotationLabelHitPaddingPx
+    ).contains(point) {
       return DimensionConstraintAnnotationHit(constraint: constraint, labelOnly: true)
     }
-    if distanceFrom(point, toSegmentStart: dimensionStart, end: dimensionEnd) <= 5.0 {
+    if distanceFrom(point, toSegmentStart: layout.dimensionStart, end: layout.dimensionEnd)
+      <= CanvasMetrics.annotationLineHitTolerancePx
+    {
       return DimensionConstraintAnnotationHit(constraint: constraint, labelOnly: false)
     }
     return nil
@@ -272,36 +291,25 @@ extension LeatherCanvasView {
     point: CGPoint,
     in pageRect: CGRect
   ) -> DimensionConstraintAnnotationHit? {
-    let scale = canvasScale(in: pageRect)
-    let overallOffset = canvasOffset(for: annotation.overallOffsetMM, scale: scale)
-    let labelOffset = canvasOffset(for: annotation.labelOffsetMM, scale: scale)
-    let centerPoint = canvasPoint(for: overlay.center, in: pageRect).offsetBy(
-      dx: overallOffset.x, dy: overallOffset.y)
-    let startPoint = canvasPoint(for: overlay.start, in: pageRect).offsetBy(
-      dx: overallOffset.x, dy: overallOffset.y)
-    let endPoint = canvasPoint(for: overlay.end, in: pageRect).offsetBy(
-      dx: overallOffset.x, dy: overallOffset.y)
-    let startLength = hypot(startPoint.x - centerPoint.x, startPoint.y - centerPoint.y)
-    let endLength = hypot(endPoint.x - centerPoint.x, endPoint.y - centerPoint.y)
-    guard startLength > 0.001, endLength > 0.001 else {
+    guard
+      let layout = CanvasAnnotationLayout.angle(
+        overlay: overlay,
+        label: overlay.label,
+        labelOffsetMM: annotation.labelOffsetMM,
+        overallOffsetMM: annotation.overallOffsetMM,
+        in: pageRect,
+        orientation: a4ReferenceOrientation
+      )
+    else {
       return nil
     }
-    let radius = max(18.0, min(min(startLength, endLength) * 0.34, 44.0))
-    let startAngle = angleRadians(from: overlay.center, to: overlay.start)
-    let sweepAngle = degreesToRadians(overlay.signedDegrees)
-    let labelPoint = angleLabelPoint(
-      center: centerPoint,
-      startAngleRad: startAngle,
-      sweepAngleRad: sweepAngle,
-      radius: radius
-    ).offsetBy(dx: labelOffset.x, dy: labelOffset.y)
-    if measurementLabelRect(label: overlay.label, around: labelPoint).insetBy(dx: -4, dy: -4)
-      .contains(point)
-    {
+    if layout.labelRect.insetBy(
+      dx: -CanvasMetrics.annotationLabelHitPaddingPx,
+      dy: -CanvasMetrics.annotationLabelHitPaddingPx
+    ).contains(point) {
       return DimensionConstraintAnnotationHit(constraint: constraint, labelOnly: true)
     }
-    let distanceToCenter = hypot(point.x - centerPoint.x, point.y - centerPoint.y)
-    if abs(distanceToCenter - radius) <= 6.0 {
+    if layout.contains(point, radiusTolerance: CanvasMetrics.annotationArcHitTolerancePx) {
       return DimensionConstraintAnnotationHit(constraint: constraint, labelOnly: false)
     }
     return nil
@@ -331,31 +339,29 @@ extension LeatherCanvasView {
   }
 
   func constraintMarker(at point: CGPoint, in pageRect: CGRect) -> ConstraintMarker? {
-    constraintMarkers(in: pageRect)
+    let tolerance = CanvasMetrics.constraintMarkerHitTolerancePx
+    return constraintMarkers(in: pageRect)
       .reversed()
       .first { marker in
         return constraintMarkerRect(marker, in: pageRect)
-          .insetBy(dx: -4, dy: -4)
+          .insetBy(dx: -tolerance, dy: -tolerance)
           .contains(point)
       }
   }
 
   func updateHoveredConstraintMarker(for point: CGPoint, in pageRect: CGRect) {
     guard canvasBoundsRect(in: pageRect).contains(point), selectedTool == .select else {
-      onHoverConstraint?(nil)
+      commandExecutor.clearHoverConstraint()
       return
     }
-    onHoverConstraint?(constraintMarker(at: point, in: pageRect)?.constraintID)
+    commandExecutor.hoverConstraint(constraintMarker(at: point, in: pageRect)?.constraintID)
   }
 
   func constraintMarkerRect(_ marker: ConstraintMarker, in pageRect: CGRect) -> CGRect {
-    let anchor = canvasPoint(for: marker.position, in: pageRect)
-    let offset = markerOffset(for: marker.stackIndex)
-    return CGRect(
-      x: anchor.x + offset.width,
-      y: anchor.y + offset.height,
-      width: 22.0,
-      height: 22.0
+    CanvasLayout.constraintMarkerRect(
+      position: marker.position,
+      stackIndex: marker.stackIndex,
+      in: coordinateSpace(in: pageRect)
     )
   }
 
@@ -364,10 +370,7 @@ extension LeatherCanvasView {
   }
 
   func markerOffset(for stackIndex: Int) -> CGSize {
-    CGSize(
-      width: 10.0 + CGFloat(stackIndex % 4) * 24.0,
-      height: -24.0 - CGFloat(stackIndex / 4) * 24.0
-    )
+    CanvasLayout.constraintMarkerOffset(for: stackIndex)
   }
   func constraintTargetObjects(_ constraint: ProjectConstraint) -> [CoreConstraintTarget]? {
     CoreConstraintTarget.decodeList(from: constraint.targetsJSON)

@@ -3,10 +3,11 @@ import { Paintbrush, Plus, Trash2 } from "lucide-react";
 import {
   matchesInspectorSearch,
   setInspectorSharedStyleSearchQuery,
-  type InspectorFeatureState,
+  type StylesTabState,
 } from "@/features/inspector/selectors/inspectorFeature";
 import { appStrings } from "@/localization";
-import type { Props, LineStyle } from "@/features/inspector/components/InspectorPanel";
+import type { StyleInspectorModel } from "@/features/inspector/domain/inspectorViewModel";
+import type { LineStyle } from "@/shared/domain/coreWireTypes";
 import { sharedStyleDefaultName } from "@/features/inspector/domain/sharedStyleDefaults";
 import {
   InspectorDisclosureRow,
@@ -15,34 +16,34 @@ import {
 } from "@/shared/components/InspectorPrimitives";
 
 type InspectorStylesTabProps = {
-  props: Props;
-  feature: InspectorFeatureState;
-  updateFeature: (update: (state: InspectorFeatureState) => InspectorFeatureState) => void;
+  model: StyleInspectorModel;
+  state: StylesTabState;
+  updateState: (update: (state: StylesTabState) => StylesTabState) => void;
   defaultStyle: LineStyle;
   renderStyleFields: (style: LineStyle, onChange: (style: LineStyle) => void) => ReactNode;
 };
 
 export function InspectorStylesTab({
-  props,
-  feature,
-  updateFeature,
+  model,
+  state,
+  updateState,
   defaultStyle,
   renderStyleFields,
 }: InspectorStylesTabProps) {
   const [selectedStyleId, setSelectedStyleId] = useState<string>();
-  const filteredStyles = props.sharedStyles.filter((item) =>
-    matchesInspectorSearch(item.name, feature.sharedStyleSearchQuery),
+  const filteredStyles = model.sharedStyles.filter((item) =>
+    matchesInspectorSearch(item.name, state.sharedStyleSearchQuery),
   );
   return (
     <InspectorSection title={appStrings.inspector.sharedStyles} icon={Paintbrush}>
-      {(props.sharedStyles.length >= 8 || feature.sharedStyleSearchVisible || feature.sharedStyleSearchQuery) && (
+      {(model.sharedStyles.length >= 8 || state.searchVisible || state.sharedStyleSearchQuery) && (
         <label className="inspector-search">
           {appStrings.inspector.sharedStyleSearch}
           <input
             type="search"
-            value={feature.sharedStyleSearchQuery}
+            value={state.sharedStyleSearchQuery}
             onChange={(event) =>
-              updateFeature((state) => setInspectorSharedStyleSearchQuery(state, event.target.value))
+              updateState((current) => setInspectorSharedStyleSearchQuery(current, event.target.value))
             }
           />
         </label>
@@ -81,9 +82,8 @@ export function InspectorStylesTab({
                   onBlur={(event) => {
                     const name = event.target.value.trim();
                     if (name && name !== item.name)
-                      props.onCommand(
-                        "updateSharedStyle",
-                        { ...item, name },
+                      model.actions.update(
+                        { styleId: item.id, name, style: item.style },
                         appStrings.inspector.operationMessage.sharedStyleUpdated,
                       );
                   }}
@@ -93,20 +93,15 @@ export function InspectorStylesTab({
                   className="inspector-icon-button inspector-icon-destructive-button"
                   aria-label={appStrings.inspector.deleteStyle(item.name)}
                   onClick={() =>
-                    props.onCommand(
-                      "deleteSharedStyle",
-                      item.id,
-                      appStrings.inspector.operationMessage.sharedStyleDeleted,
-                    )
+                    model.actions.delete(item.id, appStrings.inspector.operationMessage.sharedStyleDeleted)
                   }
                 >
                   <Trash2 aria-hidden="true" />
                 </button>
               </div>
               {renderStyleFields(item.style, (style) =>
-                props.onCommand(
-                  "updateSharedStyle",
-                  { ...item, style },
+                model.actions.update(
+                  { styleId: item.id, name: item.name, style: { ...style } },
                   appStrings.inspector.operationMessage.sharedStyleUpdated,
                 ),
               )}
@@ -116,17 +111,7 @@ export function InspectorStylesTab({
       })}
       <button
         className="inspector-add-button"
-        onClick={() =>
-          props.onCommand(
-            "addSharedStyle",
-            {
-              id: "style:" + crypto.randomUUID(),
-              name: sharedStyleDefaultName(props.sharedStyles.length + 1),
-              style: defaultStyle,
-            },
-            appStrings.inspector.operationMessage.sharedStyleAdded,
-          )
-        }
+        onClick={() => model.actions.add(sharedStyleDefaultName(model.sharedStyles.length + 1))}
       >
         <Plus aria-hidden="true" />
         {appStrings.inspector.addSharedStyle}
