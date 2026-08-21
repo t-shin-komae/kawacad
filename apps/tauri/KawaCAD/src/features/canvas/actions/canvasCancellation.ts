@@ -8,6 +8,7 @@ import type {
   PendingTextEntry,
   PasteOptions,
 } from "@/features/canvas/state/useCanvasPresentation";
+import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 
 type Setter<T> = React.Dispatch<React.SetStateAction<T>>;
 
@@ -52,6 +53,7 @@ export type CanvasCancellationInput = {
   editingFreeTextId: string | undefined;
   clearFreeTextEdit: () => void;
   rewindFilletDraft: () => void;
+  selectedTool: Tool;
   selectTool: (tool: "select") => void;
 };
 
@@ -89,9 +91,9 @@ export function cancelCanvasInteraction(input: CanvasCancellationInput) {
   else if (input.selectedFreeTextId) input.clearSelectedFreeText();
   else if (input.selectedStitchStartPointId) input.clearSelectedStitchStartPoint();
   else if (input.selected.size) input.clearEntitySelection();
-  else {
+  else if (input.selectedTool !== "select") {
     input.selectTool("select");
-    return false;
-  }
+    return true;
+  } else return false;
   return true;
 }

@@ -43,6 +43,7 @@ function cancellationInput(overrides: Partial<CanvasCancellationInput> = {}): Ca
     editingFreeTextId: undefined,
     clearFreeTextEdit: vi.fn(),
     rewindFilletDraft: vi.fn(),
+    selectedTool: "select",
     selectTool: vi.fn(),
     ...overrides,
   };
@@ -64,13 +65,17 @@ describe("Canvas cancellation boundary", () => {
     expect(input.clearEntitySelection).not.toHaveBeenCalled();
   });
 
-  it("cancels preview and reports no active canvas interaction separately", () => {
+  it("cancels preview, then switches a drawing tool before external Escape targets", () => {
     const preview = cancellationInput({ previewActive: { current: true } });
     expect(cancelCanvasInteraction(preview)).toBe(true);
     expect(preview.clearCanvasPreview).toHaveBeenCalledOnce();
 
+    const drawing = cancellationInput({ selectedTool: "line" });
+    expect(cancelCanvasInteraction(drawing)).toBe(true);
+    expect(drawing.selectTool).toHaveBeenCalledWith("select");
+
     const idle = cancellationInput();
     expect(cancelCanvasInteraction(idle)).toBe(false);
-    expect(idle.selectTool).toHaveBeenCalledWith("select");
+    expect(idle.selectTool).not.toHaveBeenCalled();
   });
 });

@@ -250,7 +250,10 @@ struct CanvasInteractionController {
   }
 
   mutating func mouseDownResult(for input: CanvasMouseDownInput) -> CanvasInteractionResult {
-    if input.selectedTool == .select, let selectionInput = input.selectionInput {
+    if input.isInsideCanvas,
+      input.selectedTool == .select,
+      let selectionInput = input.selectionInput
+    {
       let selectionResult = selectionResult(for: selectionInput)
       return CanvasInteractionResult(
         command: nil,

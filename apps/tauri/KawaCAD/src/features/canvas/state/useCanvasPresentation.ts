@@ -180,6 +180,7 @@ export function useCanvasPresentation() {
         editingFreeTextId,
         clearFreeTextEdit,
         rewindFilletDraft: external.rewindFilletDraft,
+        selectedTool: tool,
         selectTool: external.selectTool,
       }),
     [
@@ -196,6 +197,7 @@ export function useCanvasPresentation() {
       selected,
       setPastePlacement,
       pendingTextEntry,
+      tool,
     ],
   );
   const interaction: CanvasInteractionPresentation = {

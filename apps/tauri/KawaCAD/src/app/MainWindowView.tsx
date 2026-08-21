@@ -252,6 +252,7 @@ export function MainWindowView() {
     resetCanvasPresentation,
     clearTransientCanvasState,
     clearInspectorSelection: clearInspectorSelectedPart,
+    clearPartOriginSelection,
     closeWorkspacePanels: closeCompactDrawer,
   });
 

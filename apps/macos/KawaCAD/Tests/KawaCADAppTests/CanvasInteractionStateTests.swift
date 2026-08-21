@@ -130,4 +130,39 @@ struct CanvasInteractionStateTests {
     #expect(result.selectionCommands.count == 4)
     #expect(controller.snapshot.dragState != nil)
   }
+
+  @Test
+  func mouse_down_reducer_ignores_selection_input_outside_canvas_bounds() {
+    var controller = CanvasInteractionController()
+    let result = controller.mouseDownResult(
+      for: CanvasMouseDownInput(
+        isInsideCanvas: false,
+        selectedTool: .select,
+        isSettingPartOrigin: false,
+        modifiers: CanvasPlacementModifiers(),
+        placementPoint: .zero,
+        linePoint: .zero,
+        constraintTarget: nil,
+        selectionInput: CanvasSelectionInput(
+          point: CGPoint(x: 12, y: 18),
+          modelPoint: .zero,
+          clickCount: 1,
+          togglesSelection: false,
+          modifiers: CanvasPlacementModifiers(),
+          selectedEntityIDs: ["entity:line-a"],
+          measurementHit: nil,
+          dimensionHit: nil,
+          controlPointTarget: nil,
+          constraintMarkerID: nil,
+          stitchStartPointID: nil,
+          freeTextID: nil,
+          entityID: nil
+        )
+      )
+    )
+
+    #expect(result.command == nil)
+    #expect(result.selectionCommands.isEmpty)
+    #expect(controller.snapshot.dragState == nil)
+  }
 }
