@@ -3,7 +3,7 @@ import SwiftUI
 struct PanelResizeHandle: View {
   let alignment: HorizontalAlignment
   let onChanged: (CGSize) -> Void
-  let onEnded: () -> Void
+  let onEnded: (CGSize) -> Void
   let onKeyboardAdjust: (CGFloat) -> Void
 
   var body: some View {
@@ -21,8 +21,8 @@ struct PanelResizeHandle: View {
           .onChanged { value in
             onChanged(value.translation)
           }
-          .onEnded { _ in
-            onEnded()
+          .onEnded { value in
+            onEnded(value.translation)
           }
       )
       .accessibilityLabel(AppStrings.tr("accessibility.resize_panel"))

@@ -86,18 +86,27 @@ struct WorkspaceView: View {
           )
           .zIndex(10)
           PanelResizeHandle(alignment: .trailing) { translation in
-            let base = toolResizeBaseWidth ?? state.toolPanelWidth
+            let base = toolResizeBaseWidth ?? policy.toolDockWidth
             toolResizeBaseWidth = toolResizeBaseWidth ?? base
-            let range = WindowLayoutPolicy.toolWidthRange(for: policy.mode)
-            actions.setToolPanelWidth(clamp(base + translation.width, within: range))
-          } onEnded: {
+          } onEnded: { translation in
+            if let base = toolResizeBaseWidth {
+              let proposedWidth = base + translation.width
+              actions.setToolPanelWidth(
+                WindowLayoutPolicy.snappedToolWidth(
+                  proposedWidth,
+                  for: policy.mode
+                )
+              )
+            }
             toolResizeBaseWidth = nil
           } onKeyboardAdjust: { delta in
             actions.setToolPanelWidth(
-              clamp(
-                state.toolPanelWidth + delta,
-                within: WindowLayoutPolicy.toolWidthRange(for: policy.mode)
-              ))
+              WindowLayoutPolicy.toolWidthAfterKeyboardAdjustment(
+                currentWidth: policy.toolDockWidth,
+                delta: delta,
+                for: policy.mode
+              )
+            )
           }
         }
 

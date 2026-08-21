@@ -29,7 +29,7 @@ struct WorkspaceCanvasLayout<CanvasColumn: View, InspectorPanel: View>: View {
                 within: WindowLayoutPolicy.inspectorDockWidthRange
               )
             )
-          } onEnded: {
+          } onEnded: { _ in
             inspectorResizeBaseWidth = nil
           } onKeyboardAdjust: { delta in
             actions.setInspectorPanelWidth(
@@ -56,7 +56,7 @@ struct WorkspaceCanvasLayout<CanvasColumn: View, InspectorPanel: View>: View {
               actions.setInspectorPanelWidth(
                 clamp(base - translation.width, within: overlayInspectorWidthRange)
               )
-            } onEnded: {
+            } onEnded: { _ in
               inspectorResizeBaseWidth = nil
             } onKeyboardAdjust: { delta in
               actions.setInspectorPanelWidth(
