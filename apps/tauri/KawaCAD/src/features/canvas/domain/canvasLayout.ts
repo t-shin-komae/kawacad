@@ -89,6 +89,8 @@ export function annotationArcLayout(arc: AnnotationArcLayoutInput) {
 
 export function constraintMarkerLayout(marker: ConstraintMarkerLayoutInput) {
   const stackIndex = marker.stackIndex ?? 0;
+  const stackColumn = stackIndex % 4;
+  const stackRow = Math.floor(stackIndex / 4);
   const text = [marker.icon, marker.label].filter(Boolean).join(" ");
   const measuredTextWidthPx = marker.measuredTextWidthPx ?? measureCanvasTextWidth(text);
   const measuredWidth = measuredTextWidthPx + canvasLayoutMetrics.constraintMarkerHorizontalPaddingPx;
@@ -97,8 +99,9 @@ export function constraintMarkerLayout(marker: ConstraintMarkerLayoutInput) {
     text,
     width,
     height: canvasLayoutMetrics.constraintMarkerHeightPx,
-    offsetX: canvasLayoutMetrics.constraintMarkerAnchorX + stackIndex * canvasLayoutMetrics.constraintMarkerStackOffset,
-    offsetY: canvasLayoutMetrics.constraintMarkerAnchorY - stackIndex * canvasLayoutMetrics.constraintMarkerStackOffset,
+    offsetX:
+      canvasLayoutMetrics.constraintMarkerAnchorX + stackColumn * canvasLayoutMetrics.constraintMarkerStackOffset,
+    offsetY: canvasLayoutMetrics.constraintMarkerAnchorY - stackRow * canvasLayoutMetrics.constraintMarkerStackOffset,
   };
 }
 

@@ -4,6 +4,7 @@ import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import {
   annotationArcLayout,
   annotationLabelLayout,
+  canvasLayoutMetrics,
   constraintMarkerLayout,
 } from "@/features/canvas/domain/canvasLayout";
 import {
@@ -1092,7 +1093,12 @@ function drawConstraintMarker(
   const x = point.x + layout.offsetX;
   const y = point.y + layout.offsetY;
   context.save();
-  const visualRect = { x, y, width: 22, height: 22 };
+  const visualRect = {
+    x,
+    y,
+    width: canvasLayoutMetrics.constraintMarkerMinimumWidthPx,
+    height: canvasLayoutMetrics.constraintMarkerHeightPx,
+  };
   const icon = marker.icon ?? "?";
   context.font = "600 13px -apple-system, BlinkMacSystemFont, sans-serif";
   context.textAlign = "center";
