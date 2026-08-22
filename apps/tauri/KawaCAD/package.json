@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include=src/** --coverage.reporter=lcov --coverage.reporter=html",
     "test:e2e": "playwright test",
+    "screenshots:comparison": "playwright test --config playwright.screenshots.config.ts",
     "licenses:generate": "node ../../../scripts/generate-licenses.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
