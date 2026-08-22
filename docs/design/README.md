@@ -15,6 +15,7 @@
 | How does output flow through the engine? | [`output/overview.md`](output/overview.md), [`output/document-model.md`](output/document-model.md), [`a4-tile-output/overview.md`](a4-tile-output/overview.md) |
 | How is UI responsibility separated? | [`ui-architecture/overview.md`](ui-architecture/overview.md) |
 | How do the Swift and Tauri UI components correspond? | [`ui-architecture/component-correspondence.md`](ui-architecture/component-correspondence.md) |
+| Where are the Swift and Tauri component docs generated? | [`ui-architecture/component-documentation.md`](ui-architecture/component-documentation.md) |
 | How are selection and annotations designed? | [`interaction/selection-targets.md`](interaction/selection-targets.md), [`annotations/measurement-annotations.md`](annotations/measurement-annotations.md) |
 
 The external contracts remain in [`../spec/`](../spec/). The `.kawa` shape and interface wire shape remain in `schemas/` and are not duplicated here.
