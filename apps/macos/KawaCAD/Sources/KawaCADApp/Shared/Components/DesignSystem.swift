@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 enum LeatherColors {
+  static let canvasBackground = NSColor.white
   static let window = Color(nsColor: .windowBackgroundColor)
   static let panel = Color(nsColor: .controlBackgroundColor)
   static let panelStroke = Color(nsColor: .separatorColor)
@@ -16,7 +17,7 @@ enum LeatherColors {
   static let selectedFill = Color.accentColor.opacity(0.14)
   static let selectedStroke = Color.accentColor.opacity(0.75)
   static let insetFill = Color(nsColor: .textBackgroundColor).opacity(0.55)
-  static let canvas = Color(nsColor: .underPageBackgroundColor)
+  static let canvas = Color(nsColor: canvasBackground)
 }
 
 enum ToolPaletteMetrics {

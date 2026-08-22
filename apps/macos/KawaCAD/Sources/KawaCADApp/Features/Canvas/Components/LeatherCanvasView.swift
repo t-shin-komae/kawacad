@@ -759,7 +759,7 @@ final class LeatherCanvasView: NSView {
 
 extension LeatherCanvasView: CanvasRenderPassDrawing {
   func drawCanvasBackground(dirtyRect: CGRect, canvasBounds: CGRect) {
-    NSColor.underPageBackgroundColor.setFill()
+    LeatherColors.canvasBackground.setFill()
     dirtyRect.fill()
     drawA4Page(in: canvasBounds)
   }
