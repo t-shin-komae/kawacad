@@ -4,6 +4,7 @@ import type { ConstraintTarget, PointMm, RawEntity, Viewport } from "@/shared/do
 import {
   annotationArcLayout,
   annotationLabelLayout,
+  canvasLayoutMetrics,
   constraintMarkerLayout,
 } from "@/features/canvas/domain/canvasLayout";
 import { canvasMetrics } from "@/features/canvas/domain/canvasMetrics";
@@ -103,10 +104,9 @@ export function hitProjectedPoint(
     )?.id;
 }
 
-/** Hit-tests the label-shaped affordance rendered for a constraint marker.
- * SwiftUI lets users click the marker label as well as its anchor point; the
- * React canvas uses the same screen-space box so the affordance remains
- * usable at every zoom level. */
+/** Hit-tests the fixed-size affordance rendered for a constraint marker.
+ * The marker name is only rendered while hovering, so it must not expand the
+ * normal hit area beyond the visible icon. */
 export function hitConstraintMarker(
   point: PointMm,
   items: Array<{
@@ -119,14 +119,10 @@ export function hitConstraintMarker(
   }>,
   viewport: Viewport,
   tolerancePx = canvasMetrics.constraintMarkerHitTolerancePx,
-  measuredTextWidths: Record<string, number> = {},
 ) {
   for (const item of [...items].reverse()) {
     if (item.visible === false) continue;
-    const layout = constraintMarkerLayout({
-      ...item,
-      measuredTextWidthPx: measuredTextWidths[item.id],
-    });
+    const layout = constraintMarkerLayout(item);
     // The marker is anchored at the item's model position. Compare the
     // screen-space offset after translating to that anchor.
     const offset = {
@@ -135,9 +131,9 @@ export function hitConstraintMarker(
     };
     const labelHit =
       offset.x >= layout.offsetX - tolerancePx &&
-      offset.x <= layout.offsetX + layout.width + tolerancePx &&
+      offset.x <= layout.offsetX + canvasLayoutMetrics.constraintMarkerMinimumWidthPx + tolerancePx &&
       offset.y >= layout.offsetY - tolerancePx &&
-      offset.y <= layout.offsetY + layout.height + tolerancePx;
+      offset.y <= layout.offsetY + canvasLayoutMetrics.constraintMarkerHeightPx + tolerancePx;
     if (labelHit || Math.hypot(offset.x, offset.y) <= tolerancePx) return item.id;
   }
   return undefined;

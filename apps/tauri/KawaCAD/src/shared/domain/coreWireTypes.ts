@@ -119,7 +119,13 @@ export type State = {
   viewMode: CanvasViewMode;
   outputPreview?: { pages: OutputPreviewPage[]; warnings: Array<{ message: string }> } | null;
   entities: RawEntity[];
-  drawingEntityMetadata: Array<{ entityId: string; derivedElementId?: string; resolvedIndex?: number }>;
+  drawingEntityMetadata: Array<{
+    entityId: string;
+    derivedElementId?: string;
+    resolvedIndex?: number;
+    sourceEntityId?: string;
+    suppressedByFillet?: boolean;
+  }>;
   layers: Layer[];
   sharedStyles: SharedStyle[];
   parameters: Parameter[];

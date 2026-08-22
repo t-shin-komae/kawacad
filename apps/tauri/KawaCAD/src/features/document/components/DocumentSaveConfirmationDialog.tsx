@@ -22,10 +22,10 @@ export function DocumentSaveConfirmationDialog({ reason, documentName, onChoose 
           <button type="button" onClick={() => onChoose("cancel")}>
             {appStrings.common.cancel}
           </button>
-          <button type="button" className="destructive" onClick={() => onChoose("discard")}>
+          <button type="button" className="destructive-action" onClick={() => onChoose("discard")}>
             {appStrings.app.discardChanges}
           </button>
-          <button type="button" className="primary" autoFocus onClick={() => onChoose("save")}>
+          <button type="button" className="primary-action" autoFocus onClick={() => onChoose("save")}>
             {appStrings.app.saveChanges}
           </button>
         </div>

@@ -2,9 +2,9 @@ import type { PointMm } from "@/features/canvas/domain/cad";
 
 export const canvasLayoutMetrics = {
   constraintMarkerAnchorX: 10,
-  constraintMarkerAnchorY: -20,
-  constraintMarkerStackOffset: 5,
-  constraintMarkerHeightPx: 16,
+  constraintMarkerAnchorY: -24,
+  constraintMarkerStackOffset: 24,
+  constraintMarkerHeightPx: 22,
   constraintMarkerMinimumWidthPx: 22,
   fallbackCharacterWidthPx: 6,
   constraintMarkerHorizontalPaddingPx: 10,
@@ -89,6 +89,8 @@ export function annotationArcLayout(arc: AnnotationArcLayoutInput) {
 
 export function constraintMarkerLayout(marker: ConstraintMarkerLayoutInput) {
   const stackIndex = marker.stackIndex ?? 0;
+  const stackColumn = stackIndex % 4;
+  const stackRow = Math.floor(stackIndex / 4);
   const text = [marker.icon, marker.label].filter(Boolean).join(" ");
   const measuredTextWidthPx = marker.measuredTextWidthPx ?? measureCanvasTextWidth(text);
   const measuredWidth = measuredTextWidthPx + canvasLayoutMetrics.constraintMarkerHorizontalPaddingPx;
@@ -97,8 +99,9 @@ export function constraintMarkerLayout(marker: ConstraintMarkerLayoutInput) {
     text,
     width,
     height: canvasLayoutMetrics.constraintMarkerHeightPx,
-    offsetX: canvasLayoutMetrics.constraintMarkerAnchorX + stackIndex * canvasLayoutMetrics.constraintMarkerStackOffset,
-    offsetY: canvasLayoutMetrics.constraintMarkerAnchorY - stackIndex * canvasLayoutMetrics.constraintMarkerStackOffset,
+    offsetX:
+      canvasLayoutMetrics.constraintMarkerAnchorX + stackColumn * canvasLayoutMetrics.constraintMarkerStackOffset,
+    offsetY: canvasLayoutMetrics.constraintMarkerAnchorY - stackRow * canvasLayoutMetrics.constraintMarkerStackOffset,
   };
 }
 

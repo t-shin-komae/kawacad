@@ -77,7 +77,9 @@ describe("PDFExportDialog", () => {
     );
 
     expect(await screen.findAllByText("1ページ")).toHaveLength(2);
-    fireEvent.click(screen.getByRole("button", { name: "保存へ進む" }));
+    const save = screen.getByRole("button", { name: "保存へ進む" });
+    expect(save).toHaveClass("primary-action");
+    fireEvent.click(save);
 
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith("save_prepared_pdf", {
