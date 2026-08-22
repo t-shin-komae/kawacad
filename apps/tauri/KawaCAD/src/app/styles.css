@@ -37,6 +37,54 @@
   line-height: 1.2;
   font-synthesis: none;
 }
+.component-reference-card {
+  max-width: 760px;
+  border: 1px solid var(--panel-stroke);
+  border-radius: 12px;
+  background: var(--dialog-fill);
+  box-shadow: var(--panel-shadow);
+  padding: 22px 24px;
+}
+.component-reference-card h1 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+.component-reference-card dl {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 0;
+}
+.component-reference-card dl > div {
+  display: grid;
+  gap: 4px;
+}
+.component-reference-card dt {
+  color: var(--secondary-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.component-reference-card dd {
+  margin: 0;
+  line-height: 1.45;
+}
+.component-reference-card code {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+.component-reference-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.component-reference-note {
+  margin: 20px 0 0;
+  color: var(--secondary-ink);
+  font-size: 11px;
+}
 * {
   box-sizing: border-box;
 }

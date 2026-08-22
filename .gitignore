@@ -14,3 +14,4 @@ mutants.out/
 /local/
 apps/tauri/KawaCAD/public/ThirdPartyNotices.json
 apps/macos/KawaCAD/Sources/KawaCADApp/Resources/ThirdPartyNotices.generated.md
+apps/tauri/KawaCAD/storybook-static/
