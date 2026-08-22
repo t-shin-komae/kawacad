@@ -31,3 +31,24 @@ KAWACAD_CORE_PROCESS="$PWD/target/debug/kawacad-core-process" \
   LEATHER_ENABLE_LIVE_CORE_TESTS=1 \
   swift test --package-path apps/macos/KawaCAD --filter 'live_core_'
 ```
+
+## Comparison screenshots
+
+`ComparisonScreenshotTests.swift` renders the SwiftUI/AppKit states paired with the
+Tauri visual verification. Run both variants and generate side-by-side images
+from the repository root:
+
+```bash
+node scripts/capture-comparison-screenshots.mjs
+```
+
+The Swift test draws its `NSHostingView` directly into a bitmap instead of
+capturing WindowServer pixels. It does not require app activation or Screen &
+System Audio Recording permission. Because the test process is not activated,
+standard controls can use their inactive colors; this fixture does not verify
+active-window appearance. The context-menu image is an in-process visual fixture;
+menu actions and item construction remain covered by non-visual tests.
+
+Regular `swift test` does not update generated images because the output
+environment variable is absent. The repository command sets it only for this
+screenshot case.
