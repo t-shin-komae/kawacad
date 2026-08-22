@@ -67,7 +67,7 @@ extension LeatherCanvasView {
     let coordinateSpace = coordinateSpace(in: pageRect)
     let canvasBounds = coordinateSpace.canvasBoundsRect
 
-    NSColor.textBackgroundColor.setFill()
+    LeatherColors.canvasBackground.setFill()
     NSBezierPath(rect: canvasBounds).fill()
 
     let pageOffset = CanvasCoordinateSpace.a4GridPageLimit / 2
