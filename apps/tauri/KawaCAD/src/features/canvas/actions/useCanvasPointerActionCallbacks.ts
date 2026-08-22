@@ -8,6 +8,7 @@ import {
   controlPointEntityId,
   coreConstraintTarget,
   hitConstraintMarker,
+  hitProjectedAnnotation,
   preferredConstraintTarget,
   selectionInRect,
   type ConstraintTarget,
@@ -110,7 +111,8 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       setHoveredConstraintId(
         state?.viewMode === "outputPreview" || tool !== "select"
           ? undefined
-          : hitConstraintMarker(point, canvasProjection.constraintMarkers, viewport),
+          : (hitProjectedAnnotation(point, canvasProjection.dimensionConstraints, viewport) ??
+              hitConstraintMarker(point, canvasProjection.constraintMarkers, viewport)),
       );
       if (tool === "arc" && draft.length === 2) {
         const placement = arcPlacementEndPoint(draft[0], draft[1], snappedPoint, arcSweepAngle.current, event.shiftKey);

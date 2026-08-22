@@ -2,9 +2,9 @@ import type { PointMm } from "@/features/canvas/domain/cad";
 
 export const canvasLayoutMetrics = {
   constraintMarkerAnchorX: 10,
-  constraintMarkerAnchorY: -20,
-  constraintMarkerStackOffset: 5,
-  constraintMarkerHeightPx: 16,
+  constraintMarkerAnchorY: -24,
+  constraintMarkerStackOffset: 24,
+  constraintMarkerHeightPx: 22,
   constraintMarkerMinimumWidthPx: 22,
   fallbackCharacterWidthPx: 6,
   constraintMarkerHorizontalPaddingPx: 10,

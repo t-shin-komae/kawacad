@@ -257,7 +257,7 @@ export function DirectPrintDialog({
               <button type="button" onClick={onClose} disabled={printing}>
                 {appStrings.common.cancel}
               </button>
-              <button type="button" onClick={() => void print()} disabled={!canPrint}>
+              <button type="button" className="primary-action" onClick={() => void print()} disabled={!canPrint}>
                 {printing ? appStrings.output.printing : appStrings.output.printNext}
               </button>
             </div>

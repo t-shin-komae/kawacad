@@ -29,13 +29,13 @@ export function RecoveryChooserDialog({ candidates, onRestore, onDiscard, onReve
               <div className="button-row">
                 <button
                   type="button"
-                  className="primary"
+                  className="primary-action"
                   disabled={candidate.status !== "recoverable"}
                   onClick={() => onRestore(candidate.id)}
                 >
                   {appStrings.app.restore}
                 </button>
-                <button type="button" className="destructive" onClick={() => onDiscard(candidate.id)}>
+                <button type="button" className="destructive-action" onClick={() => onDiscard(candidate.id)}>
                   {appStrings.app.discard}
                 </button>
                 <button type="button" onClick={() => onReveal(candidate.id)}>

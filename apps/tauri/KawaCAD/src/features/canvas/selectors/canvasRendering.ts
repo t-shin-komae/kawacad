@@ -50,16 +50,19 @@ export type CanvasRenderOptions = {
   a4Landscape: boolean;
   outputPages: OutputPreviewPage[];
   entities: RawEntity[];
+  suppressedByFilletEntityIds?: Set<string>;
   layers: CanvasLayer[];
   sharedStyles: CanvasSharedStyle[];
   selectedIds: Set<string>;
   freeTexts: CanvasFreeText[];
   editingFreeTextId?: string;
   highlightedFreeTextIds: Set<string>;
+  highlightedEntityIds?: Set<string>;
   highlightedMeasurementAnnotationIds: Set<string>;
   highlightedStitchStartPointIds: Set<string>;
   projection: CanvasProjection;
   selectedMeasurementAnnotationId?: string;
+  selectedConstraintId?: string;
   selectedStitchStartPointId?: string;
   measurementLabels: Record<string, string>;
   measurementLabelOffsets: Record<string, PointMm>;
@@ -101,16 +104,19 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
     a4Landscape,
     outputPages,
     entities,
+    suppressedByFilletEntityIds = new Set(),
     layers,
     sharedStyles,
     selectedIds,
     freeTexts,
     editingFreeTextId,
     highlightedFreeTextIds,
+    highlightedEntityIds = new Set(),
     highlightedMeasurementAnnotationIds,
     highlightedStitchStartPointIds,
     projection,
     selectedMeasurementAnnotationId,
+    selectedConstraintId,
     selectedStitchStartPointId,
     measurementLabels,
     measurementLabelOffsets,
@@ -150,6 +156,8 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
       !outputPreview && selectedIds.has(entity.id),
       !outputPreview && pendingTargetEntityIds.has(entity.id),
       !outputPreview && entity.id === hoveredTargetEntityId,
+      suppressedByFilletEntityIds.has(entity.id),
+      !outputPreview && highlightedEntityIds.has(entity.id),
     ),
   );
   freeTexts
@@ -169,6 +177,7 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
         height,
         viewport,
         measurementArcCounterclockwise[item.id],
+        item.id === selectedMeasurementAnnotationId || highlightedMeasurementAnnotationIds.has(item.id),
       ),
     );
     projection.dimensionConstraints.forEach((item) =>
@@ -177,11 +186,12 @@ export function drawCanvasFrame(options: CanvasRenderOptions) {
         item,
         dimensionLabels[item.id],
         dimensionLabelOffsets[item.id],
-        "#2e426b",
+        item.id === selectedConstraintId || item.id === hoveredConstraintId ? "#dd5615" : "#2e426b",
         width,
         height,
         viewport,
         dimensionArcCounterclockwise[item.id],
+        item.id === selectedConstraintId || item.id === hoveredConstraintId,
       ),
     );
   }
@@ -327,21 +337,21 @@ function drawOutputPreviewPages(
     context.fillStyle = "rgba(10, 132, 255, .045)";
     context.fillRect(page.x, page.y, page.width, page.height);
     context.strokeStyle = "rgba(10, 132, 255, .75)";
-    context.lineWidth = 1;
-    context.setLineDash([5, 4]);
+    context.lineWidth = 1.4;
+    context.setLineDash([7, 4]);
     context.strokeRect(page.x, page.y, page.width, page.height);
     context.setLineDash([]);
     const label = `${index + 1}`;
     context.font = "600 11px -apple-system, BlinkMacSystemFont, sans-serif";
-    const badgeWidth = context.measureText(label).width + 12;
+    const badgeWidth = Math.max(24, context.measureText(label).width + 14);
     context.fillStyle = "#0a84ff";
     context.beginPath();
-    context.roundRect(page.x + 8, page.y + 8, badgeWidth, 18, 5);
+    context.roundRect(page.x + 8, page.y + 8, badgeWidth, 22, 5);
     context.fill();
     context.fillStyle = "#fff";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText(label, page.x + 8 + badgeWidth / 2, page.y + 17);
+    context.fillText(label, page.x + 8 + badgeWidth / 2, page.y + 19);
   }
   context.restore();
 }
@@ -446,26 +456,49 @@ function drawA4(
 function drawCoordinateReference(context: CanvasRenderingContext2D, width: number, height: number, viewport: Viewport) {
   const origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport);
   context.save();
-  context.strokeStyle = "rgba(90,90,96,.75)";
-  context.fillStyle = "rgba(90,90,96,.85)";
-  context.lineWidth = 1;
+  const axisColor = "rgba(10,132,255,.72)";
+  const axisEndX = Math.min(origin.x + 70, width);
+  const axisEndY = Math.max(origin.y - 70, 0);
+  context.strokeStyle = axisColor;
+  context.fillStyle = axisColor;
+  context.lineWidth = 1.4;
   context.beginPath();
   context.moveTo(origin.x, origin.y);
-  context.lineTo(origin.x + 34, origin.y);
+  context.lineTo(axisEndX, origin.y);
   context.moveTo(origin.x, origin.y);
-  context.lineTo(origin.x, origin.y - 34);
+  context.lineTo(origin.x, axisEndY);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(axisEndX, origin.y);
+  context.lineTo(Math.max(origin.x, axisEndX - 8), origin.y - 4);
+  context.lineTo(Math.max(origin.x, axisEndX - 8), origin.y + 4);
+  context.fill();
+  context.beginPath();
+  context.moveTo(origin.x, axisEndY);
+  context.lineTo(origin.x - 4, Math.min(origin.y, axisEndY + 8));
+  context.lineTo(origin.x + 4, Math.min(origin.y, axisEndY + 8));
+  context.fill();
+  context.fillStyle = "rgba(255,255,255,.95)";
+  context.strokeStyle = axisColor;
+  context.beginPath();
+  context.arc(origin.x, origin.y, 4, 0, Math.PI * 2);
+  context.fill();
   context.stroke();
   context.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
-  context.fillText("X", origin.x + 38, origin.y + 4);
-  context.fillText("Y", origin.x + 4, origin.y - 38);
-  context.fillText(appStrings.canvas.origin, origin.x + 6, origin.y + 14);
-  const scale = Math.max(10, 50 * displayScale(viewport));
-  context.strokeStyle = "rgba(90,90,96,.6)";
+  context.fillStyle = axisColor;
+  context.fillText("X", Math.min(axisEndX + 6, width - 10), origin.y + 4);
+  context.fillText("Y", origin.x - 4, Math.max(axisEndY - 8, 10));
+  context.fillText(appStrings.canvas.origin, origin.x + 7, Math.max(origin.y - 8, 12));
+  const scale = 112;
+  context.strokeStyle = "rgba(29,29,31,.72)";
+  context.lineWidth = 3;
   context.beginPath();
-  context.moveTo(14, height - 28);
-  context.lineTo(14 + scale, height - 28);
+  context.moveTo(20, height - 34);
+  context.lineTo(20 + scale, height - 34);
   context.stroke();
-  context.fillText(appStrings.canvas.scaleGuide, 14, height - 32);
+  context.fillStyle = "#1d1d1f";
+  context.font = "600 11px -apple-system, BlinkMacSystemFont, sans-serif";
+  context.fillText(appStrings.canvas.scaleGuide, 20, height - 42);
   context.restore();
 }
 
@@ -538,8 +571,13 @@ function drawSelectionMarquee(
   context.restore();
 }
 
-function geometryScreenBounds(entity: RawEntity, width: number, height: number, viewport: Viewport) {
-  const geometry = geometryOf(entity);
+function geometryScreenBounds(
+  entity: RawEntity | NonNullable<ReturnType<typeof geometryOf>>,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  const geometry = "tag" in entity ? entity : geometryOf(entity);
   if (!geometry) return undefined;
   if (geometry.tag === "point") {
     const point = screenPoint(geometry.point, width, height, viewport);
@@ -586,19 +624,19 @@ function drawPendingTargetFeedback(
     return;
   const screen = screenPoint(point, width, height, viewport);
   context.save();
-  context.strokeStyle = "#34c759";
+  context.strokeStyle = "#048174";
   context.lineWidth = 2;
   context.setLineDash([]);
   context.beginPath();
   context.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
   context.stroke();
   context.setLineDash([]);
-  drawCanvasBadge(
+  drawOutlinedCanvasBadge(
     context,
-    appStrings.canvas.constraintTargetSelection(pendingTargetEntityIds.size + 1),
+    constraintGuidanceText(tool, pendingTargetEntityIds.size),
     screen.x + 12,
-    screen.y - 10,
-    "#34c759",
+    screen.y + 12,
+    "#048174",
   );
   context.restore();
 }
@@ -614,12 +652,12 @@ function drawDragFeedback(
 ) {
   if (!point) return;
   const screen = screenPoint(point, width, height, viewport);
-  drawCanvasBadge(
+  drawDragCanvasBadge(
     context,
     duplicating ? appStrings.canvas.dragCopy(count) : appStrings.canvas.dragMove(count),
     screen.x + 12,
     screen.y - 27,
-    duplicating ? "#34c759" : "#0a84ff",
+    duplicating ? "#048174" : "#204ab3",
   );
 }
 
@@ -635,12 +673,12 @@ function drawSnapFeedback(
   if (!point) return;
   const screen = screenPoint(point, width, height, viewport);
   if (suppressed) {
-    drawCanvasBadge(context, appStrings.canvas.snapOff, screen.x + 12, screen.y + 10, "#6e6e73");
+    drawOutlinedCanvasBadge(context, appStrings.canvas.snapOff, screen.x + 12, screen.y + 10, "#4a525d", true);
     return;
   }
   if (!enabled) return;
   context.save();
-  context.strokeStyle = "#34c759";
+  context.strokeStyle = "#048174";
   context.lineWidth = 1.5;
   context.beginPath();
   context.moveTo(screen.x - 8, screen.y);
@@ -666,6 +704,92 @@ function drawCanvasBadge(context: CanvasRenderingContext2D, text: string, x: num
   context.restore();
 }
 
+function drawOutlinedCanvasBadge(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  color: string,
+  monospaced = false,
+) {
+  context.save();
+  context.font = monospaced
+    ? "700 9px ui-monospace, SFMono-Regular, Menlo, monospace"
+    : "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
+  const metrics = context.measureText(text);
+  const badgeWidth = metrics.width + 14;
+  const badgeHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + 7;
+  context.fillStyle = monospaced ? "rgba(74,82,93,.88)" : "rgba(255,255,255,.92)";
+  context.strokeStyle = monospaced ? "rgba(251,245,228,.92)" : "rgba(4,129,116,.58)";
+  context.lineWidth = 1;
+  context.beginPath();
+  context.roundRect(x, y, badgeWidth, badgeHeight, 6);
+  context.fill();
+  context.stroke();
+  context.fillStyle = monospaced ? "#fbf5e4" : color;
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  context.fillText(text, x + 7, y + badgeHeight / 2);
+  context.restore();
+}
+
+function drawDragCanvasBadge(context: CanvasRenderingContext2D, text: string, x: number, y: number, color: string) {
+  context.save();
+  context.font = "600 11px -apple-system, BlinkMacSystemFont, sans-serif";
+  const metrics = context.measureText(text);
+  const badgeWidth = metrics.width + 18;
+  const badgeHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + 8;
+  context.fillStyle = color === "#048174" ? "rgba(4,129,116,.92)" : "rgba(32,74,179,.90)";
+  context.strokeStyle = "rgba(255,255,255,.84)";
+  context.lineWidth = 1;
+  context.beginPath();
+  context.roundRect(x, y, badgeWidth, badgeHeight, 8);
+  context.fill();
+  context.stroke();
+  context.fillStyle = "#fff";
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  context.fillText(text, x + 9, y + badgeHeight / 2);
+  context.restore();
+}
+
+function constraintGuidanceText(tool: Tool, pendingTargetCount: number) {
+  const hints = appStrings.canvas.constraintHint;
+  switch (tool) {
+    case "distance":
+    case "measureDistance":
+    case "horizontal":
+    case "vertical":
+      return pendingTargetCount === 0 ? hints.pointOrLine : hints.nextPointOrLine;
+    case "horizontalDistance":
+    case "verticalDistance":
+    case "coincident":
+      return pendingTargetCount === 0 ? hints.point : hints.nextPoint;
+    case "parallel":
+    case "perpendicular":
+    case "equalLength":
+    case "angle":
+    case "segmentLength":
+    case "fillet":
+    case "measureSegmentLength":
+    case "measureAngle":
+      return pendingTargetCount === 0 ? hints.line : hints.nextLine;
+    case "diameter":
+    case "measureDiameter":
+      return hints.circle;
+    case "radius":
+    case "measureRadius":
+    case "measureArcSweepAngle":
+      return hints.circleOrArc;
+    case "fixed":
+      return hints.pointOrCenter;
+    case "symmetric":
+      return pendingTargetCount < 2 ? hints.point : hints.nextAxis;
+    default:
+      return hints.target;
+  }
+}
+
 function drawEntity(
   context: CanvasRenderingContext2D,
   entity: RawEntity,
@@ -676,26 +800,29 @@ function drawEntity(
   selected: boolean,
   pendingTarget = false,
   hoveredTarget = false,
+  suppressedByFillet = false,
+  highlightedPart = false,
 ) {
   const geometry = geometryOf(entity);
   if (!geometry) return;
   const scale = displayScale(viewport);
+  const distinguishedStyle = suppressedByFillet
+    ? {
+        ...style,
+        stroke: { ...style.stroke, alpha: style.stroke.alpha * 0.26 },
+        strokeWidthMm: style.strokeWidthMm * 0.75,
+        pattern: "dashed",
+      }
+    : style;
   context.save();
-  context.strokeStyle = selected
-    ? "#0a84ff"
-    : hoveredTarget
-      ? "#34c759"
-      : pendingTarget
-        ? "#0a84ff"
-        : rgba(style.stroke);
-  context.fillStyle = context.strokeStyle;
-  context.lineWidth = selected || pendingTarget || hoveredTarget ? 2.2 : Math.max(0.8, style.strokeWidthMm * scale);
-  if (!selected && pendingTarget && !hoveredTarget) context.setLineDash([5, 3]);
-  else if (!selected) setLinePattern(context, style.pattern, context.lineWidth);
+  context.strokeStyle = rgba(distinguishedStyle.stroke);
+  context.fillStyle = rgba(distinguishedStyle.stroke);
+  context.lineWidth = Math.max(0.8, distinguishedStyle.strokeWidthMm * scale);
+  setLinePattern(context, distinguishedStyle.pattern, context.lineWidth);
   if (geometry.tag === "point") {
     const point = screenPoint(geometry.point, width, height, viewport);
     context.beginPath();
-    context.arc(point.x, point.y, selected ? 5 : 3, 0, Math.PI * 2);
+    context.arc(point.x, point.y, 3, 0, Math.PI * 2);
     context.fill();
   }
   if (geometry.tag === "lineSegment" || geometry.tag === "centerLine") {
@@ -726,6 +853,10 @@ function drawEntity(
     );
     context.stroke();
   }
+  if (selected) drawEntitySelectionHighlight(context, geometry, width, height, viewport);
+  if (highlightedPart && !selected) drawEntityPartHighlight(context, geometry, width, height, viewport);
+  if (pendingTarget || hoveredTarget)
+    drawEntityTargetHighlight(context, geometry, width, height, viewport, hoveredTarget);
   if (selected) {
     context.fillStyle = "#fff";
     context.strokeStyle = "#0a84ff";
@@ -740,6 +871,106 @@ function drawEntity(
   }
   context.restore();
 }
+
+function drawEntitySelectionHighlight(
+  context: CanvasRenderingContext2D,
+  geometry: NonNullable<ReturnType<typeof geometryOf>>,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  const bounds = geometryScreenBounds(geometry, width, height, viewport);
+  if (!bounds) return;
+  context.save();
+  context.strokeStyle = "rgba(59,130,246,.28)";
+  context.lineWidth = 3;
+  context.setLineDash([]);
+  context.beginPath();
+  if (geometry.tag === "point" || geometry.tag === "circle" || geometry.tag === "arc") {
+    const inset = geometry.tag === "point" ? 4 : 3;
+    context.arc(
+      bounds.x + bounds.width / 2,
+      bounds.y + bounds.height / 2,
+      Math.max(bounds.width, bounds.height) / 2 + inset,
+      0,
+      Math.PI * 2,
+    );
+  } else {
+    context.roundRect(bounds.x - 4, bounds.y - 4, bounds.width + 8, bounds.height + 8, 8);
+  }
+  context.stroke();
+  context.restore();
+}
+
+function drawEntityTargetHighlight(
+  context: CanvasRenderingContext2D,
+  geometry: NonNullable<ReturnType<typeof geometryOf>>,
+  width: number,
+  height: number,
+  viewport: Viewport,
+  hovered: boolean,
+) {
+  const bounds = geometryScreenBounds(geometry, width, height, viewport);
+  if (!bounds) return;
+  const stroke = hovered ? "rgba(4,129,116,.92)" : "rgba(32,74,179,.95)";
+  const fill = hovered ? "rgba(4,129,116,.10)" : "rgba(59,130,246,.14)";
+  context.save();
+  context.strokeStyle = stroke;
+  context.fillStyle = fill;
+  context.lineWidth = hovered ? 2 : 3;
+  context.setLineDash([]);
+  context.beginPath();
+  if (geometry.tag === "lineSegment" || geometry.tag === "centerLine") {
+    const start = screenPoint(geometry.start, width, height, viewport);
+    const end = screenPoint(geometry.end, width, height, viewport);
+    context.moveTo(start.x, start.y);
+    context.lineTo(end.x, end.y);
+  } else if (geometry.tag === "point" || geometry.tag === "circle" || geometry.tag === "arc") {
+    const inset = geometry.tag === "point" ? 8 : 5;
+    context.arc(
+      bounds.x + bounds.width / 2,
+      bounds.y + bounds.height / 2,
+      Math.max(bounds.width, bounds.height) / 2 + inset,
+      0,
+      Math.PI * 2,
+    );
+  } else {
+    context.roundRect(bounds.x - 5, bounds.y - 5, bounds.width + 10, bounds.height + 10, 8);
+  }
+  if (geometry.tag !== "lineSegment" && geometry.tag !== "centerLine") context.fill();
+  context.stroke();
+  context.restore();
+}
+
+function drawEntityPartHighlight(
+  context: CanvasRenderingContext2D,
+  geometry: NonNullable<ReturnType<typeof geometryOf>>,
+  width: number,
+  height: number,
+  viewport: Viewport,
+) {
+  const bounds = geometryScreenBounds(geometry, width, height, viewport);
+  if (!bounds) return;
+  context.save();
+  context.strokeStyle = "rgba(234,128,36,.55)";
+  context.lineWidth = 2;
+  context.setLineDash([]);
+  context.beginPath();
+  if (geometry.tag === "point" || geometry.tag === "circle" || geometry.tag === "arc") {
+    context.arc(
+      bounds.x + bounds.width / 2,
+      bounds.y + bounds.height / 2,
+      Math.max(bounds.width, bounds.height) / 2 + 3,
+      0,
+      Math.PI * 2,
+    );
+  } else {
+    context.roundRect(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6, 7);
+  }
+  context.stroke();
+  context.restore();
+}
+
 export function displayStyleFor(
   entity: RawEntity,
   layers: CanvasLayer[],
@@ -747,7 +978,7 @@ export function displayStyleFor(
 ): DisplayStyle {
   const base = sharedStyles.find((style) => style.id === entity.styleId)?.style ??
     layers.find((layer) => layer.id === entity.layerId)?.style ?? {
-      stroke: { red: 0.11, green: 0.11, blue: 0.12, alpha: 1 },
+      stroke: { red: 0.067, green: 0.094, blue: 0.153, alpha: 1 },
       strokeWidthMm: 0.2,
       pattern: "solid",
     };
@@ -783,9 +1014,21 @@ function drawFreeText(
   const point = screenPoint(item.positionMm, width, height, viewport);
   const scale = displayScale(viewport);
   context.save();
-  context.fillStyle = highlighted ? "#007aff" : "#1d1d1f";
   context.font = `${Math.max(11, item.fontSizeMm * scale)}px -apple-system, BlinkMacSystemFont, sans-serif`;
   context.textBaseline = "alphabetic";
+  const metrics = context.measureText(item.content);
+  if (highlighted) {
+    const ascent = metrics.actualBoundingBoxAscent || Math.max(9, item.fontSizeMm * scale);
+    const descent = metrics.actualBoundingBoxDescent || 3;
+    context.fillStyle = "rgba(59,130,246,.12)";
+    context.strokeStyle = "rgba(59,130,246,.75)";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.roundRect(point.x - 4, point.y - ascent - 3, metrics.width + 8, ascent + descent + 6, 4);
+    context.fill();
+    context.stroke();
+  }
+  context.fillStyle = "#1d1d1f";
   context.fillText(item.content, point.x, point.y);
   context.restore();
 }
@@ -799,16 +1042,16 @@ function drawStitchStart(
 ) {
   const point = screenPoint(pointMm, width, height, viewport);
   context.save();
-  context.strokeStyle = highlighted ? "#007aff" : "#dc2626";
-  context.fillStyle = "#fff";
-  context.lineWidth = 1.5;
+  const size = highlighted ? 13 : 10;
+  context.fillStyle = "rgba(23,31,42,.96)";
+  context.strokeStyle = "#fff";
+  context.lineWidth = highlighted ? 2 : 1.4;
   context.beginPath();
-  context.arc(point.x, point.y, highlighted ? 6.5 : 5, 0, Math.PI * 2);
+  context.arc(point.x, point.y, size / 2, 0, Math.PI * 2);
   context.fill();
   context.stroke();
   context.beginPath();
-  context.moveTo(point.x, point.y - 9);
-  context.lineTo(point.x, point.y - 3);
+  context.arc(point.x, point.y, Math.max(1, size / 2 - 2), 0, Math.PI * 2);
   context.stroke();
   context.restore();
 }
@@ -849,27 +1092,35 @@ function drawConstraintMarker(
   const x = point.x + layout.offsetX;
   const y = point.y + layout.offsetY;
   context.save();
-  context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
-  const measuredWidth = context.measureText(layout.text).width;
-  const measuredLayout = constraintMarkerLayout({
-    ...marker,
-    label: marker.label ?? appStrings.canvas.constraint,
-    measuredTextWidthPx: measuredWidth,
-  });
-  context.fillStyle = hovered ? "rgba(32, 74, 179, .95)" : "rgba(4, 129, 116, .92)";
-  context.strokeStyle = hovered ? "#204ab3" : "rgba(4, 129, 116, .72)";
-  context.lineWidth = hovered ? 1.5 : 1;
-  context.beginPath();
-  context.roundRect(x, y, measuredLayout.width, measuredLayout.height, 4);
-  context.fill();
-  context.stroke();
-  context.fillStyle = "#fff";
+  const visualRect = { x, y, width: 22, height: 22 };
+  const icon = marker.icon ?? "?";
+  context.font = "600 13px -apple-system, BlinkMacSystemFont, sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(layout.text, x + measuredLayout.width / 2, y + measuredLayout.height / 2);
+  context.fillStyle = hovered ? "rgba(255,249,230,1)" : "rgba(12,96,88,.94)";
+  context.strokeStyle = hovered ? "rgba(221,86,21,.90)" : "rgba(12,96,88,.94)";
+  context.lineWidth = 1.6;
   context.beginPath();
-  context.arc(point.x, point.y, hovered ? 4.5 : 3.5, 0, Math.PI * 2);
-  context.fill();
+  if (hovered) {
+    context.roundRect(visualRect.x, visualRect.y, visualRect.width, visualRect.height, 5);
+    context.fill();
+  }
+  context.fillText(icon, visualRect.x + visualRect.width / 2, visualRect.y + visualRect.height / 2);
+  if (hovered) {
+    context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
+    const name = marker.label ?? appStrings.canvas.constraint;
+    const labelWidth = context.measureText(name).width + 12;
+    const labelX = visualRect.x + visualRect.width + 5;
+    const labelY = visualRect.y + 2;
+    context.fillStyle = "rgba(221,86,21,.88)";
+    context.beginPath();
+    context.roundRect(labelX, labelY, labelWidth, 18, 6);
+    context.fill();
+    context.fillStyle = "rgba(251,245,228,1)";
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    context.fillText(name, labelX + 6, labelY + 9);
+  }
   context.restore();
 }
 function drawAnnotation(
@@ -882,6 +1133,7 @@ function drawAnnotation(
   height: number,
   viewport: Viewport,
   arcCounterclockwise?: boolean,
+  highlighted = false,
 ) {
   if (!item.visible || !item.startMm || !item.endMm) return;
   const start = screenPoint(item.startMm, width, height, viewport),
@@ -889,8 +1141,8 @@ function drawAnnotation(
   context.save();
   context.strokeStyle = color;
   context.fillStyle = color;
-  context.lineWidth = 1;
-  context.setLineDash([3, 3]);
+  context.lineWidth = highlighted ? 1.5 : 1;
+  context.setLineDash([]);
   context.beginPath();
   if (item.arc && item.centerMm) {
     const center = screenPoint(item.centerMm, width, height, viewport);
@@ -910,10 +1162,10 @@ function drawAnnotation(
   context.setLineDash([]);
   if (item.arc && item.centerMm) {
     const center = screenPoint(item.centerMm, width, height, viewport);
-    drawArcArrowhead(context, center, start, end, Boolean(arcCounterclockwise), color);
+    drawArcArrowhead(context, center, start, end, Boolean(arcCounterclockwise), color, highlighted);
   } else {
-    drawLinearArrowhead(context, start, end, color);
-    drawLinearArrowhead(context, end, start, color);
+    drawLinearArrowhead(context, start, end, color, highlighted);
+    drawLinearArrowhead(context, end, start, color, highlighted);
   }
   if (label) {
     const midpoint =
@@ -937,10 +1189,18 @@ function drawAnnotation(
       context.measureText(label).width,
     );
     const labelPoint = screenPoint(labelLayout.centerMm, width, height, viewport);
-    drawAnnotationLabel(context, label, labelPoint.x, labelPoint.y, color, {
-      halfWidthPx: labelLayout.halfWidthMm * displayScale(viewport),
-      halfHeightPx: labelLayout.halfHeightMm * displayScale(viewport),
-    });
+    drawAnnotationLabel(
+      context,
+      label,
+      labelPoint.x,
+      labelPoint.y,
+      color,
+      {
+        halfWidthPx: labelLayout.halfWidthMm * displayScale(viewport),
+        halfHeightPx: labelLayout.halfHeightMm * displayScale(viewport),
+      },
+      highlighted,
+    );
   }
   context.restore();
 }
@@ -950,9 +1210,10 @@ function drawLinearArrowhead(
   point: { x: number; y: number },
   toward: { x: number; y: number },
   color: string,
+  highlighted = false,
 ) {
   const angle = Math.atan2(toward.y - point.y, toward.x - point.x);
-  const size = 5;
+  const size = highlighted ? 10 : 8;
   context.save();
   context.fillStyle = color;
   context.beginPath();
@@ -971,15 +1232,16 @@ function drawArcArrowhead(
   end: { x: number; y: number },
   counterclockwise: boolean,
   color: string,
+  highlighted = false,
 ) {
   const tangent = counterclockwise
     ? { x: -(end.y - center.y), y: end.x - center.x }
     : { x: end.y - center.y, y: -(end.x - center.x) };
-  drawLinearArrowhead(context, end, { x: end.x + tangent.x, y: end.y + tangent.y }, color);
+  drawLinearArrowhead(context, end, { x: end.x + tangent.x, y: end.y + tangent.y }, color, highlighted);
   const startTangent = counterclockwise
     ? { x: start.y - center.y, y: -(start.x - center.x) }
     : { x: -(start.y - center.y), y: start.x - center.x };
-  drawLinearArrowhead(context, start, { x: start.x + startTangent.x, y: start.y + startTangent.y }, color);
+  drawLinearArrowhead(context, start, { x: start.x + startTangent.x, y: start.y + startTangent.y }, color, highlighted);
 }
 
 function drawAnnotationLabel(
@@ -989,6 +1251,7 @@ function drawAnnotationLabel(
   y: number,
   color: string,
   layout?: { halfWidthPx: number; halfHeightPx: number },
+  highlighted = false,
 ) {
   context.save();
   context.font = "600 10px -apple-system, BlinkMacSystemFont, sans-serif";
@@ -997,14 +1260,14 @@ function drawAnnotationLabel(
   const measuredHalfWidth = metrics.width / 2 + 4;
   const halfWidth = Math.max(layout?.halfWidthPx ?? 0, measuredHalfWidth);
   const halfHeight = layout?.halfHeightPx ?? 8;
-  context.fillStyle = "rgba(255,255,255,.82)";
+  context.fillStyle = highlighted ? "rgba(221,86,21,.90)" : "rgba(255,255,255,.82)";
   context.strokeStyle = color;
-  context.lineWidth = 1;
+  context.lineWidth = highlighted ? 0 : 1;
   context.beginPath();
   context.roundRect(x - halfWidth, y - halfHeight, halfWidth * 2, halfHeight * 2, 3);
   context.fill();
-  context.stroke();
-  context.fillStyle = color;
+  if (!highlighted) context.stroke();
+  context.fillStyle = highlighted ? "#fbf5e4" : color;
   context.fillText(label, x, y);
   context.restore();
 }

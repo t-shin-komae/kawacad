@@ -68,6 +68,8 @@ private struct RecoveryCandidateRow: View {
         Button(AppStrings.tr("document.recovery.discard")) {
           actions.discard(candidate)
         }
+        .buttonStyle(.borderedProminent)
+        .tint(.red)
 
         Button(AppStrings.tr("document.recovery.show_in_finder")) {
           actions.revealInFinder(candidate)

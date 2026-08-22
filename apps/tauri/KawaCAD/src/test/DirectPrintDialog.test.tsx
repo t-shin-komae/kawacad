@@ -34,6 +34,7 @@ describe("DirectPrintDialog", () => {
     render(<DirectPrintDialog initialOrientation="portrait" onClose={vi.fn()} onPrinted={vi.fn()} />);
 
     const print = await screen.findByRole("button", { name: "印刷へ進む" });
+    expect(print).toHaveClass("primary-action");
     await waitFor(() => expect(print).toBeEnabled());
     fireEvent.click(print);
 
