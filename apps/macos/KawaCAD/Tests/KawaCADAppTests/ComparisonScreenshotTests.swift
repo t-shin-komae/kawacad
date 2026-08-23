@@ -5,9 +5,24 @@ import XCTest
 
 @testable import KawaCADApp
 
-private let wideScreenshotSize = CGSize(width: 1280, height: 720)
-private let expandedWideScreenshotSize = CGSize(width: 1800, height: 900)
-private let compactScreenshotSize = CGSize(width: 1024, height: 720)
+private let regularScreenshotSize = CGSize(width: 1280, height: 800)
+private let wideScreenshotSize = CGSize(width: 1800, height: 900)
+private let themeMatrixWideScreenshotSize = CGSize(width: 1600, height: 900)
+private let compactScreenshotSize = CGSize(width: 1024, height: 700)
+
+private enum ScreenshotTheme: String, CaseIterable {
+  case light
+  case dark
+
+  var appearanceName: NSAppearance.Name {
+    switch self {
+    case .light:
+      return .aqua
+    case .dark:
+      return .darkAqua
+    }
+  }
+}
 
 final class ComparisonScreenshotTests: XCTestCase {
   @MainActor
@@ -50,6 +65,7 @@ final class ComparisonScreenshotTests: XCTestCase {
     try captureSelectionEntityEditors(outputDirectory)
     try captureRecoveryCandidates(outputDirectory)
     try capturePDFOutput(outputDirectory)
+    try captureRepresentativeThemeMatrix(outputDirectory)
     try createComparisonImages(screenshotDirectory: outputDirectory)
   }
 }
@@ -58,7 +74,7 @@ final class ComparisonScreenshotTests: XCTestCase {
 private func captureInitialWorkspace(_ outputDirectory: URL) throws {
   try renderWorkspace(
     makeScreenshotAppState(),
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-browser-initial.png")
   )
 }
@@ -73,7 +89,7 @@ private func captureDetailedToolsAndSummary(_ outputDirectory: URL) throws {
   }
   try renderWorkspace(
     appState,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-detailed-tools-summary.png")
   )
 }
@@ -86,7 +102,7 @@ private func captureWideToolbarStates(_ outputDirectory: URL) throws {
   let capture: (String) throws -> Void = { fileName in
     try renderWorkspace(
       appState,
-      size: expandedWideScreenshotSize,
+      size: wideScreenshotSize,
       to: outputDirectory.appendingPathComponent(fileName)
     )
   }
@@ -164,7 +180,7 @@ private func captureConstraintHUD(_ outputDirectory: URL) throws {
   )
   try renderWorkspace(
     appState,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-constraint-hud.png")
   )
 }
@@ -217,11 +233,11 @@ private func captureContextMenu(_ outputDirectory: URL) throws {
           .stroke(Color.black.opacity(0.14), lineWidth: 0.5)
       }
       .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-      .offset(x: wideScreenshotSize.width * 0.46, y: wideScreenshotSize.height * 0.48)
+      .offset(x: regularScreenshotSize.width * 0.46, y: regularScreenshotSize.height * 0.48)
   }
   try renderScreenshot(
     comparisonView,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-context-menu.png")
   )
 }
@@ -261,7 +277,7 @@ private func capturePasteOptions(_ outputDirectory: URL) throws {
   )
   try renderWorkspace(
     appState,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-paste-options.png")
   )
 }
@@ -286,7 +302,7 @@ private func captureFreeText(
   appState.canvasPresentation.setFreeTextInlineEditRequestID(note.id)
   try renderWorkspace(
     appState,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent(fileName)
   )
 }
@@ -346,7 +362,7 @@ private func captureLicenses(_ outputDirectory: URL) throws {
   }
   try renderScreenshot(
     comparisonView,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-oss-licenses.png")
   )
 }
@@ -383,7 +399,7 @@ private func captureLayerDeletion(_ outputDirectory: URL) throws {
   )
   try renderWorkspace(
     appState,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-layer-deletion-confirmation.png")
   )
 }
@@ -470,7 +486,7 @@ private func captureInspectorManagementTabs(_ outputDirectory: URL) throws {
   layersState.inspectorPresentation.setSelectedLayerID(verificationLayer.id)
   try renderWorkspace(
     layersState,
-    size: expandedWideScreenshotSize,
+    size: wideScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-inspector-layers.png")
   )
 
@@ -479,7 +495,7 @@ private func captureInspectorManagementTabs(_ outputDirectory: URL) throws {
   stylesState.inspectorPresentation.setSelectedSharedStyleID(sharedStyles[0].id)
   try renderWorkspace(
     stylesState,
-    size: expandedWideScreenshotSize,
+    size: wideScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-inspector-shared-styles.png")
   )
 
@@ -488,7 +504,7 @@ private func captureInspectorManagementTabs(_ outputDirectory: URL) throws {
   parametersState.inspectorPresentation.setSelectedParameterID(parameter.id)
   try renderWorkspace(
     parametersState,
-    size: expandedWideScreenshotSize,
+    size: wideScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-inspector-parameters.png")
   )
 
@@ -505,7 +521,7 @@ private func captureInspectorManagementTabs(_ outputDirectory: URL) throws {
   partsState.inspectorPresentation.setSelectedPartID(part.id)
   try renderWorkspace(
     partsState,
-    size: expandedWideScreenshotSize,
+    size: wideScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-inspector-parts.png")
   )
 }
@@ -603,7 +619,7 @@ private func captureSelectionEntityEditors(_ outputDirectory: URL) throws {
     appState.canvasPresentation.setSelectedTool(.select)
     try renderWorkspace(
       appState,
-      size: expandedWideScreenshotSize,
+      size: wideScreenshotSize,
       to: outputDirectory.appendingPathComponent("swift-selection-\(name).png")
     )
   }
@@ -657,13 +673,18 @@ private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
   }
   try renderScreenshot(
     comparisonView,
-    size: wideScreenshotSize,
+    size: regularScreenshotSize,
     to: outputDirectory.appendingPathComponent("swift-recovery-candidates.png")
   )
 }
 
 @MainActor
-private func capturePDFOutput(_ outputDirectory: URL) throws {
+private func capturePDFOutput(
+  _ outputDirectory: URL,
+  fileName: String = "swift-pdf-output-settings.png",
+  appearanceName: NSAppearance.Name = .aqua,
+  size: CGSize = regularScreenshotSize
+) throws {
   let appState = makeScreenshotAppState()
   let presentationOptions = OutputPresentationOptions(
     orientation: .portrait,
@@ -709,9 +730,74 @@ private func capturePDFOutput(_ outputDirectory: URL) throws {
   }
   try renderScreenshot(
     comparisonView,
-    size: wideScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-pdf-output-settings.png")
+    size: size,
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
   )
+}
+
+@MainActor
+private func captureRepresentativeThemeMatrix(_ outputDirectory: URL) throws {
+  let line = lineEntity(
+    id: "entity:theme-matrix-line",
+    start: ModelPoint(xMM: -35, yMM: 0),
+    end: ModelPoint(xMM: 35, yMM: 0)
+  )
+  let selectedState = makeDocumentState(
+    name: "無題プロジェクト",
+    entities: [line]
+  )
+
+  for theme in ScreenshotTheme.allCases {
+    let prefix = "swift-\(theme.rawValue)"
+
+    let emptyState = makeScreenshotAppState()
+    emptyState.workspaceLayout.setWindowLayoutMode(.compact)
+    try renderWorkspace(
+      emptyState,
+      size: compactScreenshotSize,
+      to: outputDirectory.appendingPathComponent("\(prefix)-compact-empty.png"),
+      appearanceName: theme.appearanceName
+    )
+
+    let toolsState = makeScreenshotAppState()
+    toolsState.workspaceLayout.setWindowLayoutMode(.compact)
+    toolsState.workspaceLayout.setCompactDrawer(.tools)
+    try renderWorkspace(
+      toolsState,
+      size: compactScreenshotSize,
+      to: outputDirectory.appendingPathComponent("\(prefix)-compact-tools-drawer.png"),
+      appearanceName: theme.appearanceName
+    )
+
+    let inspectorState = makeScreenshotAppState(documentState: selectedState)
+    inspectorState.canvasPresentation.selectEntity(line.id)
+    inspectorState.workspaceLayout.setWindowLayoutMode(.compact)
+    inspectorState.workspaceLayout.setCompactDrawer(.inspector)
+    try renderWorkspace(
+      inspectorState,
+      size: compactScreenshotSize,
+      to: outputDirectory.appendingPathComponent("\(prefix)-compact-inspector-drawer.png"),
+      appearanceName: theme.appearanceName
+    )
+
+    let selectedInspectorState = makeScreenshotAppState(documentState: selectedState)
+    selectedInspectorState.canvasPresentation.selectEntity(line.id)
+    selectedInspectorState.workspaceLayout.setWindowLayoutMode(.regular)
+    try renderWorkspace(
+      selectedInspectorState,
+      size: regularScreenshotSize,
+      to: outputDirectory.appendingPathComponent("\(prefix)-regular-selected-inspector.png"),
+      appearanceName: theme.appearanceName
+    )
+
+    try capturePDFOutput(
+      outputDirectory,
+      fileName: "\(prefix)-wide-dialog.png",
+      appearanceName: theme.appearanceName,
+      size: themeMatrixWideScreenshotSize
+    )
+  }
 }
 
 @MainActor
@@ -871,18 +957,29 @@ private func workspaceView(_ appState: AppCoordinator) -> WorkspaceView {
 private func renderWorkspace(
   _ appState: AppCoordinator,
   size: CGSize,
-  to outputURL: URL
+  to outputURL: URL,
+  appearanceName: NSAppearance.Name = .aqua
 ) throws {
-  try renderScreenshot(workspaceView(appState), size: size, to: outputURL)
+  try renderScreenshot(
+    workspaceView(appState),
+    size: size,
+    to: outputURL,
+    appearanceName: appearanceName
+  )
 }
 
 @MainActor
 private func renderScreenshot<Content: View>(
   _ content: Content,
   size: CGSize,
-  to outputURL: URL
+  to outputURL: URL,
+  appearanceName: NSAppearance.Name = .aqua
 ) throws {
-  let (window, hostingView) = try makeScreenshotWindow(content, size: size)
+  let (window, hostingView) = try makeScreenshotWindow(
+    content,
+    size: size,
+    appearanceName: appearanceName
+  )
   defer { closeScreenshotWindow(window) }
 
   settle(hostingView)
@@ -894,7 +991,8 @@ private func renderScreenshot<Content: View>(
 @MainActor
 private func makeScreenshotWindow<Content: View>(
   _ content: Content,
-  size: CGSize
+  size: CGSize,
+  appearanceName: NSAppearance.Name
 ) throws -> (NSWindow, NSView) {
   let hostingView = NSHostingView(
     rootView:
@@ -914,6 +1012,9 @@ private func makeScreenshotWindow<Content: View>(
   // the test's autorelease pool after all screenshots have been written.
   window.isReleasedWhenClosed = false
   window.contentView = hostingView
+  let appearance = NSAppearance(named: appearanceName)
+  window.appearance = appearance
+  hostingView.appearance = appearance
   window.backgroundColor = .windowBackgroundColor
   return (window, hostingView)
 }
@@ -1006,8 +1107,48 @@ private func capture(view: NSView, logicalSize: CGSize, to outputURL: URL) throw
 }
 
 private func createComparisonImages(screenshotDirectory: URL) throws {
-  let standardPanelSize = CGSize(width: 1280, height: 720)
+  let standardPanelSize = regularScreenshotSize
   let pairs: [(String, String, String, CGSize)] = [
+    (
+      "light-compact-empty", "swift-light-compact-empty.png",
+      "tauri-light-compact-empty.jpg", compactScreenshotSize
+    ),
+    (
+      "light-compact-tools-drawer", "swift-light-compact-tools-drawer.png",
+      "tauri-light-compact-tools-drawer.jpg", compactScreenshotSize
+    ),
+    (
+      "light-compact-inspector-drawer", "swift-light-compact-inspector-drawer.png",
+      "tauri-light-compact-inspector-drawer.jpg", compactScreenshotSize
+    ),
+    (
+      "light-regular-selected-inspector", "swift-light-regular-selected-inspector.png",
+      "tauri-light-regular-selected-inspector.jpg", standardPanelSize
+    ),
+    (
+      "light-wide-dialog", "swift-light-wide-dialog.png", "tauri-light-wide-dialog.jpg",
+      themeMatrixWideScreenshotSize
+    ),
+    (
+      "dark-compact-empty", "swift-dark-compact-empty.png",
+      "tauri-dark-compact-empty.jpg", compactScreenshotSize
+    ),
+    (
+      "dark-compact-tools-drawer", "swift-dark-compact-tools-drawer.png",
+      "tauri-dark-compact-tools-drawer.jpg", compactScreenshotSize
+    ),
+    (
+      "dark-compact-inspector-drawer", "swift-dark-compact-inspector-drawer.png",
+      "tauri-dark-compact-inspector-drawer.jpg", compactScreenshotSize
+    ),
+    (
+      "dark-regular-selected-inspector", "swift-dark-regular-selected-inspector.png",
+      "tauri-dark-regular-selected-inspector.jpg", standardPanelSize
+    ),
+    (
+      "dark-wide-dialog", "swift-dark-wide-dialog.png", "tauri-dark-wide-dialog.jpg",
+      themeMatrixWideScreenshotSize
+    ),
     ("initial", "swift-browser-initial.png", "tauri-browser-initial.jpg", standardPanelSize),
     (
       "detailed-tools-summary", "swift-detailed-tools-summary.png",
@@ -1015,27 +1156,27 @@ private func createComparisonImages(screenshotDirectory: URL) throws {
     ),
     (
       "wide-toolbar", "swift-wide-toolbar.png", "tauri-wide-toolbar.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "wide-grid-off", "swift-wide-grid-off.png", "tauri-wide-grid-off.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "wide-a4-reference-off", "swift-wide-a4-reference-off.png",
-      "tauri-wide-a4-reference-off.jpg", expandedWideScreenshotSize
+      "tauri-wide-a4-reference-off.jpg", wideScreenshotSize
     ),
     (
       "wide-a4-landscape", "swift-wide-a4-landscape.png", "tauri-wide-a4-landscape.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "wide-grid-snap-off", "swift-wide-grid-snap-off.png", "tauri-wide-grid-snap-off.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "wide-point-snap-off", "swift-wide-point-snap-off.png", "tauri-wide-point-snap-off.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     ("constraint-hud", "swift-constraint-hud.png", "tauri-constraint-hud.jpg", standardPanelSize),
     ("context-menu", "swift-context-menu.png", "tauri-context-menu.jpg", standardPanelSize),
@@ -1063,39 +1204,39 @@ private func createComparisonImages(screenshotDirectory: URL) throws {
     ),
     (
       "inspector-layers", "swift-inspector-layers.png", "tauri-inspector-layers.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "inspector-shared-styles", "swift-inspector-shared-styles.png",
-      "tauri-inspector-shared-styles.jpg", expandedWideScreenshotSize
+      "tauri-inspector-shared-styles.jpg", wideScreenshotSize
     ),
     (
       "inspector-parameters", "swift-inspector-parameters.png",
-      "tauri-inspector-parameters.jpg", expandedWideScreenshotSize
+      "tauri-inspector-parameters.jpg", wideScreenshotSize
     ),
     (
       "inspector-parts", "swift-inspector-parts.png", "tauri-inspector-parts.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "selection-line", "swift-selection-line.png", "tauri-selection-line.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "selection-circle", "swift-selection-circle.png", "tauri-selection-circle.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "selection-arc", "swift-selection-arc.png", "tauri-selection-arc.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "selection-point", "swift-selection-point.png", "tauri-selection-point.jpg",
-      expandedWideScreenshotSize
+      wideScreenshotSize
     ),
     (
       "selection-center-line", "swift-selection-center-line.png",
-      "tauri-selection-center-line.jpg", expandedWideScreenshotSize
+      "tauri-selection-center-line.jpg", wideScreenshotSize
     ),
     (
       "recovery-candidates", "swift-recovery-candidates.png", "tauri-recovery-candidates.jpg",

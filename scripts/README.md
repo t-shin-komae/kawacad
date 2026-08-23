@@ -59,6 +59,12 @@ fixture does not verify active-window appearance. The context-menu image uses an
 in-process visual fixture because a native `NSMenu` is a separate WindowServer
 window.
 
+The representative matrix covers both light and dark themes at compact
+`1024x700`, regular `1280x800`, and wide `1600x900`. It uses fixed fixture data
+and resets the Tauri Core document between viewport states, so generated output
+does not depend on test order or elapsed time. The remaining images retain the
+broader toolbar, inspector, recovery, and output-dialog scenarios.
+
 ## Coverage
 
 Coverage reports are written under `coverage/`, never as report artifacts under `target/`:

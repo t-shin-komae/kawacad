@@ -42,6 +42,12 @@ from the repository root:
 node scripts/capture-comparison-screenshots.mjs
 ```
 
+The representative regression matrix covers light and dark themes at these
+fixed viewports: compact `1024x700`, regular `1280x800`, and wide `1600x900`.
+It captures the empty workspace, compact tools and inspector drawers, a
+selected inspector, and the PDF dialog. Each Swift fixture is rendered from a
+fresh in-memory document so the result does not depend on test order.
+
 The Swift test draws its `NSHostingView` directly into a bitmap instead of
 capturing WindowServer pixels. It does not require app activation or Screen &
 System Audio Recording permission. Because the test process is not activated,

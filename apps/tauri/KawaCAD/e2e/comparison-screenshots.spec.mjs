@@ -54,7 +54,7 @@ const test = base.extend({
 });
 
 test.use({
-  viewport: { width: 1280, height: 720 },
+  viewport: { width: 1280, height: 800 },
   deviceScaleFactor: 1,
   locale: "ja-JP",
   timezoneId: "Asia/Tokyo",
@@ -95,10 +95,13 @@ async function rightClickModelPoint(page, xMm, yMm) {
 }
 
 async function drawLine(page, start, end) {
+  const statusBar = page.getByTestId("leather.workspace.status-bar");
   await clickTool(page, "線分");
+  await expect(statusBar).toContainText("線分:");
   await clickModelPoint(page, ...start);
+  await expect(statusBar).toContainText("線分の次の点");
   await clickModelPoint(page, ...end);
-  await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("1 図形");
+  await expect(statusBar).toContainText("1 図形");
 }
 
 async function selectOnlyEntity(page) {
@@ -124,7 +127,52 @@ async function setViewportAndNotify(page, viewport) {
   await page.evaluate(() => window.dispatchEvent(new Event("resize")));
 }
 
+const screenshotThemes = [
+  { id: "light", colorScheme: "light" },
+  { id: "dark", colorScheme: "dark" },
+];
+const screenshotLayouts = [
+  { id: "compact", viewport: { width: 1024, height: 700 } },
+  { id: "regular", viewport: { width: 1280, height: 800 } },
+  { id: "wide", viewport: { width: 1600, height: 900 } },
+];
+
 test.describe("Swift and Tauri visual comparison", () => {
+  for (const theme of screenshotThemes) {
+    test(`captures representative ${theme.id} theme states at every layout width`, async ({ page, core }) => {
+      await page.emulateMedia({ colorScheme: theme.colorScheme });
+
+      for (const layout of screenshotLayouts) {
+        await core.invoke("new_document", { name: "Untitled" });
+        await setViewportAndNotify(page, layout.viewport);
+        await openWorkspace(page);
+        await expect(page.locator(`.app-shell.layout-${layout.id}`)).toBeVisible();
+        await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-empty.jpg`);
+
+        if (layout.id === "compact") {
+          await page.getByTestId("leather.toolbar.tools").click();
+          await expect(page.getByRole("complementary", { name: "ツール", exact: true })).toBeVisible();
+          await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-tools-drawer.jpg`);
+
+          await page.getByTestId("leather.toolbar.inspector").click();
+          await expect(page.getByRole("complementary", { name: "インスペクタ" })).toBeVisible();
+          await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-inspector-drawer.jpg`);
+          await page.keyboard.press("Escape");
+        } else if (layout.id === "regular") {
+          await drawLine(page, [-120, 0], [60, 0]);
+          await selectOnlyEntity(page);
+          await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-selected-inspector.jpg`);
+        } else {
+          await page.evaluate(() => {
+            window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "exportPDF" }));
+          });
+          await expect(page.getByRole("dialog", { name: "PDF" })).toBeVisible();
+          await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-dialog.jpg`);
+        }
+      }
+    });
+  }
+
   test("captures the initial workspace and its detailed summary", async ({ page }) => {
     await openWorkspace(page);
     await saveScreenshot(page, "tauri-browser-initial.jpg");
@@ -245,19 +293,19 @@ test.describe("Swift and Tauri visual comparison", () => {
     await inlineText.press("Enter");
     await expect(inlineText).toHaveCount(0);
 
-    await setViewportAndNotify(page, { width: 1085, height: 720 });
+    await setViewportAndNotify(page, { width: 1280, height: 800 });
     await expect.poll(() => page.locator(".app-shell").getAttribute("class")).toContain("layout-regular");
-    await setViewportAndNotify(page, { width: 799, height: 720 });
+    await setViewportAndNotify(page, { width: 1024, height: 700 });
     await expect.poll(() => page.locator(".app-shell").getAttribute("class")).toContain("layout-compact");
     await page.getByTestId("leather.toolbar.tools").click();
     await expect(page.getByRole("complementary", { name: "ツール", exact: true })).toBeVisible();
-    await saveScreenshot(page, "tauri-compact-tools-drawer.jpg", { fullPage: true });
+    await saveScreenshot(page, "tauri-compact-tools-drawer.jpg");
 
     await page.getByTestId("leather.toolbar.inspector").click();
     await expect(page.getByRole("complementary", { name: "インスペクタ" })).toBeVisible();
-    await saveScreenshot(page, "tauri-compact-inspector-drawer.jpg", { fullPage: true });
+    await saveScreenshot(page, "tauri-compact-inspector-drawer.jpg");
 
-    await setViewportAndNotify(page, { width: 1280, height: 720 });
+    await setViewportAndNotify(page, { width: 1280, height: 800 });
     await expect(page.locator(".app-shell.layout-regular")).toBeVisible();
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
