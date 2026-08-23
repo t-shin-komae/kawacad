@@ -26,14 +26,59 @@ enum ToolPaletteMetrics {
 }
 
 /// Shared dimensions mirrored by the Tauri design tokens in `styles.css`.
-/// Keeping the small set of cross-platform primitives here prevents each
-/// feature view from inventing a new control or card size.
+///
+/// These values describe the common visual vocabulary only. Feature-specific
+/// geometry (for example, canvas annotations) stays with the feature that owns
+/// it instead of being forced into this namespace.
 enum LeatherDesignMetrics {
-  static let controlHeight: CGFloat = 24
-  static let controlRadius: CGFloat = 6
-  static let cardRadius: CGFloat = 8
-  static let panelPadding: CGFloat = 16
-  static let toolbarIconSize: CGFloat = 22
+  enum Spacing {
+    static let xSmall: CGFloat = 4
+    static let small: CGFloat = 6
+    static let medium: CGFloat = 8
+    static let large: CGFloat = 10
+    static let extraLarge: CGFloat = 12
+    static let panel: CGFloat = 16
+    static let dialog: CGFloat = 20
+  }
+
+  enum Radius {
+    static let control: CGFloat = 6
+    static let tool: CGFloat = 7
+    static let card: CGFloat = 8
+    static let icon: CGFloat = 8
+    static let pill: CGFloat = 999
+  }
+
+  enum Typography {
+    static let body: CGFloat = 13
+    static let title: CGFloat = 15
+    static let section: CGFloat = 12
+    static let label: CGFloat = 11
+    static let caption: CGFloat = 10
+  }
+
+  enum Icon {
+    static let toolbar: CGFloat = 22
+    static let tool: CGFloat = 18
+    static let palette: CGFloat = 15
+    static let paletteFrame: CGFloat = 16
+    static let action: CGFloat = 12
+    static let small: CGFloat = 13
+  }
+
+  enum Control {
+    static let height: CGFloat = 24
+    static let compactHeight: CGFloat = 22
+    static let toolButton: CGFloat = 34
+    static let paletteToolHeight: CGFloat = 38
+    static let chip: CGFloat = 28
+  }
+
+  enum Border {
+    static let hairline: CGFloat = 1
+    static let selected: CGFloat = 1.2
+  }
+
 }
 
 extension Color {
@@ -57,11 +102,11 @@ struct PanelHeader: View {
   var body: some View {
     HStack(spacing: 8) {
       Image(systemName: symbolName)
-        .font(.system(size: 12, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
         .foregroundStyle(LeatherColors.accent)
         .frame(width: 16)
       Text(title)
-        .font(.system(size: 12, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
         .foregroundStyle(LeatherColors.ink)
       Spacer()
     }
@@ -77,15 +122,23 @@ struct CanvasToolButton: View {
     Button(action: action) {
       ToolIcon(
         tool: tool,
-        size: 18,
+        size: LeatherDesignMetrics.Icon.tool,
         color: isSelected ? LeatherColors.accent : LeatherColors.ink
       )
-      .frame(width: 34, height: 34)
+      .frame(
+        width: LeatherDesignMetrics.Control.toolButton,
+        height: LeatherDesignMetrics.Control.toolButton
+      )
       .background(isSelected ? LeatherColors.selectedFill : .clear)
-      .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+      .clipShape(
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.icon, style: .continuous)
+      )
       .overlay(
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-          .stroke(isSelected ? LeatherColors.selectedStroke : .clear)
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.icon, style: .continuous)
+          .stroke(
+            isSelected ? LeatherColors.selectedStroke : .clear,
+            lineWidth: LeatherDesignMetrics.Border.selected
+          )
       )
     }
     .buttonStyle(.borderless)
@@ -101,21 +154,26 @@ struct LabeledToolButton: View {
   var body: some View {
     Button(action: action) {
       HStack(spacing: 8) {
-        ToolIcon(tool: tool, size: 17, color: LeatherColors.ink)
+        ToolIcon(tool: tool, size: LeatherDesignMetrics.Icon.tool - 1, color: LeatherColors.ink)
           .frame(width: 20)
         Text(tool.displayName)
-          .font(.system(size: 12))
+          .font(.system(size: LeatherDesignMetrics.Typography.section))
           .lineLimit(1)
         Spacer(minLength: 0)
       }
       .foregroundStyle(isSelected ? LeatherColors.ink : LeatherColors.ink)
-      .padding(.horizontal, 10)
-      .frame(height: 34)
+      .padding(.horizontal, LeatherDesignMetrics.Spacing.large)
+      .frame(height: LeatherDesignMetrics.Control.toolButton)
       .background(isSelected ? LeatherColors.selectedFill : .clear)
-      .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+      .clipShape(
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.tool, style: .continuous)
+      )
       .overlay(
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
-          .stroke(isSelected ? LeatherColors.selectedStroke : .clear)
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.tool, style: .continuous)
+          .stroke(
+            isSelected ? LeatherColors.selectedStroke : .clear,
+            lineWidth: LeatherDesignMetrics.Border.selected
+          )
       )
     }
     .buttonStyle(.borderless)
@@ -132,29 +190,50 @@ struct PaletteToolButton: View {
     Button(action: action) {
       HStack(alignment: .top, spacing: 6) {
         ToolIcon(
-          tool: tool, size: 15, color: isSelected ? LeatherColors.accent : LeatherColors.ink
+          tool: tool,
+          size: LeatherDesignMetrics.Icon.palette,
+          color: isSelected ? LeatherColors.accent : LeatherColors.ink
         )
-        .frame(width: 16, height: 16)
+        .frame(
+          width: LeatherDesignMetrics.Icon.paletteFrame,
+          height: LeatherDesignMetrics.Icon.paletteFrame
+        )
         Text(tool.displayName)
-          .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+          .font(
+            .system(
+              size: LeatherDesignMetrics.Typography.label,
+              weight: isSelected ? .semibold : .medium
+            )
+          )
           .lineLimit(2)
           .multilineTextAlignment(.leading)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
       .foregroundStyle(LeatherColors.ink)
-      .padding(.horizontal, 6)
-      .padding(.vertical, 6)
-      .frame(maxWidth: .infinity, minHeight: 38, alignment: .leading)
+      .padding(.horizontal, LeatherDesignMetrics.Spacing.small)
+      .padding(.vertical, LeatherDesignMetrics.Spacing.small)
+      .frame(
+        maxWidth: .infinity,
+        minHeight: LeatherDesignMetrics.Control.paletteToolHeight,
+        alignment: .leading
+      )
       .background(
         isSelected
           ? LeatherColors.selectedFill : Color(nsColor: .controlBackgroundColor).opacity(0.28)
       )
-      .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+      .clipShape(
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.control, style: .continuous)
+      )
       .overlay(
-        RoundedRectangle(cornerRadius: 6, style: .continuous)
-          .stroke(
-            isSelected ? LeatherColors.selectedStroke : LeatherColors.panelStroke.opacity(0.26),
-            lineWidth: isSelected ? 1.2 : 1.0)
+        RoundedRectangle(
+          cornerRadius: LeatherDesignMetrics.Radius.control,
+          style: .continuous
+        )
+        .stroke(
+          isSelected ? LeatherColors.selectedStroke : LeatherColors.panelStroke.opacity(0.26),
+          lineWidth: isSelected
+            ? LeatherDesignMetrics.Border.selected : LeatherDesignMetrics.Border.hairline
+        )
       )
     }
     .buttonStyle(.borderless)
@@ -379,10 +458,10 @@ struct ChipView: View {
 
   var body: some View {
     Text(text)
-      .font(.system(size: 11, weight: .semibold))
+      .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .semibold))
       .foregroundStyle(LeatherColors.secondaryInk)
-      .padding(.horizontal, 10)
-      .frame(height: 28)
+      .padding(.horizontal, LeatherDesignMetrics.Spacing.large)
+      .frame(height: LeatherDesignMetrics.Control.chip)
       .background(LeatherColors.insetFill)
       .clipShape(Capsule())
   }
@@ -424,9 +503,9 @@ struct InspectorSection<Content: View>: View {
   @ViewBuilder let content: Content
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 10) {
+    VStack(alignment: .leading, spacing: LeatherDesignMetrics.Spacing.large) {
       PanelHeader(title: title, symbolName: symbolName)
-      VStack(alignment: .leading, spacing: 10) {
+      VStack(alignment: .leading, spacing: LeatherDesignMetrics.Spacing.large) {
         content
       }
       .padding(.leading, 24)
@@ -441,12 +520,17 @@ struct InsetSurface<Content: View>: View {
 
   var body: some View {
     content
-      .padding(10)
+      .padding(LeatherDesignMetrics.Spacing.large)
       .background(LeatherColors.insetFill)
-      .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+      .clipShape(
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.card, style: .continuous)
+      )
       .overlay(
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-          .strokeBorder(LeatherColors.panelStroke.opacity(0.45))
+        RoundedRectangle(cornerRadius: LeatherDesignMetrics.Radius.card, style: .continuous)
+          .strokeBorder(
+            LeatherColors.panelStroke.opacity(0.45),
+            lineWidth: LeatherDesignMetrics.Border.hairline
+          )
       )
   }
 }
