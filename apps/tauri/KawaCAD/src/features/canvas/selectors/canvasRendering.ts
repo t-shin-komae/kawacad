@@ -505,7 +505,9 @@ function drawCoordinateReference(context: CanvasRenderingContext2D, width: numbe
 
 function drawEmptyState(context: CanvasRenderingContext2D, width: number, height: number) {
   const centerX = width / 2;
-  const centerY = height / 2;
+  // Keep the first-use guide above the origin and coordinate axes while leaving
+  // the canvas center available for the A4 reference and the first drawing.
+  const centerY = height * 0.24;
   context.save();
   context.fillStyle = "rgba(10,132,255,.1)";
   context.strokeStyle = "rgba(10,132,255,.65)";

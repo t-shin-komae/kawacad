@@ -814,7 +814,11 @@ extension LeatherCanvasView {
   }
 
   func drawEmptyState(in pageRect: CGRect) {
-    let markerRect = CGRect(x: pageRect.midX - 21, y: pageRect.midY - 42, width: 42, height: 42)
+    // AppKit's y-axis grows upward, so the upper quarter uses 76% of the
+    // page height. Keep the origin and coordinate axes clear for the first
+    // drawing while retaining a stable, centered guide across window sizes.
+    let guideCenterY = pageRect.minY + pageRect.height * 0.76
+    let markerRect = CGRect(x: pageRect.midX - 21, y: guideCenterY - 42, width: 42, height: 42)
     NSColor(calibratedRed: 0.392, green: 0.439, blue: 0.490, alpha: 0.38).setStroke()
     let marker = NSBezierPath(ovalIn: markerRect)
     marker.lineWidth = 2
@@ -831,9 +835,9 @@ extension LeatherCanvasView {
     ]
 
     NSAttributedString(string: AppStrings.tr("canvas.empty.title"), attributes: titleAttributes)
-      .draw(at: CGPoint(x: pageRect.midX - 96, y: pageRect.midY + 14))
+      .draw(at: CGPoint(x: pageRect.midX - 96, y: guideCenterY + 14))
     NSAttributedString(string: AppStrings.tr("canvas.empty.body"), attributes: bodyAttributes)
-      .draw(at: CGPoint(x: pageRect.midX - 132, y: pageRect.midY + 36))
+      .draw(at: CGPoint(x: pageRect.midX - 132, y: guideCenterY + 36))
   }
 
   func layerStyle(for layerID: String?, in pageRect: CGRect) -> CanvasLineStyle {
