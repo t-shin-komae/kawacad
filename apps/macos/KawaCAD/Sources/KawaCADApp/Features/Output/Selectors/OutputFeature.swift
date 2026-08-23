@@ -34,9 +34,6 @@ enum OutputFeature {
     {
       return AppStrings.tr("output.sheet.empty_output")
     }
-    if !preparedState.buildResult.warnings.isEmpty, !draft.warningAcknowledged {
-      return AppStrings.tr("output.sheet.warning_ack_required")
-    }
     return nil
   }
 }

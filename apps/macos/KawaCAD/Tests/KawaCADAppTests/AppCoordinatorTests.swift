@@ -3647,7 +3647,7 @@ func output_app_state_direct_print_selection_failure_disables_printing() {
   #expect(printController.printedRenderData.isEmpty)
 }
 
-@Test("Output AppCoordinator は直接印刷設定シートで警告を確認して続行できる")
+@Test("Output AppCoordinator は警告付きの直接印刷主操作で続行できる")
 @MainActor
 func output_app_state_direct_print_sheet_allows_warning_confirmation() {
   let initialState = makeDocumentState(name: "Direct Print Warning", entities: [])
@@ -3691,12 +3691,8 @@ func output_app_state_direct_print_sheet_allows_warning_confirmation() {
       ))
   )
 
-  appState.actions.output.confirmOutputRequest()
-
-  #expect(appState.actions.output.outputRequestDraft != nil)
-  #expect(printController.printedRenderData.isEmpty)
-
-  appState.actions.output.setOutputWarningsAcknowledged(true)
+  #expect(
+    appState.actions.output.outputRequestDraft?.confirmationTitle == "警告を確認して印刷へ進む")
   appState.actions.output.confirmOutputRequest()
 
   #expect(appState.actions.output.outputRequestDraft == nil)

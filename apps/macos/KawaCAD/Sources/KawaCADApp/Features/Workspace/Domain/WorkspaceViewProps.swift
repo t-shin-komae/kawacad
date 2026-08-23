@@ -127,7 +127,6 @@ struct OutputRequestSheetActions {
   let setDestination: (OutputDestination) -> Void
   let setIncludeDimensionLabels: (Bool) -> Void
   let setIncludeScaleGuide: (Bool) -> Void
-  let setWarningsAcknowledged: (Bool) -> Void
   let selectDirectPrintPrinter: (String) -> Void
   let cancel: () -> Void
   let confirm: () -> Void

@@ -141,7 +141,6 @@ extension OutputActionHandler {
       return
     }
     draft.destination = destination
-    draft.warningAcknowledged = false
     switch destination {
     case .pdf:
       draft.selectedDirectPrinterName = nil
@@ -171,14 +170,6 @@ extension OutputActionHandler {
         rotationDeg: draft.options.rotationDeg
       )
     }
-  }
-
-  func setOutputWarningsAcknowledged(_ acknowledged: Bool) {
-    guard var draft = outputPresentation.requestDraft else {
-      return
-    }
-    draft.warningAcknowledged = acknowledged
-    outputPresentation.setRequestDraft(draft)
   }
 
   func selectDirectPrintPrinter(_ printerName: String) {
