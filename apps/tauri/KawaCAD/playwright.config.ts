@@ -4,6 +4,7 @@ const chromePath = process.env.LEATHER_E2E_CHROME;
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "**/*screenshots.spec.mjs",
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: false,

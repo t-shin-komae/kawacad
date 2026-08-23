@@ -42,6 +42,29 @@ node scripts/kawacad.mjs test --scope all
 
 `--live-core` enables the Swift tests that start a real `kawacad-core-process`. Swift commands require macOS. The `all` scope skips Swift on other operating systems and reports the skip.
 
+## Comparison screenshots
+
+On macOS, regenerate the matching Tauri and Swift screenshot scenarios with:
+
+```bash
+node scripts/capture-comparison-screenshots.mjs
+```
+
+Generated images are written below `test-results/comparison-screenshots/`, which
+is ignored by Git. Swift runs the screenshot case through SwiftPM and draws its
+`NSHostingView` directly into fixed-size PNG bitmaps. It does not bring an app to
+the foreground, use Screen Capture APIs, or require Screen & System Audio
+Recording permission. Standard controls can therefore use inactive colors; this
+fixture does not verify active-window appearance. The context-menu image uses an
+in-process visual fixture because a native `NSMenu` is a separate WindowServer
+window.
+
+The representative matrix covers both light and dark themes at compact
+`1024x700`, regular `1280x800`, and wide `1600x900`. It uses fixed fixture data
+and resets the Tauri Core document between viewport states, so generated output
+does not depend on test order or elapsed time. The remaining images retain the
+broader toolbar, inspector, recovery, and output-dialog scenarios.
+
 ## Coverage
 
 Coverage reports are written under `coverage/`, never as report artifacts under `target/`:
