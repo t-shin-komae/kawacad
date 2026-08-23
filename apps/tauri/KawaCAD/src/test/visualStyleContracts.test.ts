@@ -22,6 +22,15 @@ function rule(selector: string): string {
 }
 
 describe("visual style contracts", () => {
+  it("#165 keeps the shared design vocabulary in one token layer", () => {
+    expect(styles).toContain("--font-size-body: 13px");
+    expect(styles).toContain("--space-panel: 16px");
+    expect(styles).toContain("--radius-pill: 999px");
+    expect(styles).toContain("--icon-size-toolbar: 22px");
+    expect(styles).toContain("--border-width-selected: 1.2px");
+    expect(styles).toContain("--font-family-ui:");
+  });
+
   it("#66 keeps the shared control, card, panel, and focus tokens", () => {
     expect(styles).toContain("--control-height: 24px");
     expect(styles).toContain("--card-radius: 8px");
@@ -39,13 +48,17 @@ describe("visual style contracts", () => {
   });
 
   it("#68 keeps toolbar controls on the Swift icon and control sizes", () => {
-    expect(rule(".toolbar-tool-icon")).toMatch(/width: 22px;[\s\S]*height: 22px/u);
+    expect(rule(".toolbar-tool-icon")).toMatch(
+      /width: var\(--icon-size-toolbar\);[\s\S]*height: var\(--icon-size-toolbar\)/u,
+    );
     expect(rule(".toolbar-control-group > button")).toContain("min-height: var(--control-height)");
-    expect(rule(".toolbar-icon-button")).toMatch(/min-width: 24px !important;[\s\S]*height: 24px/u);
+    expect(rule(".toolbar-icon-button")).toMatch(
+      /min-width: var\(--control-height\) !important;[\s\S]*height: var\(--control-height\)/u,
+    );
   });
 
   it("#69 keeps palette controls, two-column threshold, and button geometry", () => {
-    expect(rule(".palette-select,\n.palette-input")).toContain("height: 22px");
+    expect(rule(".palette-select,\n.palette-input")).toContain("height: var(--control-compact-height)");
     expect(rule(".tool-grid button")).toContain("min-height: var(--palette-tool-height)");
     expect(rule(".tool-grid button")).toContain("background: rgba(255, 255, 255, 0.36)");
     expect(styles).toContain("@container palette (min-width: 220px)");

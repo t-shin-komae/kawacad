@@ -6,6 +6,8 @@
 
 外部から観測できる振る舞いは [`docs/spec/ui-ux-spec.md`](../../spec/ui-ux-spec.md)、UI 内の責務分割と状態所有は [`overview.md`](overview.md) を正とする。本書は表示コンポーネントを対象とする。action、state、selector、adapter の対応は網羅せず、表示責務の一部がコンポーネント以外に置かれている場合だけ併記する。
 
+共通の色、文字、余白、操作部品、アイコン、境界、影は [`design-tokens.md`](design-tokens.md) を参照する。
+
 対応関係は次のように表記する。
 
 | 表記 | 意味 |

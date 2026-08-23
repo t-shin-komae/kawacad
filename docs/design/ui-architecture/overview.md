@@ -2,7 +2,7 @@
 
 ## 1. 目的
 
-本書は、Swift/macOS UI と Tauri/React UI に共通する責務分割、状態所有、adapter 境界を定義する。個別の画面構成、クラス名、関数名、ファイル一覧は扱わない。現行実装のコンポーネントを相互に探す場合は [`component-correspondence.md`](component-correspondence.md) を参照する。
+本書は、Swift/macOS UI と Tauri/React UI に共通する責務分割、状態所有、adapter 境界を定義する。個別の画面構成、クラス名、関数名、ファイル一覧は扱わない。現行実装のコンポーネントを相互に探す場合は [`component-correspondence.md`](component-correspondence.md) を、共通の視覚基準を変更する場合は [`design-tokens.md`](design-tokens.md) を参照する。
 
 外部から観測できる振る舞いは `docs/spec/ui-ux-spec.md`、UI と Core が交換するデータの意味は `docs/design/internal-interface-spec.md` を正とする。UI 実装はこれらの正本を独自に複製しない。
 

@@ -1,4 +1,31 @@
 :root {
+  /* Shared design tokens. Keep these roles aligned with LeatherDesignMetrics. */
+  --font-family-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-size-body: 13px;
+  --font-size-title: 15px;
+  --font-size-section: 12px;
+  --font-size-label: 11px;
+  --font-size-caption: 10px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-body: 1.2;
+  --space-x-small: 4px;
+  --space-small: 6px;
+  --space-medium: 8px;
+  --space-large: 10px;
+  --space-extra-large: 12px;
+  --space-panel: 16px;
+  --space-dialog: 20px;
+  --radius-pill: 999px;
+  --icon-size-toolbar: 22px;
+  --icon-size-tool: 18px;
+  --icon-size-palette: 15px;
+  --icon-size-action: 12px;
+  --icon-size-small: 13px;
+  --border-width-hairline: 1px;
+  --border-width-selected: 1.2px;
   --window: #f5f5f7;
   --panel: #e7e7e8;
   --panel-stroke: rgba(60, 60, 67, 0.16);
@@ -19,6 +46,7 @@
   --dialog-fill: #fff;
   --inset-fill: rgba(255, 255, 255, 0.68);
   --control-height: 24px;
+  --control-compact-height: 22px;
   --control-radius: 6px;
   --card-radius: 8px;
   --panel-padding: 16px;
@@ -33,9 +61,9 @@
   --palette-tool-height: 38px;
   color: var(--ink);
   background: var(--window);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-  font-size: 13px;
-  line-height: 1.2;
+  font-family: var(--font-family-ui);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
   font-synthesis: none;
 }
 * {
@@ -60,16 +88,16 @@ button,
 select,
 input {
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-body);
 }
 button {
   appearance: none;
   min-height: var(--control-height);
-  border: 1px solid transparent;
+  border: var(--border-width-hairline) solid transparent;
   border-radius: var(--control-radius);
   background: var(--control-fill);
   color: var(--ink);
-  padding: 2px 7px;
+  padding: var(--space-x-small) 7px;
   cursor: pointer;
 }
 button:hover:not(:disabled) {
@@ -139,7 +167,7 @@ input[type="checkbox"] {
 }
 .app-shell {
   display: grid;
-  grid-template-columns: var(--tool-palette-width) 8px minmax(0, 1fr);
+  grid-template-columns: var(--tool-palette-width) var(--space-medium) minmax(0, 1fr);
   height: 100vh;
 }
 .app-shell.tool-palette-hidden {
@@ -393,8 +421,8 @@ input[type="checkbox"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: var(--icon-size-toolbar);
+  height: var(--icon-size-toolbar);
 }
 .toolbar-tool svg {
   color: var(--ink);
@@ -462,10 +490,10 @@ input[type="checkbox"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  min-width: 24px !important;
-  height: 24px;
-  min-height: 24px !important;
+  width: var(--control-height);
+  min-width: var(--control-height) !important;
+  height: var(--control-height);
+  min-height: var(--control-height) !important;
   padding: 1px !important;
   border: 1px solid rgba(60, 60, 67, 0.18);
   border-radius: var(--control-radius);
@@ -845,9 +873,9 @@ input[type="checkbox"] {
   border-bottom: 1px solid var(--panel-stroke);
 }
 .palette-header-icon {
-  width: 13px;
-  height: 13px;
-  flex: 0 0 13px;
+  width: var(--icon-size-small);
+  height: var(--icon-size-small);
+  flex: 0 0 var(--icon-size-small);
   color: var(--accent);
 }
 .palette-header > span {
@@ -857,13 +885,13 @@ input[type="checkbox"] {
 }
 .palette-header strong {
   color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
   line-height: 15px;
 }
 .palette-header small {
   color: var(--secondary-ink);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   line-height: 12px;
 }
 .palette-scroll {
@@ -888,10 +916,10 @@ input[type="checkbox"] {
 .palette-select,
 .palette-input {
   width: 100%;
-  min-height: 22px;
-  height: 22px;
-  font-size: 12px;
-  font-weight: 500;
+  min-height: var(--control-compact-height);
+  height: var(--control-compact-height);
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-medium);
 }
 .palette-select {
   appearance: auto;
@@ -908,8 +936,8 @@ input[type="checkbox"] {
   justify-content: flex-start;
   gap: 6px;
   width: 100%;
-  min-height: 22px;
-  height: 22px;
+  min-height: var(--control-compact-height);
+  height: var(--control-compact-height);
   margin: 0;
   padding: 2px 6px;
   border-color: transparent;
@@ -918,9 +946,9 @@ input[type="checkbox"] {
   text-align: left;
 }
 .palette-action-icon {
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
+  width: var(--icon-size-action);
+  height: var(--icon-size-action);
+  flex: 0 0 var(--icon-size-action);
   color: var(--secondary-ink);
 }
 .tool-group {
@@ -980,9 +1008,9 @@ input[type="checkbox"] {
   background: rgba(10, 132, 255, 0.07);
 }
 .tool-grid button svg {
-  flex: 0 0 16px;
-  width: 15px;
-  height: 15px;
+  flex: 0 0 var(--icon-size-small);
+  width: var(--icon-size-palette);
+  height: var(--icon-size-palette);
   color: var(--ink);
 }
 .tool-grid button.active {
@@ -1503,7 +1531,7 @@ input[type="checkbox"] {
   display: grid;
   min-width: 120px;
   padding: 6px;
-  border: 1px solid var(--panel-stroke);
+  border: var(--border-width-hairline) solid var(--panel-stroke);
   border-radius: var(--card-radius);
   background: rgba(250, 250, 252, 0.98);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
