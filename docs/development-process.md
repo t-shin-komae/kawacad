@@ -38,7 +38,20 @@ KawaCADのIssue作成からリリースまでの進め方を定めます。
 - `main`への直接pushは禁止し、作業ブランチからPull Requestを作成します。
 - タイトルには、対応するIssue番号を含めます。
 - 本文には、変更概要、確認内容、`Closes #123`のようなIssueを閉じる記述を含めます。
+- UIを変更した場合は、Draft Pull Requestを作成して番号を確定した後、PR単位のローカル比較レポートを生成します。作業完了時に、依頼者へレポートの場所、差分の要点、比較対象を報告します。
+- Before / Afterは、画面サイズ、テーマ、表示内容、拡大率を揃えて撮影します。画面全体ではなく、差分を判断できるコンポーネント単位で構いません。
 - CIが成功したことを確認してから、Squashマージします。
+
+比較成果物はGit管理外の`test-results/ui-reviews/pr-<PR番号>/`へ保存します。`before/`と`after/`に画像と撮影元commitを保存し、`index.html`で横並びと重ね合わせを確認できます。保存先はGitの共通ディレクトリから決めるため、複数worktreeから同じ場所を参照でき、PR番号の異なる画像を上書きしません。
+
+固定シナリオを撮影する場合は、作業ブランチを切り替えず、基準revisionのworktreeを指定して次を実行します。`--variant`には`all`、`tauri`、`swift`を指定できます。
+
+```bash
+node scripts/ui-review.mjs capture --pr 123 --side before --source-root /path/to/base-worktree
+node scripts/ui-review.mjs capture --pr 123 --side after
+```
+
+2回目の撮影後、`test-results/ui-reviews/pr-123/index.html`を開いて確認します。固定シナリオにないコンポーネントは、同じファイル名の画像を各`screenshots/`へ追加し、`node scripts/ui-review.mjs report --pr 123`でレポートを再生成します。レビューでは、仕様どおりの差分か、意図しないレイアウト崩れがないか、Before / Afterの条件が揃っているかを確認します。
 
 ## 手動テスト
 
