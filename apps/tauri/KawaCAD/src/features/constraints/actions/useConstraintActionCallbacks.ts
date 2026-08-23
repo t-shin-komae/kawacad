@@ -91,13 +91,11 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
           command: { kind: "addConstraint", payload },
         });
         applyState(next);
-        if (needsConstraintValue(candidate)) {
-          await command(
-            "addDimensionConstraintAnnotation",
-            { constraintId, labelOffsetMm: { xMm: 0, yMm: 0 }, overallOffsetMm: { xMm: 0, yMm: 0 }, visible: true },
-            appStrings.app.dimensionConstraintAdded,
-          );
-        } else setMessage(appStrings.status.constraintAdded(names[candidate]));
+        setMessage(
+          needsConstraintValue(candidate)
+            ? appStrings.app.dimensionConstraintAdded
+            : appStrings.status.constraintAdded(names[candidate]),
+        );
         setPendingConstraintValue(undefined);
         setSelected(new Set());
         selectTool("select");
@@ -148,11 +146,7 @@ export function useConstraintActionCallbacks(dependencies: ConstraintActionDepen
           },
         });
         applyState(next);
-        await command(
-          "addDimensionConstraintAnnotation",
-          { constraintId, labelOffsetMm: { xMm: 0, yMm: 0 }, overallOffsetMm: { xMm: 0, yMm: 0 }, visible: true },
-          appStrings.app.currentSegmentLengthConstrained,
-        );
+        setMessage(appStrings.app.currentSegmentLengthConstrained);
       } catch (error) {
         presentOperationFailure(new Error(appStrings.status.segmentLengthConstraintFailed(error)), "setSegmentLength");
       }
