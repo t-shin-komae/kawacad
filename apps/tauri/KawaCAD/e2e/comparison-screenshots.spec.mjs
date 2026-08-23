@@ -6,7 +6,9 @@ import { preparedPDF, recoveryCandidates } from "./comparison-screenshot-fixture
 
 const appRoot = path.resolve(import.meta.dirname, "..");
 const repoRoot = path.resolve(appRoot, "../../..");
-const screenshotDirectory = path.join(repoRoot, "test-results/comparison-screenshots/screenshots");
+const screenshotDirectory = process.env.KAWACAD_SCREENSHOT_OUTPUT_DIR
+  ? path.resolve(process.env.KAWACAD_SCREENSHOT_OUTPUT_DIR)
+  : path.join(repoRoot, "test-results/comparison-screenshots/screenshots");
 const primary = process.platform === "darwin" ? "Meta" : "Control";
 const displayPointsPerMillimeter = 72 / 25.4;
 const comparisonLineStart = [-35 * displayPointsPerMillimeter, 0];

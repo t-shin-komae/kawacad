@@ -65,6 +65,38 @@ and resets the Tauri Core document between viewport states, so generated output
 does not depend on test order or elapsed time. The remaining images retain the
 broader toolbar, inspector, recovery, and output-dialog scenarios.
 
+## Local UI review
+
+After opening a Draft Pull Request, capture its base and head states into an
+isolated local directory:
+
+```bash
+node scripts/ui-review.mjs capture --pr 123 --side before --source-root /path/to/base-worktree
+node scripts/ui-review.mjs capture --pr 123 --side after
+```
+
+Use `--variant tauri` or `--variant swift` when only one frontend changed. The
+source worktree must already have the dependencies required by that frontend.
+The current worktree remains checked out while the base revision is rendered
+from `--source-root`.
+
+Both captures and their commit metadata are stored under
+`test-results/ui-reviews/pr-123/`. The second capture also regenerates
+`index.html`, which provides side-by-side images, an overlay slider, and a file
+name filter. The default output root is derived from Git's common directory, so
+linked worktrees share the same PR-numbered reports. The whole directory is
+ignored by Git and remains available to local Codex sessions without requiring
+a GitHub image upload. Use `--review-root` only when a different shared location
+is needed.
+
+For a component not covered by the fixed scenarios, place matching image names
+under `before/screenshots/` and `after/screenshots/`, then regenerate only the
+report:
+
+```bash
+node scripts/ui-review.mjs report --pr 123
+```
+
 ## Coverage
 
 Coverage reports are written under `coverage/`, never as report artifacts under `target/`:
