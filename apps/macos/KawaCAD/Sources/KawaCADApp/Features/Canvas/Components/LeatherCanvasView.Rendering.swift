@@ -813,18 +813,20 @@ extension LeatherCanvasView {
     }
   }
 
-  func drawEmptyState(in pageRect: CGRect) {
-    // LeatherCanvasView uses a flipped coordinate system, so the upper quarter
-    // uses 24% of the page height. Keep the origin and coordinate axes clear
-    // for the first drawing while retaining a stable, centered guide across
-    // window sizes.
-    let guideCenterY = pageRect.minY + pageRect.height * 0.24
-    let markerRect = CGRect(x: pageRect.midX - 21, y: guideCenterY - 42, width: 42, height: 42)
-    NSColor(calibratedRed: 0.392, green: 0.439, blue: 0.490, alpha: 0.38).setStroke()
-    let marker = NSBezierPath(ovalIn: markerRect)
-    marker.lineWidth = 2
-    marker.setLineDash([4, 4], count: 2, phase: 0)
-    marker.stroke()
+  static func emptyStateGuideCenter(in visibleBounds: CGRect) -> CGPoint {
+    // Use the visible view rather than the zoomed/panned page rectangle so the
+    // first-use message remains reachable in every canvas viewport.
+    let preferredY = visibleBounds.minY + visibleBounds.height * 0.24
+    let lowerBound = visibleBounds.minY + min(44, visibleBounds.height / 2)
+    let upperBound = max(lowerBound, visibleBounds.maxY - min(12, visibleBounds.height / 2))
+    return CGPoint(
+      x: visibleBounds.midX,
+      y: min(max(preferredY, lowerBound), upperBound)
+    )
+  }
+
+  func drawEmptyState(in _: CGRect) {
+    let guideCenter = Self.emptyStateGuideCenter(in: bounds)
 
     let titleAttributes: [NSAttributedString.Key: Any] = [
       .font: NSFont.systemFont(ofSize: 14, weight: .semibold),
@@ -836,9 +838,9 @@ extension LeatherCanvasView {
     ]
 
     NSAttributedString(string: AppStrings.tr("canvas.empty.title"), attributes: titleAttributes)
-      .draw(at: CGPoint(x: pageRect.midX - 96, y: guideCenterY + 14))
+      .draw(at: CGPoint(x: guideCenter.x - 96, y: guideCenter.y + 14))
     NSAttributedString(string: AppStrings.tr("canvas.empty.body"), attributes: bodyAttributes)
-      .draw(at: CGPoint(x: pageRect.midX - 132, y: guideCenterY + 36))
+      .draw(at: CGPoint(x: guideCenter.x - 132, y: guideCenter.y + 36))
   }
 
   func layerStyle(for layerID: String?, in pageRect: CGRect) -> CanvasLineStyle {

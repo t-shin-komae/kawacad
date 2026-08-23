@@ -509,20 +509,6 @@ function drawEmptyState(context: CanvasRenderingContext2D, width: number, height
   // the canvas center available for the A4 reference and the first drawing.
   const centerY = height * 0.24;
   context.save();
-  context.fillStyle = "rgba(10,132,255,.1)";
-  context.strokeStyle = "rgba(10,132,255,.65)";
-  context.lineWidth = 1.5;
-  context.beginPath();
-  context.arc(centerX, centerY - 22, 18, 0, Math.PI * 2);
-  context.fill();
-  context.stroke();
-  context.strokeStyle = "#0a84ff";
-  context.beginPath();
-  context.moveTo(centerX - 8, centerY - 22);
-  context.lineTo(centerX + 8, centerY - 22);
-  context.moveTo(centerX, centerY - 30);
-  context.lineTo(centerX, centerY - 14);
-  context.stroke();
   context.fillStyle = "#323238";
   context.font = "600 15px -apple-system, BlinkMacSystemFont, sans-serif";
   context.textAlign = "center";
