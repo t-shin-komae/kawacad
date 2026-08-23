@@ -9,6 +9,8 @@ const repoRoot = path.resolve(appRoot, "../../..");
 const screenshotDirectory = path.join(repoRoot, "test-results/comparison-screenshots/screenshots");
 const primary = process.platform === "darwin" ? "Meta" : "Control";
 const displayPointsPerMillimeter = 72 / 25.4;
+const comparisonLineStart = [-35 * displayPointsPerMillimeter, 0];
+const comparisonLineEnd = [35 * displayPointsPerMillimeter, 0];
 const inlineTextPositionOffset = [-10 * displayPointsPerMillimeter, 10 * displayPointsPerMillimeter];
 const inlineTextHitOffset = [-9 * displayPointsPerMillimeter, 9 * displayPointsPerMillimeter];
 const wideScreenshotViewport = { width: 1800, height: 900 };
@@ -159,7 +161,14 @@ test.describe("Swift and Tauri visual comparison", () => {
           await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-inspector-drawer.jpg`);
           await page.keyboard.press("Escape");
         } else if (layout.id === "regular") {
-          await drawLine(page, [-120, 0], [60, 0]);
+          const inspector = page.getByRole("complementary", { name: "インスペクタ" });
+          if ((await inspector.count()) > 0) {
+            await page.getByTestId("leather.toolbar.inspector").click();
+            await expect(inspector).toHaveCount(0);
+          }
+          await drawLine(page, comparisonLineStart, comparisonLineEnd);
+          await page.getByTestId("leather.toolbar.inspector").click();
+          await expect(inspector).toBeVisible();
           await selectOnlyEntity(page);
           await saveScreenshot(page, `tauri-${theme.id}-${layout.id}-selected-inspector.jpg`);
         } else {

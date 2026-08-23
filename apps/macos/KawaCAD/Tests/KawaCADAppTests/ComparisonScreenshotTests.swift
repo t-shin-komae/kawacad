@@ -627,6 +627,10 @@ private func captureSelectionEntityEditors(_ outputDirectory: URL) throws {
 
 @MainActor
 private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
+  let originalTimeZone = NSTimeZone.default
+  NSTimeZone.default = TimeZone(identifier: "Asia/Tokyo")!
+  defer { NSTimeZone.default = originalTimeZone }
+
   let appState = makeScreenshotAppState()
   let candidates = [
     DocumentRecoveryCandidate(
@@ -634,7 +638,7 @@ private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
       generationID: "generation-1",
       displayName: "カードケース",
       originalDocumentURL: URL(fileURLWithPath: "/projects/card-case.kawa"),
-      updatedAt: Date(timeIntervalSince1970: 1_786_584_600),
+      updatedAt: Date(timeIntervalSince1970: 1_786_582_800),
       containerURL: URL(fileURLWithPath: "/tmp/recovery/recoverable"),
       metadataURL: URL(fileURLWithPath: "/tmp/recovery/recoverable/metadata.json"),
       status: .recoverable(
@@ -646,7 +650,7 @@ private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
       generationID: nil,
       displayName: "破損した復旧候補",
       originalDocumentURL: nil,
-      updatedAt: Date(timeIntervalSince1970: 1_786_584_000),
+      updatedAt: Date(timeIntervalSince1970: 1_786_582_200),
       containerURL: URL(fileURLWithPath: "/tmp/recovery/broken"),
       metadataURL: nil,
       status: .broken(details: "snapshot.kawa を読み込めません。")
@@ -700,6 +704,7 @@ private func capturePDFOutput(
     printableAreaMm: OutputPaperDefaults.pdfPrintableAreaMm(for: .portrait)
   )
   let buildResult = sampleOutputBuildResult(
+    model: comparisonPDFOutputDocumentModel(),
     warnings: [
       OutputWarning(
         kind: .pageBoundaryCrossing,
@@ -733,6 +738,64 @@ private func capturePDFOutput(
     size: size,
     to: outputDirectory.appendingPathComponent(fileName),
     appearanceName: appearanceName
+  )
+}
+
+private func comparisonPDFOutputDocumentModel() -> OutputDocumentModel {
+  let pageSize = OutputPaperDefaults.a4PageSizeMm(for: .portrait)
+  let printableArea = OutputPaperDefaults.pdfPrintableAreaMm(for: .portrait)
+  let circleStyle = OutputLayerStyle(
+    stroke: OutputRGBA(red: 0.05, green: 0.32, blue: 0.78, alpha: 1),
+    strokeWidthMm: 0.35,
+    pattern: .dashed
+  )
+  return OutputDocumentModel(
+    paperSize: .a4,
+    orientation: .portrait,
+    scale: .actualSize,
+    pageCount: 1,
+    pages: [
+      OutputPage(
+        widthMm: pageSize.widthMm,
+        heightMm: pageSize.heightMm,
+        rotationDeg: 0,
+        printableAreaMm: printableArea,
+        graphics: [
+          OutputGraphic(
+            entityId: "entity:comparison-line",
+            kind: .lineSegment,
+            geometry: .lineSegment(
+              startMm: OutputPointMm(xMm: -35, yMm: -45),
+              endMm: OutputPointMm(xMm: 35, yMm: -45)
+            ),
+            style: .default
+          ),
+          OutputGraphic(
+            entityId: "entity:comparison-circle",
+            kind: .circle,
+            geometry: .circle(
+              centerMm: OutputPointMm(xMm: 0, yMm: 15),
+              radiusMm: 24
+            ),
+            style: circleStyle
+          ),
+        ],
+        texts: [
+          OutputText(
+            kind: .freeText,
+            content: "型紙プレビュー",
+            positionMm: OutputPointMm(xMm: 0, yMm: 55),
+            fontSizeMm: 4
+          )
+        ],
+        guide: OutputGuide(
+          startMm: OutputPointMm(xMm: -90, yMm: -130),
+          endMm: OutputPointMm(xMm: -40, yMm: -130),
+          label: "50mm",
+          labelPositionMm: OutputPointMm(xMm: -65, yMm: -125)
+        )
+      )
+    ]
   )
 }
 
@@ -770,8 +833,7 @@ private func captureRepresentativeThemeMatrix(_ outputDirectory: URL) throws {
       appearanceName: theme.appearanceName
     )
 
-    let inspectorState = makeScreenshotAppState(documentState: selectedState)
-    inspectorState.canvasPresentation.selectEntity(line.id)
+    let inspectorState = makeScreenshotAppState()
     inspectorState.workspaceLayout.setWindowLayoutMode(.compact)
     inspectorState.workspaceLayout.setCompactDrawer(.inspector)
     try renderWorkspace(
