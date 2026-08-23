@@ -25,18 +25,12 @@ type Props = {
   layers: Array<{ id: string; name: string }>;
   activeLayer: string;
   viewMode: CanvasViewMode;
-  clipboardAvailable: boolean;
-  selectedCount: number;
-  constraintStatuses: string[];
   zoomPercent: number;
   gridVisible: boolean;
   a4Visible: boolean;
   a4Landscape: boolean;
   snapEnabled: boolean;
   pointSnapEnabled: boolean;
-  onCopy: () => void;
-  onPaste: () => void;
-  onDuplicate: () => void;
   onLayerChange: (id: string) => void;
   onViewModeChange: (mode: CanvasViewMode) => void;
   onViewportChange: (next: Viewport | ((current: Viewport) => Viewport)) => void;
@@ -48,14 +42,6 @@ type Props = {
   showToolPaletteButton: boolean;
   onToggleInspector: () => void;
   onToggleTools: () => void;
-};
-
-const constraintStatusPresentation: Record<ConstraintStatus, { label: string; className: string }> = {
-  unknown: { label: appStrings.constraintStatus.unknown, className: "unknown" },
-  underConstrained: { label: appStrings.constraintStatus.underConstrained, className: "under-constrained" },
-  fullyConstrained: { label: appStrings.constraintStatus.fullyConstrained, className: "fully-constrained" },
-  overConstrained: { label: appStrings.constraintStatus.overConstrained, className: "over-constrained" },
-  conflicting: { label: appStrings.constraintStatus.conflicting, className: "conflicting" },
 };
 
 export function aggregateConstraintStatus(statuses: string[]): ConstraintStatus {
@@ -113,18 +99,12 @@ export function CADToolbar({
   layers,
   activeLayer,
   viewMode,
-  clipboardAvailable,
-  selectedCount,
-  constraintStatuses,
   zoomPercent,
   gridVisible,
   a4Visible,
   a4Landscape,
   snapEnabled,
   pointSnapEnabled,
-  onCopy,
-  onPaste,
-  onDuplicate,
   onLayerChange,
   onViewModeChange,
   onViewportChange,
@@ -138,8 +118,6 @@ export function CADToolbar({
   onToggleTools,
 }: Props) {
   const [overflowOpen, setOverflowOpen] = useState(false);
-  const constraintStatus = aggregateConstraintStatus(constraintStatuses);
-  const constraintBadge = constraintStatusPresentation[constraintStatus];
   const zoomToFit = () => onViewportChange({ zoom: 1, panX: 0, panY: 0 });
   const zoomOut = () =>
     onViewportChange((value) => ({
@@ -174,32 +152,6 @@ export function CADToolbar({
           </span>
           {labels[tool]}
         </span>
-        <div className="toolbar-control-group toolbar-edit-actions" aria-label={appStrings.accessibility.editSelection}>
-          <button
-            type="button"
-            data-testid={accessibilityIdentifiers.toolbarCopySelection}
-            onClick={onCopy}
-            disabled={!selectedCount}
-          >
-            {appStrings.toolbar.copySelection}
-          </button>
-          <button
-            type="button"
-            data-testid={accessibilityIdentifiers.toolbarPasteSelection}
-            onClick={onPaste}
-            disabled={!clipboardAvailable}
-          >
-            {appStrings.toolbar.pasteSelection}
-          </button>
-          <button
-            type="button"
-            data-testid={accessibilityIdentifiers.toolbarDuplicateSelection}
-            onClick={onDuplicate}
-            disabled={!selectedCount}
-          >
-            {appStrings.toolbar.duplicateSelection}
-          </button>
-        </div>
       </div>
       <span className="toolbar-divider toolbar-primary-divider" aria-hidden="true" />
       <label className="toolbar-layer" data-testid={accessibilityIdentifiers.toolbarDrawingLayer}>
@@ -212,12 +164,6 @@ export function CADToolbar({
           ))}
         </select>
       </label>
-      <span
-        className={`constraint-badge ${constraintBadge.className}`}
-        title={appStrings.accessibility.constraintStatus}
-      >
-        {constraintBadge.label}
-      </span>
       <span className="toolbar-metric">{appStrings.toolbarMetrics.zoom(zoomPercent)}</span>
       <div className="toolbar-control-group" aria-label={appStrings.accessibility.zoom}>
         <button
@@ -350,39 +296,6 @@ export function CADToolbar({
         {overflowOpen && (
           <div className="toolbar-overflow-menu" role="menu">
             <div className="toolbar-overflow-secondary">
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onCopy();
-                  setOverflowOpen(false);
-                }}
-                disabled={!selectedCount}
-              >
-                {appStrings.toolbar.copySelection}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onPaste();
-                  setOverflowOpen(false);
-                }}
-                disabled={!clipboardAvailable}
-              >
-                {appStrings.toolbar.pasteSelection}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onDuplicate();
-                  setOverflowOpen(false);
-                }}
-                disabled={!selectedCount}
-              >
-                {appStrings.toolbar.duplicateSelection}
-              </button>
               <label className="toolbar-overflow-layer">
                 {appStrings.toolbar.drawingLayer}
                 <select value={activeLayer} onChange={(event) => onLayerChange(event.target.value)}>

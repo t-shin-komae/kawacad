@@ -23,9 +23,6 @@ export const accessibilityIdentifiers = {
   toolbarInspector: "leather.toolbar.inspector",
   toolbarViewMode: "leather.toolbar.view-mode",
   toolbarOverflow: "leather.toolbar.overflow",
-  toolbarCopySelection: "leather.toolbar.copy-selection",
-  toolbarPasteSelection: "leather.toolbar.paste-selection",
-  toolbarDuplicateSelection: "leather.toolbar.duplicate-selection",
 
   statusBottomWorkbench: "leather.status.bottom-workbench",
   pasteOptions: "leather.paste-options",

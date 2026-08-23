@@ -9,9 +9,11 @@ import {
 describe("ToolPalette progression", () => {
   it("classifies every Canvas tool once between basic and detailed", () => {
     expect(basicTools).toHaveLength(15);
-    expect(detailedTools).toHaveLength(22);
+    expect(detailedTools).toHaveLength(20);
     expect([...basicTools].filter((tool) => detailedTools.has(tool))).toEqual([]);
     expect(new Set([...basicTools, ...detailedTools])).toEqual(new Set(allPaletteTools));
+    expect(allPaletteTools).not.toContain("horizontalCenterLine");
+    expect(allPaletteTools).not.toContain("verticalCenterLine");
   });
 
   it("starts with secondary groups collapsed while keeping the drawing group open", () => {

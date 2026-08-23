@@ -37,6 +37,9 @@ describe("Window layout policy parity", () => {
     expect(constrainedWindowWidth(1280, 1352)).toBe(1280);
     expect(constrainedWindowWidth(1520, 1352)).toBe(1352);
   });
+  it("keeps the wide layout reachable at the 1352pt screen width", () => {
+    expect(makeWindowLayout(1352, 176, 440).mode).toBe("wide");
+  });
   it("keeps a reachable canvas and inspector across repeated resize widths", () => {
     let previous: "compact" | "regular" | "wide" | undefined;
     [900, 1024, 1060, 1220, 1400, 1600, 1020].forEach((requested) => {

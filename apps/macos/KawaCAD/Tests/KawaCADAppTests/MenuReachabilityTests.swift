@@ -38,3 +38,12 @@ func swift_menu_reaches_all_previously_missing_tools() throws {
     #expect(source.contains("activateTool(.\(toolCase))"), "Missing menu route for \(toolCase)")
   }
 }
+
+@Test("#8 Swiftメニューは中心線ツールを一本だけ公開する")
+func swift_menu_exposes_only_the_general_center_line_tool() throws {
+  let source = try kawaCADCommandsSource()
+
+  #expect(source.contains("activateTool(.centerLine)"))
+  #expect(!source.contains("activateTool(.horizontalCenterLine)"))
+  #expect(!source.contains("activateTool(.verticalCenterLine)"))
+}
