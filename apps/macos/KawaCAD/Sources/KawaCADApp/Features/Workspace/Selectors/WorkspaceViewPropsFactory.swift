@@ -33,9 +33,6 @@ struct WorkspaceViewPropsFactory {
   private var selectedEntities: [CanvasEntity] { handler.selectedEntities }
   private var coreSnapshot: LeatherDocumentSnapshot? { handler.coreSnapshot }
   private var aggregatedConstraintStatus: ConstraintStatus { handler.aggregatedConstraintStatus }
-  private var canCopySelection: Bool { handler.canCopySelection }
-  private var canPasteSelection: Bool { handler.canPasteSelection }
-  private var canDuplicateSelection: Bool { handler.canDuplicateSelection }
   private var outputPreviewSummaryText: String? { handler.outputPreviewSummaryText }
   private var statusMessage: String { handler.statusMessage }
   private var documentName: String { handler.documentName }
@@ -132,17 +129,13 @@ struct WorkspaceViewPropsFactory {
       viewMode: canvasPresentation.viewMode,
       layers: layers,
       activeLayerID: canvasPresentation.activeLayerID,
-      constraintStatus: aggregatedConstraintStatus,
       zoomScale: canvasPresentation.zoomScale,
       gridVisible: workspacePreferences.gridVisible,
       a4ReferenceVisible: workspacePreferences.a4ReferenceVisible,
       a4ReferenceOrientation: workspacePreferences.a4ReferenceOrientation,
       gridSnapEnabled: workspacePreferences.gridSnapEnabled,
       pointSnapEnabled: workspacePreferences.pointSnapEnabled,
-      inspectorPanelVisible: workspacePreferences.inspectorPanelVisible,
-      canCopySelection: canCopySelection,
-      canPasteSelection: canPasteSelection,
-      canDuplicateSelection: canDuplicateSelection
+      inspectorPanelVisible: workspacePreferences.inspectorPanelVisible
     )
   }
 
@@ -168,10 +161,7 @@ struct WorkspaceViewPropsFactory {
       setA4ReferenceVisible: bindings.toolbar.setA4ReferenceVisible,
       setA4ReferenceOrientation: bindings.toolbar.setA4ReferenceOrientation,
       setGridSnapEnabled: bindings.toolbar.setGridSnapEnabled,
-      setPointSnapEnabled: bindings.toolbar.setPointSnapEnabled,
-      copySelection: bindings.menu.copySelection,
-      pasteSelection: bindings.menu.pasteCopiedEntity,
-      duplicateSelection: bindings.menu.duplicateSelection
+      setPointSnapEnabled: bindings.toolbar.setPointSnapEnabled
     )
   }
 

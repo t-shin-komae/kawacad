@@ -758,22 +758,12 @@ export function MainWindowView() {
           layers={state?.layers ?? []}
           activeLayer={activeLayer}
           viewMode={state?.viewMode ?? "editDisplay"}
-          clipboardAvailable={Boolean(clipboard)}
-          selectedCount={selected.size}
-          constraintStatuses={
-            state?.snapshot.constraintStatus
-              ? [state.snapshot.constraintStatus]
-              : (state?.constraints ?? []).map((constraint) => constraint.status)
-          }
           zoomPercent={Math.round(viewport.zoom * 100)}
           gridVisible={gridVisible}
           a4Visible={a4Visible}
           a4Landscape={a4Landscape}
           snapEnabled={snapEnabled}
           pointSnapEnabled={pointSnapEnabled}
-          onCopy={() => void copySelection()}
-          onPaste={() => pasteSelection()}
-          onDuplicate={duplicateSelection}
           onLayerChange={setActiveLayer}
           onViewModeChange={setDocumentViewMode}
           onViewportChange={setViewport}

@@ -9,18 +9,12 @@ const toolbarProps = {
   layers: [{ id: "layer:default", name: "レイヤー1" }],
   activeLayer: "layer:default",
   viewMode: "editDisplay" as const,
-  clipboardAvailable: false,
-  selectedCount: 0,
-  constraintStatuses: [],
   zoomPercent: 100,
   gridVisible: true,
   a4Visible: true,
   a4Landscape: false,
   snapEnabled: true,
   pointSnapEnabled: true,
-  onCopy: () => {},
-  onPaste: () => {},
-  onDuplicate: () => {},
   onLayerChange: () => {},
   onViewModeChange: () => {},
   onViewportChange: () => {},
@@ -33,7 +27,7 @@ const toolbarProps = {
   onToggleTools: () => {},
 };
 
-describe("CAD toolbar constraint-status parity", () => {
+describe("CAD toolbar parity", () => {
   it("shows the tool palette button only in compact layout", () => {
     const { rerender } = render(<CADToolbar {...toolbarProps} showToolPaletteButton={false} />);
 
@@ -49,6 +43,15 @@ describe("CAD toolbar constraint-status parity", () => {
         .getByRole("navigation", { name: appStrings.accessibility.cadToolbar })
         .querySelector(".toolbar-tool-cluster"),
     );
+  });
+
+  it("keeps edit commands and constraint status out of the top toolbar", () => {
+    render(<CADToolbar {...toolbarProps} showToolPaletteButton={false} />);
+
+    expect(screen.queryByText(appStrings.toolbar.copySelection)).not.toBeInTheDocument();
+    expect(screen.queryByText(appStrings.toolbar.pasteSelection)).not.toBeInTheDocument();
+    expect(screen.queryByText(appStrings.toolbar.duplicateSelection)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(appStrings.accessibility.constraintStatus)).not.toBeInTheDocument();
   });
 
   it("uses the SwiftUI status priority when multiple Core constraints are present", () => {

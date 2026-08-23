@@ -399,10 +399,6 @@ input[type="checkbox"] {
 .toolbar-tool svg {
   color: var(--ink);
 }
-.toolbar-edit-actions {
-  flex: 0 1 auto;
-  min-width: 0;
-}
 .toolbar-divider {
   width: 1px;
   height: 30px;
@@ -516,8 +512,7 @@ input[type="checkbox"] {
   border-radius: 50%;
   background: currentColor;
 }
-.toolbar-metric,
-.constraint-badge {
+.toolbar-metric {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -534,31 +529,6 @@ input[type="checkbox"] {
 }
 .toolbar-metric {
   padding: 0 8px;
-}
-.constraint-badge {
-  height: 24px;
-  padding: 0 8px;
-  background: #e7ebe5;
-  color: #475569;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 24px;
-}
-.constraint-badge.under-constrained {
-  background: #ffedd5;
-  color: #9a3412;
-}
-.constraint-badge.fully-constrained {
-  background: #dcfce7;
-  color: #166534;
-}
-.constraint-badge.over-constrained {
-  background: #fef3c7;
-  color: #92400e;
-}
-.constraint-badge.conflicting {
-  background: #fee2e2;
-  color: #991b1b;
 }
 .toolbar-spacer {
   flex: 1 1 auto;
@@ -2183,22 +2153,14 @@ input[type="checkbox"] {
   color: var(--secondary-ink);
   font-size: 10px;
 }
-@container workspace-column (max-width: 1500px) {
-  .toolbar-edit-actions > button:nth-child(2),
-  .toolbar-edit-actions > button:nth-child(3),
+@container workspace-column (max-width: 1050px) {
   .toolbar-display-toggles,
   .toolbar-metric {
     display: none;
   }
-  .toolbar-layer {
-    flex-basis: 180px;
-  }
   .toolbar-overflow-secondary {
     display: contents;
   }
-}
-@container workspace-column (max-width: 1050px) {
-  .toolbar-edit-actions,
   .toolbar-layer,
   .toolbar-primary-divider,
   .toolbar-control-group > .toolbar-zoom-secondary {
@@ -2258,7 +2220,6 @@ input[type="checkbox"] {
   .cad-canvas {
     background: #fff;
   }
-  .constraint-badge,
   .canvas-hud {
     border-color: #55555a;
     background: rgba(42, 42, 45, 0.95);

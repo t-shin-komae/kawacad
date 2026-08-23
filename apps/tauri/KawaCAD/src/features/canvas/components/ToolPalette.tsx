@@ -30,22 +30,7 @@ type Props = {
 };
 
 export const toolGroups: ReadonlyArray<readonly [string, readonly Tool[]]> = [
-  [
-    "drawing",
-    [
-      "select",
-      "point",
-      "line",
-      "circle",
-      "roundHole",
-      "arc",
-      "freeText",
-      "stitchStartPoint",
-      "centerLine",
-      "horizontalCenterLine",
-      "verticalCenterLine",
-    ],
-  ],
+  ["drawing", ["select", "point", "line", "circle", "roundHole", "arc", "freeText", "stitchStartPoint", "centerLine"]],
   ["derived", ["offset", "fillet"]],
   [
     "constraint",

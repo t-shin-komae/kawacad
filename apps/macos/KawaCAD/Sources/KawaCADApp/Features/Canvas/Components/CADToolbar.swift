@@ -48,13 +48,6 @@ struct CADToolbar: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(state.selectedTool.displayName)
 
-        if density == .expanded {
-          ControlGroup {
-            copySelectionButton
-            pasteSelectionButton
-            duplicateSelectionButton
-          }
-        }
       }
       .foregroundStyle(LeatherColors.ink)
       .frame(minWidth: 112, alignment: .leading)
@@ -77,8 +70,6 @@ struct CADToolbar: View {
         .frame(width: 220)
         .accessibilityIdentifier(AccessibilityIdentifier.toolbarDrawingLayer)
       }
-
-      ConstraintStatusBadge(status: state.constraintStatus, compact: true)
 
       if density == .expanded {
         ToolbarMetric(
@@ -202,17 +193,6 @@ struct CADToolbar: View {
   @ViewBuilder
   private var overflowMenuContent: some View {
     if density == .condensed {
-      copySelectionButton
-        .keyboardShortcut("c", modifiers: [.command])
-      pasteSelectionButton
-        .keyboardShortcut("v", modifiers: [.command])
-      duplicateSelectionButton
-        .keyboardShortcut("d", modifiers: [.command])
-
-      Divider()
-    }
-
-    if density == .condensed {
       layerPickerMenu
       Divider()
     }
@@ -257,29 +237,6 @@ struct CADToolbar: View {
     }
   }
 
-  private var copySelectionButton: some View {
-    Button(AppStrings.tr("toolbar.copy_selection")) {
-      actions.copySelection()
-    }
-    .disabled(!state.canCopySelection)
-    .accessibilityIdentifier(AccessibilityIdentifier.toolbarCopySelection)
-  }
-
-  private var pasteSelectionButton: some View {
-    Button(AppStrings.tr("toolbar.paste_selection")) {
-      actions.pasteSelection()
-    }
-    .disabled(!state.canPasteSelection)
-    .accessibilityIdentifier(AccessibilityIdentifier.toolbarPasteSelection)
-  }
-
-  private var duplicateSelectionButton: some View {
-    Button(AppStrings.tr("toolbar.duplicate_selection")) {
-      actions.duplicateSelection()
-    }
-    .disabled(!state.canDuplicateSelection)
-    .accessibilityIdentifier(AccessibilityIdentifier.toolbarDuplicateSelection)
-  }
 }
 
 private struct ToolbarOrientationToggle: View {

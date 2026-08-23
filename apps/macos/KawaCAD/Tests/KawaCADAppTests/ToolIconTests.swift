@@ -14,8 +14,7 @@ func tool_icons_have_display_fallbacks() {
 func tool_icons_do_not_collide_within_palette_groups() {
   let groups: [[CanvasTool]] = [
     [
-      .select, .point, .line, .circle, .arc, .centerLine, .horizontalCenterLine,
-      .verticalCenterLine, .offset, .fillet,
+      .select, .point, .line, .circle, .arc, .centerLine, .offset, .fillet,
     ],
     [
       .coincident, .horizontal, .vertical, .parallel, .perpendicular, .tangent, .equalLength,
@@ -37,12 +36,13 @@ func tool_palette_includes_tangent_constraint_tool() {
   #expect(paletteTools.contains(.tangent))
 }
 
-@Test("ツールパレットは全ツールをカテゴリ切替なしで表示対象にする")
-func tool_palette_includes_all_canvas_tools() {
+@Test("ツールパレットは専用の水平・垂直中心線を除く作図ツールを表示対象にする")
+func tool_palette_includes_visible_canvas_tools() {
   let paletteTools = ToolPalette.toolGroups.flatMap(\.tools)
+  let hiddenCenterLineTools: Set<CanvasTool> = [.horizontalCenterLine, .verticalCenterLine]
 
-  #expect(Set(paletteTools) == Set(CanvasTool.allCases))
-  #expect(paletteTools.count == CanvasTool.allCases.count)
+  #expect(Set(paletteTools) == Set(CanvasTool.allCases).subtracting(hiddenCenterLineTools))
+  #expect(paletteTools.count == CanvasTool.allCases.count - hiddenCenterLineTools.count)
 }
 
 @Test("戻した拘束ツールはPR前のSF Symbolを使う")

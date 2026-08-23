@@ -2202,13 +2202,15 @@ describe("React workspace shortcuts", () => {
     await screen.findByDisplayValue("Test project");
     const toolbar = screen.getByRole("navigation", { name: "CAD ツールバー" });
     const text = toolbar.textContent ?? "";
-    expect(text).toContain(
-      "選択選択図形をコピーコピーした図形をペースト選択図形を複製作図レイヤーCut Line未評価倍率 100%",
-    );
+    expect(text).toContain("選択作図レイヤーCut Line倍率 100%");
+    expect(text).not.toContain("選択図形をコピー");
+    expect(text).not.toContain("コピーした図形をペースト");
+    expect(text).not.toContain("選択図形を複製");
+    expect(screen.queryByTitle("拘束状態")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "グリッド" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "編集表示" })).toHaveAttribute("aria-pressed", "true");
   });
-  it("reflects the aggregated Core constraint status in the toolbar badge", async () => {
+  it("keeps aggregated Core constraint status out of the toolbar", async () => {
     const constrainedState = {
       ...state,
       constraints: [
@@ -2224,8 +2226,7 @@ describe("React workspace shortcuts", () => {
     });
     render(<App />);
     await screen.findByDisplayValue("Test project");
-    expect(screen.getByTitle("拘束状態")).toHaveTextContent("競合");
-    expect(screen.getByTitle("拘束状態")).toHaveClass("conflicting");
+    expect(screen.queryByTitle("拘束状態")).not.toBeInTheDocument();
   });
   it("keeps part library export and placement in the React workspace", async () => {
     const part = {

@@ -20,7 +20,7 @@ struct ToolPalette: View {
       defaultExpanded: true,
       tools: [
         .select, .point, .line, .circle, .roundHole, .arc, .freeText, .stitchStartPoint,
-        .centerLine, .horizontalCenterLine, .verticalCenterLine,
+        .centerLine,
       ]
     ),
     ToolGroup(

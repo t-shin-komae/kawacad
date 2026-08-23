@@ -16,9 +16,6 @@ enum AccessibilityIdentifier {
   static let toolbarInspector = "leather.toolbar.inspector"
   static let toolbarViewMode = "leather.toolbar.view-mode"
   static let toolbarOverflow = "leather.toolbar.overflow"
-  static let toolbarCopySelection = "leather.toolbar.copy-selection"
-  static let toolbarPasteSelection = "leather.toolbar.paste-selection"
-  static let toolbarDuplicateSelection = "leather.toolbar.duplicate-selection"
 
   static let statusBottomWorkbench = "leather.status.bottom-workbench"
   static let pasteOptions = "leather.paste-options"

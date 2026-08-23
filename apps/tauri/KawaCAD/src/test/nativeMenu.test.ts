@@ -60,8 +60,6 @@ describe("cross-platform native menu", () => {
       "freeText",
       "separator",
       "centerLine",
-      "horizontalCenterLine",
-      "verticalCenterLine",
       "separator",
       "offset",
       "fillet",

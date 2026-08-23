@@ -109,6 +109,16 @@ func window_layout_policy_constrains_window_width_to_visible_screen() {
   #expect(WindowLayoutPolicy.constrainedWindowWidth(1520, visibleScreenWidth: 1352) == 1352)
 }
 
+@Test("WindowLayoutPolicy は 1352pt の画面幅でも wide を選択できる")
+func window_layout_policy_keeps_wide_mode_available_at_1352_points() {
+  #expect(
+    WindowLayoutPolicy.make(
+      contentWidth: 1352,
+      storedToolWidth: 176,
+      storedInspectorWidth: 440
+    ).mode == .wide)
+}
+
 @Test("WindowLayoutPolicy は連続リサイズ中に実配置可能な inspector frame を返す")
 func window_layout_policy_keeps_inspector_frame_inside_workspace_during_resize() {
   let visibleScreenWidth: CGFloat = 1_600

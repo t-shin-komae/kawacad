@@ -113,7 +113,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
     await expect(page.getByRole("complementary", { name: "インスペクタ" })).toBeVisible();
     await expect(page.getByTestId("leather.toolbar.grid")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("leather.toolbar.a4-reference")).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByText("未評価", { exact: true })).toBeVisible();
+    await expect(page.getByText("未評価", { exact: true })).toHaveCount(0);
   });
 
   // 実際に割り当てられた幅で表示密度を切り替え、代表的な画面幅で要素が画面外へはみ出さないことを検証する。

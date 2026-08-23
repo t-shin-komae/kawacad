@@ -163,12 +163,6 @@ struct KawaCADCommands: Commands {
         uiBindings.menu.activateTool(.centerLine)
       }
       .keyboardShortcut("5", modifiers: [.command])
-      Button(AppStrings.tr("tool.horizontal_center_line")) {
-        uiBindings.menu.activateTool(.horizontalCenterLine)
-      }
-      Button(AppStrings.tr("tool.vertical_center_line")) {
-        uiBindings.menu.activateTool(.verticalCenterLine)
-      }
       Divider()
       Button(AppStrings.tr("tool.offset")) { uiBindings.menu.activateTool(.offset) }
       Button(AppStrings.tr("tool.fillet")) { uiBindings.menu.activateTool(.fillet) }

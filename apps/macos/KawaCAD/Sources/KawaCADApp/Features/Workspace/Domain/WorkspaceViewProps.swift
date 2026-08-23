@@ -6,7 +6,6 @@ struct CADToolbarState {
   let viewMode: CanvasViewMode
   let layers: [ProjectLayer]
   let activeLayerID: String
-  let constraintStatus: ConstraintStatus
   let zoomScale: Double
   let gridVisible: Bool
   let a4ReferenceVisible: Bool
@@ -14,9 +13,6 @@ struct CADToolbarState {
   let gridSnapEnabled: Bool
   let pointSnapEnabled: Bool
   let inspectorPanelVisible: Bool
-  let canCopySelection: Bool
-  let canPasteSelection: Bool
-  let canDuplicateSelection: Bool
 }
 
 struct CADToolbarActions {
@@ -32,9 +28,6 @@ struct CADToolbarActions {
   let setA4ReferenceOrientation: (OutputPrintOrientation) -> Void
   let setGridSnapEnabled: (Bool) -> Void
   let setPointSnapEnabled: (Bool) -> Void
-  let copySelection: () -> Void
-  let pasteSelection: () -> Void
-  let duplicateSelection: () -> Void
 }
 
 struct CanvasStatusBarState {
