@@ -3913,12 +3913,6 @@ fn dimension_constraint_annotations_are_view_metadata_and_round_trip() {
         overall_offset_mm: point(0.0, 0.0),
         visible: true,
     };
-    document
-        .apply_command(DocumentCommand::AddDimensionConstraintAnnotation(
-            annotation.clone(),
-        ))
-        .expect("dimension constraint annotation should be added");
-
     assert_eq!(
         document.dimension_constraint_annotations(),
         std::slice::from_ref(&annotation)
@@ -3986,7 +3980,7 @@ fn dimension_constraint_annotations_are_view_metadata_and_round_trip() {
 }
 
 #[test]
-fn moving_an_unannotated_dimension_constraint_creates_default_annotation_in_core() {
+fn moving_dimension_constraint_updates_automatically_created_annotation() {
     let mut document = ProjectDocument::new("Dimension annotation default");
     document
         .apply_command(DocumentCommand::AddEntity(line_entity(
@@ -4021,6 +4015,88 @@ fn moving_an_unannotated_dimension_constraint_creates_default_annotation_in_core
             visible: true,
         }]
     );
+}
+
+#[test]
+fn adding_existing_dimension_constraint_annotation_updates_automatic_annotation() {
+    let mut document = ProjectDocument::new("Dimension annotation upsert");
+    document
+        .apply_command(DocumentCommand::AddEntity(line_entity(
+            "entity:line-a",
+            point(0.0, 0.0),
+            point(10.0, 0.0),
+        )))
+        .expect("line should be added");
+    document
+        .apply_command(DocumentCommand::AddConstraint(constraint(
+            "constraint:length-a",
+            ConstraintKind::SegmentLength,
+            vec![entity_target("entity:line-a")],
+            Some(ConstraintValue::FixedMm(10.0)),
+        )))
+        .expect("constraint should be added");
+
+    let annotation = DimensionConstraintAnnotation {
+        constraint_id: "constraint:length-a".to_owned(),
+        label_offset_mm: point(3.0, 1.0),
+        overall_offset_mm: point(-2.0, 4.0),
+        visible: false,
+    };
+    document
+        .apply_command(DocumentCommand::AddDimensionConstraintAnnotation(
+            annotation.clone(),
+        ))
+        .expect("explicit annotation should update the automatic annotation");
+
+    assert_eq!(document.dimension_constraint_annotations(), &[annotation]);
+}
+
+#[test]
+fn axis_dimension_constraints_are_projected_immediately_after_addition() {
+    let mut document = ProjectDocument::new("Axis dimension display");
+    document
+        .apply_command(DocumentCommand::AddEntity(point_entity(
+            "entity:first",
+            point(2.0, 3.0),
+        )))
+        .expect("first point should be added");
+    document
+        .apply_command(DocumentCommand::AddEntity(point_entity(
+            "entity:second",
+            point(12.0, 8.0),
+        )))
+        .expect("second point should be added");
+
+    for (id, kind) in [
+        ("constraint:horizontal", ConstraintKind::HorizontalDistance),
+        ("constraint:vertical", ConstraintKind::VerticalDistance),
+    ] {
+        document
+            .apply_command(DocumentCommand::AddConstraint(constraint(
+                id,
+                kind,
+                vec![
+                    entity_target("entity:first"),
+                    entity_target("entity:second"),
+                ],
+                Some(ConstraintValue::FixedMm(
+                    if kind == ConstraintKind::HorizontalDistance {
+                        10.0
+                    } else {
+                        5.0
+                    },
+                )),
+            )))
+            .expect("axis dimension constraint should be added");
+    }
+
+    assert_eq!(document.dimension_constraint_annotations().len(), 2);
+    let projection = document.canvas_projection(CanvasViewMode::EditDisplay);
+    assert_eq!(projection.dimension_constraints.len(), 2);
+    assert!(projection
+        .dimension_constraints
+        .iter()
+        .all(|item| item.visible && item.start_mm.is_some() && item.end_mm.is_some()));
 }
 
 #[test]

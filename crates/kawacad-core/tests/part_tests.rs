@@ -9,7 +9,7 @@ use kawacad_core::derived::{DerivedElement, OffsetCurve, OffsetDirection};
 use kawacad_core::document::ProjectDocument;
 use kawacad_core::free_text::FreeText;
 use kawacad_core::geometry::EntityKind;
-use kawacad_core::measurement::{DimensionConstraintAnnotation, MeasurementAnnotationKind};
+use kawacad_core::measurement::MeasurementAnnotationKind;
 use kawacad_core::output::{BuildOutputDocumentModelOptions, PrintableAreaMm};
 use kawacad_core::parts::{Part, PartAlignment, PartDistributionAxis};
 use kawacad_core::print::PrintOrientation;
@@ -105,16 +105,6 @@ fn canvas_projection_resolves_semantic_geometry_and_hidden_part_visibility() {
             vec![entity_target("entity:body:bottom")],
             Some(ConstraintValue::FixedMm(50.0)),
         )))
-        .unwrap();
-    document
-        .apply_command(DocumentCommand::AddDimensionConstraintAnnotation(
-            DimensionConstraintAnnotation {
-                constraint_id: "constraint:length".into(),
-                label_offset_mm: point(0.0, 0.0),
-                overall_offset_mm: point(0.0, 0.0),
-                visible: true,
-            },
-        ))
         .unwrap();
     document
         .apply_command(DocumentCommand::CreatePart {

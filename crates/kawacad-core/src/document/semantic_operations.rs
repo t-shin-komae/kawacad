@@ -273,7 +273,7 @@ impl ProjectDocument {
             self.add_measurement_annotation(item)?;
         }
         for item in dimensions {
-            self.add_dimension_constraint_annotation(item)?;
+            self.update_dimension_constraint_annotation(item)?;
         }
         for item in stitches {
             self.add_stitch_start_point(item)?;
@@ -468,7 +468,7 @@ impl ProjectDocument {
             .collect::<Vec<_>>();
         for mut annotation in dimension_annotations {
             annotation.constraint_id = constraint_map[&annotation.constraint_id].clone();
-            self.add_dimension_constraint_annotation(annotation)?;
+            self.update_dimension_constraint_annotation(annotation)?;
         }
 
         let explicit_measurements = selection

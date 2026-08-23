@@ -1222,8 +1222,38 @@ impl ProjectDocument {
             }
         }
 
+        let constraint_id = accepted_constraint.id.clone();
+        let creates_dimension_annotation = matches!(
+            accepted_constraint.kind,
+            ConstraintKind::Distance
+                | ConstraintKind::HorizontalDistance
+                | ConstraintKind::VerticalDistance
+                | ConstraintKind::PointLineDistance
+                | ConstraintKind::LineLineDistance
+                | ConstraintKind::SegmentLength
+                | ConstraintKind::Angle
+                | ConstraintKind::Diameter
+                | ConstraintKind::Radius
+        );
+
         self.entities = updated_entities;
         self.constraints.push(accepted_constraint);
+        if creates_dimension_annotation
+            && !self
+                .view_annotations
+                .dimension_constraint_annotations
+                .iter()
+                .any(|annotation| annotation.constraint_id == constraint_id)
+        {
+            self.view_annotations.dimension_constraint_annotations.push(
+                DimensionConstraintAnnotation {
+                    constraint_id,
+                    label_offset_mm: Point2::new(0.0, 0.0),
+                    overall_offset_mm: Point2::new(0.0, 0.0),
+                    visible: true,
+                },
+            );
+        }
         Ok(())
     }
 

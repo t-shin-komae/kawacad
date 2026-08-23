@@ -401,18 +401,19 @@ impl ProjectDocument {
     ) -> CommandResult {
         validate_dimension_constraint_annotation_offsets(&annotation)?;
         ensure_non_empty_id("dimension constraint annotation", &annotation.constraint_id)?;
-        ensure_unique_id(
+        self.validate_dimension_constraint_annotation_target(&annotation)?;
+        if let Some(index) = self
+            .view_annotations
+            .dimension_constraint_annotations
+            .iter()
+            .position(|existing| existing.constraint_id == annotation.constraint_id)
+        {
+            self.view_annotations.dimension_constraint_annotations[index] = annotation;
+        } else {
             self.view_annotations
                 .dimension_constraint_annotations
-                .iter()
-                .map(|existing| existing.constraint_id.as_str()),
-            "dimension constraint annotation",
-            &annotation.constraint_id,
-        )?;
-        self.validate_dimension_constraint_annotation_target(&annotation)?;
-        self.view_annotations
-            .dimension_constraint_annotations
-            .push(annotation);
+                .push(annotation);
+        }
         Ok(())
     }
 
