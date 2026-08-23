@@ -22,6 +22,7 @@
   --icon-size-toolbar: 22px;
   --icon-size-tool: 18px;
   --icon-size-palette: 15px;
+  --icon-size-palette-frame: 16px;
   --icon-size-action: 12px;
   --icon-size-small: 13px;
   --border-width-hairline: 1px;
@@ -97,7 +98,7 @@ button {
   border-radius: var(--control-radius);
   background: var(--control-fill);
   color: var(--ink);
-  padding: var(--space-x-small) 7px;
+  padding: 2px 7px;
   cursor: pointer;
 }
 button:hover:not(:disabled) {
@@ -1008,7 +1009,7 @@ input[type="checkbox"] {
   background: rgba(10, 132, 255, 0.07);
 }
 .tool-grid button svg {
-  flex: 0 0 var(--icon-size-small);
+  flex: 0 0 var(--icon-size-palette-frame);
   width: var(--icon-size-palette);
   height: var(--icon-size-palette);
   color: var(--ink);
