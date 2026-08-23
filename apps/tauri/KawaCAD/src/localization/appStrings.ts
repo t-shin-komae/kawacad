@@ -826,6 +826,8 @@ export const sharedLocalizationKeyMap = {
   "output.sheet.preview_loading": "output.updating",
   "output.sheet.status": "output.status",
   "output.sheet.ready": "output.ready",
+  "output.confirmation.save_with_warnings": "output.warningSaveNext",
+  "output.confirmation.print_with_warnings": "output.warningPrintNext",
   "output.sheet.empty_output": "output.noOutput",
   "output.sheet.build_loading": "output.buildLoading",
   "output.sheet.printer": "output.printer",

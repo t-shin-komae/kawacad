@@ -70,4 +70,26 @@ describe("DirectPrintDialog", () => {
       }),
     );
   });
+
+  it("uses the ordinary print action when warnings cannot produce a page", async () => {
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "direct_print_availability") return { status: "available" };
+      if (command === "list_printers") return [{ id: "printer:1", displayName: "Test Printer", selectable: true }];
+      if (command === "prepare_direct_print") {
+        return {
+          ...prepared,
+          outputDocumentModel: { ...prepared.outputDocumentModel, pageCount: 0, pages: [] },
+          preparedPrintId: "prepared:empty-warning",
+          warnings: [{ kind: "emptyDocument", message: "出力対象がありません" }],
+        };
+      }
+      return undefined;
+    });
+
+    render(<DirectPrintDialog initialOrientation="portrait" onClose={vi.fn()} onPrinted={vi.fn()} />);
+
+    const print = await screen.findByRole("button", { name: "印刷へ進む" });
+    expect(print).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "警告を確認して印刷へ進む" })).not.toBeInTheDocument();
+  });
 });

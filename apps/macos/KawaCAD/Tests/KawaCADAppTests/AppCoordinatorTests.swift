@@ -3701,6 +3701,50 @@ func output_app_state_direct_print_sheet_allows_warning_confirmation() {
   #expect(printController.printedDocumentNames == ["Direct Print Warning"])
 }
 
+@Test("OutputRequestDraft は空の出力警告を続行用ラベルにしない")
+func output_request_draft_empty_output_warning_uses_basic_confirmation_title() {
+  let emptyModel = OutputDocumentModel(
+    paperSize: .a4,
+    orientation: .portrait,
+    scale: .actualSize,
+    pageCount: 0,
+    pages: []
+  )
+  let buildResult = sampleOutputBuildResult(
+    model: emptyModel,
+    warnings: [.init(kind: .emptyDocument, message: "出力対象がありません。")]
+  )
+  let presentationOptions = OutputPresentationOptions(
+    orientation: .portrait,
+    includeDimensionLabels: true,
+    includeScaleGuide: true,
+    rotationDeg: 0
+  )
+  let buildOptions = OutputBuildOptions(
+    orientation: .portrait,
+    includeDimensionLabels: true,
+    includeScaleGuide: true,
+    rotationDeg: 0,
+    printableAreaMm: OutputPaperDefaults.pdfPrintableAreaMm(for: .portrait)
+  )
+  let cases: [(OutputDestination, String)] = [
+    (.pdf, "保存へ進む"),
+    (.directPrint, "印刷へ進む"),
+  ]
+
+  for (destination, expectedTitle) in cases {
+    var draft = OutputRequestDraft(destination: destination, options: presentationOptions)
+    draft.buildState = .ready(
+      OutputRequestPreparedState(
+        buildResult: buildResult,
+        buildOptions: buildOptions,
+        directPrintSession: nil
+      ))
+
+    #expect(draft.confirmationTitle == expectedTitle)
+  }
+}
+
 @Test("UC1 AppCoordinator の失敗した再作成・開く・再読込は状態を壊さない")
 @MainActor
 func uc1_app_state_failed_session_operations_keep_state_safe() {

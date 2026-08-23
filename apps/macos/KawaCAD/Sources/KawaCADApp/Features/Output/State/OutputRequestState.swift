@@ -40,7 +40,11 @@ struct OutputRequestDraft: Identifiable, Equatable {
   var buildState: OutputRequestBuildState = .idle
   var title: String { destination.title }
   var confirmationTitle: String {
-    destination.confirmationTitle(hasWarnings: !(buildResult?.warnings.isEmpty ?? true))
+    let hasContinuableWarnings =
+      buildResult.map {
+        $0.outputDocumentModel.pageCount > 0 && !$0.warnings.isEmpty
+      } ?? false
+    return destination.confirmationTitle(hasWarnings: hasContinuableWarnings)
   }
 
   var buildResult: OutputBuildResult? {

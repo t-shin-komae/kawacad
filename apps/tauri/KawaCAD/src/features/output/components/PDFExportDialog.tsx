@@ -128,7 +128,8 @@ export function PDFExportDialog({
   const warnings = prepared?.warnings ?? [];
   const pageCount = outputDocumentModel?.pageCount ?? 0;
   const canSave = Boolean(outputDocumentModel && pageCount > 0 && !loading && !saving);
-  const saveLabel = warnings.length > 0 ? appStrings.output.warningSaveNext : appStrings.output.saveNext;
+  const saveLabel =
+    warnings.length > 0 && pageCount > 0 ? appStrings.output.warningSaveNext : appStrings.output.saveNext;
   const changeOptions = (update: Partial<OutputOptions>) => {
     const next = { ...options, ...update };
     onOptionsChange?.(next);
