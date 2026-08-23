@@ -814,10 +814,11 @@ extension LeatherCanvasView {
   }
 
   func drawEmptyState(in pageRect: CGRect) {
-    // AppKit's y-axis grows upward, so the upper quarter uses 76% of the
-    // page height. Keep the origin and coordinate axes clear for the first
-    // drawing while retaining a stable, centered guide across window sizes.
-    let guideCenterY = pageRect.minY + pageRect.height * 0.76
+    // LeatherCanvasView uses a flipped coordinate system, so the upper quarter
+    // uses 24% of the page height. Keep the origin and coordinate axes clear
+    // for the first drawing while retaining a stable, centered guide across
+    // window sizes.
+    let guideCenterY = pageRect.minY + pageRect.height * 0.24
     let markerRect = CGRect(x: pageRect.midX - 21, y: guideCenterY - 42, width: 42, height: 42)
     NSColor(calibratedRed: 0.392, green: 0.439, blue: 0.490, alpha: 0.38).setStroke()
     let marker = NSBezierPath(ovalIn: markerRect)
