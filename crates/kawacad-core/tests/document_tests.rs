@@ -4018,6 +4018,40 @@ fn moving_dimension_constraint_updates_automatically_created_annotation() {
 }
 
 #[test]
+fn adding_existing_dimension_constraint_annotation_updates_automatic_annotation() {
+    let mut document = ProjectDocument::new("Dimension annotation upsert");
+    document
+        .apply_command(DocumentCommand::AddEntity(line_entity(
+            "entity:line-a",
+            point(0.0, 0.0),
+            point(10.0, 0.0),
+        )))
+        .expect("line should be added");
+    document
+        .apply_command(DocumentCommand::AddConstraint(constraint(
+            "constraint:length-a",
+            ConstraintKind::SegmentLength,
+            vec![entity_target("entity:line-a")],
+            Some(ConstraintValue::FixedMm(10.0)),
+        )))
+        .expect("constraint should be added");
+
+    let annotation = DimensionConstraintAnnotation {
+        constraint_id: "constraint:length-a".to_owned(),
+        label_offset_mm: point(3.0, 1.0),
+        overall_offset_mm: point(-2.0, 4.0),
+        visible: false,
+    };
+    document
+        .apply_command(DocumentCommand::AddDimensionConstraintAnnotation(
+            annotation.clone(),
+        ))
+        .expect("explicit annotation should update the automatic annotation");
+
+    assert_eq!(document.dimension_constraint_annotations(), &[annotation]);
+}
+
+#[test]
 fn axis_dimension_constraints_are_projected_immediately_after_addition() {
     let mut document = ProjectDocument::new("Axis dimension display");
     document
