@@ -47,14 +47,14 @@ func ui_bootstrap_uc1_application_delegate_can_defer_termination() {
 @Test("Aboutパネルは開発版と正式版の表示バージョンを切り替える")
 func about_panel_uses_the_marketing_version_without_a_build_number() {
   #expect(
-    KawaCADAboutPanel.displayVersion(from: ["CFBundleShortVersionString": "0.2.0"])
-      == "0.2.0-dev"
+    KawaCADAboutPanel.displayVersion(from: ["CFBundleShortVersionString": "0.4.0"])
+      == "0.4.0-dev"
   )
   #expect(
     KawaCADAboutPanel.displayVersion(from: [
-      "CFBundleShortVersionString": "0.2.0",
+      "CFBundleShortVersionString": "0.4.0",
       "KawaCADBuildChannel": "release",
-    ]) == "0.2.0"
+    ]) == "0.4.0"
   )
 }
 

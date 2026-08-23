@@ -1,6 +1,6 @@
 [package]
 name = "kawa-cad-tauri"
-version = "0.3.0"
+version = "0.4.0"
 description = "Cross-platform Tauri + React application for KawaCAD"
 edition.workspace = true
 license.workspace = true

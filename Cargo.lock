@@ -1580,7 +1580,7 @@ dependencies = [
 
 [[package]]
 name = "kawa-cad-tauri"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "kawacad-core",
  "kawacad-output-engine",

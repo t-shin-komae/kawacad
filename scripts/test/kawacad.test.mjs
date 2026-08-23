@@ -191,7 +191,7 @@ test("staged Swift metadata contains the shared product information without a bu
   );
   assert.match(
     developmentPlist,
-    /<key>CFBundleShortVersionString<\/key><string>0\.3\.0<\/string>/u,
+    /<key>CFBundleShortVersionString<\/key><string>0\.4\.0<\/string>/u,
   );
   assert.match(
     developmentPlist,
@@ -218,11 +218,11 @@ test("Tauri About metadata switches between development and release display vers
 
   assert.deepEqual(productInfoForBuild(false), {
     name: "KawaCAD",
-    version: "0.3.0",
-    displayVersion: "0.3.0-dev",
+    version: "0.4.0",
+    displayVersion: "0.4.0-dev",
     copyright: "© 2026 t-shin-komae",
   });
-  assert.equal(productInfoForBuild(true).displayVersion, "0.3.0");
+  assert.equal(productInfoForBuild(true).displayVersion, "0.4.0");
   assert.equal(Object.hasOwn(productInfoForBuild(true), "buildNumber"), false);
 });
 
