@@ -288,6 +288,7 @@ export function PDFExportDialog({
               </button>
               <button
                 type="button"
+                className="primary-action"
                 data-testid={accessibilityIdentifiers.pdfExportSave}
                 onClick={() => void save()}
                 disabled={!canSave}

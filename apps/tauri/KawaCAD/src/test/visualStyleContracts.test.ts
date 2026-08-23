@@ -54,8 +54,10 @@ describe("visual style contracts", () => {
 
   it("#70 keeps annotation and constraint marker typography and state colors", () => {
     expect(canvasRendering).toContain('"600 10px -apple-system, BlinkMacSystemFont, sans-serif"');
-    expect(canvasRendering).toContain('hovered ? "rgba(32, 74, 179, .95)" : "rgba(4, 129, 116, .92)"');
+    expect(canvasRendering).toContain('hovered ? "rgba(255,249,230,1)" : "rgba(12,96,88,.94)"');
+    expect(canvasRendering).toContain('hovered ? "rgba(221,86,21,.90)" : "rgba(12,96,88,.94)"');
     expect(canvasRendering).toContain("selectedMeasurementAnnotationId");
+    expect(canvasRendering).toContain("selectedConstraintId");
     expect(canvasRendering).toContain('"#dd5615"');
     expect(canvasRendering).toContain('"#0c6058"');
   });
@@ -99,7 +101,8 @@ describe("visual style contracts", () => {
 
   it("#76 keeps confirmation modal and destructive action visually distinct", () => {
     expect(rule(".constraint-value-backdrop")).toContain("background: rgba(0, 0, 0, 0.2)");
-    expect(rule("button.destructive-action")).toMatch(/color: var\(--destructive\)/u);
+    expect(styles).toContain("button.destructive-action {\n  border-color: var(--destructive-action);");
+    expect(styles).toContain("button.primary-action {\n  border-color: var(--accent);");
   });
 
   it("#77 keeps bottom summary and status bar dimensions and typography", () => {

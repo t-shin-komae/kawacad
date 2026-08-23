@@ -801,15 +801,22 @@ export function MainWindowView() {
               canvas={{
                 renderModel: {
                   entities: canvasState?.entities ?? [],
+                  suppressedByFilletEntityIds: new Set(
+                    (canvasState?.drawingEntityMetadata ?? [])
+                      .filter((item) => item.suppressedByFillet)
+                      .map((item) => item.entityId),
+                  ),
                   layers: canvasState?.layers ?? [],
                   sharedStyles: canvasState?.sharedStyles ?? [],
                   freeTexts: canvasState?.freeTexts ?? [],
                   editingFreeTextId,
                   highlightedFreeTextIds: selectedPartHighlights.freeTextIds,
+                  highlightedEntityIds: selectedPartHighlights.entityIds,
                   highlightedMeasurementAnnotationIds: selectedPartHighlights.measurementAnnotationIds,
                   highlightedStitchStartPointIds: selectedPartHighlights.stitchStartPointIds,
                   selectedIds: selected,
                   selectedMeasurementAnnotationId: selectedMeasurementId,
+                  selectedConstraintId,
                   selectedStitchStartPointId,
                   viewport,
                   gridVisible,

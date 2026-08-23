@@ -11,6 +11,7 @@
   --warning: #9a3412;
   --warning-fill: #ffedd5;
   --destructive: #991b1b;
+  --destructive-action: #b42318;
   --destructive-fill: #fee2e2;
   --control-fill: rgba(118, 118, 128, 0.12);
   --control-hover-fill: rgba(118, 118, 128, 0.18);
@@ -139,13 +140,29 @@ button:disabled {
   color: #8e8e93;
   cursor: default;
 }
+button.primary-action,
 button.destructive-action {
-  border-color: color-mix(in srgb, var(--destructive) 32%, transparent);
-  color: var(--destructive);
+  color: #fff;
+}
+button.primary-action {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+button.primary-action:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 88%, #000);
+  background: color-mix(in srgb, var(--accent) 88%, #000);
+}
+button.destructive-action {
+  border-color: var(--destructive-action);
+  background: var(--destructive-action);
 }
 button.destructive-action:hover:not(:disabled) {
-  background: var(--destructive-fill);
-  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive-action) 88%, #000);
+  border-color: color-mix(in srgb, var(--destructive-action) 88%, #000);
+}
+button.primary-action:disabled,
+button.destructive-action:disabled {
+  opacity: 0.5;
 }
 select,
 :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"])) {
@@ -345,16 +362,6 @@ input[type="checkbox"] {
 .document-save-confirmation-actions {
   justify-content: flex-end;
 }
-.document-save-confirmation-actions .destructive {
-  border-color: #b42318;
-  background: #b42318;
-  color: white;
-}
-.document-save-confirmation-actions .primary {
-  border-color: #007aff;
-  background: #007aff;
-  color: white;
-}
 .recovery-chooser-dialog {
   display: grid;
   width: min(660px, calc(100vw - 40px));
@@ -398,9 +405,6 @@ input[type="checkbox"] {
 }
 .recovery-candidate-card > strong {
   font-size: 13px;
-}
-.recovery-candidate-card .destructive {
-  color: var(--destructive, #b42318);
 }
 .recovery-chooser-footer {
   justify-content: flex-end;

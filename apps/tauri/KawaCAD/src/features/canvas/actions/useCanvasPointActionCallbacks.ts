@@ -246,16 +246,17 @@ export function useCanvasPointActionCallbacks(dependencies: CanvasPointActionDep
           event.currentTarget.setPointerCapture(event.pointerId);
           return;
         }
-        // A draggable control point must win over a nearby constraint marker.
-        // Otherwise coincident vertices cannot be dragged once the marker is visible.
+        // Geometry controls and bodies must win over a nearby constraint marker.
+        // Otherwise a marker label can intercept a normal selection or drag.
         const controlTarget = hitConstraintTarget(point, visibleEntities, viewport);
         const markerControlEntity =
           controlTarget && "controlPoint" in controlTarget
             ? visibleEntities.find((entity) => entity.id === controlPointEntityId(controlTarget.controlPoint))
             : undefined;
         const markerIsPointControl = geometryOf(markerControlEntity ?? { id: "", kind: {} })?.tag === "point";
+        const geometryHit = Boolean(hit) && !markerIsPointControl;
         const constraintId =
-          controlTarget && "controlPoint" in controlTarget && !markerIsPointControl
+          geometryHit || (controlTarget && "controlPoint" in controlTarget && !markerIsPointControl)
             ? undefined
             : hitConstraintMarker(point, canvasProjection.constraintMarkers, viewport);
         if (constraintId) {

@@ -60,6 +60,17 @@ describe("CAD geometry helpers", () => {
     expect(long.width).toBeGreaterThan(short.width);
   });
 
+  it("wraps marker stacks into four columns like SwiftUI", () => {
+    const first = constraintMarkerLayout({ positionMm: { xMm: 10, yMm: 5 }, stackIndex: 0 });
+    const fourth = constraintMarkerLayout({ positionMm: { xMm: 10, yMm: 5 }, stackIndex: 3 });
+    const wrapped = constraintMarkerLayout({ positionMm: { xMm: 10, yMm: 5 }, stackIndex: 4 });
+
+    expect(fourth.offsetX).toBeGreaterThan(first.offsetX);
+    expect(fourth.offsetY).toBe(first.offsetY);
+    expect(wrapped.offsetX).toBe(first.offsetX);
+    expect(wrapped.offsetY).toBeLessThan(first.offsetY);
+  });
+
   it("never lets a measured marker label shrink below its measured text", () => {
     const layout = constraintMarkerLayout({
       positionMm: { xMm: 10, yMm: 5 },
@@ -105,16 +116,21 @@ describe("CAD geometry helpers", () => {
     expect(hitProjectedPoint({ xMm: 1.5, yMm: 0 }, markers, { zoom: 4, panX: 0, panY: 0 })).toBe("visible");
     expect(hitProjectedPoint({ xMm: 10, yMm: 0 }, markers, { zoom: 4, panX: 0, panY: 0 })).toBeUndefined();
   });
-  it("hits the SwiftUI-style marker label as well as its anchor", () => {
+  it("hits the visible marker affordance without including its hover label", () => {
     const items = [{ id: "constraint:horizontal", positionMm: { xMm: 10, yMm: 0 }, label: "水平" }];
-    const labelPoint = {
+    const markerPoint = {
       xMm: 10 + 21 / displayPointsPerMillimeter,
       yMm: 15 / displayPointsPerMillimeter,
     };
     expect(hitConstraintMarker({ xMm: 10, yMm: 0 }, items, { zoom: 1, panX: 0, panY: 0 })).toBe(
       "constraint:horizontal",
     );
-    expect(hitConstraintMarker(labelPoint, items, { zoom: 1, panX: 0, panY: 0 })).toBe("constraint:horizontal");
+    expect(hitConstraintMarker(markerPoint, items, { zoom: 1, panX: 0, panY: 0 })).toBe("constraint:horizontal");
+    const hoverLabelOnlyPoint = {
+      xMm: 10 + 45 / displayPointsPerMillimeter,
+      yMm: 15 / displayPointsPerMillimeter,
+    };
+    expect(hitConstraintMarker(hoverLabelOnlyPoint, items, { zoom: 1, panX: 0, panY: 0 })).toBeUndefined();
     expect(hitConstraintMarker({ xMm: -40, yMm: -40 }, items, { zoom: 1, panX: 0, panY: 0 })).toBeUndefined();
   });
   it("gives every SwiftUI-supported constraint kind a canvas marker label", () => {

@@ -38,6 +38,12 @@ describe("recovery presentation", () => {
     const dialog = screen.getByRole("dialog", { name: "復旧できる編集中データがあります" });
     const candidates = dialog.querySelectorAll(".recovery-candidate-card");
     expect(candidates).toHaveLength(2);
+    expect(within(candidates[0] as HTMLElement).getByRole("button", { name: "復旧して開く" })).toHaveClass(
+      "primary-action",
+    );
+    expect(within(candidates[0] as HTMLElement).getByRole("button", { name: "破棄" })).toHaveClass(
+      "destructive-action",
+    );
     fireEvent.click(within(candidates[0] as HTMLElement).getByRole("button", { name: "復旧して開く" }));
     expect(onRestore).toHaveBeenCalledWith("recoverable-1");
     expect(within(candidates[1] as HTMLElement).getByRole("button", { name: "復旧して開く" })).toBeDisabled();
