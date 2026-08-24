@@ -5,7 +5,10 @@ enum CanvasMetrics {
   static let entityCandidatePaddingPx: CGFloat = 8
   // The cursor is an affordance for the nearby movable entity. Keep its
   // target slightly easier to acquire without changing click selection.
-  static let cursorEntityCandidatePaddingPx: CGFloat = 12
+  static let cursorEntityCandidatePaddingPx: CGFloat = 16
+  // Once the open-hand cursor has been acquired, retain it over a wider
+  // nearby area so small pointer movements do not make it flicker.
+  static let cursorEntityRetentionPaddingPx: CGFloat = 24
   static let entityLineHitTolerancePx: CGFloat = 8
   static let annotationLineHitTolerancePx: CGFloat = 5
   static let annotationArcHitTolerancePx: CGFloat = 6

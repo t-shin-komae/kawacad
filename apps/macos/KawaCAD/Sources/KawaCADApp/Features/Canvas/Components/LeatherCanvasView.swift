@@ -31,6 +31,7 @@ final class LeatherCanvasView: NSView {
   let inlineFreeTextEditor = CanvasInlineTextEditorController()
   private var pointerInsideCanvas = false
   private var hasCursorTarget = false
+  private var cursorTargetEntityID: String?
   private var lastPointerPoint: CGPoint?
 
   func interactionSnapshot() -> CanvasInteractionSnapshot {
@@ -121,6 +122,7 @@ final class LeatherCanvasView: NSView {
   private func refreshCursorTarget(at point: CGPoint, in pageRect: CGRect) {
     guard pointerInsideCanvas else {
       hasCursorTarget = false
+      cursorTargetEntityID = nil
       return
     }
     if selectedTool == .select {
@@ -132,12 +134,32 @@ final class LeatherCanvasView: NSView {
         clickCount: 1,
         entityCandidatePadding: CanvasMetrics.cursorEntityCandidatePaddingPx
       )
-      hasCursorTarget =
+      let hasDirectTarget =
         input.measurementHit != nil || input.dimensionHit != nil
         || input.controlPointTarget != nil || input.constraintMarkerID != nil
         || input.stitchStartPointID != nil || input.freeTextID != nil || input.entityID != nil
+      if let entityID = input.entityID {
+        cursorTargetEntityID = entityID
+        hasCursorTarget = true
+      } else if hasDirectTarget {
+        cursorTargetEntityID = nil
+        hasCursorTarget = true
+      } else if let entityID = cursorTargetEntityID,
+        entity(
+          at: point,
+          in: pageRect,
+          preferring: [entityID],
+          candidatePadding: CanvasMetrics.cursorEntityRetentionPaddingPx
+        )?.id == entityID
+      {
+        hasCursorTarget = true
+      } else {
+        cursorTargetEntityID = nil
+        hasCursorTarget = false
+      }
       return
     }
+    cursorTargetEntityID = nil
     guard selectedTool.isConstraintTool || selectedTool.isMeasurementTool else {
       hasCursorTarget = false
       return
@@ -794,6 +816,7 @@ final class LeatherCanvasView: NSView {
   override func mouseExited(with event: NSEvent) {
     pointerInsideCanvas = false
     hasCursorTarget = false
+    cursorTargetEntityID = nil
     lastPointerPoint = nil
     commandExecutor.clearHoverConstraint()
     commandExecutor.updateCursorPoint(nil, nil)

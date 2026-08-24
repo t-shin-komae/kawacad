@@ -492,7 +492,7 @@ struct CanvasSelectionResolverTests {
     let center = canvasPoint(ModelPoint(xMM: 10, yMM: 0))
     let point = CGPoint(
       x: center.x,
-      y: center.y + CanvasMetrics.entityCandidatePaddingPx + 1
+      y: center.y + CanvasMetrics.cursorEntityCandidatePaddingPx - 1
     )
 
     #expect(resolver.entity(at: point) == nil)
