@@ -91,7 +91,7 @@ describe("PDFExportDialog", () => {
     expect(onSaved).toHaveBeenCalledWith("/tmp/pattern.pdf");
   });
 
-  it("requires warning acknowledgement before saving", async () => {
+  it("uses a warning-specific save action without a separate acknowledgement", async () => {
     mocks.invoke.mockImplementation(async (command: string) =>
       command === "prepare_pdf_output" ? { ...prepared, warnings: [{ message: "境界をまたいでいます" }] } : undefined,
     );
@@ -99,10 +99,33 @@ describe("PDFExportDialog", () => {
       <PDFExportDialog documentName="Pattern" initialOrientation="portrait" onClose={vi.fn()} onSaved={vi.fn()} />,
     );
 
+    const save = await screen.findByRole("button", { name: "警告を確認して保存へ進む" });
+    expect(save).toBeEnabled();
+    expect(screen.queryByLabelText("警告内容を確認しました")).not.toBeInTheDocument();
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith("save_prepared_pdf", {
+        outputDocumentModel: prepared.outputDocumentModel,
+        path: "/tmp/pattern.pdf",
+      }),
+    );
+  });
+
+  it("uses the ordinary save action when warnings cannot produce a page", async () => {
+    mocks.invoke.mockImplementation(async (command: string) =>
+      command === "prepare_pdf_output"
+        ? {
+            ...prepared,
+            outputDocumentModel: { ...prepared.outputDocumentModel, pageCount: 0, pages: [] },
+            warnings: [{ kind: "emptyDocument", message: "出力対象がありません" }],
+          }
+        : undefined,
+    );
+    render(<PDFExportDialog documentName="Empty" initialOrientation="portrait" onClose={vi.fn()} onSaved={vi.fn()} />);
+
     const save = await screen.findByRole("button", { name: "保存へ進む" });
     expect(save).toBeDisabled();
-    fireEvent.click(screen.getByLabelText("警告内容を確認しました"));
-    expect(save).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "警告を確認して保存へ進む" })).not.toBeInTheDocument();
   });
 
   it("clears a previously prepared model when regeneration fails", async () => {

@@ -47,7 +47,6 @@ export function DirectPrintDialog({
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
   const [error, setError] = useState<string>();
-  const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -83,7 +82,6 @@ export function DirectPrintDialog({
     const requestGeneration = ++nextPreparedPrintGeneration;
     setLoading(true);
     setPrepared(undefined);
-    setWarningsAcknowledged(false);
     setError(undefined);
     void documentAdapter
       .command<PreparedPrint>("prepare_direct_print", {
@@ -115,7 +113,10 @@ export function DirectPrintDialog({
   }, [options, preparationRevision, printerId]);
 
   const warnings = prepared?.warnings ?? [];
-  const canPrint = Boolean(prepared && !loading && !printing && (warnings.length === 0 || warningsAcknowledged));
+  const pageCount = prepared?.outputDocumentModel.pageCount ?? 0;
+  const canPrint = Boolean(prepared && pageCount > 0 && !loading && !printing);
+  const printLabel =
+    warnings.length > 0 && pageCount > 0 ? appStrings.output.warningPrintNext : appStrings.output.printNext;
   const changeOptions = (update: Partial<OutputOptions>) => {
     const next = { ...options, ...update };
     onOptionsChange?.(next);
@@ -242,15 +243,6 @@ export function DirectPrintDialog({
                     <li key={`${warning.message}-${index}`}>{warning.message}</li>
                   ))}
                 </ul>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={warningsAcknowledged}
-                    disabled={loading || printing}
-                    onChange={(event) => setWarningsAcknowledged(event.target.checked)}
-                  />
-                  {appStrings.output.warningsAcknowledged}
-                </label>
               </section>
             ) : null}
             <div className="button-row pdf-export-actions">
@@ -258,7 +250,7 @@ export function DirectPrintDialog({
                 {appStrings.common.cancel}
               </button>
               <button type="button" className="primary-action" onClick={() => void print()} disabled={!canPrint}>
-                {printing ? appStrings.output.printing : appStrings.output.printNext}
+                {printing ? appStrings.output.printing : printLabel}
               </button>
             </div>
           </div>

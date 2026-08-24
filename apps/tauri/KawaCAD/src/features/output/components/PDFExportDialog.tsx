@@ -100,7 +100,6 @@ export function PDFExportDialog({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
-  const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
   const request = useRef(0);
 
   useEffect(() => {
@@ -108,7 +107,6 @@ export function PDFExportDialog({
     setLoading(true);
     setPrepared(undefined);
     setError(undefined);
-    setWarningsAcknowledged(false);
     void documentAdapter
       .command<PreparedPDF>("prepare_pdf_output", { options })
       .then((result) => {
@@ -129,9 +127,9 @@ export function PDFExportDialog({
   const outputDocumentModel = prepared?.outputDocumentModel;
   const warnings = prepared?.warnings ?? [];
   const pageCount = outputDocumentModel?.pageCount ?? 0;
-  const canSave = Boolean(
-    outputDocumentModel && pageCount > 0 && !loading && !saving && (warnings.length === 0 || warningsAcknowledged),
-  );
+  const canSave = Boolean(outputDocumentModel && pageCount > 0 && !loading && !saving);
+  const saveLabel =
+    warnings.length > 0 && pageCount > 0 ? appStrings.output.warningSaveNext : appStrings.output.saveNext;
   const changeOptions = (update: Partial<OutputOptions>) => {
     const next = { ...options, ...update };
     onOptionsChange?.(next);
@@ -265,16 +263,6 @@ export function PDFExportDialog({
                     </li>
                   ))}
                 </ul>
-                {!warningsAcknowledged ? <p>{appStrings.output.warningAckRequired}</p> : null}
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={warningsAcknowledged}
-                    disabled={loading || saving}
-                    onChange={(event) => setWarningsAcknowledged(event.target.checked)}
-                  />
-                  {appStrings.output.warningsAcknowledged}
-                </label>
               </section>
             ) : null}
             {pageCount === 0 && !loading && !error ? (
@@ -293,7 +281,7 @@ export function PDFExportDialog({
                 onClick={() => void save()}
                 disabled={!canSave}
               >
-                {saving ? appStrings.output.saving : appStrings.output.saveNext}
+                {saving ? appStrings.output.saving : saveLabel}
               </button>
             </div>
           </div>

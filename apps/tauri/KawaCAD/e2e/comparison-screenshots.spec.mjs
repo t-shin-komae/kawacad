@@ -501,7 +501,7 @@ test.describe("Swift and Tauri visual comparison", () => {
     await saveScreenshot(page, "tauri-recovery-candidates.jpg");
   });
 
-  test("captures PDF settings, warning acknowledgement, and final preview", async ({ page }) => {
+  test("captures PDF settings, warning action, and final preview", async ({ page }) => {
     await openWorkspace(page);
     await page.evaluate(() => {
       window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "exportPDF" }));
@@ -511,7 +511,7 @@ test.describe("Swift and Tauri visual comparison", () => {
     await expect(dialog).toContainText("1ページ");
     await expect(dialog.getByRole("region", { name: "出力警告" })).toContainText("ページ境界をまたぐ形状があります。");
     await expect(dialog.getByRole("img", { name: "PDF 1ページ目" })).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "保存へ進む", exact: true })).toBeDisabled();
+    await expect(dialog.getByRole("button", { name: "警告を確認して保存へ進む", exact: true })).toBeEnabled();
     await saveScreenshot(page, "tauri-pdf-output-settings.jpg");
   });
 });

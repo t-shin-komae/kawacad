@@ -17,12 +17,14 @@ enum OutputDestination: String, Identifiable, Equatable {
     }
   }
 
-  var confirmationTitle: String {
+  func confirmationTitle(hasWarnings: Bool) -> String {
     switch self {
     case .pdf:
-      return AppStrings.tr("output.confirmation.save")
+      return AppStrings.tr(
+        hasWarnings ? "output.confirmation.save_with_warnings" : "output.confirmation.save")
     case .directPrint:
-      return AppStrings.tr("output.confirmation.print")
+      return AppStrings.tr(
+        hasWarnings ? "output.confirmation.print_with_warnings" : "output.confirmation.print")
     }
   }
 }
@@ -36,10 +38,14 @@ struct OutputRequestDraft: Identifiable, Equatable {
   var directPrintSession: OutputDirectPrintSession?
   var buildRevision: Int = 0
   var buildState: OutputRequestBuildState = .idle
-  var warningAcknowledged: Bool = false
-
   var title: String { destination.title }
-  var confirmationTitle: String { destination.confirmationTitle }
+  var confirmationTitle: String {
+    let hasContinuableWarnings =
+      buildResult.map {
+        $0.outputDocumentModel.pageCount > 0 && !$0.warnings.isEmpty
+      } ?? false
+    return destination.confirmationTitle(hasWarnings: hasContinuableWarnings)
+  }
 
   var buildResult: OutputBuildResult? {
     if case .ready(let result) = buildState {
@@ -163,7 +169,6 @@ final class OutputPresentationState: ObservableObject {
   ) {
     guard var draft = requestDraft else { return }
     update(&draft)
-    draft.warningAcknowledged = false
     requestDraft = draft
     scheduleBuild(session: session)
   }
@@ -177,7 +182,6 @@ final class OutputPresentationState: ObservableObject {
     draft.selectedDirectPrinterName = printerName
     draft.directPrintSession = nil
     draft.buildState = .failed(message)
-    draft.warningAcknowledged = false
     requestDraft = draft
   }
 
@@ -189,7 +193,6 @@ final class OutputPresentationState: ObservableObject {
     let revision = buildSequence
     draft.buildRevision = revision
     draft.buildState = .loading
-    draft.warningAcknowledged = false
     requestDraft = draft
 
     buildTask = Task { @MainActor [weak self] in

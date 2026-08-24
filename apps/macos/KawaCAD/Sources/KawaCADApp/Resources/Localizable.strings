@@ -8,6 +8,8 @@
 "output.destination.direct_print" = "直接印刷";
 "output.confirmation.save" = "保存へ進む";
 "output.confirmation.print" = "印刷へ進む";
+"output.confirmation.save_with_warnings" = "警告を確認して保存へ進む";
+"output.confirmation.print_with_warnings" = "警告を確認して印刷へ進む";
 "output.sheet.destination" = "出力先";
 "output.sheet.paper" = "用紙";
 "output.sheet.paper_value" = "A4";
@@ -22,8 +24,6 @@
 "output.sheet.status" = "状態";
 "output.sheet.ready" = "出力可能";
 "output.sheet.warning_count" = "警告 %d 件";
-"output.sheet.warning_ack" = "警告内容を確認しました";
-"output.sheet.warning_ack_required" = "警告があるため、内容を確認してチェックを入れるまで実行できません。";
 "output.sheet.empty_output" = "出力ページがありません。形状または設定を確認してください。";
 "output.sheet.build_loading" = "最新の出力内容を構築中です。";
 "output.sheet.print_session" = "印刷設定";

@@ -313,7 +313,6 @@ struct WorkspaceViewPropsFactory {
         actions.output.setOutputRequestIncludeDimensionLabels($0)
       },
       setIncludeScaleGuide: { [self] in actions.output.setOutputRequestIncludeScaleGuide($0) },
-      setWarningsAcknowledged: { [self] in actions.output.setOutputWarningsAcknowledged($0) },
       selectDirectPrintPrinter: { [self] in actions.output.selectDirectPrintPrinter($0) },
       cancel: { [self] in actions.output.cancelOutputRequest() },
       confirm: { [self] in actions.output.confirmOutputRequest() }

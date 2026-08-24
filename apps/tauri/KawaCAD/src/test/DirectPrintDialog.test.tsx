@@ -42,4 +42,54 @@ describe("DirectPrintDialog", () => {
     await waitFor(() => expect(print).toBeEnabled());
     expect(mocks.invoke).toHaveBeenCalledWith("run_prepared_direct_print", { preparedPrintId: "prepared:1" });
   });
+
+  it("uses a warning-specific print action without a separate acknowledgement", async () => {
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "direct_print_availability") return { status: "available" };
+      if (command === "list_printers") return [{ id: "printer:1", displayName: "Test Printer", selectable: true }];
+      if (command === "prepare_direct_print") {
+        return {
+          ...prepared,
+          preparedPrintId: "prepared:warning",
+          warnings: [{ kind: "pageBoundaryCrossing", message: "ページ境界をまたいでいます" }],
+        };
+      }
+      return undefined;
+    });
+
+    render(<DirectPrintDialog initialOrientation="portrait" onClose={vi.fn()} onPrinted={vi.fn()} />);
+
+    const print = await screen.findByRole("button", { name: "警告を確認して印刷へ進む" });
+    expect(print).toBeEnabled();
+    expect(screen.queryByLabelText("警告内容を確認しました")).not.toBeInTheDocument();
+    fireEvent.click(print);
+
+    await waitFor(() =>
+      expect(mocks.invoke).toHaveBeenCalledWith("run_prepared_direct_print", {
+        preparedPrintId: "prepared:warning",
+      }),
+    );
+  });
+
+  it("uses the ordinary print action when warnings cannot produce a page", async () => {
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "direct_print_availability") return { status: "available" };
+      if (command === "list_printers") return [{ id: "printer:1", displayName: "Test Printer", selectable: true }];
+      if (command === "prepare_direct_print") {
+        return {
+          ...prepared,
+          outputDocumentModel: { ...prepared.outputDocumentModel, pageCount: 0, pages: [] },
+          preparedPrintId: "prepared:empty-warning",
+          warnings: [{ kind: "emptyDocument", message: "出力対象がありません" }],
+        };
+      }
+      return undefined;
+    });
+
+    render(<DirectPrintDialog initialOrientation="portrait" onClose={vi.fn()} onPrinted={vi.fn()} />);
+
+    const print = await screen.findByRole("button", { name: "印刷へ進む" });
+    expect(print).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "警告を確認して印刷へ進む" })).not.toBeInTheDocument();
+  });
 });

@@ -145,11 +145,6 @@ struct OutputDialog: View {
                 .foregroundStyle(LeatherColors.ink)
             }
 
-            Toggle(
-              AppStrings.tr("output.sheet.warning_ack"),
-              isOn: warningAcknowledgedBinding
-            )
-            .toggleStyle(.checkbox)
           }
           .padding(12)
           .background(LeatherColors.panel)
@@ -231,11 +226,6 @@ struct OutputDialog: View {
   private var includeScaleGuideBinding: Binding<Bool> {
     draftOptionBinding(
       state.draft?.options.includeScaleGuide, default: true, set: actions.setIncludeScaleGuide)
-  }
-
-  private var warningAcknowledgedBinding: Binding<Bool> {
-    draftOptionBinding(
-      state.draft?.warningAcknowledged, default: false, set: actions.setWarningsAcknowledged)
   }
 
   private func draftOptionBinding<Value>(

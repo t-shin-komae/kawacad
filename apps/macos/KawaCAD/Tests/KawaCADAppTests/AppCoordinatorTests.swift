@@ -3647,7 +3647,7 @@ func output_app_state_direct_print_selection_failure_disables_printing() {
   #expect(printController.printedRenderData.isEmpty)
 }
 
-@Test("Output AppCoordinator は直接印刷設定シートで警告を確認して続行できる")
+@Test("Output AppCoordinator は警告付きの直接印刷主操作で続行できる")
 @MainActor
 func output_app_state_direct_print_sheet_allows_warning_confirmation() {
   let initialState = makeDocumentState(name: "Direct Print Warning", entities: [])
@@ -3691,18 +3691,58 @@ func output_app_state_direct_print_sheet_allows_warning_confirmation() {
       ))
   )
 
-  appState.actions.output.confirmOutputRequest()
-
-  #expect(appState.actions.output.outputRequestDraft != nil)
-  #expect(printController.printedRenderData.isEmpty)
-
-  appState.actions.output.setOutputWarningsAcknowledged(true)
+  #expect(
+    appState.actions.output.outputRequestDraft?.confirmationTitle == "警告を確認して印刷へ進む")
   appState.actions.output.confirmOutputRequest()
 
   #expect(appState.actions.output.outputRequestDraft == nil)
   #expect(printController.printedRenderData.count == 1)
   #expect(printController.printedOrientations == [.landscape])
   #expect(printController.printedDocumentNames == ["Direct Print Warning"])
+}
+
+@Test("OutputRequestDraft は空の出力警告を続行用ラベルにしない")
+func output_request_draft_empty_output_warning_uses_basic_confirmation_title() {
+  let emptyModel = OutputDocumentModel(
+    paperSize: .a4,
+    orientation: .portrait,
+    scale: .actualSize,
+    pageCount: 0,
+    pages: []
+  )
+  let buildResult = sampleOutputBuildResult(
+    model: emptyModel,
+    warnings: [.init(kind: .emptyDocument, message: "出力対象がありません。")]
+  )
+  let presentationOptions = OutputPresentationOptions(
+    orientation: .portrait,
+    includeDimensionLabels: true,
+    includeScaleGuide: true,
+    rotationDeg: 0
+  )
+  let buildOptions = OutputBuildOptions(
+    orientation: .portrait,
+    includeDimensionLabels: true,
+    includeScaleGuide: true,
+    rotationDeg: 0,
+    printableAreaMm: OutputPaperDefaults.pdfPrintableAreaMm(for: .portrait)
+  )
+  let cases: [(OutputDestination, String)] = [
+    (.pdf, "保存へ進む"),
+    (.directPrint, "印刷へ進む"),
+  ]
+
+  for (destination, expectedTitle) in cases {
+    var draft = OutputRequestDraft(destination: destination, options: presentationOptions)
+    draft.buildState = .ready(
+      OutputRequestPreparedState(
+        buildResult: buildResult,
+        buildOptions: buildOptions,
+        directPrintSession: nil
+      ))
+
+    #expect(draft.confirmationTitle == expectedTitle)
+  }
 }
 
 @Test("UC1 AppCoordinator の失敗した再作成・開く・再読込は状態を壊さない")
