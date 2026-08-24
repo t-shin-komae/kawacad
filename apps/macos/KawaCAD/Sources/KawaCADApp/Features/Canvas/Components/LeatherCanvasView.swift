@@ -57,9 +57,8 @@ final class LeatherCanvasView: NSView {
   override var isFlipped: Bool { true }
   override var acceptsFirstResponder: Bool { true }
 
-  override func resetCursorRects() {
-    super.resetCursorRects()
-    let cursor = CanvasCursorPolicy.cursor(
+  private var cursorKind: CanvasCursorKind {
+    CanvasCursorPolicy.cursor(
       for: CanvasCursorState(
         tool: selectedTool,
         outputPreview: isOutputPreviewMode,
@@ -68,9 +67,16 @@ final class LeatherCanvasView: NSView {
         inlineTextEditing: inlineFreeTextEditor.isEditing,
         settingPartOrigin: isSettingPartOrigin,
         dragging: isCanvasDragging
-      )
-    )
-    addCursorRect(bounds, cursor: cursor.nsCursor)
+      ))
+  }
+
+  override func resetCursorRects() {
+    super.resetCursorRects()
+    addCursorRect(bounds, cursor: cursorKind.nsCursor)
+  }
+
+  override func cursorUpdate(with event: NSEvent) {
+    cursorKind.nsCursor.set()
   }
 
   func refreshAccessibilityState() {
@@ -104,6 +110,12 @@ final class LeatherCanvasView: NSView {
 
   private func invalidateCursor() {
     window?.invalidateCursorRects(for: self)
+    // Cursor rects are recalculated asynchronously by AppKit. Apply the
+    // current state immediately so tool changes and hover targets are visible
+    // without requiring an additional mouse movement.
+    if pointerInsideCanvas {
+      cursorKind.nsCursor.set()
+    }
   }
 
   private func refreshCursorTarget(at point: CGPoint, in pageRect: CGRect) {
@@ -171,7 +183,9 @@ final class LeatherCanvasView: NSView {
     }
     let area = NSTrackingArea(
       rect: bounds,
-      options: [.activeInKeyWindow, .mouseMoved, .mouseEnteredAndExited, .inVisibleRect],
+      options: [
+        .activeInKeyWindow, .mouseMoved, .mouseEnteredAndExited, .cursorUpdate, .inVisibleRect,
+      ],
       owner: self,
       userInfo: nil
     )
@@ -760,6 +774,18 @@ final class LeatherCanvasView: NSView {
       ? lineToolModelPoint(for: point, in: pageRect, modifiers: modifiers)
       : placementModelPoint(for: point, in: pageRect, modifiers: modifiers)
     commandExecutor.hoverPoint(modelPoint, modifiers: modifiers)
+  }
+
+  override func mouseEntered(with event: NSEvent) {
+    let point = convert(event.locationInWindow, from: nil)
+    let pageRect = pageRect(in: bounds)
+    lastPointerPoint = point
+    pointerInsideCanvas = canvasBoundsRect(in: pageRect).contains(point)
+    updateCursorPoint(for: point, in: pageRect)
+    updateHoveredConstraintMarker(for: point, in: pageRect)
+    updateHoveredConstraintTarget(for: point, in: pageRect)
+    refreshCursorTarget(at: point, in: pageRect)
+    invalidateCursor()
   }
 
   override func mouseExited(with event: NSEvent) {
