@@ -10,15 +10,19 @@ struct CanvasHitTesting {
     entity(at: point, preferring: [])
   }
 
-  func entity(at point: CGPoint, preferring preferredEntityIDs: Set<String>) -> CanvasEntity? {
+  func entity(
+    at point: CGPoint,
+    preferring preferredEntityIDs: Set<String>,
+    candidatePadding: CGFloat = CanvasMetrics.entityCandidatePaddingPx
+  ) -> CanvasEntity? {
     let hits =
       displayEntities
       .reversed()
       .filter {
         hitRect(for: $0)
           .insetBy(
-            dx: -CanvasMetrics.entityCandidatePaddingPx,
-            dy: -CanvasMetrics.entityCandidatePaddingPx
+            dx: -candidatePadding,
+            dy: -candidatePadding
           )
           .contains(point)
       }

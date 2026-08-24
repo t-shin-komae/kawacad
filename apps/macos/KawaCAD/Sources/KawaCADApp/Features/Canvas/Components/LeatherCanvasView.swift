@@ -129,7 +129,8 @@ final class LeatherCanvasView: NSView {
         in: pageRect,
         togglesSelection: false,
         modifiers: CanvasPlacementModifiers(),
-        clickCount: 1
+        clickCount: 1,
+        entityCandidatePadding: CanvasMetrics.cursorEntityCandidatePaddingPx
       )
       hasCursorTarget =
         input.measurementHit != nil || input.dimensionHit != nil
@@ -533,7 +534,8 @@ final class LeatherCanvasView: NSView {
     in pageRect: CGRect,
     togglesSelection: Bool,
     modifiers: CanvasPlacementModifiers,
-    clickCount: Int
+    clickCount: Int,
+    entityCandidatePadding: CGFloat = CanvasMetrics.entityCandidatePaddingPx
   ) -> CanvasSelectionInput {
     let measurementHit = measurementAnnotationHit(at: point, in: pageRect)
     let dimensionHit = dimensionConstraintAnnotationHit(at: point, in: pageRect)
@@ -544,7 +546,8 @@ final class LeatherCanvasView: NSView {
     let entityTarget = entity(
       at: point,
       in: pageRect,
-      preferring: selectedEntityIDs
+      preferring: selectedEntityIDs,
+      candidatePadding: entityCandidatePadding
     )?.entitySelectionTarget
     let modelPoint = placementModelPoint(
       for: point,
