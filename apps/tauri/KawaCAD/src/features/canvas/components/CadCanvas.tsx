@@ -33,6 +33,7 @@ export type CanvasInteractionModel = {
   draftPointCount: number;
   dragDuplicating?: boolean;
   dragging?: boolean;
+  hasHoveredCanvasTarget?: boolean;
   snapSuppressed?: boolean;
   toolName: string;
 };
@@ -80,6 +81,7 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     pendingTargetCount,
     dragDuplicating = false,
     dragging = false,
+    hasHoveredCanvasTarget = false,
     snapSuppressed = false,
     toolName,
   } = interactionModel;
@@ -141,7 +143,7 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     tool,
     outputPreview,
     pointerOver,
-    hasTarget: Boolean(renderModel.hoveredTargetEntityId || renderModel.hoveredConstraintId),
+    hasTarget: hasHoveredCanvasTarget || Boolean(renderModel.hoveredTargetEntityId || renderModel.hoveredConstraintId),
     editingFreeText: Boolean(editingFreeText),
     settingPartOrigin,
     dragging,

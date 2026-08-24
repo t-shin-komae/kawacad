@@ -9,8 +9,11 @@ import {
   coreConstraintTarget,
   hitConstraintMarker,
   hitEntity,
-  hitProjectedAnnotation,
+  hitProjectedAnnotationDetail,
+  hitProjectedPoint,
+  hitFreeText,
   preferredConstraintTarget,
+  supportsOffsetTarget,
   selectionInRect,
   type ConstraintTarget,
   type PointMm,
@@ -37,6 +40,7 @@ type CanvasPointerActionDependencies = Pick<
   | "setDragDuplicating"
   | "setMarqueeCurrent"
   | "setHoveredTargetEntityId"
+  | "setHasHoveredCanvasTarget"
   | "setCursorPoint"
   | "pendingTargets"
   | "setSelected"
@@ -46,6 +50,12 @@ type CanvasPointerActionDependencies = Pick<
 > & {
   state: State | undefined;
   canvasProjection: CanvasProjection;
+  measurementLabels: Record<string, string>;
+  measurementLabelOffsets: Record<string, PointMm>;
+  measurementArcCounterclockwise: Record<string, boolean>;
+  dimensionLabels: Record<string, string>;
+  dimensionLabelOffsets: Record<string, PointMm>;
+  dimensionArcCounterclockwise: Record<string, boolean>;
   previewCommand: (command: unknown, success: string) => void;
   clearCanvasPreview: () => void;
   setMessage: (message: string) => void;
@@ -72,6 +82,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
     setDragDuplicating,
     setMarqueeCurrent,
     setHoveredTargetEntityId,
+    setHasHoveredCanvasTarget,
     setCursorPoint,
     previewCommand,
     clearCanvasPreview,
@@ -85,6 +96,12 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
     dimensionMove,
     freeTextMove,
     snap,
+    measurementLabels,
+    measurementLabelOffsets,
+    measurementArcCounterclockwise,
+    dimensionLabels,
+    dimensionLabelOffsets,
+    dimensionArcCounterclockwise,
   } = dependencies;
 
   const canvasMove = useCallback(
@@ -99,25 +116,73 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       );
       if (marquee.current) setMarqueeCurrent(point);
       const canPickTarget =
-        state?.viewMode !== "outputPreview" && (constraintTools.has(tool) || Boolean(measurementKinds[tool]));
+        state?.viewMode !== "outputPreview" &&
+        (constraintTools.has(tool) || Boolean(measurementKinds[tool]) || tool === "offset" || tool === "fillet");
       const hoveredTarget = canPickTarget
-        ? preferredConstraintTarget(point, visibleEntities, viewport, tool, pendingTargets)
+        ? tool === "fillet"
+          ? (() => {
+              const entityId = hitEntity(point, visibleEntities, viewport);
+              return entityId ? ({ entity: entityId } satisfies ConstraintTarget) : undefined;
+            })()
+          : preferredConstraintTarget(point, visibleEntities, viewport, tool, pendingTargets)
         : undefined;
       const hoveredTargetEntity = hoveredTarget
         ? visibleEntities.find((entity) => entity.id === constraintTargetEntityId(hoveredTarget))
         : undefined;
-      setHoveredTargetEntityId(
+      const targetIsValid =
+        Boolean(hoveredTarget) &&
+        allowsDerivedTarget(tool, hoveredTargetEntity) &&
+        (tool !== "offset" || supportsOffsetTarget(hoveredTargetEntity));
+      const hoveredMeasurement =
         tool === "select"
-          ? hitEntity(point, visibleEntities, viewport)
-          : hoveredTarget && allowsDerivedTarget(tool, hoveredTargetEntity)
-            ? hoveredTargetEntity?.id
-            : undefined,
+          ? hitProjectedAnnotationDetail(
+              point,
+              canvasProjection.measurementAnnotations.map((item) => ({
+                ...item,
+                arcCounterclockwise: measurementArcCounterclockwise[item.id],
+              })),
+              viewport,
+              measurementLabels,
+              measurementLabelOffsets,
+            )?.id
+          : undefined;
+      const hoveredDimension =
+        tool === "select"
+          ? hitProjectedAnnotationDetail(
+              point,
+              canvasProjection.dimensionConstraints.map((item) => ({
+                ...item,
+                arcCounterclockwise: dimensionArcCounterclockwise[item.id],
+              })),
+              viewport,
+              dimensionLabels,
+              dimensionLabelOffsets,
+            )?.id
+          : undefined;
+      const hoveredConstraintMarker =
+        tool === "select" ? hitConstraintMarker(point, canvasProjection.constraintMarkers, viewport) : undefined;
+      const hoveredStitchStartPoint =
+        tool === "select" ? hitProjectedPoint(point, canvasProjection.stitchStartPoints, viewport) : undefined;
+      const hoveredFreeText = tool === "select" ? hitFreeText(point, state?.freeTexts ?? []) : undefined;
+      const hoveredEntity = tool === "select" ? hitEntity(point, visibleEntities, viewport) : undefined;
+      setHoveredTargetEntityId(tool === "select" ? hoveredEntity : targetIsValid ? hoveredTargetEntity?.id : undefined);
+      setHasHoveredCanvasTarget(
+        state?.viewMode !== "outputPreview" &&
+          (tool === "select"
+            ? Boolean(
+                hoveredEntity ||
+                hoveredMeasurement ||
+                hoveredDimension ||
+                hoveredConstraintMarker ||
+                hoveredStitchStartPoint ||
+                hoveredFreeText,
+              )
+            : targetIsValid),
       );
       setHoveredConstraintId(
         state?.viewMode === "outputPreview" || tool !== "select"
           ? undefined
-          : (hitProjectedAnnotation(point, canvasProjection.dimensionConstraints, viewport) ??
-              hitConstraintMarker(point, canvasProjection.constraintMarkers, viewport)),
+          : (hoveredDimension ?? hoveredConstraintMarker),
       );
       if (tool === "arc" && draft.length === 2) {
         const placement = arcPlacementEndPoint(draft[0], draft[1], snappedPoint, arcSweepAngle.current, event.shiftKey);
@@ -201,8 +266,17 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
     },
     [
       canvasProjection.constraintMarkers,
+      canvasProjection.dimensionConstraints,
+      canvasProjection.measurementAnnotations,
+      canvasProjection.stitchStartPoints,
       clearCanvasPreview,
+      dimensionLabelOffsets,
+      dimensionLabels,
+      dimensionArcCounterclockwise,
       draft,
+      measurementLabelOffsets,
+      measurementLabels,
+      measurementArcCounterclockwise,
       previewCommand,
       snap,
       state?.drawingEntityMetadata,
@@ -214,6 +288,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       visibleEntities,
       pendingTargets,
       setHoveredTargetEntityId,
+      setHasHoveredCanvasTarget,
       setMarqueeCurrent,
       setSnapActive,
     ],
@@ -227,7 +302,10 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       setSnapActive(false);
       setDragDuplicating(false);
       setMarqueeCurrent(undefined);
-      if (tool !== "select") setHoveredTargetEntityId(undefined);
+      if (tool !== "select") {
+        setHoveredTargetEntityId(undefined);
+        setHasHoveredCanvasTarget(false);
+      }
       if (state?.viewMode === "outputPreview") return;
       clearCanvasPreview();
       const marqueeStart = marquee.current;
@@ -358,6 +436,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       clearCanvasPreview,
       command,
       setDragDuplicating,
+      setHasHoveredCanvasTarget,
       setHoveredTargetEntityId,
       setMarqueeCurrent,
       setMessage,
@@ -371,7 +450,8 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
 
   const canvasLeave = useCallback(() => {
     setCursorPoint(undefined);
-  }, [setCursorPoint]);
+    setHasHoveredCanvasTarget(false);
+  }, [setCursorPoint, setHasHoveredCanvasTarget]);
 
   return { canvasMove, canvasLeave, canvasUp };
 }

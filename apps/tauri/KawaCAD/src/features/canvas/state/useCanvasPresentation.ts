@@ -81,6 +81,7 @@ export function useCanvasPresentation() {
   const [dragDuplicating, setDragDuplicating] = useState(false);
   const [marqueeCurrent, setMarqueeCurrent] = useState<PointMm>();
   const [hoveredTargetEntityId, setHoveredTargetEntityId] = useState<string>();
+  const [hasHoveredCanvasTarget, setHasHoveredCanvasTarget] = useState(false);
   const pan = useRef<{ screen: { x: number; y: number }; viewport: Viewport }>();
   const marquee = useRef<PointMm>();
   const move = useRef<{ start: PointMm; ids: string[]; partId?: string }>();
@@ -112,6 +113,7 @@ export function useCanvasPresentation() {
     setDragDuplicating(false);
     setMarqueeCurrent(undefined);
     setHoveredTargetEntityId(undefined);
+    setHasHoveredCanvasTarget(false);
     setPendingTargets([]);
     setPendingConstraintValue(undefined);
     setPendingDerivedValue(undefined);
@@ -283,6 +285,8 @@ export function useCanvasPresentation() {
     setMarqueeCurrent,
     hoveredTargetEntityId,
     setHoveredTargetEntityId,
+    hasHoveredCanvasTarget,
+    setHasHoveredCanvasTarget,
     pan,
     marquee,
     move,
