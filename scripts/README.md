@@ -82,12 +82,14 @@ from `--source-root`.
 
 Both captures and their commit metadata are stored under
 `test-results/ui-reviews/pr-123/`. The second capture also regenerates
-`index.html`, which provides side-by-side images, an overlay slider, and a file
-name filter. The default output root is derived from Git's common directory, so
-linked worktrees share the same PR-numbered reports. The whole directory is
-ignored by Git and remains available to local Codex sessions without requiring
-a GitHub image upload. Use `--review-root` only when a different shared location
-is needed.
+`index.html`. Screenshots with identical file names and bytes are omitted from
+the report. Changed, added, and removed screenshots remain available with
+side-by-side images, an overlay slider, and a file name filter. The report also
+shows how many unchanged images were omitted. The default output root is derived
+from Git's common directory, so linked worktrees share the same PR-numbered
+reports. The whole directory is ignored by Git and remains available to local
+Codex sessions without requiring a GitHub image upload. Use `--review-root` only
+when a different shared location is needed.
 
 For a component not covered by the fixed scenarios, place matching image names
 under `before/screenshots/` and `after/screenshots/`, then regenerate only the

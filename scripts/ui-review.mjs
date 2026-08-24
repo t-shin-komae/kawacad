@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -135,29 +136,55 @@ function listScreenshots(directory) {
 }
 
 export function buildReviewEntries(reviewPath) {
-  const before = new Set(
-    listScreenshots(join(reviewPath, "before", "screenshots")),
+  return buildReviewComparison(reviewPath).entries;
+}
+
+function filesEqual(left, right) {
+  if (statSync(left).size !== statSync(right).size) return false;
+  return readFileSync(left).equals(readFileSync(right));
+}
+
+export function buildReviewComparison(reviewPath) {
+  const beforeDirectory = join(reviewPath, "before", "screenshots");
+  const afterDirectory = join(reviewPath, "after", "screenshots");
+  const before = new Set(listScreenshots(beforeDirectory));
+  const after = new Set(listScreenshots(afterDirectory));
+  const names = [...new Set([...before, ...after])].sort((left, right) =>
+    left.localeCompare(right, "en"),
   );
-  const after = new Set(
-    listScreenshots(join(reviewPath, "after", "screenshots")),
-  );
-  return [...new Set([...before, ...after])]
-    .sort((left, right) => left.localeCompare(right, "en"))
-    .map((name) => ({
+  const entries = [];
+  let unchanged = 0;
+  for (const name of names) {
+    const hasBefore = before.has(name);
+    const hasAfter = after.has(name);
+    if (
+      hasBefore &&
+      hasAfter &&
+      filesEqual(join(beforeDirectory, name), join(afterDirectory, name))
+    ) {
+      unchanged += 1;
+      continue;
+    }
+    entries.push({
       name,
-      before: before.has(name)
+      before: hasBefore
         ? `before/screenshots/${encodeURIComponent(name)}`
         : null,
-      after: after.has(name)
-        ? `after/screenshots/${encodeURIComponent(name)}`
-        : null,
+      after: hasAfter ? `after/screenshots/${encodeURIComponent(name)}` : null,
       status:
-        before.has(name) && after.has(name)
-          ? "paired"
-          : before.has(name)
-            ? "before-only"
-            : "after-only",
-    }));
+        hasBefore && hasAfter ? "changed" : hasBefore ? "removed" : "added",
+    });
+  }
+  return {
+    entries,
+    summary: {
+      total: names.length,
+      changed: entries.filter((entry) => entry.status === "changed").length,
+      added: entries.filter((entry) => entry.status === "added").length,
+      removed: entries.filter((entry) => entry.status === "removed").length,
+      unchanged,
+    },
+  };
 }
 
 function escapeHtml(value) {
@@ -180,10 +207,19 @@ function imageOrPlaceholder(source, label) {
     : `<div class="missing">${label}画像なし</div>`;
 }
 
-export function renderReviewHtml({ pr, entries, before, after }) {
+export function renderReviewHtml({ pr, entries, before, after, summary }) {
+  const resultSummary = summary ?? {
+    total: entries.length,
+    changed: entries.filter((entry) => entry.status === "changed").length,
+    added: entries.filter((entry) => entry.status === "added").length,
+    removed: entries.filter((entry) => entry.status === "removed").length,
+    unchanged: 0,
+  };
+  const statusLabels = { changed: "変更", added: "追加", removed: "削除" };
   const cards = entries
     .map((entry) => {
       const name = escapeHtml(entry.name);
+      const status = statusLabels[entry.status] ?? entry.status;
       const overlay =
         entry.before && entry.after
           ? `<details><summary>重ね合わせ</summary>
@@ -195,7 +231,7 @@ export function renderReviewHtml({ pr, entries, before, after }) {
           </details>`
           : "";
       return `<article class="card" data-name="${name.toLowerCase()}">
-        <h2>${name}</h2>
+        <h2><span>${name}</span><span class="status status-${entry.status}">${status}</span></h2>
         <div class="pair">
           <figure><figcaption>Before</figcaption>${imageOrPlaceholder(entry.before, "Before")}</figure>
           <figure><figcaption>After</figcaption>${imageOrPlaceholder(entry.after, "After")}</figure>
@@ -204,7 +240,6 @@ export function renderReviewHtml({ pr, entries, before, after }) {
       </article>`;
     })
     .join("\n");
-  const paired = entries.filter((entry) => entry.status === "paired").length;
   const beforeLabel = before?.commit?.slice(0, 12) ?? "未撮影";
   const afterLabel = after?.commit?.slice(0, 12) ?? "未撮影";
   return `<!doctype html>
@@ -222,7 +257,11 @@ export function renderReviewHtml({ pr, entries, before, after }) {
     #filter { width: min(520px, 100%); box-sizing: border-box; padding: 8px 10px; font: inherit; }
     main { display: grid; gap: 20px; padding: 20px; }
     .card { border: 1px solid GrayText; border-radius: 10px; padding: 16px; overflow: hidden; }
-    h2 { margin: 0 0 12px; font: 600 15px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    h2 { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; font: 600 15px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .status { padding: 3px 8px; border-radius: 999px; font: 600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .status-changed { background: #bf870022; color: #9a6700; }
+    .status-added { background: #1a7f3722; color: #1a7f37; }
+    .status-removed { background: #cf222e22; color: #cf222e; }
     .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     figure { margin: 0; min-width: 0; }
     figcaption { margin-bottom: 6px; font-weight: 600; }
@@ -241,10 +280,10 @@ export function renderReviewHtml({ pr, entries, before, after }) {
 <body>
   <header>
     <h1>UI Review — PR #${escapeHtml(pr)}</h1>
-    <p class="meta">Before: ${escapeHtml(beforeLabel)} / After: ${escapeHtml(afterLabel)} / ${paired}組</p>
+    <p class="meta">Before: ${escapeHtml(beforeLabel)} / After: ${escapeHtml(afterLabel)} / 差分: ${entries.length}件 / 変更なし: ${resultSummary.unchanged}件（除外） / 総数: ${resultSummary.total}件</p>
     <input id="filter" type="search" placeholder="ファイル名で絞り込み" aria-label="ファイル名で絞り込み">
   </header>
-  <main>${cards || '<p class="missing">比較画像がありません。</p>'}</main>
+  <main>${cards || `<p class="missing">差のある画像はありません。${resultSummary.unchanged}件の一致画像を除外しました。</p>`}</main>
   <script>
     const filter = document.querySelector("#filter");
     filter.addEventListener("input", () => {
@@ -262,13 +301,13 @@ export function renderReviewHtml({ pr, entries, before, after }) {
 
 export function generateUiReviewReport(options) {
   const destination = reviewDirectory(options.reviewRoot, options.pr);
-  const entries = buildReviewEntries(destination);
+  const comparison = buildReviewComparison(destination);
   const manifest = {
     pr: Number(options.pr),
     generatedAt: new Date().toISOString(),
     before: metadata(destination, "before"),
     after: metadata(destination, "after"),
-    entries,
+    ...comparison,
   };
   mkdirSync(destination, { recursive: true });
   writeFileSync(
