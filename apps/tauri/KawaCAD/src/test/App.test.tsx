@@ -226,38 +226,6 @@ describe("React workspace shortcuts", () => {
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
   });
-  it("keeps the open-hand cursor while Select hovers a selectable entity", async () => {
-    const cursorState = {
-      ...state,
-      entities: [
-        {
-          id: "line:cursor",
-          kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 20, yMm: 0 } } },
-        },
-      ],
-    };
-    mocks.invoke.mockImplementation(async (command: string) => {
-      if (command === "document_state") return cursorState;
-      if (command === "recovery_candidate") return null;
-      if (command === "load_part_library") return [];
-      return cursorState;
-    });
-    render(<App />);
-    await screen.findByDisplayValue("Test project");
-    const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
-    Object.defineProperty(canvas, "getBoundingClientRect", {
-      value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
-    });
-
-    fireEvent.pointerMove(canvas, { ...canvasClientPoint({ xMm: 9, yMm: 0 }), pointerId: 1 });
-    await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-open-hand"));
-
-    fireEvent.pointerMove(canvas, { ...canvasClientPoint({ xMm: 11, yMm: 0 }), pointerId: 1 });
-    await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-open-hand"));
-
-    fireEvent.pointerLeave(canvas, { pointerId: 1 });
-    await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-arrow"));
-  });
   it("opens PDF output from the native File menu action", async () => {
     render(<App />);
     await screen.findByDisplayValue("Test project");
@@ -2624,6 +2592,38 @@ describe("React workspace shortcuts", () => {
       }),
     );
     expect(screen.getByText("線分", { selector: ".toolbar-tool" })).toBeInTheDocument();
+  });
+  it("keeps the open-hand cursor while Select hovers a selectable entity", async () => {
+    const cursorState = {
+      ...state,
+      entities: [
+        {
+          id: "line:cursor",
+          kind: { lineSegment: { start: { xMm: 0, yMm: 0 }, end: { xMm: 20, yMm: 0 } } },
+        },
+      ],
+    };
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === "document_state") return cursorState;
+      if (command === "recovery_candidate") return null;
+      if (command === "load_part_library") return [];
+      return cursorState;
+    });
+    render(<App />);
+    await screen.findByDisplayValue("Test project");
+    const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
+    Object.defineProperty(canvas, "getBoundingClientRect", {
+      value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
+    });
+
+    fireEvent.pointerMove(canvas, { ...canvasClientPoint({ xMm: 9, yMm: 0 }), pointerId: 1 });
+    await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-open-hand"));
+
+    fireEvent.pointerMove(canvas, { ...canvasClientPoint({ xMm: 11, yMm: 0 }), pointerId: 1 });
+    await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-open-hand"));
+
+    fireEvent.pointerLeave(canvas, { pointerId: 1 });
+    await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-arrow"));
   });
   it("matches the SwiftUI window title rules for saved and unsaved projects", () => {
     expect(documentWindowPresentation("丸型キーホルダー", "/tmp/keyholder-round.kawa", false)).toMatchObject({
