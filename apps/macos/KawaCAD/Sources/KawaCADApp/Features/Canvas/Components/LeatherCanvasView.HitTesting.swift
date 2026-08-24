@@ -439,14 +439,9 @@ extension LeatherCanvasView {
   func entity(
     at point: CGPoint,
     in pageRect: CGRect,
-    preferring preferredEntityIDs: Set<String> = [],
-    candidatePadding: CGFloat = CanvasMetrics.entityCandidatePaddingPx
+    preferring preferredEntityIDs: Set<String> = []
   ) -> CanvasEntity? {
-    hitTesting(in: pageRect).entity(
-      at: point,
-      preferring: preferredEntityIDs,
-      candidatePadding: candidatePadding
-    )
+    hitTesting(in: pageRect).entity(at: point, preferring: preferredEntityIDs)
   }
 
   func isFilletResolvedEntity(_ entity: CanvasEntity) -> Bool {

@@ -3,11 +3,10 @@ import { canvasCursorClass } from "@/features/canvas/selectors/canvasCursor";
 
 const base = {
   outputPreview: false,
-  pointerOver: true,
   hasTarget: false,
   editingFreeText: false,
   settingPartOrigin: false,
-  dragging: false,
+  movingContent: false,
 };
 
 describe("canvasCursorClass", () => {
@@ -20,7 +19,7 @@ describe("canvasCursorClass", () => {
     expect(canvasCursorClass({ ...base, tool: "line" })).toBe("canvas-cursor-crosshair");
     expect(canvasCursorClass({ ...base, tool: "freeText" })).toBe("canvas-cursor-crosshair");
     expect(canvasCursorClass({ ...base, tool: "select", editingFreeText: true })).toBe("canvas-cursor-ibeam");
-    expect(canvasCursorClass({ ...base, tool: "select", dragging: true })).toBe("canvas-cursor-closed-hand");
+    expect(canvasCursorClass({ ...base, tool: "select", movingContent: true })).toBe("canvas-cursor-closed-hand");
   });
 
   it("shows target availability for constraint and measurement tools", () => {
@@ -28,8 +27,7 @@ describe("canvasCursorClass", () => {
     expect(canvasCursorClass({ ...base, tool: "distance", hasTarget: true })).toBe("canvas-cursor-pointing-hand");
   });
 
-  it("does not advertise editing in output preview or outside the canvas", () => {
+  it("does not advertise editing in output preview", () => {
     expect(canvasCursorClass({ ...base, tool: "line", outputPreview: true })).toBe("canvas-cursor-arrow");
-    expect(canvasCursorClass({ ...base, tool: "distance", pointerOver: false })).toBe("canvas-cursor-arrow");
   });
 });

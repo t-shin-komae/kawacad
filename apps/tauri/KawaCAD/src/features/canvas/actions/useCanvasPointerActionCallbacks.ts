@@ -12,6 +12,7 @@ import {
   hitProjectedAnnotationDetail,
   hitProjectedPoint,
   hitFreeText,
+  preferredEntitySelectionHit,
   preferredConstraintTarget,
   supportsOffsetTarget,
   selectionInRect,
@@ -20,6 +21,7 @@ import {
   type RawEntity,
 } from "@/features/canvas/domain/cad";
 import { constraintTools, measurementKinds } from "@/features/canvas/domain/workspaceTools";
+import { hitDerivedRadiusControl } from "@/features/canvas/selectors/canvasProjection";
 import type { CanvasProjection, State } from "@/shared/domain/coreWireTypes";
 import type { CanvasPresentation } from "@/features/canvas/state/useCanvasPresentation";
 
@@ -43,6 +45,7 @@ type CanvasPointerActionDependencies = Pick<
   | "setHasHoveredCanvasTarget"
   | "setCursorPoint"
   | "pendingTargets"
+  | "selected"
   | "setSelected"
   | "measurementMove"
   | "dimensionMove"
@@ -90,6 +93,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
     setMessage,
     visibleEntities,
     pendingTargets,
+    selected,
     setSelected,
     command,
     measurementMove,
@@ -164,13 +168,25 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       const hoveredStitchStartPoint =
         tool === "select" ? hitProjectedPoint(point, canvasProjection.stitchStartPoints, viewport) : undefined;
       const hoveredFreeText = tool === "select" ? hitFreeText(point, state?.freeTexts ?? []) : undefined;
-      const hoveredEntity = tool === "select" ? hitEntity(point, visibleEntities, viewport) : undefined;
-      setHoveredTargetEntityId(tool === "select" ? hoveredEntity : targetIsValid ? hoveredTargetEntity?.id : undefined);
+      const hoveredRadiusControl =
+        tool === "select" && state
+          ? hitDerivedRadiusControl(
+              point,
+              visibleEntities,
+              state.drawingEntityMetadata,
+              viewport,
+              state.derivedElements,
+            )
+          : undefined;
+      const hoveredEntity =
+        tool === "select" ? preferredEntitySelectionHit(point, visibleEntities, viewport, selected) : undefined;
+      setHoveredTargetEntityId(targetIsValid ? hoveredTargetEntity?.id : undefined);
       setHasHoveredCanvasTarget(
         state?.viewMode !== "outputPreview" &&
           (tool === "select"
             ? Boolean(
                 hoveredEntity ||
+                hoveredRadiusControl ||
                 hoveredMeasurement ||
                 hoveredDimension ||
                 hoveredConstraintMarker ||
@@ -280,7 +296,9 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       previewCommand,
       snap,
       state?.drawingEntityMetadata,
+      state?.derivedElements,
       state?.viewMode,
+      selected,
       tool,
       viewport,
       setDragDuplicating,
@@ -450,8 +468,10 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
 
   const canvasLeave = useCallback(() => {
     setCursorPoint(undefined);
+    setHoveredTargetEntityId(undefined);
+    setHoveredConstraintId(undefined);
     setHasHoveredCanvasTarget(false);
-  }, [setCursorPoint, setHasHoveredCanvasTarget]);
+  }, [setCursorPoint, setHasHoveredCanvasTarget, setHoveredConstraintId, setHoveredTargetEntityId]);
 
   return { canvasMove, canvasLeave, canvasUp };
 }

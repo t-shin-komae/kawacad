@@ -11,7 +11,7 @@ func selectionCursorReflectsTarget() {
     hasTarget: false,
     inlineTextEditing: false,
     settingPartOrigin: false,
-    dragging: false
+    movingContent: false
   )
   #expect(CanvasCursorPolicy.cursor(for: base) == .arrow)
   #expect(
@@ -23,7 +23,7 @@ func selectionCursorReflectsTarget() {
         hasTarget: true,
         inlineTextEditing: false,
         settingPartOrigin: false,
-        dragging: false
+        movingContent: false
       )) == .openHand)
 }
 
@@ -38,7 +38,7 @@ func drawingAndEditingCursors() {
         hasTarget: false,
         inlineTextEditing: false,
         settingPartOrigin: false,
-        dragging: false
+        movingContent: false
       )) == .crosshair)
   #expect(
     CanvasCursorPolicy.cursor(
@@ -49,7 +49,7 @@ func drawingAndEditingCursors() {
         hasTarget: false,
         inlineTextEditing: true,
         settingPartOrigin: false,
-        dragging: false
+        movingContent: false
       )) == .iBeam)
   #expect(
     CanvasCursorPolicy.cursor(
@@ -60,7 +60,7 @@ func drawingAndEditingCursors() {
         hasTarget: true,
         inlineTextEditing: false,
         settingPartOrigin: false,
-        dragging: true
+        movingContent: true
       )) == .closedHand)
 }
 
@@ -75,7 +75,7 @@ func targetAndPreviewCursors() {
         hasTarget: false,
         inlineTextEditing: false,
         settingPartOrigin: false,
-        dragging: false
+        movingContent: false
       )) == .operationNotAllowed)
   #expect(
     CanvasCursorPolicy.cursor(
@@ -86,7 +86,7 @@ func targetAndPreviewCursors() {
         hasTarget: true,
         inlineTextEditing: false,
         settingPartOrigin: false,
-        dragging: false
+        movingContent: false
       )) == .pointingHand)
   #expect(
     CanvasCursorPolicy.cursor(
@@ -97,6 +97,6 @@ func targetAndPreviewCursors() {
         hasTarget: false,
         inlineTextEditing: false,
         settingPartOrigin: false,
-        dragging: false
+        movingContent: false
       )) == .arrow)
 }

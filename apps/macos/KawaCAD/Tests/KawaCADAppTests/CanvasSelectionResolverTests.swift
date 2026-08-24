@@ -476,35 +476,6 @@ struct CanvasSelectionResolverTests {
     #expect(resolver.entity(at: outside) == nil)
   }
 
-  @Test
-  func cursor_entity_hit_uses_a_larger_hover_padding_without_changing_selection() {
-    let resolver = makeResolver(
-      selectedTool: .select,
-      entities: [
-        lineEntity(
-          id: "entity:cursor-hover",
-          label: "Cursor hover",
-          start: .zero,
-          end: ModelPoint(xMM: 20, yMM: 0)
-        )
-      ]
-    )
-    let center = canvasPoint(ModelPoint(xMM: 10, yMM: 0))
-    let point = CGPoint(
-      x: center.x,
-      y: center.y + CanvasMetrics.cursorEntityCandidatePaddingPx - 1
-    )
-
-    #expect(resolver.entity(at: point) == nil)
-    #expect(
-      resolver.entity(
-        at: point,
-        preferring: [],
-        candidatePadding: CanvasMetrics.cursorEntityCandidatePaddingPx
-      )?.id == "entity:cursor-hover"
-    )
-  }
-
   private func makeResolver(
     selectedTool: CanvasTool,
     entities: [CanvasEntity],

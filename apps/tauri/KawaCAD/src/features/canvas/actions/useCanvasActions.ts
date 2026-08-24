@@ -233,6 +233,7 @@ export function useCanvasActions(canvas: CanvasPresentation, dependencies: Canva
     setMessage,
     visibleEntities,
     pendingTargets,
+    selected,
     measurementLabels,
     measurementLabelOffsets,
     measurementArcCounterclockwise,
