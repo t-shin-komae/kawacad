@@ -78,7 +78,9 @@ node scripts/ui-review.mjs capture --pr 123 --side after
 Use `--variant tauri` or `--variant swift` when only one frontend changed. The
 source worktree must already have the dependencies required by that frontend.
 The current worktree remains checked out while the base revision is rendered
-from `--source-root`.
+from `--source-root`. Before each capture, existing screenshots for the selected
+side and variant are removed so deleted or renamed scenarios do not remain as
+stale files.
 
 Both captures and their commit metadata are stored under
 `test-results/ui-reviews/pr-123/`. The second capture also regenerates

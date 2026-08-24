@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { command, npmCommand, runCommand } from "./lib/command.mjs";
@@ -38,6 +44,22 @@ export function parseComparisonScreenshotArgs(args) {
   return options;
 }
 
+export function clearComparisonScreenshots(outputDirectory, variant) {
+  const screenshotDirectory = join(outputDirectory, "screenshots");
+  if (!existsSync(screenshotDirectory)) return;
+  const prefixes = variant === "all" ? ["swift-", "tauri-"] : [`${variant}-`];
+  for (const entry of readdirSync(screenshotDirectory, {
+    withFileTypes: true,
+  })) {
+    if (
+      entry.isFile() &&
+      prefixes.some((prefix) => entry.name.startsWith(prefix))
+    ) {
+      rmSync(join(screenshotDirectory, entry.name));
+    }
+  }
+}
+
 export function captureComparisonScreenshots(options) {
   if (
     (options.variant === "all" || options.variant === "swift") &&
@@ -51,7 +73,19 @@ export function captureComparisonScreenshots(options) {
   const tauriDirectory = join(options.sourceRoot, "apps/tauri/KawaCAD");
   const swiftDirectory = join(options.sourceRoot, "apps/macos/KawaCAD");
   const screenshotDirectory = join(options.outputDirectory, "screenshots");
+  const legacyOutputDirectory = join(
+    options.sourceRoot,
+    "test-results/comparison-screenshots",
+  );
   const env = { KAWACAD_SCREENSHOT_OUTPUT_DIR: screenshotDirectory };
+
+  clearComparisonScreenshots(options.outputDirectory, options.variant);
+  if (
+    (options.variant === "all" || options.variant === "tauri") &&
+    resolve(legacyOutputDirectory) !== resolve(options.outputDirectory)
+  ) {
+    clearComparisonScreenshots(legacyOutputDirectory, "tauri");
+  }
 
   if (options.variant === "all" || options.variant === "tauri") {
     runCommand(npmCommand(["run", "screenshots:comparison"]), {
@@ -63,10 +97,7 @@ export function captureComparisonScreenshots(options) {
       readdirSync(screenshotDirectory).some((name) =>
         name.startsWith("tauri-"),
       );
-    const legacyDirectory = join(
-      options.sourceRoot,
-      "test-results/comparison-screenshots/screenshots",
-    );
+    const legacyDirectory = join(legacyOutputDirectory, "screenshots");
     if (!hasTauriImages && existsSync(legacyDirectory)) {
       // Older base revisions ignore KAWACAD_SCREENSHOT_OUTPUT_DIR. This keeps
       // local PR comparisons usable while such a revision is checked out.

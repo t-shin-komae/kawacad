@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { parseComparisonScreenshotArgs } from "../capture-comparison-screenshots.mjs";
+import {
+  clearComparisonScreenshots,
+  parseComparisonScreenshotArgs,
+} from "../capture-comparison-screenshots.mjs";
 import {
   buildReviewComparison,
   buildReviewEntries,
@@ -25,6 +34,55 @@ test("comparison screenshot arguments accept isolated source and output roots", 
   assert.equal(options.sourceRoot, "/tmp/source");
   assert.equal(options.outputDirectory, "/tmp/output");
   assert.equal(options.variant, "tauri");
+});
+
+test("comparison capture clears only screenshots for the selected variant", () => {
+  const root = mkdtempSync(join(tmpdir(), "kawacad-ui-capture-"));
+  try {
+    const screenshots = join(root, "screenshots");
+    mkdirSync(screenshots, { recursive: true });
+    writeFileSync(join(screenshots, "swift-removed.png"), "old");
+    writeFileSync(join(screenshots, "tauri-retained.jpg"), "old");
+    writeFileSync(join(screenshots, "custom-component.png"), "keep");
+
+    clearComparisonScreenshots(root, "swift");
+
+    assert.equal(existsSync(join(screenshots, "swift-removed.png")), false);
+    assert.equal(existsSync(join(screenshots, "tauri-retained.jpg")), true);
+    assert.equal(existsSync(join(screenshots, "custom-component.png")), true);
+
+    clearComparisonScreenshots(root, "all");
+
+    assert.equal(existsSync(join(screenshots, "tauri-retained.jpg")), false);
+    assert.equal(existsSync(join(screenshots, "custom-component.png")), true);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("recapture cleanup exposes a removed screenshot in the review", () => {
+  const root = mkdtempSync(join(tmpdir(), "kawacad-ui-recapture-"));
+  try {
+    const before = join(root, "before/screenshots");
+    const after = join(root, "after/screenshots");
+    mkdirSync(before, { recursive: true });
+    mkdirSync(after, { recursive: true });
+    writeFileSync(join(before, "swift-removed.png"), "same stale image");
+    writeFileSync(join(after, "swift-removed.png"), "same stale image");
+
+    clearComparisonScreenshots(join(root, "after"), "swift");
+
+    assert.deepEqual(buildReviewEntries(root), [
+      {
+        name: "swift-removed.png",
+        before: "before/screenshots/swift-removed.png",
+        after: null,
+        status: "removed",
+      },
+    ]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("UI review arguments isolate captures by PR and side", () => {

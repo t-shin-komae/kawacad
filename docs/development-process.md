@@ -44,7 +44,7 @@ KawaCADのIssue作成からリリースまでの進め方を定めます。
 
 比較成果物はGit管理外の`test-results/ui-reviews/pr-<PR番号>/`へ保存します。`before/`と`after/`に画像と撮影元commitを保存し、`index.html`では画像ファイルの内容が異なるものと、片側だけに存在するものだけを横並びと重ね合わせで確認できます。完全一致した画像はレポートから除外し、除外件数だけを表示します。保存先はGitの共通ディレクトリから決めるため、複数worktreeから同じ場所を参照でき、PR番号の異なる画像を上書きしません。
 
-固定シナリオを撮影する場合は、作業ブランチを切り替えず、基準revisionのworktreeを指定して次を実行します。`--variant`には`all`、`tauri`、`swift`を指定できます。
+固定シナリオを撮影する場合は、作業ブランチを切り替えず、基準revisionのworktreeを指定して次を実行します。`--variant`には`all`、`tauri`、`swift`を指定できます。再撮影時は、指定した側とvariantの古い画像を削除してから撮影するため、廃止・改名したシナリオも片側だけの差分として検出されます。
 
 ```bash
 node scripts/ui-review.mjs capture --pr 123 --side before --source-root /path/to/base-worktree
