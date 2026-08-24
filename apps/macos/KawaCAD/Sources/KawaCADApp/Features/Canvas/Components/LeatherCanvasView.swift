@@ -58,6 +58,11 @@ final class LeatherCanvasView: NSView {
   override var isFlipped: Bool { true }
   override var acceptsFirstResponder: Bool { true }
 
+  override func viewDidMoveToWindow() {
+    super.viewDidMoveToWindow()
+    window?.acceptsMouseMovedEvents = true
+  }
+
   private var cursorKind: CanvasCursorKind {
     CanvasCursorPolicy.cursor(
       for: CanvasCursorState(

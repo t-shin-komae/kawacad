@@ -223,3 +223,23 @@ func appKit_tracking_area_is_not_replaced_during_updates() {
   #expect(view.trackingArea === initialTrackingArea)
   #expect(view.trackingAreas.filter { $0.owner === view }.count == 1)
 }
+
+@Test("キャンバスを収容するウィンドウはマウス移動イベントを受け付ける")
+@MainActor
+func appKit_canvas_window_accepts_mouse_moved_events() {
+  let inputs = CanvasTestInputBuilder()
+  let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 520, height: 736))
+  let window = NSWindow(
+    contentRect: view.frame,
+    styleMask: [.borderless],
+    backing: .buffered,
+    defer: false
+  )
+  window.isReleasedWhenClosed = false
+  defer { window.close() }
+
+  #expect(window.acceptsMouseMovedEvents == false)
+  window.contentView = view
+
+  #expect(window.acceptsMouseMovedEvents)
+}
