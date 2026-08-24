@@ -214,8 +214,8 @@ final class LeatherCanvasView: NSView {
 
   override func updateTrackingAreas() {
     super.updateTrackingAreas()
-    if let trackingArea {
-      removeTrackingArea(trackingArea)
+    if let trackingArea, trackingAreas.contains(where: { $0 === trackingArea }) {
+      return
     }
     let area = NSTrackingArea(
       rect: bounds,

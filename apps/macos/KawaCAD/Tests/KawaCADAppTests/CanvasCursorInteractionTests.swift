@@ -207,3 +207,19 @@ func appKit_cursor_updates_when_select_tool_changes_under_stationary_pointer() {
   RunLoop.main.run(until: Date().addingTimeInterval(0.05))
   #expect(NSCursor.current === NSCursor.openHand)
 }
+
+@Test("AppKitの追跡領域更新では既存領域を交換しない")
+@MainActor
+func appKit_tracking_area_is_not_replaced_during_updates() {
+  let inputs = CanvasTestInputBuilder()
+  let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 520, height: 736))
+
+  view.updateTrackingAreas()
+  let initialTrackingArea = view.trackingArea
+  #expect(initialTrackingArea != nil)
+
+  view.updateTrackingAreas()
+
+  #expect(view.trackingArea === initialTrackingArea)
+  #expect(view.trackingAreas.filter { $0.owner === view }.count == 1)
+}
