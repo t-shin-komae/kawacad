@@ -33,6 +33,7 @@ final class LeatherCanvasView: NSView {
   private var hasCursorTarget = false
   private var cursorTargetEntityID: String?
   private var lastPointerPoint: CGPoint?
+  private var registeredCursorKind: CanvasCursorKind?
 
   func interactionSnapshot() -> CanvasInteractionSnapshot {
     interactionController.snapshot
@@ -83,9 +84,11 @@ final class LeatherCanvasView: NSView {
       pointerInsideCanvas = canvasBoundsRect(in: pageRect).contains(lastPointerPoint)
       refreshCursorTarget(at: lastPointerPoint, in: pageRect)
     }
-    addCursorRect(bounds, cursor: cursorKind.nsCursor)
+    let kind = cursorKind
+    addCursorRect(bounds, cursor: kind.nsCursor)
+    registeredCursorKind = kind
     if pointerInsideCanvas {
-      cursorKind.nsCursor.set()
+      kind.nsCursor.set()
     }
   }
 
@@ -127,14 +130,17 @@ final class LeatherCanvasView: NSView {
       || snapshot.dimensionConstraintDragState != nil || snapshot.freeTextDragState != nil
   }
 
-  private func invalidateCursor() {
-    window?.invalidateCursorRects(for: self)
-    // Cursor rects are recalculated asynchronously by AppKit. Apply the
-    // current state immediately so tool changes and hover targets are visible
-    // without requiring an additional mouse movement.
+  private func updateCursor() {
+    let kind = cursorKind
+    // Apply the current semantic state immediately. Rebuilding AppKit cursor
+    // rects is only necessary when that state changes; doing it on every
+    // mouse move races the asynchronous cursor-rect update against this set().
     if pointerInsideCanvas {
-      cursorKind.nsCursor.set()
+      kind.nsCursor.set()
     }
+    guard registeredCursorKind != kind else { return }
+    registeredCursorKind = kind
+    window?.invalidateCursorRects(for: self)
   }
 
   private func refreshCursorTarget(at point: CGPoint, in pageRect: CGRect) {
@@ -325,7 +331,7 @@ final class LeatherCanvasView: NSView {
     if interactionResult.shouldRedraw {
       needsDisplay = true
     }
-    invalidateCursor()
+    updateCursor()
   }
 
   private func preferredConstraintTarget(at point: CGPoint, in pageRect: CGRect)
@@ -410,7 +416,7 @@ final class LeatherCanvasView: NSView {
       let modelPoint = placementModelPoint(
         for: point, in: pageRect, modifiers: CanvasPlacementModifiers(event: event))
       interactionController.updateMeasurementDrag(to: modelPoint)
-      invalidateCursor()
+      updateCursor()
       needsDisplay = true
       return
     }
@@ -420,7 +426,7 @@ final class LeatherCanvasView: NSView {
       let modelPoint = placementModelPoint(
         for: point, in: pageRect, modifiers: CanvasPlacementModifiers(event: event))
       interactionController.updateDimensionDrag(to: modelPoint)
-      invalidateCursor()
+      updateCursor()
       needsDisplay = true
       return
     }
@@ -429,7 +435,7 @@ final class LeatherCanvasView: NSView {
       let pageRect = pageRect(in: bounds)
       dragFreeTextInteraction(
         to: point, in: pageRect, modifiers: CanvasPlacementModifiers(event: event))
-      invalidateCursor()
+      updateCursor()
       return
     }
 
@@ -440,25 +446,25 @@ final class LeatherCanvasView: NSView {
     let pageRect = pageRect(in: bounds)
     dragSelectInteraction(
       to: point, in: pageRect, modifiers: CanvasPlacementModifiers(event: event))
-    invalidateCursor()
+    updateCursor()
   }
 
   override func mouseUp(with event: NSEvent) {
     if interactionSnapshot().measurementDragState != nil {
       commandExecutor.execute(interactionController.finishMeasurementDragResult())
-      invalidateCursor()
+      updateCursor()
       needsDisplay = true
       return
     }
     if interactionSnapshot().dimensionConstraintDragState != nil {
       commandExecutor.execute(interactionController.finishDimensionDragResult())
-      invalidateCursor()
+      updateCursor()
       needsDisplay = true
       return
     }
     if interactionSnapshot().freeTextDragState != nil {
       endFreeTextInteraction()
-      invalidateCursor()
+      updateCursor()
       return
     }
 
@@ -468,7 +474,7 @@ final class LeatherCanvasView: NSView {
     let point = convert(event.locationInWindow, from: nil)
     endSelectInteraction(
       at: point, in: pageRect(in: bounds), modifiers: CanvasPlacementModifiers(event: event))
-    invalidateCursor()
+    updateCursor()
   }
 
   override func scrollWheel(with event: NSEvent) {
@@ -801,7 +807,7 @@ final class LeatherCanvasView: NSView {
     updateHoveredConstraintMarker(for: point, in: pageRect)
     updateHoveredConstraintTarget(for: point, in: pageRect)
     refreshCursorTarget(at: point, in: pageRect)
-    invalidateCursor()
+    updateCursor()
     guard !isOutputPreviewMode else {
       return
     }
@@ -828,7 +834,7 @@ final class LeatherCanvasView: NSView {
     updateHoveredConstraintMarker(for: point, in: pageRect)
     updateHoveredConstraintTarget(for: point, in: pageRect)
     refreshCursorTarget(at: point, in: pageRect)
-    invalidateCursor()
+    updateCursor()
   }
 
   override func mouseExited(with event: NSEvent) {
@@ -839,7 +845,7 @@ final class LeatherCanvasView: NSView {
     commandExecutor.clearHoverConstraint()
     commandExecutor.updateCursorPoint(nil, nil)
     interactionController.clearHover()
-    invalidateCursor()
+    updateCursor()
     needsDisplay = true
   }
 
@@ -901,7 +907,7 @@ final class LeatherCanvasView: NSView {
       pointerInsideCanvas = canvasBoundsRect(in: pageRect).contains(lastPointerPoint)
       refreshCursorTarget(at: lastPointerPoint, in: pageRect)
     }
-    invalidateCursor()
+    updateCursor()
   }
 
 }

@@ -243,3 +243,85 @@ func appKit_canvas_window_accepts_mouse_moved_events() {
 
   #expect(window.acceptsMouseMovedEvents)
 }
+
+@Test("同じ図形上の移動ではカーソル領域を繰り返し再構築しない")
+@MainActor
+func appKit_cursor_rects_are_invalidated_only_when_cursor_kind_changes() {
+  let inputs = CanvasTestInputBuilder()
+  inputs.entities = [
+    lineEntity(
+      id: "entity:stable-cursor-line",
+      start: .zero,
+      end: ModelPoint(xMM: 20, yMM: 0)
+    )
+  ]
+  inputs.layers = defaultLayers()
+  inputs.selectedTool = .select
+
+  let view = inputs.makeView(frame: NSRect(x: 0, y: 0, width: 520, height: 736))
+  let window = CursorInvalidationCountingWindow(
+    contentRect: view.frame,
+    styleMask: [.borderless],
+    backing: .buffered,
+    defer: false
+  )
+  window.isReleasedWhenClosed = false
+  window.contentView = view
+  defer { window.close() }
+
+  let pageRect = view.pageRect(in: view.bounds)
+  let firstLinePoint = view.canvasPoint(for: ModelPoint(xMM: 9, yMM: 0), in: pageRect)
+  let firstEvent = NSEvent.mouseEvent(
+    with: .mouseMoved,
+    location: firstLinePoint,
+    modifierFlags: [],
+    timestamp: 0,
+    windowNumber: window.windowNumber,
+    context: nil,
+    eventNumber: 3,
+    clickCount: 1,
+    pressure: 1
+  )
+  let secondLinePoint = view.canvasPoint(for: ModelPoint(xMM: 11, yMM: 0), in: pageRect)
+  let secondEvent = NSEvent.mouseEvent(
+    with: .mouseMoved,
+    location: secondLinePoint,
+    modifierFlags: [],
+    timestamp: 0.1,
+    windowNumber: window.windowNumber,
+    context: nil,
+    eventNumber: 4,
+    clickCount: 1,
+    pressure: 1
+  )
+  #expect(firstEvent != nil)
+  #expect(secondEvent != nil)
+
+  inputs.onCursorPoint = { _, _ in
+    inputs.syncForTest()
+  }
+  window.cursorRectInvalidationCount = 0
+
+  let previousCursor = NSCursor.current
+  defer { previousCursor.set() }
+
+  view.mouseMoved(with: firstEvent!)
+  let invalidationCountAfterEnteringTarget = window.cursorRectInvalidationCount
+  view.mouseMoved(with: secondEvent!)
+  let invalidationCountAfterMovingWithinTarget = window.cursorRectInvalidationCount
+  RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+
+  #expect(invalidationCountAfterEnteringTarget > 0)
+  #expect(invalidationCountAfterMovingWithinTarget == invalidationCountAfterEnteringTarget)
+  #expect(NSCursor.current === NSCursor.openHand)
+}
+
+@MainActor
+private final class CursorInvalidationCountingWindow: NSWindow {
+  var cursorRectInvalidationCount = 0
+
+  override func invalidateCursorRects(for view: NSView) {
+    cursorRectInvalidationCount += 1
+    super.invalidateCursorRects(for: view)
+  }
+}
