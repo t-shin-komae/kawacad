@@ -137,6 +137,10 @@ final class CanvasTestInputBuilder {
     )
   }
 
+  func syncForTest() {
+    sync()
+  }
+
   private var renderInput: LeatherCanvasRenderInput {
     LeatherCanvasRenderInput(
       document: LeatherCanvasDocumentDisplay(

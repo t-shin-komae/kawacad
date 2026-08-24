@@ -86,6 +86,7 @@ export function useCanvasActions(canvas: CanvasPresentation, dependencies: Canva
     setDragDuplicating,
     setMarqueeCurrent,
     setHoveredTargetEntityId,
+    setHasHoveredCanvasTarget,
     pan,
     marquee,
     move,
@@ -127,6 +128,9 @@ export function useCanvasActions(canvas: CanvasPresentation, dependencies: Canva
     (next: Tool) => {
       clearCanvasPreview();
       setTool(next);
+      setHasHoveredCanvasTarget(false);
+      setHoveredTargetEntityId(undefined);
+      setHoveredConstraintId(undefined);
       setDraft([]);
       setPendingTargets([]);
       setPendingConstraintValue(undefined);
@@ -143,6 +147,9 @@ export function useCanvasActions(canvas: CanvasPresentation, dependencies: Canva
       lineStartSnap,
       setDocumentViewMode,
       setDraft,
+      setHasHoveredCanvasTarget,
+      setHoveredConstraintId,
+      setHoveredTargetEntityId,
       setMessage,
       setPendingConstraintValue,
       setPendingDerivedValue,
@@ -218,6 +225,7 @@ export function useCanvasActions(canvas: CanvasPresentation, dependencies: Canva
     setDragDuplicating,
     setMarqueeCurrent,
     setHoveredTargetEntityId,
+    setHasHoveredCanvasTarget,
     setCursorPoint,
     previewCommand,
     clearCanvasPreview,
@@ -225,6 +233,13 @@ export function useCanvasActions(canvas: CanvasPresentation, dependencies: Canva
     setMessage,
     visibleEntities,
     pendingTargets,
+    selected,
+    measurementLabels,
+    measurementLabelOffsets,
+    measurementArcCounterclockwise,
+    dimensionLabels,
+    dimensionLabelOffsets,
+    dimensionArcCounterclockwise,
     setSelected,
     command,
     measurementMove,

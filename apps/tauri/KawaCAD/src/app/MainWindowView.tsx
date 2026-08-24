@@ -142,6 +142,7 @@ export function MainWindowView() {
     setMarqueeCurrent,
     hoveredTargetEntityId,
     setHoveredTargetEntityId,
+    hasHoveredCanvasTarget,
     pan,
     marquee,
     move,
@@ -604,6 +605,9 @@ export function MainWindowView() {
     selectAllEntities: setSelected,
     dismiss: () => setContextMenu(undefined),
   });
+  const canvasContentMoving = Boolean(
+    move.current || controlMove.current || measurementMove.current || dimensionMove.current || freeTextMove.current,
+  );
 
   return (
     <main
@@ -849,7 +853,8 @@ export function MainWindowView() {
                   pendingTargetCount: pendingTargets.length,
                   draftPointCount: draft.length,
                   dragDuplicating,
-                  dragging: Boolean(move.current),
+                  movingContent: canvasContentMoving,
+                  hasHoveredCanvasTarget,
                   snapSuppressed,
                   toolName: names[tool],
                 },

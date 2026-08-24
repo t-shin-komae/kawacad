@@ -1009,9 +1009,30 @@ input[type="checkbox"] {
   display: block;
   width: 100%;
   height: 100%;
-  cursor: crosshair;
+  cursor: default;
   touch-action: none;
   background: #fff;
+}
+.cad-canvas.canvas-cursor-arrow {
+  cursor: default;
+}
+.cad-canvas.canvas-cursor-crosshair {
+  cursor: crosshair;
+}
+.cad-canvas.canvas-cursor-ibeam {
+  cursor: text;
+}
+.cad-canvas.canvas-cursor-open-hand {
+  cursor: grab;
+}
+.cad-canvas.canvas-cursor-closed-hand {
+  cursor: grabbing;
+}
+.cad-canvas.canvas-cursor-pointing-hand {
+  cursor: pointer;
+}
+.cad-canvas.canvas-cursor-operation-not-allowed {
+  cursor: not-allowed;
 }
 .canvas-inline-text-editor {
   position: absolute;

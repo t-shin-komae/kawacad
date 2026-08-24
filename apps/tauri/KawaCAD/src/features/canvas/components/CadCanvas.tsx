@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { type CanvasRenderModel, entityIsVisible } from "@/features/canvas/selectors/canvasRendering";
 import { useCanvasRenderer } from "@/features/canvas/components/useCanvasRenderer";
 import { canvasInteractionDescription } from "@/features/canvas/selectors/canvasAccessibility";
+import { canvasCursorClass } from "@/features/canvas/selectors/canvasCursor";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
 import {
@@ -31,7 +32,8 @@ export type CanvasInteractionModel = {
   pendingTargetCount: number;
   draftPointCount: number;
   dragDuplicating?: boolean;
-  dragging?: boolean;
+  movingContent?: boolean;
+  hasHoveredCanvasTarget?: boolean;
   snapSuppressed?: boolean;
   toolName: string;
 };
@@ -69,6 +71,7 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     draftPoints,
     marqueeStart,
     marqueeCurrent,
+    dragging,
   } = renderModel;
   const {
     editingFreeText,
@@ -77,7 +80,8 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     filletDraftClosed = false,
     pendingTargetCount,
     dragDuplicating = false,
-    dragging = false,
+    movingContent = false,
+    hasHoveredCanvasTarget = false,
     snapSuppressed = false,
     toolName,
   } = interactionModel;
@@ -135,12 +139,20 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     editingFreeText && canvasRect
       ? screenPoint(editingFreeText.positionMm, canvasRect.width, canvasRect.height, viewport)
       : undefined;
+  const cursorClass = canvasCursorClass({
+    tool,
+    outputPreview,
+    hasTarget: hasHoveredCanvasTarget,
+    editingFreeText: Boolean(editingFreeText),
+    settingPartOrigin,
+    movingContent,
+  });
   return (
     <>
       <canvas
         ref={ref}
         data-testid={accessibilityIdentifiers.workspaceCanvas}
-        className="cad-canvas"
+        className={`cad-canvas ${cursorClass}`}
         tabIndex={0}
         role="application"
         aria-label={appStrings.canvas.ariaLabel}
