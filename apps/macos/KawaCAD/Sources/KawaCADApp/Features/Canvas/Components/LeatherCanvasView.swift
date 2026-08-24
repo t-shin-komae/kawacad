@@ -73,10 +73,20 @@ final class LeatherCanvasView: NSView {
 
   override func resetCursorRects() {
     super.resetCursorRects()
+    if let lastPointerPoint {
+      let pageRect = pageRect(in: bounds)
+      pointerInsideCanvas = canvasBoundsRect(in: pageRect).contains(lastPointerPoint)
+      refreshCursorTarget(at: lastPointerPoint, in: pageRect)
+    }
     addCursorRect(bounds, cursor: cursorKind.nsCursor)
   }
 
   override func cursorUpdate(with event: NSEvent) {
+    let point = convert(event.locationInWindow, from: nil)
+    let pageRect = pageRect(in: bounds)
+    lastPointerPoint = point
+    pointerInsideCanvas = canvasBoundsRect(in: pageRect).contains(point)
+    refreshCursorTarget(at: point, in: pageRect)
     cursorKind.nsCursor.set()
   }
 
