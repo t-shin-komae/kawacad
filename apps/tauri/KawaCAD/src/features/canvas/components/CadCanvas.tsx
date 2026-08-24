@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { type CanvasRenderModel, entityIsVisible } from "@/features/canvas/selectors/canvasRendering";
 import { useCanvasRenderer } from "@/features/canvas/components/useCanvasRenderer";
 import { canvasInteractionDescription } from "@/features/canvas/selectors/canvasAccessibility";
+import { canvasCursorClass } from "@/features/canvas/selectors/canvasCursor";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
 import {
@@ -57,6 +58,7 @@ export type CADCanvasProps = {
 export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const cancelledInlineEdit = useRef(false);
+  const [pointerOver, setPointerOver] = useState(false);
   const [editingContent, setEditingContent] = useState(interactionModel.editingFreeText?.content ?? "");
   const {
     viewport,
@@ -135,12 +137,21 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     editingFreeText && canvasRect
       ? screenPoint(editingFreeText.positionMm, canvasRect.width, canvasRect.height, viewport)
       : undefined;
+  const cursorClass = canvasCursorClass({
+    tool,
+    outputPreview,
+    pointerOver,
+    hasTarget: Boolean(renderModel.hoveredTargetEntityId || renderModel.hoveredConstraintId),
+    editingFreeText: Boolean(editingFreeText),
+    settingPartOrigin,
+    dragging,
+  });
   return (
     <>
       <canvas
         ref={ref}
         data-testid={accessibilityIdentifiers.workspaceCanvas}
-        className="cad-canvas"
+        className={`cad-canvas ${cursorClass}`}
         tabIndex={0}
         role="application"
         aria-label={appStrings.canvas.ariaLabel}
@@ -150,8 +161,14 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
           onContextMenu(event, pointAt(event));
         }}
         onPointerDown={(event) => onPointerDown(event, pointAt(event))}
-        onPointerMove={(event) => onPointerMove(event, pointAt(event))}
-        onPointerLeave={onPointerLeave}
+        onPointerMove={(event) => {
+          setPointerOver(true);
+          onPointerMove(event, pointAt(event));
+        }}
+        onPointerLeave={() => {
+          setPointerOver(false);
+          onPointerLeave?.();
+        }}
         onPointerUp={(event) => onPointerUp(event, pointAt(event))}
         onDoubleClick={(event) => onDoubleClick(event, pointAt(event))}
         onWheel={onWheel}

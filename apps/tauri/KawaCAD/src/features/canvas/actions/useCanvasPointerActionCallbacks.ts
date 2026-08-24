@@ -8,6 +8,7 @@ import {
   controlPointEntityId,
   coreConstraintTarget,
   hitConstraintMarker,
+  hitEntity,
   hitProjectedAnnotation,
   preferredConstraintTarget,
   selectionInRect,
@@ -106,7 +107,11 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
         ? visibleEntities.find((entity) => entity.id === constraintTargetEntityId(hoveredTarget))
         : undefined;
       setHoveredTargetEntityId(
-        hoveredTarget && allowsDerivedTarget(tool, hoveredTargetEntity) ? hoveredTargetEntity?.id : undefined,
+        tool === "select"
+          ? hitEntity(point, visibleEntities, viewport)
+          : hoveredTarget && allowsDerivedTarget(tool, hoveredTargetEntity)
+            ? hoveredTargetEntity?.id
+            : undefined,
       );
       setHoveredConstraintId(
         state?.viewMode === "outputPreview" || tool !== "select"
@@ -222,7 +227,7 @@ export function useCanvasPointerActionCallbacks(dependencies: CanvasPointerActio
       setSnapActive(false);
       setDragDuplicating(false);
       setMarqueeCurrent(undefined);
-      setHoveredTargetEntityId(undefined);
+      if (tool !== "select") setHoveredTargetEntityId(undefined);
       if (state?.viewMode === "outputPreview") return;
       clearCanvasPreview();
       const marqueeStart = marquee.current;
