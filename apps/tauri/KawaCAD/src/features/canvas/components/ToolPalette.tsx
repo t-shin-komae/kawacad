@@ -65,6 +65,7 @@ export const toolGroups: ReadonlyArray<readonly [string, readonly Tool[]]> = [
   ],
 ];
 const labels = appStrings.toolNames;
+const hints = appStrings.toolHints;
 const groupLabels = appStrings.palette.groupNames;
 export const basicTools = new Set<Tool>([
   "select",
@@ -107,7 +108,7 @@ export function PaletteToolButton({ tool, isSelected, onSelect }: PaletteToolBut
       className={isSelected ? "active" : ""}
       onClick={() => onSelect(tool)}
       aria-pressed={isSelected}
-      title={labels[tool]}
+      title={hints[tool]}
     >
       <ToolIcon tool={tool} size={15} />
       <span>{labels[tool]}</span>
