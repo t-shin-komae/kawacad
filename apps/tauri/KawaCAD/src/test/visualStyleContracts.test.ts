@@ -32,7 +32,7 @@ describe("visual style contracts", () => {
   });
 
   it("#66 keeps the shared control, card, panel, and focus tokens", () => {
-    expect(styles).toContain("--control-height: 24px");
+    expect(styles).toContain("--control-height: 28px");
     expect(styles).toContain("--card-radius: 8px");
     expect(styles).toContain("--panel-padding: 16px");
     expect(styles).toContain("--focus-ring: 2px solid #0a84ff");

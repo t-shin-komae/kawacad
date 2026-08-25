@@ -12,7 +12,7 @@ struct DesignSystemTokenTests {
     #expect(LeatherDesignMetrics.Typography.body == 13)
     #expect(LeatherDesignMetrics.Typography.section >= 12)
     #expect(LeatherDesignMetrics.Icon.toolbar == 22)
-    #expect(LeatherDesignMetrics.Control.height == 24)
+    #expect(LeatherDesignMetrics.Control.height == 28)
     #expect(LeatherDesignMetrics.Border.hairline == 1)
   }
 

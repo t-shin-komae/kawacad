@@ -45,5 +45,5 @@ Swift側の共通表示部品は `apps/macos/KawaCAD/Sources/KawaCADApp/Shared/C
 | `Typography.label = 11` | `--font-size-label: 11px` | 補助ラベル |
 | `Icon.toolbar = 22` | `--icon-size-toolbar: 22px` | 上部ツールバーのアイコン枠 |
 | `Icon.palette = 15` | `--icon-size-palette: 15px` | ツールパレットのアイコン |
-| `Control.height = 24` | `--control-height: 24px` | 標準操作部品 |
+| `Control.height = 28` | `--control-height: 28px` | 標準操作部品 |
 | `Border.hairline = 1` | `--border-width-hairline: 1px` | 通常の境界線 |

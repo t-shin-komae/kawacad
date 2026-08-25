@@ -67,7 +67,7 @@ enum LeatherDesignMetrics {
   }
 
   enum Control {
-    static let height: CGFloat = 24
+    static let height: CGFloat = 28
     static let compactHeight: CGFloat = 22
     static let toolButton: CGFloat = 34
     static let paletteToolHeight: CGFloat = 38

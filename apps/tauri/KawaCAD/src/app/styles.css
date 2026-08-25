@@ -46,7 +46,7 @@
   --field-fill: rgba(255, 255, 255, 0.86);
   --dialog-fill: #fff;
   --inset-fill: rgba(255, 255, 255, 0.68);
-  --control-height: 24px;
+  --control-height: 28px;
   --control-compact-height: 22px;
   --control-radius: 6px;
   --card-radius: 8px;
@@ -583,7 +583,7 @@ input[type="checkbox"] {
 .toolbar-overflow-layer select {
   width: 136px;
   min-width: 0;
-  min-height: 24px;
+  min-height: var(--control-height);
   font-size: 12px;
 }
 .toolbar-overflow-divider {
@@ -1006,7 +1006,7 @@ input[type="checkbox"] {
   position: relative;
 }
 .paste-options button {
-  min-height: 24px;
+  min-height: var(--control-height);
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -1691,7 +1691,7 @@ input[type="checkbox"] {
 .inspector-inline-name {
   min-width: 0;
   flex: 1 1 auto;
-  height: 24px;
+  height: var(--control-height);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1742,7 +1742,7 @@ input[type="checkbox"] {
 .part-origin-fields input {
   min-width: 0;
   width: 100%;
-  height: 24px;
+  height: var(--control-height);
   border-radius: var(--control-radius);
 }
 .inspector-card > .inspector-picker-row,
@@ -1761,7 +1761,7 @@ input[type="checkbox"] {
 .inspector-picker-row > select {
   width: 180px;
   min-width: 0;
-  height: 24px;
+  height: var(--control-height);
 }
 .inspector-numeric-control {
   display: grid;
@@ -1776,7 +1776,7 @@ input[type="checkbox"] {
 .round-hole-fields .inspector-numeric-control > input,
 .derived-element-editor .inspector-numeric-control > input {
   width: 86px;
-  height: 24px;
+  height: var(--control-height);
 }
 .free-text-editor .part-origin-fields {
   grid-template-columns: repeat(2, 86px);
@@ -1822,13 +1822,13 @@ input[type="checkbox"] {
 }
 .part-quantity-field input {
   width: 68px;
-  height: 24px;
+  height: var(--control-height);
 }
 .part-name-field,
 .part-origin-fields input {
   width: 100%;
   min-width: 0;
-  height: 24px;
+  height: var(--control-height);
 }
 .part-name-field {
   font-size: 12px;
@@ -1967,7 +1967,7 @@ input[type="checkbox"] {
 .parameter-editor > input {
   width: 100%;
   min-width: 0;
-  height: 24px;
+  height: var(--control-height);
 }
 .parameter-name-field small {
   overflow: hidden;
@@ -1979,7 +1979,7 @@ input[type="checkbox"] {
 .parameter-value-field {
   width: 82px;
   min-width: 0;
-  height: 24px;
+  height: var(--control-height);
 }
 .parameter-unit {
   color: var(--secondary-ink);
@@ -2028,7 +2028,7 @@ input[type="checkbox"] {
 .style-fields select {
   min-width: 0;
   width: 100%;
-  height: 24px;
+  height: var(--control-height);
 }
 .style-color-swatch {
   width: 14px;
