@@ -541,6 +541,7 @@ extension LeatherCanvasView {
     NSColor(calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 0.28).setStroke()
     let path = NSBezierPath(roundedRect: rect.insetBy(dx: -4, dy: -4), xRadius: 8, yRadius: 8)
     path.lineWidth = 3
+    path.setLineDash([5, 3], count: 2, phase: 0)
     path.stroke()
   }
 

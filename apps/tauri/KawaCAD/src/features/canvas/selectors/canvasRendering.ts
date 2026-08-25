@@ -873,7 +873,7 @@ function drawEntitySelectionHighlight(
   context.save();
   context.strokeStyle = "rgba(59,130,246,.28)";
   context.lineWidth = 3;
-  context.setLineDash([]);
+  context.setLineDash([5, 3]);
   context.beginPath();
   if (geometry.tag === "point" || geometry.tag === "circle" || geometry.tag === "arc") {
     const inset = geometry.tag === "point" ? 4 : 3;
@@ -888,6 +888,7 @@ function drawEntitySelectionHighlight(
     context.roundRect(bounds.x - 4, bounds.y - 4, bounds.width + 8, bounds.height + 8, 8);
   }
   context.stroke();
+  context.setLineDash([]);
   context.restore();
 }
 
