@@ -59,8 +59,11 @@ describe("visual style contracts", () => {
 
   it("#69 keeps palette controls, two-column threshold, and button geometry", () => {
     expect(rule(".palette-select,\n.palette-input")).toContain("height: var(--control-compact-height)");
-    expect(rule(".tool-grid button")).toContain("min-height: var(--palette-tool-height)");
-    expect(rule(".tool-grid button")).toContain("background: rgba(255, 255, 255, 0.36)");
+    const toolButton = rule(".tool-grid button");
+    expect(toolButton).toContain("min-height: var(--palette-tool-height)");
+    expect(toolButton).toContain("background: rgba(255, 255, 255, 0.36)");
+    expect(toolButton).toContain("font-size: var(--font-size-section)");
+    expect(toolButton).toContain("line-height: 15px");
     expect(styles).toContain("@container palette (min-width: 220px)");
     expect(styles).toContain("grid-template-columns: repeat(2, minmax(92px, 120px))");
   });

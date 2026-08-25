@@ -201,7 +201,7 @@ struct PaletteToolButton: View {
         Text(tool.displayName)
           .font(
             .system(
-              size: LeatherDesignMetrics.Typography.label,
+              size: LeatherDesignMetrics.Typography.section,
               weight: isSelected ? .semibold : .medium
             )
           )
