@@ -5,6 +5,7 @@ import {
   defaultCollapsedToolGroups,
   detailedTools,
 } from "@/features/canvas/components/ToolPalette";
+import { appStrings } from "@/localization";
 
 describe("ToolPalette progression", () => {
   it("classifies every Canvas tool once between basic and detailed", () => {
@@ -20,5 +21,19 @@ describe("ToolPalette progression", () => {
     expect(defaultCollapsedToolGroups).toEqual(new Set(["derived", "constraint", "measurement"]));
     expect(defaultCollapsedToolGroups.has("drawing")).toBe(false);
     expect(defaultCollapsedToolGroups.has("dimension")).toBe(false);
+  });
+
+  it("provides an action hint instead of repeating the tool name", () => {
+    for (const tool of allPaletteTools) {
+      expect(appStrings.toolHints[tool]).toBeTruthy();
+      expect(appStrings.toolHints[tool]).not.toBe(appStrings.toolNames[tool]);
+    }
+
+    expect(appStrings.toolHints.tangent).toContain("クリック");
+    expect(appStrings.toolHints.fillet).toContain("2本以上");
+    expect(appStrings.toolHints.fillet).toContain("中心線");
+    expect(appStrings.toolHints.fillet).toContain("円弧");
+    expect(appStrings.toolHints.angle).toContain("中心線");
+    expect(appStrings.toolHints.angle).not.toContain("円弧");
   });
 });
