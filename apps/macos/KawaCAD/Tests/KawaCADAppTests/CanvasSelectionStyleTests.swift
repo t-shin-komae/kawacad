@@ -8,7 +8,8 @@ private func canvasRenderingSource() throws -> String {
     .deletingLastPathComponent()
     .deletingLastPathComponent()
     .deletingLastPathComponent()
-  let sourceURL = packageRoot
+  let sourceURL =
+    packageRoot
     .appendingPathComponent(
       "Sources/KawaCADApp/Features/Canvas/Components/LeatherCanvasView.Rendering.swift")
   return try String(contentsOf: sourceURL, encoding: .utf8)
