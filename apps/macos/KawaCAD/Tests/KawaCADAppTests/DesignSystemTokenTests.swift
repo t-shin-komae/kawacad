@@ -10,6 +10,7 @@ struct DesignSystemTokenTests {
     #expect(LeatherDesignMetrics.Radius.control == 6)
     #expect(LeatherDesignMetrics.Radius.card == 8)
     #expect(LeatherDesignMetrics.Typography.body == 13)
+    #expect(LeatherDesignMetrics.Typography.section >= 12)
     #expect(LeatherDesignMetrics.Icon.toolbar == 22)
     #expect(LeatherDesignMetrics.Control.height == 24)
     #expect(LeatherDesignMetrics.Border.hairline == 1)
