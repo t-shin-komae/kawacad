@@ -82,9 +82,9 @@ use target_resolution::*;
 use validation::*;
 
 /// 現在のプロジェクトファイル形式バージョン。
-pub const FILE_FORMAT_VERSION: &str = "0.1.0";
+pub const FILE_FORMAT_VERSION: &str = "0.2.0";
 /// `.kawa` ファイル用の現在の JSON Schema バージョン。
-pub const SCHEMA_VERSION: &str = "0.1.0";
+pub const SCHEMA_VERSION: &str = "0.2.0";
 
 /// KawaCAD プロジェクトのトップレベルドキュメント。
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

@@ -32,7 +32,7 @@ use support::*;
 fn new_document_uses_expected_defaults_and_snapshot() {
     let document = ProjectDocument::new("Leather");
 
-    assert_eq!(FILE_FORMAT_VERSION, "0.1.0");
+    assert_eq!(FILE_FORMAT_VERSION, "0.2.0");
     assert_eq!(document.file_format_version(), FILE_FORMAT_VERSION);
     assert_eq!(document.schema_version(), SCHEMA_VERSION);
     assert_eq!(document.metadata().id, "document:local");
@@ -3520,7 +3520,7 @@ fn fillet_trims_connected_line_arc_sources_and_rejects_excessive_radius_atomical
 #[test]
 fn kawa_schema_constraint_kinds_match_public_constraint_kind_json() {
     let schema: serde_json::Value =
-        serde_json::from_str(include_str!("../../../schemas/kawa/0.1.0.schema.json"))
+        serde_json::from_str(include_str!("../../../schemas/kawa/0.2.0.schema.json"))
             .expect("schema should be valid json");
     let schema_kinds = schema
         .pointer("/$defs/constraintKind/enum")
@@ -7134,6 +7134,73 @@ fn project_document_store_facade_keeps_kawa_top_level_shape() {
 
     let round_tripped = ProjectDocument::from_json_str(&json).expect("document should deserialize");
     assert_eq!(round_tripped, document);
+}
+
+#[test]
+fn legacy_0_1_document_name_is_migrated_to_the_current_format() {
+    let document = ProjectDocument::new("Legacy");
+    let mut value = serde_json::to_value(&document).expect("document should serialize");
+    value["fileFormatVersion"] = serde_json::Value::String("0.1.0".to_owned());
+    value["schemaVersion"] = serde_json::Value::String("0.1.0".to_owned());
+    value["document"]["name"] = serde_json::Value::String("Legacy project".to_owned());
+
+    let loaded = ProjectDocument::from_json_str(
+        &serde_json::to_string(&value).expect("legacy document should serialize"),
+    )
+    .expect("legacy document should migrate");
+
+    assert_eq!(loaded.file_format_version(), FILE_FORMAT_VERSION);
+    assert_eq!(loaded.schema_version(), SCHEMA_VERSION);
+    let migrated: serde_json::Value = serde_json::from_str(
+        &loaded
+            .to_json_pretty_string()
+            .expect("migrated document should serialize"),
+    )
+    .expect("migrated document JSON should parse");
+    assert!(migrated["document"].get("name").is_none());
+}
+
+#[test]
+fn legacy_0_1_document_without_a_name_is_rejected() {
+    let document = ProjectDocument::new("Legacy");
+    let mut value = serde_json::to_value(&document).expect("document should serialize");
+    value["fileFormatVersion"] = serde_json::Value::String("0.1.0".to_owned());
+    value["schemaVersion"] = serde_json::Value::String("0.1.0".to_owned());
+
+    let error = ProjectDocument::from_json_str(
+        &serde_json::to_string(&value).expect("legacy document should serialize"),
+    )
+    .expect_err("legacy document without a name should be rejected");
+
+    assert!(matches!(
+        error,
+        DocumentIoError::DeserializeFailed(message) if message == "legacy document name is missing"
+    ));
+}
+
+#[test]
+fn kawa_schema_history_preserves_the_0_1_document_name() {
+    let legacy: serde_json::Value =
+        serde_json::from_str(include_str!("../../../schemas/kawa/0.1.0.schema.json"))
+            .expect("legacy schema should be valid JSON");
+    let current: serde_json::Value =
+        serde_json::from_str(include_str!("../../../schemas/kawa/0.2.0.schema.json"))
+            .expect("current schema should be valid JSON");
+
+    let legacy_metadata = &legacy["$defs"]["documentMetadata"];
+    let current_metadata = &current["$defs"]["documentMetadata"];
+    assert!(legacy_metadata["required"]
+        .as_array()
+        .expect("legacy required fields should be an array")
+        .iter()
+        .any(|field| field == "name"));
+    assert!(legacy_metadata["properties"].get("name").is_some());
+    assert!(current_metadata["required"]
+        .as_array()
+        .expect("current required fields should be an array")
+        .iter()
+        .all(|field| field != "name"));
+    assert!(current_metadata["properties"].get("name").is_none());
 }
 
 #[test]

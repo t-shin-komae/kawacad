@@ -1290,7 +1290,7 @@ mod tests {
     fn version_json_reports_full_versions() {
         assert_eq!(
             version_json(),
-            r#"{"fileFormatVersion":"0.1.0","schemaVersion":"0.1.0"}"#
+            r#"{"fileFormatVersion":"0.2.0","schemaVersion":"0.2.0"}"#
         );
     }
 
@@ -2165,7 +2165,7 @@ mod tests {
         let response = handle_request_json(&mut document, &request);
         assert_eq!(response, r#"{"written":true}"#);
         let written = std::fs::read_to_string(&path).expect("document should be written");
-        assert!(written.contains("\"fileFormatVersion\": \"0.1.0\""));
+        assert!(written.contains("\"fileFormatVersion\": \"0.2.0\""));
         let _ = std::fs::remove_file(path);
     }
 

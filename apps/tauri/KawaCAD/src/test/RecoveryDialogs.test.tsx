@@ -15,8 +15,6 @@ describe("recovery presentation", () => {
         candidates={[
           {
             id: "recoverable-1",
-            displayName: "カードケース",
-            originalDocumentPath: "/projects/card-case.kawa",
             updatedAtMs: 1_700_000_000_000,
             status: "recoverable",
           },
@@ -38,6 +36,8 @@ describe("recovery presentation", () => {
     const dialog = screen.getByRole("dialog", { name: "復旧できる編集中データがあります" });
     const candidates = dialog.querySelectorAll(".recovery-candidate-card");
     expect(candidates).toHaveLength(2);
+    expect(within(candidates[0] as HTMLElement).getByText("無題プロジェクト")).toBeInTheDocument();
+    expect(within(candidates[1] as HTMLElement).getByText("破損した復旧候補")).toBeInTheDocument();
     expect(within(candidates[0] as HTMLElement).getByRole("button", { name: "復旧して開く" })).toHaveClass(
       "primary-action",
     );

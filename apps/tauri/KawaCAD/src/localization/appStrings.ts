@@ -742,6 +742,7 @@ const appStrings = {
     recoverySaveFailedTitle: "自動復旧データを保存できませんでした",
     recoveryChooserTitle: "復旧できる編集中データがあります",
     recoveryChooserMessage: "前回の終了前に保存されなかった編集中データを選んで確認できます。",
+    recoveryBrokenCandidate: "破損した復旧候補",
     recoveryUnsavedSource: "未保存のドキュメント",
     recoveryUpdatedAt: (source: string, updatedAt: string) => `${source} / 最終復旧: ${updatedAt}`,
     showInFolder: "Finderに表示",

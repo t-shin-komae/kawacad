@@ -1340,7 +1340,7 @@ mod tests {
         let candidates =
             recovery_candidates_at(&directory).expect("recovery candidate should read");
         let candidate = candidates.first().expect("recovery candidate should exist");
-        assert_eq!(candidate.display_name, "recovered.kawa");
+        assert_eq!(candidate.display_name.as_deref(), Some("recovered.kawa"));
         assert_eq!(
             candidate.original_document_path.as_deref(),
             Some("/projects/recovered.kawa")
@@ -1414,6 +1414,42 @@ mod tests {
             .expect("broken candidate should remain visible");
         assert_eq!(broken.status, "broken");
         assert!(broken.details.is_some());
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn pathless_recovery_candidate_does_not_persist_an_english_display_name() {
+        let directory = temporary_directory("pathless-recovery");
+        let mut session = CadSession::new("Untitled".to_owned());
+        session
+            .document
+            .apply_command(
+                serde_json::from_value(json!({
+                    "kind": "createEntityFromGesture",
+                    "payload": {
+                        "id": "point-1",
+                        "layerId": null,
+                        "gesture": { "kind": "point", "position": { "xMm": 1.0, "yMm": 2.0 } }
+                    }
+                }))
+                .expect("recovery command should deserialize"),
+            )
+            .expect("recovery document should become dirty");
+
+        save_recovery_snapshot_at(&session, &directory).expect("recovery snapshot should save");
+        let candidate = recovery_candidates_at(&directory)
+            .expect("recovery candidate should read")
+            .pop()
+            .expect("recovery candidate should exist");
+        assert_eq!(candidate.display_name, None);
+
+        let (_, metadata_path) = recovery_paths(&directory, &candidate.id)
+            .expect("recovery metadata path should resolve");
+        let metadata: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(metadata_path).expect("recovery metadata should read"),
+        )
+        .expect("recovery metadata should parse");
+        assert!(metadata.get("displayName").is_none());
         let _ = fs::remove_dir_all(directory);
     }
 
