@@ -324,6 +324,7 @@
 "toolbar.zoom_out" = "縮小";
 "toolbar.zoom_to_fit" = "全体表示";
 "toolbar.zoom_in" = "拡大";
+"toolbar.more_actions" = "その他の操作";
 "toolbar.grid" = "グリッド";
 "toolbar.a4" = "A4";
 "toolbar.a4_orientation" = "A4向き";
