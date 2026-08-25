@@ -75,6 +75,11 @@ describe("visual style contracts", () => {
     expect(canvasRendering).toContain('"#0c6058"');
   });
 
+  it("#164 gives selected geometry a non-color boundary cue", () => {
+    expect(canvasRendering).toContain("context.setLineDash([5, 3])");
+    expect(canvasRendering).toContain("context.setLineDash([]);");
+  });
+
   it("#71 keeps the inline editor minimum width, padding, focus border, and background", () => {
     const inlineEditor = rule(".canvas-inline-text-editor");
     expect(inlineEditor).toContain("min-width: 180px");
