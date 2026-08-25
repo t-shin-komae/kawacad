@@ -31,5 +31,9 @@ describe("ToolPalette progression", () => {
 
     expect(appStrings.toolHints.tangent).toContain("クリック");
     expect(appStrings.toolHints.fillet).toContain("2本以上");
+    expect(appStrings.toolHints.fillet).toContain("中心線");
+    expect(appStrings.toolHints.fillet).toContain("円弧");
+    expect(appStrings.toolHints.angle).toContain("中心線");
+    expect(appStrings.toolHints.angle).not.toContain("円弧");
   });
 });
