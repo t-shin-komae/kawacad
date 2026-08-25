@@ -25,7 +25,6 @@
 | --- | --- | --- | --- |
 | アプリの表示ルート | [`MainWindowView`](../../../apps/macos/KawaCAD/Sources/KawaCADApp/App/MainWindowView.swift) | [`MainWindowView`](../../../apps/tauri/KawaCAD/src/app/MainWindowView.tsx) | 1対1。Swift は監視用の子 View を持ち、Tauri は React hooks を同じルートで購読する |
 | レスポンシブなワークスペース配置 | [`WorkspaceCanvasLayout`](../../../apps/macos/KawaCAD/Sources/KawaCADApp/Features/Workspace/Components/WorkspaceCanvasLayout.swift) | [`WorkspaceCanvasLayout`](../../../apps/tauri/KawaCAD/src/features/workspace/components/WorkspaceCanvasLayout.tsx) | 1対1 |
-| ドキュメントヘッダ | [`DocumentHeader`](../../../apps/macos/KawaCAD/Sources/KawaCADApp/Features/Document/Components/DocumentHeader.swift) | [`DocumentHeader`](../../../apps/tauri/KawaCAD/src/features/document/components/DocumentHeader.tsx) | 1対1 |
 | CAD ツールバー | [`CADToolbar`](../../../apps/macos/KawaCAD/Sources/KawaCADApp/Features/Canvas/Components/CADToolbar.swift) | [`CADToolbar`](../../../apps/tauri/KawaCAD/src/features/canvas/components/CadToolbar.tsx) | 1対1 |
 | ツールパレット | [`ToolPalette`](../../../apps/macos/KawaCAD/Sources/KawaCADApp/Features/Canvas/Components/ToolPalette.swift) | [`ToolPalette`](../../../apps/tauri/KawaCAD/src/features/canvas/components/ToolPalette.tsx) | 1対1 |
 | ツールアイコンとパレットボタン | [`ToolIcon` / `PaletteToolButton`](../../../apps/macos/KawaCAD/Sources/KawaCADApp/Shared/Components/DesignSystem.swift) | [`ToolIcon`](../../../apps/tauri/KawaCAD/src/features/canvas/components/ToolIcon.tsx) / [`PaletteToolButton`](../../../apps/tauri/KawaCAD/src/features/canvas/components/ToolPalette.tsx) | 1対1 |

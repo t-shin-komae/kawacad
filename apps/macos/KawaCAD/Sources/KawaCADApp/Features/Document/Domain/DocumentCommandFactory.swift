@@ -1462,18 +1462,6 @@ struct DocumentCommandFactory {
     )
   }
 
-  func makeRenameDocumentCommand(name: String) -> DocumentCommandRequest {
-    DocumentCommandRequest(
-      payload: [
-        "kind": "renameDocument",
-        "payload": [
-          "name": name
-        ],
-      ],
-      successMessage: AppStrings.tr("command.renamed", name)
-    )
-  }
-
   func makeRenameLayerCommand(_ layer: ProjectLayer, name: String) -> DocumentCommandRequest {
     DocumentCommandRequest(
       payload: [

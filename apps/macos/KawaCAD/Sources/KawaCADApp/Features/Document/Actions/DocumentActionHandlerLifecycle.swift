@@ -5,9 +5,6 @@ import SwiftUI
 /// Document create, open, save, close, and reload actions.
 extension DocumentActionHandler {
   func createNewProject() {
-    guard hasValidPendingDocumentNameDraft() else {
-      return
-    }
     guard requestDocumentIntent(.createNewProject) else {
       return
     }
@@ -20,9 +17,6 @@ extension DocumentActionHandler {
   }
 
   func openProject(at url: URL) {
-    guard commitPendingDocumentNameDraftBeforeDocumentTransition() else {
-      return
-    }
     guard requestDocumentIntent(.openProject(url)) else {
       return
     }
@@ -30,9 +24,6 @@ extension DocumentActionHandler {
   }
 
   func saveProject() {
-    guard commitPendingDocumentNameDraftBeforeDocumentTransition() else {
-      return
-    }
     if let documentURL {
       _ = writeProject(to: documentURL)
     } else {
@@ -42,9 +33,6 @@ extension DocumentActionHandler {
 
   @discardableResult
   func saveProjectAsPanel() -> Bool {
-    guard commitPendingDocumentNameDraftBeforeDocumentTransition() else {
-      return false
-    }
     return saveProjectAsPanelResult() == .saved
   }
 
@@ -106,8 +94,7 @@ extension DocumentActionHandler {
   }
 
   func performCreateNewProject(discardingRecoveryID: String? = nil) {
-    switch cadSession.createDocument(
-      named: AppStrings.tr("app.document.untitled"), viewMode: canvasPresentation.viewMode)
+    switch cadSession.createDocument(viewMode: canvasPresentation.viewMode)
     {
     case .success(let state):
       prepareForLoadedDocument()
@@ -147,9 +134,6 @@ extension DocumentActionHandler {
 
   @discardableResult
   private func writeProject(to url: URL) -> Bool {
-    guard commitPendingDocumentNameDraftBeforeDocumentTransition() else {
-      return false
-    }
     let previousRecoveryID = recoverySnapshotState.currentRecoveryID(documentURL: documentURL)
     switch cadSession.saveDocument(to: url) {
     case .success:
@@ -176,7 +160,7 @@ extension DocumentActionHandler {
     documentPresentation.beginPendingIntent(intent)
     documentPresentation.setSaveConfirmation(
       DocumentSaveConfirmation(
-        documentName: documentName,
+        documentName: documentDisplayName,
         reason: AppStrings.tr(intent.confirmationReasonKey)
       ))
     return false
@@ -257,7 +241,6 @@ extension DocumentActionHandler {
   }
 
   func prepareForLoadedDocument() {
-    documentPresentation.setPendingNameDraft(nil)
     canvasPresentation.resetForLoadedDocument()
     resetInspectorPresentationForLoadedDocument()
   }

@@ -3,7 +3,7 @@ import type { State } from "@/shared/domain/coreWireTypes";
 
 export type RecoveryCandidate = {
   id: string;
-  displayName: string;
+  displayName?: string;
   originalDocumentPath?: string;
   updatedAtMs: number;
   status: "recoverable" | "broken";

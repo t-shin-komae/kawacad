@@ -144,17 +144,28 @@ mod tests {
     fn restores_undo_and_redo_snapshots() {
         let mut history = HistoryStore::default();
         let original = ProjectDocument::new("original");
-        let updated = ProjectDocument::new("updated");
+        let mut updated = ProjectDocument::new("updated");
+        updated
+            .apply_command(crate::command::DocumentCommand::SetPrintOrientation {
+                orientation: crate::print::PrintOrientation::Landscape,
+            })
+            .unwrap();
 
         history.record_applied_command(HistoryStore::capture_pending_entry(&original).unwrap());
 
         let restored = history.undo_document(&updated).unwrap();
-        assert_eq!(restored.metadata().name, "original");
+        assert_eq!(
+            restored.settings().orientation,
+            crate::print::PrintOrientation::Portrait
+        );
         assert!(!history.can_undo());
         assert!(history.can_redo());
 
         let redone = history.redo_document(&restored).unwrap();
-        assert_eq!(redone.metadata().name, "updated");
+        assert_eq!(
+            redone.settings().orientation,
+            crate::print::PrintOrientation::Landscape
+        );
         assert!(history.can_undo());
         assert!(!history.can_redo());
     }

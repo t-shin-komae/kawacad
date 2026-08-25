@@ -9,7 +9,8 @@ use tauri::Manager;
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct RecoveryMetadata {
-    pub(crate) display_name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) display_name: Option<String>,
     pub(crate) original_document_path: Option<String>,
 }
 
@@ -17,7 +18,8 @@ pub(crate) struct RecoveryMetadata {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct RecoveryCandidate {
     pub(crate) id: String,
-    pub(crate) display_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) display_name: Option<String>,
     pub(crate) original_document_path: Option<String>,
     pub(crate) updated_at_ms: u64,
     pub(crate) status: String,
@@ -95,7 +97,7 @@ pub(crate) fn recovery_candidates_at(
         match (metadata, snapshot_validation) {
             (Ok(metadata), Ok(())) => candidates.push(RecoveryCandidate {
                 id,
-                display_name: metadata.display_name,
+                display_name: metadata.display_name.filter(|name| name != "Untitled"),
                 original_document_path: metadata.original_document_path,
                 updated_at_ms,
                 status: "recoverable".to_owned(),
@@ -110,8 +112,13 @@ pub(crate) fn recovery_candidates_at(
                     .unwrap_or_else(|| "Recovery candidate is incomplete".to_owned());
                 let (display_name, original_document_path) = metadata
                     .ok()
-                    .map(|metadata| (metadata.display_name, metadata.original_document_path))
-                    .unwrap_or_else(|| ("破損した復旧候補".to_owned(), None));
+                    .map(|metadata| {
+                        (
+                            metadata.display_name.filter(|name| name != "Untitled"),
+                            metadata.original_document_path,
+                        )
+                    })
+                    .unwrap_or((None, None));
                 candidates.push(RecoveryCandidate {
                     id,
                     display_name,
@@ -153,7 +160,11 @@ pub(crate) fn save_recovery_snapshot_at(
     fs::rename(&temporary_snapshot, &snapshot_path)
         .map_err(|error| format!("Could not commit recovery snapshot: {error}"))?;
     let metadata = RecoveryMetadata {
-        display_name: session.document.metadata().name.clone(),
+        display_name: session
+            .path
+            .as_ref()
+            .and_then(|path| Path::new(path).file_name())
+            .map(|name| name.to_string_lossy().into_owned()),
         original_document_path: session.path.clone(),
     };
     let contents = serde_json::to_vec_pretty(&metadata)

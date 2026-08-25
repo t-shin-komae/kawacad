@@ -26,28 +26,24 @@ func uc4_document_session_adapter_undo_redo_restores_previous_states() {
   )
 
   let adapter = DocumentSessionAdapter(backend: backend)
-  let created = requireSuccess(adapter.createNewDocument(named: "Root", viewMode: .editDisplay))
-  #expect(created.snapshot.name == "Root")
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
   #expect(adapter.hasDocument)
   #expect(!adapter.canUndo)
   #expect(!adapter.canRedo)
 
-  let afterAdd = requireSuccess(adapter.applyCommand(testCommand(), viewMode: .editDisplay))
-  #expect(afterAdd.snapshot.name == "After Add")
+  _ = requireSuccess(adapter.applyCommand(testCommand(), viewMode: .editDisplay))
   #expect(adapter.canUndo)
   #expect(!adapter.canRedo)
 
-  let afterUndo = requireSuccess(adapter.undo(viewMode: .editDisplay))
-  #expect(afterUndo.snapshot.name == "Root")
+  _ = requireSuccess(adapter.undo(viewMode: .editDisplay))
   #expect(!adapter.canUndo)
   #expect(adapter.canRedo)
 
-  let afterRedo = requireSuccess(adapter.redo(viewMode: .editDisplay))
-  #expect(afterRedo.snapshot.name == "After Add")
+  _ = requireSuccess(adapter.redo(viewMode: .editDisplay))
   #expect(adapter.canUndo)
   #expect(!adapter.canRedo)
 
-  #expect(backend.createdNames == ["Root"])
+  #expect(backend.createCount == 1)
 }
 
 @Test("UC4 DocumentSessionAdapter の空履歴 Undo/Redo は拒否され、Redo は新規変更で破棄される")
@@ -72,7 +68,7 @@ func uc4_document_session_adapter_empty_history_and_redo_discard_are_handled() {
   )
 
   let adapter = DocumentSessionAdapter(backend: backend)
-  _ = requireSuccess(adapter.createNewDocument(named: "Root", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
   #expect(!adapter.canUndo)
   #expect(!adapter.canRedo)
 
@@ -108,7 +104,7 @@ func uc4_document_session_adapter_empty_history_and_redo_discard_are_handled() {
     Issue.record("expected redo to be cleared after a new change")
   }
   #expect(!adapter.canRedo)
-  #expect(backend.createdNames == ["Root"])
+  #expect(backend.createCount == 1)
 }
 
 @Test("UC5 DocumentSessionAdapter の保存と読み込みは同じ状態を再現する")
@@ -141,7 +137,7 @@ func uc5_document_session_adapter_save_and_reload_preserves_state() {
   let adapter = DocumentSessionAdapter(backend: backend)
 
   let created = requireSuccess(
-    adapter.createNewDocument(named: "Round Trip", viewMode: .editDisplay))
+    adapter.createNewDocument(viewMode: .editDisplay))
   #expect(created == originalState.withPersistence(isDirty: false, revision: "original"))
   #expect(adapter.documentURL == nil)
   #expect(!adapter.isDocumentDirty)
@@ -171,7 +167,7 @@ func uc5_document_session_adapter_save_and_reload_preserves_state() {
   #expect(!adapter.canUndo)
   #expect(!adapter.canRedo)
   #expect(!adapter.isDocumentDirty)
-  #expect(backend.createdNames == ["Round Trip"])
+  #expect(backend.createCount == 1)
   #expect(backend.savedPaths == [saveURL.path, snapshotURL.path])
   #expect(backend.openedPaths == [saveURL.path])
 }
@@ -195,7 +191,7 @@ func document_session_adapter_restores_clean_checkpoint_after_undo() {
   )
   let adapter = DocumentSessionAdapter(backend: backend)
 
-  _ = requireSuccess(adapter.createNewDocument(named: "Checkpoint Root", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
   _ = requireSuccess(adapter.applyCommand(testCommand(), viewMode: .editDisplay))
   #expect(adapter.isDocumentDirty)
 
@@ -253,7 +249,7 @@ func document_session_adapter_ignores_output_preview_only_differences_for_dirty_
   let adapter = DocumentSessionAdapter(backend: backend)
 
   let created = requireSuccess(
-    adapter.createNewDocument(named: "Preview Root", viewMode: .outputPreview))
+    adapter.createNewDocument(viewMode: .outputPreview))
   #expect(created == previewRoot.withPersistence(isDirty: false, revision: "root"))
   #expect(!adapter.isDocumentDirty)
 
@@ -325,12 +321,12 @@ func document_session_adapter_keeps_current_document_when_create_new_fails() {
   )
   let adapter = DocumentSessionAdapter(backend: backend)
 
-  _ = requireSuccess(adapter.createNewDocument(named: "Current Document", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
   _ = requireSuccess(adapter.applyCommand(testCommand(), viewMode: .editDisplay))
   let currentURL = uniqueTempURL("current-document.kawa")
   requireSuccess(adapter.saveDocument(to: currentURL), context: "saveDocument")
 
-  switch adapter.createNewDocument(named: "Replacement", viewMode: .editDisplay) {
+  switch adapter.createNewDocument(viewMode: .editDisplay) {
   case .failure(let message):
     #expect(message == "create failed")
   case .success:
@@ -338,7 +334,7 @@ func document_session_adapter_keeps_current_document_when_create_new_fails() {
   }
 
   #expect(adapter.documentURL == currentURL)
-  #expect(adapter.lastAppliedState?.snapshot.name == lastAppliedState.snapshot.name)
+  #expect(adapter.lastAppliedState?.entities == lastAppliedState.entities)
   #expect(adapter.hasDocument)
 }
 
@@ -368,7 +364,7 @@ func document_session_adapter_keeps_last_successful_document_when_open_load_fail
   )
   let adapter = DocumentSessionAdapter(backend: backend)
 
-  _ = requireSuccess(adapter.createNewDocument(named: "Current Document", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
   let currentURL = uniqueTempURL("current-document.kawa")
   requireSuccess(adapter.saveDocument(to: currentURL), context: "saveDocument")
 
@@ -406,11 +402,11 @@ func document_session_adapter_keeps_current_document_when_new_document_load_fail
   )
   let adapter = DocumentSessionAdapter(backend: backend)
 
-  _ = requireSuccess(adapter.createNewDocument(named: "Current Document", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
   let currentURL = uniqueTempURL("current-document.kawa")
   requireSuccess(adapter.saveDocument(to: currentURL), context: "saveDocument")
 
-  switch adapter.createNewDocument(named: "Replacement", viewMode: .editDisplay) {
+  switch adapter.createNewDocument(viewMode: .editDisplay) {
   case .failure(let message):
     #expect(message == "load failed")
   case .success:
@@ -431,7 +427,7 @@ func output_document_session_adapter_build_output_document_model_delegates_to_se
     ]
   )
   let adapter = DocumentSessionAdapter(backend: backend)
-  _ = requireSuccess(adapter.createNewDocument(named: "Output", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
 
   let options = OutputBuildOptions(
     orientation: .portrait,
@@ -461,7 +457,7 @@ func output_document_session_adapter_render_pdf_delegates_to_session() {
     ]
   )
   let adapter = DocumentSessionAdapter(backend: backend)
-  _ = requireSuccess(adapter.createNewDocument(named: "Output", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
 
   let model = sampleOutputDocumentModel()
   let result = requireSuccess(adapter.renderPDF(outputDocumentModel: model))
@@ -479,7 +475,7 @@ func output_document_session_adapter_render_print_delegates_to_session() {
     ]
   )
   let adapter = DocumentSessionAdapter(backend: backend)
-  _ = requireSuccess(adapter.createNewDocument(named: "Output", viewMode: .editDisplay))
+  _ = requireSuccess(adapter.createNewDocument(viewMode: .editDisplay))
 
   let model = sampleOutputDocumentModel()
   let result = requireSuccess(adapter.renderPrint(outputDocumentModel: model))
@@ -491,7 +487,7 @@ func output_document_session_adapter_render_print_delegates_to_session() {
 
 private func testCommand() -> CoreDocumentCommand {
   CoreDocumentCommand(
-    kind: .renameDocument,
-    payload: .object(["name": .string("test")])
+    kind: .deleteEntity,
+    payload: .string("entity:test")
   )
 }

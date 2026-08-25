@@ -18,7 +18,11 @@ export function RecoveryChooserDialog({ candidates, onRestore, onDiscard, onReve
         <div className="recovery-candidate-list">
           {candidates.map((candidate) => (
             <article className="recovery-candidate-card" key={candidate.id}>
-              <strong>{candidate.displayName}</strong>
+              <strong>
+                {candidate.status === "broken"
+                  ? appStrings.app.recoveryBrokenCandidate
+                  : (candidate.displayName ?? appStrings.app.untitled)}
+              </strong>
               <small>
                 {appStrings.app.recoveryUpdatedAt(
                   candidate.originalDocumentPath ?? appStrings.app.recoveryUnsavedSource,

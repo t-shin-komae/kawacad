@@ -8,7 +8,7 @@ import Testing
 @Test("Live Core 意味境界は preflight・計測・数値編集・縫い始め・clipboard を Swift/Rust 間で往復する")
 func live_core_semantic_interface_round_trips_through_swift_and_rust() {
   let session = requireSuccess(
-    LeatherCoreProcessAdapter.createDocument(named: "Live Semantic Interface"),
+    LeatherCoreProcessAdapter.createDocument(),
     context: "create live core session"
   )
   let commandFactory = DocumentCommandFactory(uuidProvider: { "live-semantic" })
@@ -115,7 +115,7 @@ func live_core_semantic_interface_round_trips_through_swift_and_rust() {
 @Test("Live Core Output は複数ページ renderPrint / renderPDF の新インターフェースをSwiftで受け取れる")
 func live_core_output_engine_decodes_multi_page_clip_and_paste_up_guides() {
   let session = requireSuccess(
-    LeatherCoreProcessAdapter.createDocument(named: "Live Multi Page Output"),
+    LeatherCoreProcessAdapter.createDocument(),
     context: "create live core session"
   )
   let model = liveCoreMultiPageOutputDocumentModel()
@@ -264,7 +264,7 @@ func live_core_part_management_round_trips_through_swift_boundary() {
 @Test("Live Core パーツライブラリは不透明データのexport・ID再割り当て・配置結果をSwift境界で扱える")
 func live_core_part_library_round_trips_opaque_item_through_swift_boundary() {
   let sourceSession = requireSuccess(
-    LeatherCoreProcessAdapter.createDocument(named: "Live Part Library Source"),
+    LeatherCoreProcessAdapter.createDocument(),
     context: "create source session"
   )
   let sourceCommandFactory = DocumentCommandFactory(uuidProvider: { "live-library-source" })
@@ -296,7 +296,7 @@ func live_core_part_library_round_trips_opaque_item_through_swift_boundary() {
     createdAt: Date(timeIntervalSince1970: 0)
   )
   let targetSession = requireSuccess(
-    LeatherCoreProcessAdapter.createDocument(named: "Live Part Library Target"),
+    LeatherCoreProcessAdapter.createDocument(),
     context: "create target session"
   )
   let targetCommandFactory = DocumentCommandFactory(uuidProvider: { "live-library-target" })
@@ -2178,7 +2178,7 @@ func live_core_line_line_distance_accepts_line_line_ui_flow() {
 func live_core_rejects_invalid_point_on_line_targets_without_store_state_mutation() {
   let store = DocumentSessionAdapter()
   let initialState = requireSuccess(
-    store.createNewDocument(named: "Live Invalid Point On Line", viewMode: .editDisplay))
+    store.createNewDocument(viewMode: .editDisplay))
   let firstPointID = addLivePoint(to: store, at: .zero)
   let secondPointID = addLivePoint(to: store, at: ModelPoint(xMM: 8.0, yMM: 6.0))
   let beforeInvalidCommand = unwrap(store.lastAppliedState)
@@ -2251,7 +2251,6 @@ func live_core_document_session_save_open_and_reload_round_trip() {
     reopenedAdapter.openDocument(at: url, viewMode: .editDisplay),
     context: "open saved document in independent live core session"
   )
-  #expect(opened.snapshot.name == "Live Persistence Source")
   #expect(opened.entities.contains { $0.id == line.id })
   #expect(!reopenedAdapter.isDocumentDirty)
 
@@ -2287,20 +2286,22 @@ func live_core_discarding_unsaved_changes_replaces_with_opened_project() {
   appState.actions.document.discardDocumentChangesAndContinue()
 
   #expect(appState.actions.document.alertMessage == nil)
-  #expect(appState.actions.document.documentName == "Live Replacement Target")
+  #expect(
+    appState.actions.document.documentName
+      == savedURL.deletingPathExtension().lastPathComponent)
   #expect(appState.actions.document.entities.contains { $0.id == savedLine.id })
   #expect(!appState.actions.document.isDocumentDirty)
 }
 
 @MainActor
-private func makeLiveCoreAppState(name: String) -> AppCoordinator {
+private func makeLiveCoreAppState(name _: String) -> AppCoordinator {
   let store = DocumentSessionAdapter()
   let appState = AppCoordinator(
     documentAdapter: store,
     coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) }
   )
   appState.actions.document.applyDocumentState(
-    requireSuccess(store.createNewDocument(named: name, viewMode: .editDisplay)))
+    requireSuccess(store.createNewDocument(viewMode: .editDisplay)))
   return appState
 }
 

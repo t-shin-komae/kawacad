@@ -51,7 +51,7 @@ flowchart TB
 | 設定情報 | 用紙、向き、実寸スケール、印刷可能領域、スケールガイドに関する設定 |
 | 補助表示情報 | 作図データ本体を駆動しない視覚補助 |
 
-具体的な top-level key と各オブジェクトの形状は、schema version ごとの JSON Schema で定義する。現行 file format version は `0.1.0`、schema version は `0.1.0` であり、規範 schema は `schemas/kawa/0.1.0.schema.json` である。
+具体的な top-level key と各オブジェクトの形状は、schema version ごとの JSON Schema で定義する。現行 file format version は `0.2.0`、schema version は `0.2.0` であり、規範 schema は `schemas/kawa/0.2.0.schema.json` である。
 
 現行形式では、top-level に少なくとも次の key を持つ。
 
@@ -77,10 +77,9 @@ flowchart TB
 
 ### 5.1 メタデータ
 
-メタデータには、ファイルやプロジェクトを識別するための情報を含める。
+メタデータには、プロジェクトを識別するための情報を含める。
 
 - プロジェクトID
-- プロジェクト名
 - 単位
 
 ファイル形式バージョンとスキーマバージョンは、トップレベルのメタ情報として保持する。
@@ -159,13 +158,14 @@ A4タイル出力のページ分割結果、A4グリッド上限、貼り合わ�
 
 | `fileFormatVersion` | `schemaVersion` | 読み込み結果 |
 | --- | --- | --- |
-| `0.1.0` | `0.1.0` | 対応。Schema と参照整合性を検証して読み込む |
+| `0.2.0` | `0.2.0` | 対応。Schema と参照整合性を検証して読み込む |
+| `0.1.0` | `0.1.0` | プロジェクト名を破棄して `0.2.0` へ変換し、入力ファイルを上書きせず読み込む |
 | 上記以外 | 任意 | 非対応バージョンとして拒否する |
 | 任意 | 上記以外 | 非対応バージョンとして拒否する |
 
-現行実装は、異なるバージョンからの自動変換を行わない。読み込みに成功したファイルを保存すると、現行の `fileFormatVersion` と `schemaVersion` を持つ完全な `.kawa` として出力する。
+現行実装は、`0.1.0` から `0.2.0` への変換だけを行う。変換では廃止したプロジェクト名を破棄し、その他の保存内容を維持する。入力ファイルは上書きしない。読み込みに成功したファイルを保存すると、現行の `fileFormatVersion` と `schemaVersion` を持つ完全な `.kawa` として出力する。
 
-同じバージョン内では、Schema が省略値を定義している任意フィールドだけを省略できる。現行 Schema では `sharedStyles`、`freeTexts`、`roundHoles`、`stitchStartPoints`、`parts` などが該当し、省略時は空配列として扱う。個々のフィールドの省略可否と省略値は `schemas/kawa/0.1.0.schema.json` を正とする。
+同じバージョン内では、Schema が省略値を定義している任意フィールドだけを省略できる。現行 Schema では `sharedStyles`、`freeTexts`、`roundHoles`、`stitchStartPoints`、`parts` などが該当し、省略時は空配列として扱う。個々のフィールドの省略可否と省略値は `schemas/kawa/0.2.0.schema.json` を正とする。
 
 現行 reader は既存データの受け入れのため、`derivedElements` の省略も空配列、`viewAnnotations` の省略も空の補助表示として読み込める。現行 writer は両フィールドを常に出力する。この reader の許容範囲は、新しく生成するファイルで規範 Schema の必須条件を省略してよいことを意味しない。
 
@@ -223,3 +223,4 @@ A4タイル出力のページ分割結果、A4グリッド上限、貼り合わ�
 - `docs/design/pattern-elements/representation.md`
 - `docs/design/parts/overview.md`
 - `schemas/kawa/0.1.0.schema.json`
+- `schemas/kawa/0.2.0.schema.json`

@@ -143,7 +143,6 @@ fn state_for(session: &CadSession) -> serde_json::Value {
     });
     serde_json::json!({
         "snapshot": {
-            "name": document.metadata().name,
             "constraintStatus": snapshot.constraint_status,
             "statistics": {
                 "layerCount": document.layers().len(),
@@ -377,16 +376,9 @@ fn discard_prepared_direct_print(
 }
 
 #[tauri::command]
-fn new_document(
-    name: String,
-    state: tauri::State<'_, AppState>,
-) -> Result<serde_json::Value, String> {
-    let trimmed_name = name.trim();
-    if trimmed_name.is_empty() {
-        return Err("Project name is required".to_owned());
-    }
+fn new_document(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let mut session = lock_session(&state)?;
-    *session = CadSession::new(trimmed_name.to_owned());
+    *session = CadSession::new("Untitled".to_owned());
     Ok(state_for(&session))
 }
 
@@ -1316,7 +1308,7 @@ mod tests {
         reload_document_from_path(&mut session).expect("saved project should reload");
 
         let state = state_for(&session);
-        assert_eq!(state["snapshot"]["name"], "Saved project");
+        assert!(state["snapshot"].get("name").is_none());
         assert_eq!(state["entities"].as_array().map(Vec::len), Some(1));
         assert_eq!(state["entities"][0]["id"], "saved-point");
         assert_eq!(state["viewMode"], "outputPreview");
@@ -1348,7 +1340,7 @@ mod tests {
         let candidates =
             recovery_candidates_at(&directory).expect("recovery candidate should read");
         let candidate = candidates.first().expect("recovery candidate should exist");
-        assert_eq!(candidate.display_name, "Recovered project");
+        assert_eq!(candidate.display_name.as_deref(), Some("recovered.kawa"));
         assert_eq!(
             candidate.original_document_path.as_deref(),
             Some("/projects/recovered.kawa")
@@ -1422,6 +1414,42 @@ mod tests {
             .expect("broken candidate should remain visible");
         assert_eq!(broken.status, "broken");
         assert!(broken.details.is_some());
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn pathless_recovery_candidate_does_not_persist_an_english_display_name() {
+        let directory = temporary_directory("pathless-recovery");
+        let mut session = CadSession::new("Untitled".to_owned());
+        session
+            .document
+            .apply_command(
+                serde_json::from_value(json!({
+                    "kind": "createEntityFromGesture",
+                    "payload": {
+                        "id": "point-1",
+                        "layerId": null,
+                        "gesture": { "kind": "point", "position": { "xMm": 1.0, "yMm": 2.0 } }
+                    }
+                }))
+                .expect("recovery command should deserialize"),
+            )
+            .expect("recovery document should become dirty");
+
+        save_recovery_snapshot_at(&session, &directory).expect("recovery snapshot should save");
+        let candidate = recovery_candidates_at(&directory)
+            .expect("recovery candidate should read")
+            .pop()
+            .expect("recovery candidate should exist");
+        assert_eq!(candidate.display_name, None);
+
+        let (_, metadata_path) = recovery_paths(&directory, &candidate.id)
+            .expect("recovery metadata path should resolve");
+        let metadata: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(metadata_path).expect("recovery metadata should read"),
+        )
+        .expect("recovery metadata should parse");
+        assert!(metadata.get("displayName").is_none());
         let _ = fs::remove_dir_all(directory);
     }
 
@@ -1642,7 +1670,6 @@ mod tests {
     #[test]
     fn react_semantic_command_wire_shapes_deserialize_without_core_changes() {
         let commands = [
-            json!({ "kind": "renameDocument", "payload": { "name": "Renamed" } }),
             json!({ "kind": "setEntityLayer", "payload": { "entityId": "entity:1", "layerId": null } }),
             json!({ "kind": "setDerivedDistance", "payload": { "derivedElementId": "derived:offset", "value": { "fixedMm": 4.0 } } }),
             json!({ "kind": "setDerivedDirection", "payload": { "derivedElementId": "derived:offset", "direction": "right" } }),

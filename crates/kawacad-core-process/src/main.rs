@@ -274,7 +274,6 @@ struct CoreCoincidentPointGroup {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CoreDocumentSnapshotSummary {
-    name: String,
     statistics: CoreDocumentStatistics,
     edit_display_summary: CoreConstraintSummary,
     output_preview_summary: CoreConstraintSummary,
@@ -352,12 +351,12 @@ fn run() -> Result<(), String> {
 fn document_from_args(args: &[String]) -> Result<ProjectDocument, String> {
     match args {
         [] => Ok(ProjectDocument::new("Untitled".to_owned())),
-        [flag, name] if flag == "--new" => Ok(ProjectDocument::new(name.clone())),
+        [flag] if flag == "--new" => Ok(ProjectDocument::new("Untitled")),
         [flag, path] if flag == "--read-kawa-file" => {
             ProjectDocument::read_json_file(path).map_err(|error| format_document_io_error(&error))
         }
         _ => Err(
-            "usage: kawacad-core-process [--new name | --read-kawa-file path | --version-json]"
+            "usage: kawacad-core-process [--new | --read-kawa-file path | --version-json]"
                 .to_owned(),
         ),
     }
@@ -668,7 +667,6 @@ fn document_state_with_context(
         .collect::<BTreeMap<_, _>>();
     CoreDocumentState {
         snapshot: CoreDocumentSnapshotSummary {
-            name: document.metadata().name.clone(),
             statistics: CoreDocumentStatistics {
                 layer_count: document.layers().len(),
                 shared_style_count: document.shared_styles().len(),
@@ -1292,21 +1290,18 @@ mod tests {
     fn version_json_reports_full_versions() {
         assert_eq!(
             version_json(),
-            r#"{"fileFormatVersion":"0.1.0","schemaVersion":"0.1.0"}"#
+            r#"{"fileFormatVersion":"0.2.0","schemaVersion":"0.2.0"}"#
         );
     }
 
     #[test]
     fn document_from_args_covers_new_default_file_and_usage_paths() {
         let default_document = document_from_args(&[]).expect("default document");
-        assert_eq!(default_document.metadata().name, "Untitled");
         assert_eq!(default_document.shared_styles().len(), 6);
 
-        let named_document =
-            document_from_args(&["--new".to_owned(), "Named".to_owned()]).expect("named document");
-        assert_eq!(named_document.metadata().name, "Named");
+        let new_document = document_from_args(&["--new".to_owned()]).expect("new document");
         assert_eq!(
-            named_document
+            new_document
                 .shared_styles()
                 .iter()
                 .map(|style| style.id.as_str())
@@ -1332,7 +1327,7 @@ mod tests {
         let loaded_document =
             document_from_args(&["--read-kawa-file".to_owned(), path.display().to_string()])
                 .expect("document should load from file");
-        assert_eq!(loaded_document.metadata().name, "Read Pipe");
+        assert_eq!(loaded_document.metadata().unit, "mm");
         let _ = std::fs::remove_file(path);
 
         let usage_error =
@@ -1374,7 +1369,7 @@ mod tests {
             &mut document,
             r#"{"kind":"documentState","payload":{"viewMode":"editDisplay"}}"#,
         );
-        assert!(response.contains(r#""name":"Pipe Test""#));
+        assert!(response.contains(r#""statistics""#));
         assert!(!response.contains(r#""error""#));
     }
 
@@ -1614,7 +1609,7 @@ mod tests {
         let load_response: serde_json::Value =
             serde_json::from_str(&handle_request_json(&mut document, &load_request))
                 .expect("load response should be json");
-        assert_eq!(load_response["snapshot"]["name"], "Loaded Pipe");
+        assert!(load_response["snapshot"].get("name").is_none());
 
         let apply_request = serde_json::json!({
             "kind": "applyCommand",
@@ -2170,7 +2165,7 @@ mod tests {
         let response = handle_request_json(&mut document, &request);
         assert_eq!(response, r#"{"written":true}"#);
         let written = std::fs::read_to_string(&path).expect("document should be written");
-        assert!(written.contains("\"fileFormatVersion\": \"0.1.0\""));
+        assert!(written.contains("\"fileFormatVersion\": \"0.2.0\""));
         let _ = std::fs::remove_file(path);
     }
 

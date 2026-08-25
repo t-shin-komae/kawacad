@@ -76,7 +76,6 @@ struct LeatherCoincidentPointGroup {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct LeatherDocumentSnapshotSummary {
-    name: String,
     statistics: LeatherDocumentStatistics,
     edit_display_summary: LeatherConstraintSummary,
     output_preview_summary: LeatherConstraintSummary,
@@ -134,8 +133,8 @@ struct TestDocument {
 }
 
 impl TestDocument {
-    fn new(name: &str) -> Self {
-        Self::start(&["--new", name], None)
+    fn new(_name: &str) -> Self {
+        Self::start(&["--new"], None)
     }
 
     fn from_json(json: &str) -> Self {
@@ -356,7 +355,6 @@ fn uc1_basic_shapes_and_constraint_status_are_reported_through_the_boundary() {
     let doc = TestDocument::new("uc1-basic-shapes");
 
     let initial = doc.state();
-    assert_eq!(initial.snapshot.name, "uc1-basic-shapes");
     assert_eq!(initial.snapshot.statistics.layer_count, 1);
     assert_eq!(initial.entities.len(), 0);
     assert_eq!(

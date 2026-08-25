@@ -33,7 +33,7 @@ func inspection_uxe_01_postponing_recovery_keeps_candidate_and_work_ui() {
       {
         "fileFormatVersion": "0.1.0",
         "schemaVersion": "0.1.0",
-        "document": { "name": "復旧候補" }
+        "document": { "id": "document:recovered", "unit": "mm" }
       }
       """
     do {
@@ -59,7 +59,7 @@ func inspection_uxe_01_postponing_recovery_keeps_candidate_and_work_ui() {
 
   #expect(appState.actions.recovery.recoveryChooser == nil)
   #expect(recoveryAdapter.loadCandidates().map(\.recoveryID) == ["candidate"])
-  #expect(appState.actions.document.documentName == "作業中")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(store.hasDocument)
 }
 @Test("点検 UI UXE-02: 新規文書を作成できる")
@@ -72,7 +72,7 @@ func inspection_uxe_02_new_document_flow() {
     coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) }
   )
 
-  #expect(appState.actions.document.documentName == "新規文書")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(appState.actions.document.entities.isEmpty)
 }
 
@@ -358,23 +358,19 @@ func inspection_uxe_12_responsive_layout_keeps_inspector_reachable() {
   #expect(WindowLayoutPolicy.constrainedWindowWidth(1_700, visibleScreenWidth: 1_440) == 1_440)
 }
 
-@Test("点検 UI UP-01: 新規文書で改名し、既定レイヤーとキャンバスへ到達できる")
+@Test("点検 UI UP-01: 新規文書で既定レイヤーとキャンバスへ到達できる")
 @MainActor
-func inspection_up_01_new_project_rename_and_default_layers() {
+func inspection_up_01_new_project_and_default_layers() {
   let initial = makeDocumentState(name: "名称未設定")
-  let renamed = makeDocumentState(name: "型紙 A")
   let store = StubDocumentSessionAdapter(createNewDocumentState: initial)
-  store.applyCommandState = renamed
   let appState = AppCoordinator(
     documentAdapter: store,
     coreStatusProvider: { .connected(.init(fileFormatMajor: 1, schemaMajor: 2)) }
   )
 
-  #expect(appState.actions.document.renameDocument(to: " 型紙 A "))
-
-  #expect(appState.actions.document.documentName == "型紙 A")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(appState.actions.document.layers.map(\.name) == ["カット線", "補助線", "寸法"])
-  #expect(store.appliedPayloads.last?["kind"] as? String == "renameDocument")
+  #expect(store.appliedPayloads.isEmpty)
 }
 
 @Test("点検 UI UP-02: 線分を作図でき、途中の作図を Esc 相当で取り消せる")

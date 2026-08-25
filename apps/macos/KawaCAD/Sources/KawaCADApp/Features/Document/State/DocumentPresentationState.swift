@@ -7,7 +7,6 @@ final class DocumentPresentationState: ObservableObject {
   @Published private(set) var saveConfirmation: DocumentSaveConfirmation?
   @Published private(set) var clipboardBundle: ClipboardBundle?
   @Published private(set) var pasteOptions: PasteOptionsPresentation?
-  @Published private(set) var pendingNameDraft: String?
   private(set) var pendingIntent: PendingDocumentIntent?
   private(set) var discardedWindowClosePendingApplicationTermination = false
   private(set) var clipboardPasteSequence = 0
@@ -32,10 +31,6 @@ final class DocumentPresentationState: ObservableObject {
 
   func setPasteOptions(_ options: PasteOptionsPresentation?) {
     pasteOptions = options
-  }
-
-  func setPendingNameDraft(_ draft: String?) {
-    pendingNameDraft = draft
   }
 
   func beginPendingIntent(_ intent: PendingDocumentIntent) {

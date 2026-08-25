@@ -22,7 +22,6 @@ struct LeatherSnapshotSummary: Equatable {
 }
 
 struct LeatherDocumentSnapshot: Equatable {
-  let name: String
   let statistics: LeatherDocumentStatistics
   let editDisplaySummary: LeatherSnapshotSummary
   let outputPreviewSummary: LeatherSnapshotSummary

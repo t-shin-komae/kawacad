@@ -1,23 +1,20 @@
 use super::*;
 
-/// 人が読めるドキュメントメタデータ。
+/// ドキュメントメタデータ。
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentMetadata {
     /// ドキュメントの安定 ID。
     pub id: String,
-    /// ユーザー向けのドキュメント名。
-    pub name: String,
     /// 計測単位名。
     pub unit: String,
 }
 
 impl DocumentMetadata {
     /// ミリメートル単位のドキュメントメタデータを作成する。
-    pub(crate) fn new(name: impl Into<String>) -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             id: "document:local".to_owned(),
-            name: name.into(),
             unit: "mm".to_owned(),
         }
     }

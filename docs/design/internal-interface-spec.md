@@ -10,7 +10,7 @@
 | --- | --- |
 | 責務、操作の意味、原子性、失敗時挙動 | 本書 |
 | interface 固有 JSON のうち Schema 化済みの形状 | `schemas/interface/0.1.0.schema.json` |
-| `.kawa` と共通する保存オブジェクトの形状 | `schemas/kawa/0.1.0.schema.json` |
+| `.kawa` と共通する保存オブジェクトの形状 | `schemas/kawa/0.2.0.schema.json` |
 | Rust / Swift が同じ wire shape を扱うこと | 両側の契約テストと `tests/fixtures/interface/**` |
 
 現行 interface schema は、preflight、共有スタイル、意味コマンド、選択転送、エラー、出力に使う境界オブジェクトを対象とする。Schema に未収録の既存メッセージは本書の一覧を契約とし、今後フィールドを追加・変更する場合は、長いフィールド表を本書へ増やすのではなく interface schema の対象を広げる。
@@ -68,7 +68,7 @@ Swift/macOS UI は1つの開いているドキュメントに1つの `kawacad-co
 | 操作 | 起動または入力 | 結果 |
 | --- | --- | --- |
 | バージョン取得 | `kawacad-core-process --version-json` | `fileFormatVersion` と `schemaVersion` を1行の JSON で返して終了する |
-| 新規ドキュメント | `kawacad-core-process --new <name>` | 新規セッションを開始する |
+| 新規ドキュメント | `kawacad-core-process --new` | 新規セッションを開始する |
 | ファイルから開始 | `kawacad-core-process --read-kawa-file <path>` | 検証済み `.kawa` からセッションを開始する |
 | JSON から置換 | 起動済みセッションへ `loadDocument` | 成功時に同じプロセスの現在ドキュメントを置き換える |
 | 終了 | UI が標準入力を閉じる、またはプロセスを終了する | セッションと履歴を終了する |
@@ -200,7 +200,6 @@ payload の機械可読な形状は、対象が保存オブジェクトなら ka
 
 | `kind` | 主な入力 | 意味 |
 | --- | --- | --- |
-| `renameDocument` | `name` | ドキュメント名を変更する |
 | `addEntity` / `updateEntity` / `deleteEntity` | `Entity` または ID | 基本図形を追加、置換、削除する |
 | `moveEntities` | entity IDs、移動量 | 選択図形を移動する |
 | `moveControlPoint` | control point、移動先 | 制御点移動の意図から正規図形を更新する |
@@ -376,7 +375,7 @@ Tauri の直接印刷には、次の invoke を置く。いずれも Tauri 固�
 境界を変更する場合は、意味と形状の両方を同じ変更単位で同期する。
 
 1. 本書で責務、操作の意味、失敗時挙動を更新する。
-2. interface 固有 shape は `schemas/interface/0.1.0.schema.json`、保存オブジェクトは kawa schema を更新する。
+2. interface 固有 shape は `schemas/interface/0.1.0.schema.json`、保存オブジェクトは現行の kawa schema を更新する。
 3. Rust の serde 型と Swift の Codable 型を更新する。
 4. 共有 fixture と両側の契約テストを更新する。
 
@@ -391,4 +390,4 @@ pipe envelope に破壊的変更が必要な場合は、file format version へ�
 - `docs/design/output/document-model.md`
 - `docs/design/parts/overview.md`
 - `schemas/interface/0.1.0.schema.json`
-- `schemas/kawa/0.1.0.schema.json`
+- `schemas/kawa/0.2.0.schema.json`

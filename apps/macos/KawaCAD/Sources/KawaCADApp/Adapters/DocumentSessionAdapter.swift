@@ -50,7 +50,7 @@ protocol DocumentSessionAdapting: OutputSession {
   /// dirty metadata for subsequent transport operations. UI rendering state
   /// belongs to `CadSessionState`.
   func recordAppliedState(_ state: LeatherDocumentState?)
-  func createNewDocument(named name: String, viewMode: CanvasViewMode) -> LeatherCoreResult<
+  func createNewDocument(viewMode: CanvasViewMode) -> LeatherCoreResult<
     LeatherDocumentState
   >
   func openDocument(at url: URL, viewMode: CanvasViewMode) -> LeatherCoreResult<
@@ -96,13 +96,13 @@ extension DocumentSessionAdapting {
 }
 
 protocol DocumentSessionAdapterBackend {
-  func createDocument(named name: String) -> LeatherCoreResult<any LeatherDocumentSessionManaging>
+  func createDocument() -> LeatherCoreResult<any LeatherDocumentSessionManaging>
   func readDocument(from url: URL) -> LeatherCoreResult<any LeatherDocumentSessionManaging>
 }
 
 struct LiveDocumentSessionAdapterBackend: DocumentSessionAdapterBackend {
-  func createDocument(named name: String) -> LeatherCoreResult<any LeatherDocumentSessionManaging> {
-    switch LeatherCoreProcessAdapter.createDocument(named: name) {
+  func createDocument() -> LeatherCoreResult<any LeatherDocumentSessionManaging> {
+    switch LeatherCoreProcessAdapter.createDocument() {
     case .success(let session):
       return .success(session)
     case .failure(let message):
@@ -147,10 +147,10 @@ final class DocumentSessionAdapter: DocumentSessionAdapting {
     updateDirtyState(for: state)
   }
 
-  func createNewDocument(named name: String, viewMode: CanvasViewMode) -> LeatherCoreResult<
+  func createNewDocument(viewMode: CanvasViewMode) -> LeatherCoreResult<
     LeatherDocumentState
   > {
-    switch backend.createDocument(named: name) {
+    switch backend.createDocument() {
     case .success(let newSession):
       switch newSession.loadState(viewMode: viewMode) {
       case .success(let state):

@@ -8,7 +8,12 @@ import KawaCADOutput
 /// values from them.
 extension ActionHandlerStateAccessProviding {
   var documentName: String {
-    currentDocumentState?.snapshot.name ?? AppStrings.tr("app.document.untitled")
+    documentURL?.deletingPathExtension().lastPathComponent
+      ?? AppStrings.tr("app.document.untitled")
+  }
+
+  var documentDisplayName: String {
+    documentURL?.lastPathComponent ?? AppStrings.tr("app.document.untitled")
   }
 
   var partLibraryEntries: [PartLibraryEntry] { partLibraryState.entries }
@@ -40,7 +45,6 @@ extension ActionHandlerStateAccessProviding {
   var currentDocumentState: LeatherDocumentState? { cadSession.state }
   var documentWindowPresentation: DocumentWindowPresentation {
     DocumentWindowPresentation(
-      documentName: documentName,
       documentURL: documentURL,
       isDocumentEdited: isDocumentDirty
     )
@@ -105,7 +109,6 @@ extension ActionHandlerStateAccessProviding {
   }
 
   var canEditLayers: Bool { cadSession.hasDocument }
-  var canRenameDocument: Bool { cadSession.hasDocument }
   var canSaveProject: Bool { cadSession.hasDocument }
   var canExportPDF: Bool { cadSession.hasDocument }
   var canDirectPrint: Bool { cadSession.hasDocument }

@@ -36,11 +36,10 @@ func uc1_app_state_initial_project_is_reflected_in_the_ui_model() {
     coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
   )
 
-  #expect(appState.actions.document.documentName == "UI Project")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(appState.actions.canvas.selectedTool == .select)
   #expect(appState.actions.document.documentURL == nil)
   #expect(appState.actions.document.canEditLayers)
-  #expect(appState.actions.document.canRenameDocument)
   #expect(appState.actions.document.canSaveProject)
   #expect(appState.actions.document.canUndo == store.canUndo)
   #expect(appState.actions.document.canRedo == store.canRedo)
@@ -51,28 +50,6 @@ func uc1_app_state_initial_project_is_reflected_in_the_ui_model() {
     appState.actions.document.coreStatus
       == .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)))
   #expect(appState.actions.document.statusMessage == "新規プロジェクトを作成しました。")
-}
-
-@Test("UC1 AppCoordinator はプロジェクト名変更を境界へ送る")
-@MainActor
-func uc1_app_state_document_name_rename_is_sent_through_the_boundary() {
-  let initialState = makeDocumentState(name: "無題プロジェクト")
-  let renamedState = makeDocumentState(name: "Pattern A")
-  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
-  store.applyCommandState = renamedState
-  let appState = AppCoordinator(
-    documentAdapter: store,
-    coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
-  )
-
-  appState.actions.document.renameDocument(to: " Pattern A ")
-
-  #expect(store.appliedPayloads.count == 1)
-  #expect((store.appliedPayloads[0]["kind"] as? String) == "renameDocument")
-  let payload = unwrap(store.appliedPayloads[0]["payload"] as? [String: Any])
-  #expect((payload["name"] as? String) == "Pattern A")
-  #expect(appState.actions.document.documentName == "Pattern A")
-  #expect(appState.actions.document.statusMessage == "Pattern A に変更しました")
 }
 
 @Test("範囲選択の修飾操作は選択集合だけをトグルし履歴とDirty状態を変更しない")
@@ -96,138 +73,6 @@ func marquee_selection_modifier_toggles_without_document_mutation() {
   #expect(store.isDocumentDirty)
   #expect(appState.actions.document.canUndo)
   #expect(!appState.actions.document.canRedo)
-}
-
-@Test("プロジェクト名の未確定ドラフトは保存前にCoreへ確定する")
-@MainActor
-func pending_document_name_draft_is_committed_before_save() {
-  let initialState = makeDocumentState(name: "旧名称")
-  let renamedState = makeDocumentState(name: "保存する名称")
-  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
-  store.applyCommandState = renamedState
-  let appState = AppCoordinator(
-    documentAdapter: store,
-    coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
-  )
-  let saveURL = uniqueTempURL("pending-name-save.kawa")
-  store.documentURL = saveURL
-
-  appState.actions.document.updatePendingDocumentNameDraft(" 保存する名称 ")
-  appState.actions.document.saveProject()
-
-  #expect((store.appliedPayloads.first?["kind"] as? String) == "renameDocument")
-  let payload = unwrap(store.appliedPayloads.first?["payload"] as? [String: Any])
-  #expect((payload["name"] as? String) == "保存する名称")
-  #expect(store.saveDocumentCalls == [saveURL])
-  #expect(appState.actions.document.documentName == "保存する名称")
-  #expect(appState.actions.document.pendingDocumentNameDraft == nil)
-}
-
-@Test("無効なプロジェクト名ドラフトは保存と新規作成を開始しない")
-@MainActor
-func invalid_pending_document_name_draft_blocks_save_and_new_project() {
-  let initialState = makeDocumentState(name: "既存名称")
-  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
-  let appState = AppCoordinator(
-    documentAdapter: store,
-    coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
-  )
-  let saveURL = uniqueTempURL("invalid-pending-name-save.kawa")
-  store.documentURL = saveURL
-  let createCallsBefore = store.createNewDocumentCalls.count
-
-  appState.actions.document.updatePendingDocumentNameDraft("   ")
-  appState.actions.document.saveProject()
-  appState.actions.document.createNewProject()
-
-  #expect(store.appliedPayloads.isEmpty)
-  #expect(store.saveDocumentCalls.isEmpty)
-  #expect(store.createNewDocumentCalls.count == createCallsBefore)
-  #expect(appState.actions.document.documentName == "既存名称")
-  #expect(appState.actions.document.pendingDocumentNameDraft == "   ")
-}
-
-@Test("未確定の有効名称で新規作成に失敗しても元文書と入力を変更しない")
-@MainActor
-func pending_document_name_draft_is_not_committed_when_new_project_fails() {
-  let initialState = makeDocumentState(
-    name: "既存名称",
-    history: LeatherHistoryState(canUndo: true, canRedo: true),
-    entities: [pointEntity(id: "entity:existing", point: .zero)]
-  )
-  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
-  let appState = AppCoordinator(
-    documentAdapter: store,
-    coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
-  )
-  store.createNewDocumentFailure = "create failed"
-  let originalURL = uniqueTempURL("existing.kawa")
-  store.documentURL = originalURL
-  store.isDocumentDirty = true
-  appState.actions.canvas.selectedEntityID = "entity:existing"
-  appState.actions.document.updatePendingDocumentNameDraft("入力中の名称")
-
-  appState.actions.document.createNewProject()
-  appState.actions.document.discardDocumentChangesAndContinue()
-
-  #expect(store.appliedPayloads.isEmpty)
-  #expect(appState.actions.document.documentName == "既存名称")
-  #expect(appState.actions.document.pendingDocumentNameDraft == "入力中の名称")
-  #expect(appState.actions.document.documentURL == originalURL)
-  #expect(appState.actions.document.entities.map(\.id) == ["entity:existing"])
-  #expect(appState.actions.document.canUndo)
-  #expect(appState.actions.document.canRedo)
-  #expect(appState.actions.canvas.selectedEntityID == "entity:existing")
-}
-
-@Test("未確定の有効名称で新規作成に成功すると新規文書だけを初期状態へ置き換える")
-@MainActor
-func pending_document_name_draft_does_not_leak_into_new_project() {
-  let initialState = makeDocumentState(name: "既存名称")
-  let newState = makeDocumentState(name: "無題プロジェクト")
-  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
-  store.createNewDocumentState = newState
-  let appState = AppCoordinator(
-    documentAdapter: store,
-    coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) }
-  )
-  appState.actions.document.updatePendingDocumentNameDraft("入力中の名称")
-  appState.actions.canvas.selectedEntityID = "entity:stale"
-
-  appState.actions.document.createNewProject()
-
-  #expect(store.appliedPayloads.isEmpty)
-  #expect(store.createNewDocumentCalls.last?.name == "無題プロジェクト")
-  #expect(appState.actions.document.documentName == "無題プロジェクト")
-  #expect(appState.actions.document.documentURL == nil)
-  #expect(appState.actions.document.pendingDocumentNameDraft == nil)
-  #expect(appState.actions.canvas.selectedEntityID == nil)
-  #expect(!appState.actions.document.canUndo)
-  #expect(!appState.actions.document.canRedo)
-}
-
-@Test("別名保存のキャンセル後も確定した入力名称と元文書を保持する")
-@MainActor
-func save_as_cancellation_keeps_document_and_committed_name() {
-  let initialState = makeDocumentState(name: "既存名称")
-  let renamedState = makeDocumentState(name: "入力中の名称")
-  let store = StubDocumentSessionAdapter(createNewDocumentState: initialState)
-  store.applyCommandState = renamedState
-  let savePanel = StubDesktopEnvironmentAdapter()
-  let appState = AppCoordinator(
-    documentAdapter: store,
-    coreStatusProvider: { .connected(LeatherCoreVersionInfo(fileFormatMajor: 0, schemaMajor: 0)) },
-    desktopEnvironment: savePanel
-  )
-  appState.actions.document.updatePendingDocumentNameDraft("入力中の名称")
-
-  #expect(!appState.actions.document.saveProjectAsPanel())
-
-  #expect(savePanel.promptedDocumentNames == ["入力中の名称"])
-  #expect(store.saveDocumentCalls.isEmpty)
-  #expect(appState.actions.document.documentName == "入力中の名称")
-  #expect(appState.actions.document.pendingDocumentNameDraft == nil)
-  #expect(appState.actions.document.documentURL == nil)
 }
 
 @Test("円弧追加に失敗しても既存の図形、選択、Dirty状態、履歴を変更しない")
@@ -1667,7 +1512,7 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   #expect(appState.actions.canvas.pendingConstraintTargets.isEmpty)
   #expect(appState.actions.canvas.draftStartPoint == nil)
   #expect(appState.actions.canvas.draftCurrentPoint == nil)
-  #expect(appState.actions.document.documentName == "Undo State")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(appState.actions.document.entities.map(\.id) == ["entity:line-a"])
   #expect(appState.actions.workspace.a4ReferenceOrientation == .portrait)
   #expect(appState.actions.output.outputRequestDraft?.options.orientation == .portrait)
@@ -1676,7 +1521,7 @@ func uc4_app_state_undo_and_redo_restore_state_and_clear_transients() {
   appState.actions.document.redo()
 
   #expect(store.redoCalls == [.editDisplay])
-  #expect(appState.actions.document.documentName == "Redo State")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(
     appState.actions.document.entities.map(\.geometry)
       == [
@@ -3037,7 +2882,9 @@ func uc1_uc5_app_state_open_save_reload_routes_through_the_store() {
   #expect(appState.actions.canvas.pendingConstraintTargets.isEmpty)
   #expect(appState.actions.canvas.draftStartPoint == nil)
   #expect(appState.actions.canvas.draftCurrentPoint == nil)
-  #expect(appState.actions.document.documentName == "Reopened")
+  #expect(
+    appState.actions.document.documentName
+      == openURL.deletingPathExtension().lastPathComponent)
   #expect(appState.actions.document.entities.map(\.id) == ["entity:line-b"])
   #expect(appState.actions.document.statusMessage == "「\(openURL.lastPathComponent)」を開きました。")
 
@@ -3057,7 +2904,9 @@ func uc1_uc5_app_state_open_save_reload_routes_through_the_store() {
   #expect(store.loadStateCalls == [.outputPreview])
   #expect(appState.actions.canvas.viewMode == .outputPreview)
   #expect(appState.actions.document.statusMessage == AppStrings.tr("status.output_preview_mode"))
-  #expect(appState.actions.document.documentName == "Reloaded")
+  #expect(
+    appState.actions.document.documentName
+      == openURL.deletingPathExtension().lastPathComponent)
   #expect(appState.actions.document.entities.map(\.id) == ["entity:point-c"])
   #expect(appState.actions.canvas.selectedEntityID == nil)
   #expect(appState.actions.canvas.selectedEntityIDs.isEmpty)
@@ -3538,7 +3387,7 @@ func output_app_state_routes_direct_print_through_render_print_and_controller() 
   #expect(store.printedOutputModels.count == 1)
   #expect(printController.printedRenderData.count == 1)
   #expect(printController.printedOrientations == [.landscape])
-  #expect(printController.printedDocumentNames == ["Direct Print"])
+  #expect(printController.printedDocumentNames == ["無題プロジェクト"])
   #expect(appState.actions.document.statusMessage == "直接印刷を開始しました")
 }
 
@@ -3698,7 +3547,7 @@ func output_app_state_direct_print_sheet_allows_warning_confirmation() {
   #expect(appState.actions.output.outputRequestDraft == nil)
   #expect(printController.printedRenderData.count == 1)
   #expect(printController.printedOrientations == [.landscape])
-  #expect(printController.printedDocumentNames == ["Direct Print Warning"])
+  #expect(printController.printedDocumentNames == ["無題プロジェクト"])
 }
 
 @Test("OutputRequestDraft は空の出力警告を続行用ラベルにしない")
@@ -3770,10 +3619,10 @@ func uc1_app_state_failed_session_operations_keep_state_safe() {
   appState.actions.canvas.selectedTool = .line
 
   appState.actions.document.createNewProject()
-  #expect(store.createNewDocumentCalls.map(\.name).count == 2)
+  #expect(store.createNewDocumentCalls.count == 2)
   #expect(appState.actions.document.coreStatus == .unavailable("create failed"))
   #expect(appState.actions.workspace.errorPresentation?.message == "create failed")
-  #expect(appState.actions.document.documentName == "Stable")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(appState.actions.canvas.selectedEntityID == "entity:point-a")
   #expect(appState.actions.canvas.draftStartPoint == .init(xMM: 1.0, yMM: 1.0))
 
@@ -3832,7 +3681,7 @@ func uc1_app_state_prompts_before_creating_new_dirty_document() {
   appState.actions.document.createNewProject()
 
   #expect(store.createNewDocumentCalls.count == 1)
-  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "Dirty")
+  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "無題プロジェクト")
 
   appState.actions.document.discardDocumentChangesAndContinue()
 
@@ -3863,7 +3712,9 @@ func uc1_app_state_saves_before_opening_another_project() {
   #expect(store.saveDocumentCalls == [saveURL])
   #expect(store.openDocumentCalls.map(\.url) == [openURL])
   #expect(appState.actions.document.documentSaveConfirmation == nil)
-  #expect(appState.actions.document.documentName == "Opened")
+  #expect(
+    appState.actions.document.documentName
+      == openURL.deletingPathExtension().lastPathComponent)
 }
 
 @Test("UC1 AppCoordinator は未保存 dirty 文書で保存パネルをキャンセルすると破壊的操作を中止する")
@@ -3883,10 +3734,10 @@ func uc1_app_state_cancels_destructive_action_when_save_panel_is_cancelled() {
   appState.actions.document.createNewProject()
   appState.actions.document.confirmDocumentSaveAndContinue()
 
-  #expect(savePanelPresenter.promptedDocumentNames == ["Unsaved Dirty"])
+  #expect(savePanelPresenter.promptedDocumentNames == ["無題プロジェクト"])
   #expect(store.createNewDocumentCalls.count == 1)
   #expect(appState.actions.document.documentSaveConfirmation == nil)
-  #expect(appState.actions.document.documentName == "Unsaved Dirty")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
 }
 
 @Test("UC1 AppCoordinator は dirty なウィンドウクローズ要求で保存確認を経由する")
@@ -3904,7 +3755,7 @@ func uc1_app_state_routes_window_close_through_save_confirmation() {
   store.isDocumentDirty = true
 
   #expect(appState.actions.document.requestWindowClose() == false)
-  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "Dirty")
+  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "無題プロジェクト")
 
   appState.actions.document.discardDocumentChangesAndContinue()
 
@@ -3948,7 +3799,7 @@ func uc1_app_state_routes_quit_through_save_confirmation() {
   store.isDocumentDirty = true
 
   #expect(appState.actions.document.requestApplicationQuit() == false)
-  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "Dirty")
+  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "無題プロジェクト")
 
   appState.actions.document.cancelDocumentSaveConfirmation()
   #expect(lifecycleController.terminationReplies == [false])
@@ -3973,7 +3824,7 @@ func uc1_app_state_rejects_reentrant_quit_while_save_confirmation_is_visible() {
   store.isDocumentDirty = true
 
   #expect(appState.actions.document.requestWindowClose() == false)
-  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "Dirty")
+  #expect(appState.actions.document.documentSaveConfirmation?.documentName == "無題プロジェクト")
 
   #expect(appState.actions.document.requestApplicationQuit() == false)
   #expect(lifecycleController.terminationReplies == [false])
@@ -5990,7 +5841,7 @@ func uc1_discarded_replacement_keeps_recovery_when_creation_fails() {
   appState.actions.document.createNewProject()
   appState.actions.document.discardDocumentChangesAndContinue()
 
-  #expect(appState.actions.document.documentName == "Dirty original")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(store.isDocumentDirty)
   #expect(recoveryAdapter.loadCandidates().count == 1)
 }
@@ -6062,7 +5913,7 @@ func uc1_discarded_replacement_keeps_recovery_when_opening_fails() {
   appState.actions.document.openProject(at: uniqueTempURL("replacement-failed.kawa"))
   appState.actions.document.discardDocumentChangesAndContinue()
 
-  #expect(appState.actions.document.documentName == "Dirty original")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(store.isDocumentDirty)
   #expect(recoveryAdapter.loadCandidates().count == 1)
 
@@ -6109,7 +5960,7 @@ final class StubDocumentSessionAdapter: DocumentSessionAdapting {
   var openDocumentFailure: String?
   var loadStateFailure: String?
 
-  private(set) var createNewDocumentCalls: [(name: String, viewMode: CanvasViewMode)] = []
+  private(set) var createNewDocumentCalls: [CanvasViewMode] = []
   private(set) var openDocumentCalls: [(url: URL, viewMode: CanvasViewMode)] = []
   private(set) var recoverDocumentCalls:
     [(url: URL, suggestedDocumentURL: URL?, viewMode: CanvasViewMode)] = []
@@ -6144,10 +5995,10 @@ final class StubDocumentSessionAdapter: DocumentSessionAdapting {
     }
   }
 
-  func createNewDocument(named name: String, viewMode: CanvasViewMode) -> LeatherCoreResult<
+  func createNewDocument(viewMode: CanvasViewMode) -> LeatherCoreResult<
     LeatherDocumentState
   > {
-    createNewDocumentCalls.append((name, viewMode))
+    createNewDocumentCalls.append(viewMode)
     if let createNewDocumentFailure {
       return .failure(createNewDocumentFailure)
     }

@@ -66,7 +66,6 @@ impl CommandApplier {
         compound_deleted_entity_ids: Option<&BTreeSet<String>>,
     ) -> CommandResult {
         match command {
-            DocumentCommand::RenameDocument { name } => document.rename_document(&name),
             DocumentCommand::SetPrintOrientation { orientation } => {
                 document.set_print_orientation(orientation)
             }
@@ -921,19 +920,6 @@ impl ProjectDocument {
             }
             Err(error) => Err(error),
         }
-    }
-
-    /// ドキュメント名を更新する。
-    pub(crate) fn rename_document(&mut self, name: &str) -> CommandResult {
-        let trimmed = name.trim();
-        if trimmed.is_empty() {
-            return Err(CommandError::InvalidValue {
-                field: "document name",
-                reason: "must not be empty",
-            });
-        }
-        self.metadata.name = trimmed.to_owned();
-        Ok(())
     }
 
     fn delete_entity_with_context(

@@ -260,8 +260,8 @@
 "document.recovery.updated_at" = "%@ / 最終復旧: %@";
 "document.recovery.recovered_document" = "自動復旧データを開きました。保存して内容を確定してください。";
 "window.title.unsaved" = "%@ — 未保存";
-"window.accessibility.saved_document" = "ファイル名: %@、プロジェクト名: %@、%@";
-"window.accessibility.unsaved_document" = "未保存のプロジェクト: %@、%@";
+"window.accessibility.saved_document" = "ファイル名: %@、%@";
+"window.accessibility.unsaved_document" = "未保存のドキュメント: %@、%@";
 "window.accessibility.edited" = "変更あり";
 "window.accessibility.saved" = "保存済み";
 "sidebar.tool_display_mode" = "ツール表示";
@@ -286,8 +286,6 @@
 "dialog.delete_layer_title" = "「%@」を削除しますか？";
 "dialog.output_warning_title" = "警告があります";
 
-"header.project_name_placeholder" = "プロジェクト名";
-"header.file_info" = ".kawa 0.1.0 / %@ / %@";
 
 "workbench.selection" = "選択";
 "workbench.constraint" = "拘束";
@@ -601,7 +599,6 @@
 "status.active_layer_changed" = "作図レイヤーを %@ にしました";
 "status.pattern_line_style_changed" = "型紙線種を %@ にしました";
 "status.pattern_line_style_unavailable" = "選択した型紙線種は利用できません";
-"status.project_name_required" = "プロジェクト名を入力してください。";
 "status.layer_name_required" = "レイヤー名を入力してください";
 "status.layer_name_must_be_unique" = "レイヤー名は重複できません";
 "status.last_layer_cannot_delete" = "最後のレイヤーは削除できません。";

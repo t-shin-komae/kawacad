@@ -11,9 +11,6 @@ use support::*;
 #[test]
 fn document_command_round_trips_through_serde() {
     let commands = vec![
-        DocumentCommand::RenameDocument {
-            name: "Pattern A".to_owned(),
-        },
         DocumentCommand::AddEntity(point_entity("entity:point", point(0.0, 0.0))),
         DocumentCommand::UpdateEntity(line_entity(
             "entity:line",

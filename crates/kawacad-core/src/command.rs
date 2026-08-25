@@ -160,11 +160,6 @@ pub struct SelectionReference {
     rename_all_fields = "camelCase"
 )]
 pub enum DocumentCommand {
-    /// ドキュメント名を更新する。
-    RenameDocument {
-        /// 新しいドキュメント名。
-        name: String,
-    },
     /// 用紙の向きをドキュメント設定へ保存する。
     SetPrintOrientation {
         /// 用紙の向き。
@@ -643,7 +638,6 @@ impl DocumentCommand {
     /// UI/Core 境界で使うコマンド種別名。
     pub fn kind_name(&self) -> &'static str {
         match self {
-            Self::RenameDocument { .. } => "renameDocument",
             Self::SetPrintOrientation { .. } => "setPrintOrientation",
             Self::AddEntity(_) => "addEntity",
             Self::CreateEntityFromGesture { .. } => "createEntityFromGesture",
@@ -929,12 +923,6 @@ mod tests {
     fn document_command_kind_name_covers_all_command_variants() {
         let style = LayerStyle::default_for(LayerKind::Dimension);
         let commands = vec![
-            (
-                DocumentCommand::RenameDocument {
-                    name: "Renamed".to_owned(),
-                },
-                "renameDocument",
-            ),
             (
                 DocumentCommand::AddEntity(sample_entity("entity:add")),
                 "addEntity",

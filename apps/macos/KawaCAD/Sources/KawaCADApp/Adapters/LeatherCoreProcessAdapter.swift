@@ -423,12 +423,12 @@ enum LeatherCoreProcessAdapter {
     }
   }
 
-  static func createDocument(named name: String) -> LeatherCoreResult<LeatherDocumentSession> {
-    startSession(arguments: ["--new", name])
+  static func createDocument() -> LeatherCoreResult<LeatherDocumentSession> {
+    startSession(arguments: ["--new"])
   }
 
   static func createDocument(fromJSON json: String) -> LeatherCoreResult<LeatherDocumentSession> {
-    switch startSession(arguments: ["--new", "Loaded Document"]) {
+    switch startSession(arguments: ["--new"]) {
     case .success(let session):
       switch session.loadDocument(json: json, viewMode: .editDisplay) {
       case .success:
@@ -699,7 +699,6 @@ enum LeatherCoreProcessAdapter {
     }
 
     let snapshot = LeatherDocumentSnapshot(
-      name: snapshotObject["name"] as? String ?? "",
       statistics: try decodeStatistics(statisticsObject),
       editDisplaySummary: try decodeSnapshotSummary(editDisplaySummaryObject),
       outputPreviewSummary: try decodeSnapshotSummary(outputPreviewSummaryObject)

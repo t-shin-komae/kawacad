@@ -873,18 +873,6 @@ func command_service_builds_update_parameter_command() {
   #expect(request.successMessage == "width を更新しました")
 }
 
-@Test("CommandFactory はプロジェクト名変更コマンドを生成する")
-func command_service_builds_rename_document_command() {
-  let service = DocumentCommandFactory()
-
-  let request = service.makeRenameDocumentCommand(name: "Pattern A")
-
-  #expect((request.payload["kind"] as? String) == "renameDocument")
-  let payload = unwrap(request.payload["payload"] as? [String: Any])
-  #expect((payload["name"] as? String) == "Pattern A")
-  #expect(request.successMessage == "Pattern A に変更しました")
-}
-
 @Test("CadSessionState は内部Adapterを通じてコマンドを実行する")
 func cad_session_executes_request_through_document_adapter() {
   let state = makeDocumentState(name: "Executed")
@@ -906,7 +894,7 @@ func cad_session_executes_request_through_document_adapter() {
   #expect((store.appliedPayloads[0]["kind"] as? String) == "deleteEntity")
   switch result {
   case .success(let executedState, let successMessage):
-    #expect(executedState.snapshot.name == "Executed")
+    #expect(executedState.snapshot == state.snapshot)
     #expect(successMessage == "削除しました")
     #expect(session.state == executedState)
   case .failure(let message):

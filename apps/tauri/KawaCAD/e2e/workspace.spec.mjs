@@ -392,8 +392,6 @@ test.describe("Tauri React workspace through the real Core process", () => {
     expect(reloaded.settings.orientation).toBe("landscape");
 
     await page.keyboard.press(`${primary}+n`);
-    await acceptTextDialog(page, "New E2E project");
-    await expect(page.getByRole("textbox", { name: "プロジェクト名" })).toHaveValue("New E2E project");
     await expect(page.getByTestId("leather.workspace.status-bar")).toContainText("0 図形");
   });
 
@@ -461,22 +459,6 @@ test.describe("Tauri React workspace through the real Core process", () => {
 
     await expect(page.getByRole("status")).toContainText("丸穴の直径には正の有限値を入力してください。");
     expect((await core.invoke("document_state")).roundHoles).toHaveLength(0);
-  });
-
-  // プロジェクト名の空入力を拒否し、正しい名前を再入力するとCoreのドキュメント名へ反映されることを検証する。
-  test("rejects an empty project name and accepts the corrected name", async ({ page, core }) => {
-    await openWorkspace(page);
-    const projectName = page.getByRole("textbox", { name: "プロジェクト名" });
-
-    await projectName.fill("   ");
-    await projectName.blur();
-    await expect(projectName).toHaveAttribute("aria-invalid", "true");
-    await expect(page.getByText("プロジェクト名を入力してください。", { exact: true })).toBeVisible();
-
-    await projectName.fill("Renamed E2E project");
-    await projectName.blur();
-    await expect(projectName).toHaveAttribute("aria-invalid", "false");
-    await expect.poll(async () => (await core.invoke("document_state")).snapshot.name).toBe("Renamed E2E project");
   });
 
   // グリッド・A4・用紙向き・スナップの切り替えとズーム操作が、現在のUI状態に反映されることを検証する。

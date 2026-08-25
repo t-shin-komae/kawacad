@@ -34,7 +34,6 @@ function adaptState(coreState, { path: projectPath, viewMode, orientation }) {
   const entities = coreState.entities;
   return {
     snapshot: {
-      name: coreState.snapshot.name,
       constraintStatus: editSummary.constraintStatus,
       statistics: coreState.snapshot.statistics,
     },
@@ -97,7 +96,7 @@ export class CoreBridge {
   async start() {
     ensureCoreBinary();
     this.#tempDirectory = await mkdtemp(path.join(tmpdir(), "kawa-cad-e2e-"));
-    await this.#startProcess(["--new", "Untitled"]);
+    await this.#startProcess(["--new"]);
   }
 
   async close() {
@@ -110,7 +109,7 @@ export class CoreBridge {
       case "document_state":
         return this.#state();
       case "new_document":
-        await this.#restart(["--new", String(args.name ?? "Untitled").trim()]);
+        await this.#restart(["--new"]);
         this.#projectPath = undefined;
         this.#viewMode = "editDisplay";
         return this.#state();

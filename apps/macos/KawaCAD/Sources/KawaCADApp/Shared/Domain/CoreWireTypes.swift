@@ -131,7 +131,7 @@ extension CoreJSONValue {
 }
 
 enum CoreDocumentCommandKind: String, Codable, Hashable {
-  case renameDocument, setPrintOrientation, addEntity, createEntityFromGesture, updateEntity,
+  case setPrintOrientation, addEntity, createEntityFromGesture, updateEntity,
     moveEntities,
     moveControlPoint
   case setEntityMetric, setEntityLayer, smoothArcTangencies, deleteEntity

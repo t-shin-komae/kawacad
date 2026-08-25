@@ -409,12 +409,6 @@ const appStrings = {
     paste: "ペースト",
     selectAll: "すべてを選択",
   },
-  header: {
-    projectNameRequired: "プロジェクト名を入力してください。",
-    projectName: "プロジェクト名",
-    useLatestValue: "最新値を使う",
-    applyInput: "入力内容を適用",
-  },
   resize: { paletteWidth: "ツールパレットの幅" },
   inspector: {
     tab: {
@@ -657,7 +651,7 @@ const appStrings = {
     styleNameEdit: "線種名を変更",
   },
   app: {
-    saveChangesTitle: (projectName: string) => `${projectName}の変更を保存しますか？`,
+    saveChangesTitle: (displayName: string) => `${displayName}の変更を保存しますか？`,
     saveChanges: "保存",
     productName: "KawaCAD",
     fileFilterName: "KawaCAD project",
@@ -665,7 +659,6 @@ const appStrings = {
     paperLandscape: "A4 Landscape",
     viewModeChanged: (output: boolean) => (output ? "出力プレビューに切り替えました。" : "編集表示に切り替えました。"),
     a4OrientationChanged: (landscape: boolean) => `A4基準表示を${landscape ? "横" : "縦"}向きにしました。`,
-    documentNameUpdated: "プロジェクト名を更新しました。",
     selectGeometry: "図形を選択してください。",
     clickTarget: (tool: string) => `${tool}: 対象をクリックしてください。`,
     saved: (fileName: string) => `「${fileName}」に保存しました。`,
@@ -740,7 +733,6 @@ const appStrings = {
     saveAndContinue: "保存して続行",
     continueWithoutSaving: "保存せずに続行",
     newProjectAction: "新規プロジェクトを作成すると、現在の未保存変更は失われます。",
-    newProjectOpen: "新規プロジェクト",
     newProjectCreated: "新規プロジェクトを作成しました。",
     openOtherProjectAction: "別のプロジェクトを開くと、現在の未保存変更は失われます。",
     projectOpened: (fileName: string) => `「${fileName}」を開きました。`,
@@ -750,6 +742,7 @@ const appStrings = {
     recoverySaveFailedTitle: "自動復旧データを保存できませんでした",
     recoveryChooserTitle: "復旧できる編集中データがあります",
     recoveryChooserMessage: "前回の終了前に保存されなかった編集中データを選んで確認できます。",
+    recoveryBrokenCandidate: "破損した復旧候補",
     recoveryUnsavedSource: "未保存のドキュメント",
     recoveryUpdatedAt: (source: string, updatedAt: string) => `${source} / 最終復旧: ${updatedAt}`,
     showInFolder: "Finderに表示",

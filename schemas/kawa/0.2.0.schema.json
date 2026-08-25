@@ -1,0 +1,1042 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/leather/schemas/kawa/0.2.0.schema.json",
+  "title": "KawaCAD .kawa 0.2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fileFormatVersion",
+    "schemaVersion",
+    "document",
+    "settings",
+    "layers",
+    "entities",
+    "derivedElements",
+    "constraints",
+    "parameters"
+  ],
+  "properties": {
+    "fileFormatVersion": {
+      "const": "0.2.0"
+    },
+    "schemaVersion": {
+      "const": "0.2.0"
+    },
+    "document": {
+      "$ref": "#/$defs/documentMetadata"
+    },
+    "settings": {
+      "$ref": "#/$defs/printSettings"
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/layer"
+      }
+    },
+    "sharedStyles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sharedStyle"
+      },
+      "default": []
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "derivedElements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/derivedElement"
+      }
+    },
+    "freeTexts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/freeText"
+      },
+      "default": []
+    },
+    "roundHoles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/roundHole"
+      },
+      "default": []
+    },
+    "stitchStartPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stitchStartPoint"
+      },
+      "default": []
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/parameter"
+      }
+    },
+    "parts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/part"
+      },
+      "default": []
+    },
+    "viewAnnotations": {
+      "$ref": "#/$defs/viewAnnotations"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "documentMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "unit"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "unit": {
+          "const": "mm"
+        }
+      }
+    },
+    "point2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "xMm",
+        "yMm"
+      ],
+      "properties": {
+        "xMm": {
+          "type": "number"
+        },
+        "yMm": {
+          "type": "number"
+        }
+      }
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "originMm",
+        "outlineEntityIds",
+        "holeEntityIdGroups",
+        "entityIds",
+        "derivedElementIds",
+        "freeTextIds",
+        "measurementAnnotationIds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "originMm": { "$ref": "#/$defs/point2" },
+        "outlineEntityIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "holeEntityIdGroups": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/id" }
+          }
+        },
+        "entityIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "derivedElementIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "freeTextIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "measurementAnnotationIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "visible": { "type": "boolean", "default": true },
+        "printable": { "type": "boolean", "default": true },
+        "locked": { "type": "boolean", "const": true, "default": true },
+        "quantity": { "type": "integer", "minimum": 1, "default": 1 }
+      }
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "layerId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "styleId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "$ref": "#/$defs/entityKind"
+        }
+      }
+    },
+    "freeText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "content",
+        "positionMm",
+        "fontSizeMm"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1
+        },
+        "positionMm": {
+          "$ref": "#/$defs/point2"
+        },
+        "fontSizeMm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "roundHoleKind": {
+      "type": "string",
+      "enum": ["keyRing", "rivet", "snapFastener", "decorative"]
+    },
+    "roundHole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "entityId",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "entityId": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "$ref": "#/$defs/roundHoleKind"
+        }
+      }
+    },
+    "stitchStartPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "targetId",
+        "positionRatio"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "targetId": {
+          "$ref": "#/$defs/id"
+        },
+        "resolvedIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "positionRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "entityKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "point"
+          ],
+          "properties": {
+            "point": {
+              "$ref": "#/$defs/point2"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lineSegment"
+          ],
+          "properties": {
+            "lineSegment": {
+              "$ref": "#/$defs/lineSegment"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "circle"
+          ],
+          "properties": {
+            "circle": {
+              "$ref": "#/$defs/circle"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "arc"
+          ],
+          "properties": {
+            "arc": {
+              "$ref": "#/$defs/arc"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "centerLine"
+          ],
+          "properties": {
+            "centerLine": {
+              "$ref": "#/$defs/lineSegment"
+            }
+          }
+        }
+      ]
+    },
+    "lineSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/point2"
+        },
+        "end": {
+          "$ref": "#/$defs/point2"
+        }
+      }
+    },
+    "circle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "center",
+        "radiusMm"
+      ],
+      "properties": {
+        "center": {
+          "$ref": "#/$defs/point2"
+        },
+        "radiusMm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "arc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "center",
+        "radiusMm",
+        "startAngleRad",
+        "sweepAngleRad"
+      ],
+      "properties": {
+        "center": {
+          "$ref": "#/$defs/point2"
+        },
+        "radiusMm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "startAngleRad": {
+          "type": "number"
+        },
+        "sweepAngleRad": {
+          "type": "number"
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "visible",
+        "printable",
+        "style"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/layerKind"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "printable": {
+          "type": "boolean"
+        },
+        "style": {
+          "$ref": "#/$defs/layerStyle"
+        }
+      }
+    },
+    "layerKind": {
+      "type": "string",
+      "enum": [
+        "cutLine",
+        "dimension",
+        "printGuide",
+        "construction"
+      ]
+    },
+    "sharedStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "style"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "style": {
+          "$ref": "#/$defs/layerStyle"
+        }
+      }
+    },
+    "layerStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stroke",
+        "strokeWidthMm",
+        "pattern"
+      ],
+      "properties": {
+        "stroke": {
+          "$ref": "#/$defs/color"
+        },
+        "strokeWidthMm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pattern": {
+          "$ref": "#/$defs/linePattern"
+        }
+      }
+    },
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "red",
+        "green",
+        "blue",
+        "alpha"
+      ],
+      "properties": {
+        "red": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "green": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "blue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "alpha": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "linePattern": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "dashed",
+        "dotted",
+        "construction"
+      ]
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "targets",
+        "value",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "$ref": "#/$defs/constraintKind"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/constraintTarget"
+          }
+        },
+        "value": {
+          "$ref": "#/$defs/constraintValue"
+        },
+        "status": {
+          "$ref": "#/$defs/constraintStatus"
+        }
+      }
+    },
+    "derivedElement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "layerId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "styleId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "$ref": "#/$defs/derivedElementKind"
+        }
+      }
+    },
+    "derivedElementKind": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "offsetCurve"
+          ],
+          "properties": {
+            "offsetCurve": {
+              "$ref": "#/$defs/offsetCurve"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fillet"
+          ],
+          "properties": {
+            "fillet": {
+              "$ref": "#/$defs/fillet"
+            }
+          }
+        }
+      ]
+    },
+    "offsetCurve": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceEntityIds",
+        "distance",
+        "direction"
+      ],
+      "properties": {
+        "sourceEntityIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "sourceResolvedEntityIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "distance": {
+          "$ref": "#/$defs/constraintValue"
+        },
+        "direction": {
+          "$ref": "#/$defs/offsetDirection"
+        }
+      }
+    },
+    "fillet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceEntityIds",
+        "radius"
+      ],
+      "properties": {
+        "sourceEntityIds": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "radius": {
+          "$ref": "#/$defs/constraintValue"
+        },
+        "closed": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "offsetDirection": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right",
+        "inward",
+        "outward"
+      ]
+    },
+    "constraintKind": {
+      "type": "string",
+      "enum": [
+        "coincident",
+        "horizontal",
+        "vertical",
+        "parallel",
+        "perpendicular",
+        "tangent",
+        "symmetric",
+        "distance",
+        "horizontalDistance",
+        "verticalDistance",
+        "pointLineDistance",
+        "lineLineDistance",
+        "pointOnLine",
+        "segmentLength",
+        "angle",
+        "fixed",
+        "diameter",
+        "radius",
+        "equalSegmentLength"
+      ]
+    },
+    "constraintTarget": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "entity"
+          ],
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "controlPoint"
+          ],
+          "properties": {
+            "controlPoint": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "entity_id",
+                "point"
+              ],
+              "properties": {
+                "entity_id": {
+                  "$ref": "#/$defs/id"
+                },
+                "point": {
+                  "$ref": "#/$defs/controlPointKind"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "viewAnnotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "measurementAnnotations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/measurementAnnotation"
+          },
+          "default": []
+        },
+        "dimensionConstraintAnnotations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dimensionConstraintAnnotation"
+          },
+          "default": []
+        }
+      }
+    },
+    "dimensionConstraintAnnotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraintId",
+        "labelOffsetMm",
+        "overallOffsetMm",
+        "visible"
+      ],
+      "properties": {
+        "constraintId": {
+          "$ref": "#/$defs/id"
+        },
+        "labelOffsetMm": {
+          "$ref": "#/$defs/point2"
+        },
+        "overallOffsetMm": {
+          "$ref": "#/$defs/point2"
+        },
+        "visible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "measurementAnnotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "targets",
+        "labelOffsetMm",
+        "overallOffsetMm",
+        "visible"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "$ref": "#/$defs/measurementAnnotationKind"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/constraintTarget"
+          }
+        },
+        "labelOffsetMm": {
+          "$ref": "#/$defs/point2"
+        },
+        "overallOffsetMm": {
+          "$ref": "#/$defs/point2"
+        },
+        "visible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "measurementAnnotationKind": {
+      "type": "string",
+      "enum": [
+        "distance",
+        "segmentLength",
+        "angle",
+        "radius",
+        "diameter",
+        "arcSweepAngle"
+      ]
+    },
+    "controlPointKind": {
+      "type": "string",
+      "enum": [
+        "start",
+        "end",
+        "center"
+      ]
+    },
+    "constraintValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fixedMm"
+          ],
+          "properties": {
+            "fixedMm": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fixedDegrees"
+          ],
+          "properties": {
+            "fixedDegrees": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "parameter"
+          ],
+          "properties": {
+            "parameter": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      ]
+    },
+    "constraintStatus": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "underConstrained",
+        "fullyConstrained",
+        "overConstrained",
+        "conflicting"
+      ]
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "valueMm",
+        "unit",
+        "memo"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valueMm": {
+          "type": "number"
+        },
+        "unit": {
+          "const": "millimeter"
+        },
+        "memo": {
+          "type": "string"
+        }
+      }
+    },
+    "printSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paperSize",
+        "orientation",
+        "scale",
+        "printableArea",
+        "scaleGuide"
+      ],
+      "properties": {
+        "paperSize": {
+          "type": "string",
+          "enum": [
+            "a4"
+          ]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "portrait",
+            "landscape"
+          ]
+        },
+        "scale": {
+          "const": "actualSize"
+        },
+        "printableArea": {
+          "$ref": "#/$defs/printableArea"
+        },
+        "scaleGuide": {
+          "$ref": "#/$defs/scaleGuide"
+        }
+      }
+    },
+    "printableArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "leftMm",
+        "rightMm",
+        "topMm",
+        "bottomMm"
+      ],
+      "properties": {
+        "leftMm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rightMm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "topMm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bottomMm": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "scaleGuide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "lengthMm"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "lengthMm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    }
+  }
+}
