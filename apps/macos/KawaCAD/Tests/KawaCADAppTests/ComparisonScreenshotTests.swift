@@ -905,7 +905,7 @@ private final class ScreenshotDocumentSessionAdapter: DocumentSessionAdapting {
     canRedo = state.history.canRedo
   }
 
-  func createNewDocument(named name: String, viewMode: CanvasViewMode) -> LeatherCoreResult<
+  func createNewDocument(viewMode: CanvasViewMode) -> LeatherCoreResult<
     LeatherDocumentState
   > {
     .success(state)

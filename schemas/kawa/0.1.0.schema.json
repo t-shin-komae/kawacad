@@ -107,16 +107,11 @@
       "additionalProperties": false,
       "required": [
         "id",
-        "name",
         "unit"
       ],
       "properties": {
         "id": {
           "$ref": "#/$defs/id"
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1
         },
         "unit": {
           "const": "mm"

@@ -1,6 +1,9 @@
 import { useEffect, type MutableRefObject } from "react";
 import { appStrings } from "@/localization";
-import { documentWindowPresentation } from "@/features/workspace/selectors/documentWindowPresentation";
+import {
+  documentDisplayName,
+  documentWindowPresentation,
+} from "@/features/workspace/selectors/documentWindowPresentation";
 import type { State } from "@/shared/domain/coreWireTypes";
 import { desktopAdapter } from "@/adapters/desktopAdapter";
 import { recoveryAdapter } from "@/adapters/recoveryAdapter";
@@ -25,11 +28,7 @@ export function useWindowLifecycle({
 }: Props) {
   useEffect(() => {
     if (!state) return;
-    const title = documentWindowPresentation(
-      state.snapshot.name,
-      state.persistence.path,
-      state.persistence.isDirty,
-    ).title;
+    const title = documentWindowPresentation(state.persistence.path, state.persistence.isDirty).title;
     document.title = title;
     void windowAdapter.setTitle(title).catch(() => undefined);
   }, [state]);
@@ -48,7 +47,7 @@ export function useWindowLifecycle({
         }
         const choice = await requestDocumentSaveConfirmation(
           appStrings.app.saveAndCloseQuestion,
-          state?.snapshot.name ?? appStrings.app.untitled,
+          documentDisplayName(state?.persistence.path),
         );
         if (choice === "save") {
           if (!(await saveBeforeDestructiveAction())) return;
@@ -82,6 +81,6 @@ export function useWindowLifecycle({
     requestDocumentSaveConfirmation,
     saveBeforeDestructiveAction,
     state?.persistence.isDirty,
-    state?.snapshot.name,
+    state?.persistence.path,
   ]);
 }

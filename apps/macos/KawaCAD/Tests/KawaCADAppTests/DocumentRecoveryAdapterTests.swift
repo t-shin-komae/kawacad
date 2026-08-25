@@ -29,7 +29,7 @@ func document_recovery_adapter_commits_and_lists_candidates() throws {
       {
         "fileFormatVersion": "0.1.0",
         "schemaVersion": "0.1.0",
-        "document": { "name": "Recovered Project" }
+        "document": { "id": "document-1", "unit": "mm" }
       }
       """
     do {
@@ -77,7 +77,7 @@ func document_recovery_adapter_removes_recovery_directory() throws {
       {
         "fileFormatVersion": "0.1.0",
         "schemaVersion": "0.1.0",
-        "document": { "name": "Saved Project" }
+        "document": { "id": "document-2", "unit": "mm" }
       }
       """
     do {
@@ -122,7 +122,7 @@ func document_recovery_adapter_keeps_broken_entries_during_max_document_cleanup(
           {
             "fileFormatVersion": "0.1.0",
             "schemaVersion": "0.1.0",
-            "document": { "name": "\(displayName)" }
+            "document": { "id": "\(recoveryID)", "unit": "mm" }
           }
           """.utf8
         ).write(to: snapshotURL, options: .atomic)

@@ -1,5 +1,3 @@
-import type * as React from "react";
-import type { DocumentHeaderHandle } from "@/features/document/domain/documentHeaderTypes";
 import type { PointMm } from "@/features/canvas/domain/cad";
 import type { State } from "@/shared/domain/coreWireTypes";
 import type { PasteOptions, PendingTextEntry, SelectionExport } from "@/features/canvas/state/useCanvasPresentation";
@@ -36,9 +34,7 @@ export type DocumentActionInput = {
   presentTextEntry: (entry: PendingTextEntry) => void;
   clearPendingTextEntry: () => void;
   setMessage: (message: string) => void;
-  documentHeader: React.MutableRefObject<DocumentHeaderHandle | null>;
-  documentNameForFileDialog: React.MutableRefObject<string | undefined>;
-  requestDocumentSaveConfirmation: (reason: string, documentName: string) => Promise<DocumentSaveChoice>;
+  requestDocumentSaveConfirmation: (reason: string, displayName: string) => Promise<DocumentSaveChoice>;
   clipboard: SelectionExport | undefined;
   storeSelectionExport: (exported: SelectionExport) => void;
   pasteOptions: PasteOptions | undefined;

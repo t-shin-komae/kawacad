@@ -35,7 +35,8 @@ fn new_document_uses_expected_defaults_and_snapshot() {
     assert_eq!(FILE_FORMAT_VERSION, "0.1.0");
     assert_eq!(document.file_format_version(), FILE_FORMAT_VERSION);
     assert_eq!(document.schema_version(), SCHEMA_VERSION);
-    assert_eq!(document.metadata().name, "Leather");
+    assert_eq!(document.metadata().id, "document:local");
+    assert_eq!(document.metadata().unit, "mm");
     assert_eq!(document.layers().len(), 1);
     assert_eq!(document.layers()[0].id, "layer:cut-line");
     assert_eq!(
@@ -3555,29 +3556,6 @@ fn kawa_schema_constraint_kinds_match_public_constraint_kind_json() {
 }
 
 #[test]
-fn document_name_can_be_renamed() {
-    let mut document = ProjectDocument::new("Leather");
-
-    document
-        .apply_command(DocumentCommand::RenameDocument {
-            name: " Pattern A ".to_owned(),
-        })
-        .expect("document rename should succeed");
-
-    assert_eq!(document.metadata().name, "Pattern A");
-    assert!(matches!(
-        document.apply_command(DocumentCommand::RenameDocument {
-            name: " ".to_owned(),
-        }),
-        Err(kawacad_core::command::CommandError::InvalidValue {
-            field: "document name",
-            ..
-        })
-    ));
-    assert_eq!(document.metadata().name, "Pattern A");
-}
-
-#[test]
 fn arc_metric_partial_update_preserves_unspecified_values() {
     let mut document = ProjectDocument::new("Arc partial update");
     document
@@ -7036,17 +7014,6 @@ fn document_validation_rejects_invalid_metadata_and_schema_versions() {
     assert!(matches!(
         document.validate(),
         Err(DocumentValidationError::EmptyId("document metadata"))
-    ));
-
-    let document = document_with_json_mutation("Validation", |value| {
-        value["document"]["name"] = serde_json::Value::String(" ".to_owned());
-    });
-    assert!(matches!(
-        document.validate(),
-        Err(DocumentValidationError::InvalidValue {
-            field: "document name",
-            ..
-        })
     ));
 
     let document = document_with_json_mutation("Validation", |value| {

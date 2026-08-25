@@ -112,7 +112,7 @@ export type CanvasProjection = {
 export type EditControlTarget = ConstraintTarget | { controlPoint: { entityId: string; point: "radius" } };
 
 export type State = {
-  snapshot: { name: string; constraintStatus?: string; statistics: Record<string, number> };
+  snapshot: { constraintStatus?: string; statistics: Record<string, number> };
   history: { canUndo: boolean; canRedo: boolean };
   persistence: { isDirty: boolean; hasPath?: boolean; path?: string };
   settings: { orientation: "portrait" | "landscape" };

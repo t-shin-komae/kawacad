@@ -23,7 +23,7 @@ function showDetailedTools() {
 }
 
 const state = {
-  snapshot: { name: "Test project", statistics: {} },
+  snapshot: { statistics: {} },
   history: { canUndo: false, canRedo: false },
   persistence: { isDirty: false },
   settings: { orientation: "portrait" },
@@ -220,7 +220,7 @@ describe("React workspace shortcuts", () => {
   });
   it("loads Core state and exposes the SwiftUI drawing shortcuts", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "3", metaKey: true });
     expect(screen.getByText("線分", { selector: ".toolbar-tool" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "a", metaKey: true });
@@ -228,13 +228,13 @@ describe("React workspace shortcuts", () => {
   });
   it("opens PDF output from the native File menu action", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "exportPDF" }));
     expect(await screen.findByRole("dialog", { name: "PDF" })).toBeInTheDocument();
   });
   it("uses unmodified V to return to Select", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "3", metaKey: true });
     expect(screen.getByText("線分", { selector: ".toolbar-tool" })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: "v" });
@@ -249,7 +249,7 @@ describe("React workspace shortcuts", () => {
       return historyState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
     fireEvent.click(screen.getByRole("button", { name: "線分" }));
@@ -277,7 +277,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "3", metaKey: true });
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
@@ -309,7 +309,7 @@ describe("React workspace shortcuts", () => {
       return filletState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     showDetailedTools();
     fireEvent.click(screen.getByRole("button", { name: "フィレット" }));
@@ -350,7 +350,7 @@ describe("React workspace shortcuts", () => {
       return offsetState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "offset" }));
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
@@ -385,7 +385,7 @@ describe("React workspace shortcuts", () => {
       return filletState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     showDetailedTools();
     fireEvent.click(screen.getByRole("button", { name: "フィレット" }));
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
@@ -453,7 +453,7 @@ describe("React workspace shortcuts", () => {
       return filletState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     showDetailedTools();
     fireEvent.click(screen.getByRole("button", { name: "フィレット" }));
@@ -501,7 +501,7 @@ describe("React workspace shortcuts", () => {
       return filletState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     showDetailedTools();
     fireEvent.click(screen.getByRole("button", { name: "フィレット" }));
@@ -531,7 +531,7 @@ describe("React workspace shortcuts", () => {
   });
   it("duplicates a selected drawing with SwiftUI's five-millimetre offset", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     fireEvent.keyDown(window, { key: "d", metaKey: true });
     await waitFor(() =>
@@ -548,7 +548,7 @@ describe("React workspace shortcuts", () => {
   });
   it("creates a clockwise-over-180-degree arc with the SwiftUI sweep reference", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("button", { name: "円弧" }));
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
@@ -581,7 +581,7 @@ describe("React workspace shortcuts", () => {
   });
   it("makes the canvas and primary controls accessible by name", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     expect(screen.getByRole("application", { name: "型紙作図キャンバス" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "インスペクタを表示" })).toBeInTheDocument();
     expect(screen.getByRole("status")).toBeInTheDocument();
@@ -610,7 +610,7 @@ describe("React workspace shortcuts", () => {
     });
 
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: /^Cut Line/ }));
     fireEvent.click(screen.getByRole("button", { name: "削除" }));
@@ -647,7 +647,7 @@ describe("React workspace shortcuts", () => {
     });
 
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: /^補助線/ }));
     fireEvent.keyDown(window, { key: "2", metaKey: true });
@@ -671,7 +671,7 @@ describe("React workspace shortcuts", () => {
   });
   it("leaves Backspace available to the layer name field", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: /^Cut Line/ }));
     const input = screen.getByRole("textbox", { name: "Cut Line の名前" });
@@ -695,7 +695,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -727,7 +727,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("button", { name: "テキスト" }));
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
@@ -760,7 +760,7 @@ describe("React workspace shortcuts", () => {
       return previewState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -789,7 +789,7 @@ describe("React workspace shortcuts", () => {
       return hiddenState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -815,7 +815,7 @@ describe("React workspace shortcuts", () => {
       return lineState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     fireEvent.click(screen.getByRole("button", { name: "現在長さを拘束" }));
     await waitFor(() =>
@@ -845,7 +845,7 @@ describe("React workspace shortcuts", () => {
       return lineState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("button", { name: "線分長" }));
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
@@ -883,7 +883,7 @@ describe("React workspace shortcuts", () => {
       return lineState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("button", { name: "線分長" }));
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
@@ -916,7 +916,7 @@ describe("React workspace shortcuts", () => {
       return markerState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -942,7 +942,7 @@ describe("React workspace shortcuts", () => {
       return markerState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -969,7 +969,7 @@ describe("React workspace shortcuts", () => {
       return stitchState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1007,7 +1007,7 @@ describe("React workspace shortcuts", () => {
       return measurementState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1044,7 +1044,7 @@ describe("React workspace shortcuts", () => {
       return measurementState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1090,7 +1090,7 @@ describe("React workspace shortcuts", () => {
       return freeTextState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1131,7 +1131,7 @@ describe("React workspace shortcuts", () => {
       return freeTextState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1167,7 +1167,7 @@ describe("React workspace shortcuts", () => {
       return freeTextState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1195,7 +1195,7 @@ describe("React workspace shortcuts", () => {
       return canvasState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1256,7 +1256,7 @@ describe("React workspace shortcuts", () => {
       return partState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1311,7 +1311,7 @@ describe("React workspace shortcuts", () => {
       return canvasState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1365,7 +1365,7 @@ describe("React workspace shortcuts", () => {
       return overlappingState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1404,7 +1404,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1446,7 +1446,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     fireEvent.keyDown(window, { key: "c", metaKey: true });
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("export_selection", expect.anything()));
@@ -1477,7 +1477,7 @@ describe("React workspace shortcuts", () => {
       return dimensionState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -1501,88 +1501,10 @@ describe("React workspace shortcuts", () => {
       ),
     );
   });
-  it("uses the SwiftUI-style editable document header", async () => {
-    render(<App />);
-    const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
-    expect(name).toHaveValue("Test project");
-    expect(screen.getByText(".kawa 0.1.0 / mm / A4 Portrait")).toBeInTheDocument();
-    fireEvent.change(name, { target: { value: "Renamed project" } });
-    fireEvent.blur(name);
-    await waitFor(() =>
-      expect(mocks.invoke).toHaveBeenCalledWith(
-        "apply_command",
-        expect.objectContaining({ command: { kind: "renameDocument", payload: { name: "Renamed project" } } }),
-      ),
-    );
-  });
-  it("commits an in-progress document name before saving the current project", async () => {
-    mocks.invoke.mockImplementation(async (command: string) => {
-      if (command === "document_state")
-        return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/current.kawa" } };
-      if (command === "recovery_candidate") return null;
-      if (command === "load_part_library") return [];
-      return state;
-    });
-    render(<App />);
-    const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
-    fireEvent.change(name, { target: { value: "保存する名称" } });
-    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "save" }));
-    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_current_document"));
-    const renameIndex = mocks.invoke.mock.calls.findIndex(
-      ([command, payload]) =>
-        command === "apply_command" &&
-        (payload as { command?: { kind?: string; payload?: { name?: string } } }).command?.kind === "renameDocument",
-    );
-    const saveIndex = mocks.invoke.mock.calls.findIndex(([command]) => command === "save_current_document");
-    expect(renameIndex).toBeGreaterThanOrEqual(0);
-    expect(renameIndex).toBeLessThan(saveIndex);
-  });
-  it("blocks saving when the in-progress document name is invalid", async () => {
-    mocks.invoke.mockImplementation(async (command: string) => {
-      if (command === "document_state") return { ...state, persistence: { isDirty: true, hasPath: true } };
-      if (command === "recovery_candidate") return null;
-      if (command === "load_part_library") return [];
-      return state;
-    });
-    render(<App />);
-    const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
-    fireEvent.change(name, { target: { value: "   " } });
-    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "save" }));
-    await waitFor(() => expect(screen.getByText("プロジェクト名を入力してください。")).toBeInTheDocument());
-    expect(mocks.invoke).not.toHaveBeenCalledWith("save_current_document");
-    expect(mocks.invoke).not.toHaveBeenCalledWith(
-      "apply_command",
-      expect.objectContaining({ command: expect.objectContaining({ kind: "renameDocument" }) }),
-    );
-  });
-  it("blocks a replacement action when the in-progress document name is invalid", async () => {
-    render(<App />);
-    const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
-    fireEvent.change(name, { target: { value: "   " } });
-    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    await waitFor(() => expect(screen.getByText("プロジェクト名を入力してください。")).toBeInTheDocument());
-    expect(screen.queryByRole("dialog", { name: "新規プロジェクト" })).not.toBeInTheDocument();
-    expect(mocks.invoke).not.toHaveBeenCalledWith("new_document", expect.anything());
-  });
-  it("uses a committed project name for Save As even when the dialog is cancelled", async () => {
-    render(<App />);
-    const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
-    fireEvent.change(name, { target: { value: "別名保存する名称" } });
-    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
-    await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
-    expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ defaultPath: "別名保存する名称.kawa" }));
-    expect(mocks.invoke).toHaveBeenCalledWith(
-      "apply_command",
-      expect.objectContaining({
-        command: { kind: "renameDocument", payload: { name: "別名保存する名称" } },
-      }),
-    );
-    expect(mocks.invoke).not.toHaveBeenCalledWith("save_document", expect.anything());
-  });
   it("normalizes an extensionless Save As path and only offers .kawa files", async () => {
     mocks.save.mockResolvedValue("/projects/wallet-pattern");
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
 
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
 
@@ -1590,7 +1512,7 @@ describe("React workspace shortcuts", () => {
       expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/wallet-pattern.kawa" }),
     );
     expect(mocks.save).toHaveBeenCalledWith({
-      defaultPath: "Test project.kawa",
+      defaultPath: "無題プロジェクト.kawa",
       filters: [{ name: "KawaCAD project", extensions: ["kawa"] }],
     });
   });
@@ -1615,7 +1537,7 @@ describe("React workspace shortcuts", () => {
       return currentState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
 
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "saveAs" }));
     await waitFor(() =>
@@ -1639,34 +1561,12 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    const dialog = await screen.findByRole("dialog", { name: "新規プロジェクト" });
-    fireEvent.click(within(dialog).getByRole("button", { name: "適用" }));
     await waitFor(() => expect(screen.getByText("Error: create failed")).toBeInTheDocument());
     expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0);
-  });
-  it("keeps an uncommitted project-name draft when creating a replacement document fails", async () => {
-    mocks.invoke.mockImplementation(async (command: string) => {
-      if (command === "new_document") throw new Error("create failed");
-      if (command === "recovery_candidate") return null;
-      if (command === "load_part_library") return [];
-      return state;
-    });
-    render(<App />);
-    const name = await screen.findByRole("textbox", { name: "プロジェクト名" });
-    fireEvent.change(name, { target: { value: "入力中の名称" } });
-    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    const dialog = await screen.findByRole("dialog", { name: "新規プロジェクト" });
-    fireEvent.click(within(dialog).getByRole("button", { name: "適用" }));
-    await waitFor(() => expect(screen.getByText("Error: create failed")).toBeInTheDocument());
-    expect(name).toHaveValue("入力中の名称");
-    expect(mocks.invoke).not.toHaveBeenCalledWith(
-      "apply_command",
-      expect.objectContaining({ command: expect.objectContaining({ kind: "renameDocument" }) }),
-    );
   });
   it("keeps the current selection when opening a replacement document fails", async () => {
     mocks.open.mockResolvedValue("/projects/broken.kawa");
@@ -1677,7 +1577,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "open" }));
@@ -1686,7 +1586,7 @@ describe("React workspace shortcuts", () => {
   });
   it("uses the SwiftUI-style inspector tabs and compact tool filter", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     expect(screen.getByRole("button", { name: "レイヤーを追加" })).toBeInTheDocument();
@@ -1720,7 +1620,7 @@ describe("React workspace shortcuts", () => {
       return currentState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
 
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent.click(screen.getByRole("button", { name: "レイヤーを追加" }));
@@ -1795,7 +1695,7 @@ describe("React workspace shortcuts", () => {
       return styleState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     const stylePicker = await screen.findByRole("combobox", { name: "選択図形の共有スタイル" });
     fireEvent.change(stylePicker, { target: { value: "style:stitch" } });
@@ -1822,16 +1722,11 @@ describe("React workspace shortcuts", () => {
   });
   it("resets inspector tabs and search state when a new document replaces the current one", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent(window, new Event("kawa-cad-find-inspector"));
     fireEvent.change(screen.getByRole("searchbox", { name: "レイヤーを検索" }), { target: { value: "cut" } });
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    const dialog = await screen.findByRole("dialog", { name: "新規プロジェクト" });
-    fireEvent.change(within(dialog).getByRole("textbox", { name: "プロジェクト名" }), {
-      target: { value: "Replacement" },
-    });
-    fireEvent.click(within(dialog).getByRole("button", { name: "適用" }));
     await waitFor(() => expect(screen.getByRole("tab", { name: "選択" })).toHaveAttribute("aria-selected", "true"));
     fireEvent.click(screen.getByRole("tab", { name: "レイヤー" }));
     fireEvent(window, new Event("kawa-cad-find-inspector"));
@@ -1845,16 +1740,16 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
-    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    const confirmation = await screen.findByRole("dialog", { name: "無題プロジェクトの変更を保存しますか？" });
     expect(confirmation).toHaveTextContent("現在の未保存変更");
     fireEvent.click(within(confirmation).getByRole("button", { name: "キャンセル" }));
     expect(screen.queryByRole("dialog", { name: "新規プロジェクト" })).not.toBeInTheDocument();
     expect(mocks.invoke).not.toHaveBeenCalledWith("new_document", expect.anything());
     expect(mocks.confirm).not.toHaveBeenCalled();
   });
-  it("saves a dirty document before opening the SwiftUI new-project entry", async () => {
+  it("saves a dirty document before creating a new document", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === "document_state")
         return { ...state, persistence: { isDirty: true, hasPath: true, path: "/projects/dirty.kawa" } };
@@ -1863,15 +1758,15 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "dirty.kawaの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_document", { path: "/projects/dirty.kawa" }));
-    expect(await screen.findByRole("dialog", { name: "新規プロジェクト" })).toBeInTheDocument();
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("new_document"));
   });
   it("saves a dirty document before opening another project", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
@@ -1883,10 +1778,10 @@ describe("React workspace shortcuts", () => {
     });
     mocks.open.mockResolvedValue("/projects/opened.kawa");
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "open" }));
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "dirty.kawaの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );
@@ -1905,12 +1800,15 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "new" }));
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
-        name: "保存",
-      }),
+      within(await screen.findByRole("dialog", { name: "無題プロジェクトの変更を保存しますか？" })).getByRole(
+        "button",
+        {
+          name: "保存",
+        },
+      ),
     );
     await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
     expect(screen.queryByRole("dialog", { name: "新規プロジェクト" })).not.toBeInTheDocument();
@@ -1918,7 +1816,7 @@ describe("React workspace shortcuts", () => {
   });
   it("resizes the tool palette within the SwiftUI range and restores its default", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const handle = screen.getByRole("separator", { name: "ツールパレットの幅" });
     expect(handle).toHaveAttribute("aria-valuenow", "176");
     fireEvent.keyDown(handle, { key: "ArrowRight" });
@@ -1932,7 +1830,7 @@ describe("React workspace shortcuts", () => {
   });
   it("persists the SwiftUI tool-palette and inspector preferences", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     expect(screen.getByRole("button", { name: "詳細ツールを表示" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "詳細ツールを表示" }));
     expect(window.localStorage.getItem("leather.toolPalette.showsDetailedTools")).toBe("true");
@@ -1950,7 +1848,7 @@ describe("React workspace shortcuts", () => {
   });
   it("accepts native menu intents through the same command path", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "circle" }));
     await waitFor(() => expect(screen.getByText("円", { selector: ".toolbar-tool" })).toBeInTheDocument());
   });
@@ -1968,7 +1866,7 @@ describe("React workspace shortcuts", () => {
       }),
     );
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
 
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
     expect(await screen.findByText("last notice", { exact: true })).toBeInTheDocument();
@@ -1980,7 +1878,7 @@ describe("React workspace shortcuts", () => {
   it("reloads the saved document through the adapter command", async () => {
     const reloadedState = {
       ...state,
-      snapshot: { ...state.snapshot, name: "Reloaded project" },
+      snapshot: { ...state.snapshot },
       persistence: { isDirty: false, hasPath: true, path: "/projects/reloaded.kawa" },
       layers: [{ ...state.layers[0], id: "layer:reloaded", name: "Reloaded layer" }],
       sharedStyles: [{ ...state.sharedStyles[0], id: "style:reloaded", name: "Reloaded style" }],
@@ -1993,13 +1891,13 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
     fireEvent.keyDown(window, { key: "3", metaKey: true });
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "reload" }));
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("reload_document"));
-    expect(await screen.findByDisplayValue("Reloaded project")).toBeInTheDocument();
+    await waitFor(() => expect(mocks.setTitle).toHaveBeenCalledWith("reloaded.kawa"));
     expect(screen.getByRole("combobox", { name: "作図レイヤー" })).toHaveValue("layer:reloaded");
     expect(screen.getByRole("combobox", { name: "型紙線種" })).toHaveValue("style:reloaded");
     expect(screen.queryByText(/1 選択/)).not.toBeInTheDocument();
@@ -2014,17 +1912,16 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "a", metaKey: true });
     await waitFor(() => expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0));
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "reload" }));
     await waitFor(() => expect(screen.getByText("Error: reload failed")).toBeInTheDocument());
-    expect(screen.getByDisplayValue("Test project")).toBeInTheDocument();
     expect(screen.getAllByText(/1 選択/).length).toBeGreaterThan(0);
   });
   it("exposes the canvas context menu with accessible actions", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.contextMenu(screen.getByRole("application", { name: "型紙作図キャンバス" }), {
       clientX: 12,
       clientY: 14,
@@ -2037,7 +1934,7 @@ describe("React workspace shortcuts", () => {
 
   it("dismisses the canvas context menu when the pointer lands outside it", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.contextMenu(screen.getByRole("application", { name: "型紙作図キャンバス" }), {
       clientX: 12,
       clientY: 14,
@@ -2079,7 +1976,7 @@ describe("React workspace shortcuts", () => {
       return measurementState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -2105,7 +2002,7 @@ describe("React workspace shortcuts", () => {
       return arcState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -2144,7 +2041,7 @@ describe("React workspace shortcuts", () => {
       return freeTextState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -2164,7 +2061,7 @@ describe("React workspace shortcuts", () => {
       return defaultInvoke(command);
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const orientation = screen.getByRole("button", { name: "A4横向き" });
     fireEvent.click(orientation);
     await waitFor(() => expect(orientation).toHaveAttribute("aria-pressed", "true"));
@@ -2194,12 +2091,12 @@ describe("React workspace shortcuts", () => {
 
     render(<App />);
 
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     expect(screen.getByRole("button", { name: "A4横向き" })).toHaveAttribute("aria-pressed", "true");
   });
   it("orders the wide toolbar controls and Japanese labels like the SwiftUI toolbar", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const toolbar = screen.getByRole("navigation", { name: "CAD ツールバー" });
     const text = toolbar.textContent ?? "";
     expect(text).toContain("選択作図レイヤーCut Line倍率 100%");
@@ -2225,7 +2122,7 @@ describe("React workspace shortcuts", () => {
       return constrainedState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     expect(screen.queryByTitle("拘束状態")).not.toBeInTheDocument();
   });
   it("keeps part library export and placement in the React workspace", async () => {
@@ -2297,7 +2194,7 @@ describe("React workspace shortcuts", () => {
       return partState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     fireEvent.click(screen.getByRole("button", { name: /^Resolved part/ }));
     fireEvent.click(screen.getByRole("button", { name: "所属図形を選択" }));
@@ -2325,7 +2222,7 @@ describe("React workspace shortcuts", () => {
       return { ...state, parts: [part] };
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("tab", { name: "パーツ" }));
     fireEvent.click(screen.getByRole("button", { name: /^Escape part/ }));
     fireEvent.click(screen.getByRole("button", { name: "所属図形を選択" }));
@@ -2391,7 +2288,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("save_recovery_snapshot"), { timeout: 3_000 });
   });
   it("presents a Core document warning and lets the user dismiss it", async () => {
@@ -2415,8 +2312,8 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
-    await waitFor(() => expect(mocks.setTitle).toHaveBeenCalledWith("Test project — 未保存"));
+    await screen.findByText("ツールを選択して作図してください。");
+    await waitFor(() => expect(mocks.setTitle).toHaveBeenCalledWith("無題プロジェクト — 未保存"));
     const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
       [(event: { preventDefault: () => void }) => Promise<void>]
     >;
@@ -2425,7 +2322,7 @@ describe("React workspace shortcuts", () => {
     expect(handler).toBeDefined();
     const preventDefault = vi.fn();
     const closeRequest = handler?.({ preventDefault });
-    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    const confirmation = await screen.findByRole("dialog", { name: "無題プロジェクトの変更を保存しますか？" });
     fireEvent.click(within(confirmation).getByRole("button", { name: "変更を破棄" }));
     await closeRequest;
     expect(preventDefault).toHaveBeenCalledOnce();
@@ -2442,14 +2339,14 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
       [(event: { preventDefault: () => void }) => Promise<void>]
     >;
     const handler = calls[calls.length - 1]?.[0] as
       ((event: { preventDefault: () => void }) => Promise<void>) | undefined;
     const closeRequest = handler?.({ preventDefault: vi.fn() });
-    const confirmation = await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" });
+    const confirmation = await screen.findByRole("dialog", { name: "無題プロジェクトの変更を保存しますか？" });
     fireEvent.click(within(confirmation).getByRole("button", { name: "変更を破棄" }));
     await closeRequest;
 
@@ -2467,7 +2364,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
       [(event: { preventDefault: () => void }) => Promise<void>]
     >;
@@ -2475,7 +2372,7 @@ describe("React workspace shortcuts", () => {
       ((event: { preventDefault: () => void }) => Promise<void>) | undefined;
     const closeRequest = handler?.({ preventDefault: vi.fn() });
     fireEvent.click(
-      within(await screen.findByRole("dialog", { name: "Test projectの変更を保存しますか？" })).getByRole("button", {
+      within(await screen.findByRole("dialog", { name: "dirty.kawaの変更を保存しますか？" })).getByRole("button", {
         name: "保存",
       }),
     );
@@ -2485,7 +2382,7 @@ describe("React workspace shortcuts", () => {
   });
   it("destroys a clean window when the native close button is requested", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
       [(event: { preventDefault: () => void }) => Promise<void>]
     >;
@@ -2506,7 +2403,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const calls = mocks.onCloseRequested.mock.calls as unknown as Array<
       [(event: { preventDefault: () => void }) => Promise<void>]
     >;
@@ -2518,7 +2415,7 @@ describe("React workspace shortcuts", () => {
   it("uses mutually exclusive compact drawers and closes them when returning to a docked layout", async () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 800 });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new Event("resize"));
     await waitFor(() => expect(document.querySelector(".layout-compact")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "ツールを表示" }));
@@ -2538,7 +2435,7 @@ describe("React workspace shortcuts", () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 800 });
     window.localStorage.setItem("leather.layout.inspectorPanelVisible", "false");
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent(window, new Event("resize"));
     await waitFor(() => expect(document.querySelector(".layout-compact")).toBeInTheDocument());
     fireEvent.keyDown(window, { key: "a", metaKey: true });
@@ -2548,7 +2445,7 @@ describe("React workspace shortcuts", () => {
   });
   it("toggles the SwiftUI bottom workbench from the status bar", async () => {
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.click(screen.getByRole("button", { name: "サマリーを表示" }));
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("選択なし");
     fireEvent.click(screen.getByRole("button", { name: "サマリーを隠す" }));
@@ -2567,7 +2464,7 @@ describe("React workspace shortcuts", () => {
       return state;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     expect(screen.getByText("出力プレビュー: 1 ページ")).toBeInTheDocument();
   });
   it("returns from output preview before activating a SwiftUI editing tool", async () => {
@@ -2584,7 +2481,7 @@ describe("React workspace shortcuts", () => {
       return previewState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     fireEvent.keyDown(window, { key: "3", metaKey: true });
     await waitFor(() =>
       expect(mocks.invoke).toHaveBeenCalledWith("set_view_mode", {
@@ -2610,7 +2507,7 @@ describe("React workspace shortcuts", () => {
       return cursorState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),
@@ -2625,17 +2522,17 @@ describe("React workspace shortcuts", () => {
     fireEvent.pointerLeave(canvas, { pointerId: 1 });
     await waitFor(() => expect(canvas).toHaveClass("canvas-cursor-arrow"));
   });
-  it("matches the SwiftUI window title rules for saved and unsaved projects", () => {
-    expect(documentWindowPresentation("丸型キーホルダー", "/tmp/keyholder-round.kawa", false)).toMatchObject({
-      title: "keyholder-round.kawa — 丸型キーホルダー",
+  it("uses the file name for saved window titles and an untitled label before saving", () => {
+    expect(documentWindowPresentation("/tmp/keyholder-round.kawa", false)).toMatchObject({
+      title: "keyholder-round.kawa",
     });
-    expect(documentWindowPresentation("KeyHolder", "C:\\projects\\keyholder.kawa", true)).toMatchObject({
+    expect(documentWindowPresentation("C:\\projects\\keyholder.kawa", true)).toMatchObject({
       title: "keyholder.kawa",
       accessibilityLabel: expect.stringContaining("未保存の変更あり"),
     });
-    expect(documentWindowPresentation("新しい型紙", undefined, true)).toMatchObject({
-      title: "新しい型紙 — 未保存",
-      accessibilityLabel: expect.stringContaining("新しい型紙"),
+    expect(documentWindowPresentation(undefined, true)).toMatchObject({
+      title: "無題プロジェクト — 未保存",
+      accessibilityLabel: expect.stringContaining("無題プロジェクト"),
     });
   });
 });
@@ -2655,7 +2552,7 @@ describe("Derived edit handles", () => {
       return lineState;
     });
     render(<App />);
-    await screen.findByDisplayValue("Test project");
+    await screen.findByText("ツールを選択して作図してください。");
     const canvas = screen.getByRole("application", { name: "型紙作図キャンバス" });
     Object.defineProperty(canvas, "getBoundingClientRect", {
       value: () => ({ left: 0, top: 0, width: 100, height: 100 }),

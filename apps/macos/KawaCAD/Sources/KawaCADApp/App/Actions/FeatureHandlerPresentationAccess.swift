@@ -143,10 +143,6 @@ extension DocumentActionHandler {
     set { documentPresentation.setPasteOptions(newValue) }
   }
 
-  var pendingDocumentNameDraft: String? {
-    get { documentPresentation.pendingNameDraft }
-    set { documentPresentation.setPendingNameDraft(newValue) }
-  }
 }
 
 extension WorkspaceActionHandler {

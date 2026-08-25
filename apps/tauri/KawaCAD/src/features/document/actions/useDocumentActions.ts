@@ -66,7 +66,6 @@ export function useDocumentActions(context: DocumentActionInput, resetInspectorP
   const documentActions = useDocumentActionCallbacks({
     ...context,
     onHistoryRestored,
-    openTextEntry,
     resetLoadedDocumentPresentation,
   });
   const addLayer = useCallback(() => {

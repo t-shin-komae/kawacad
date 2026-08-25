@@ -84,7 +84,6 @@ struct WorkspaceViewStateFactoryTests {
       constraintCount: 0
     )
     let snapshot = LeatherDocumentSnapshot(
-      name: "Test",
       statistics: statistics,
       editDisplaySummary: LeatherSnapshotSummary(
         visibleEntityCount: 0,

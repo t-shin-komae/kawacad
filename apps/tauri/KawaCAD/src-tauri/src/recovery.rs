@@ -153,7 +153,12 @@ pub(crate) fn save_recovery_snapshot_at(
     fs::rename(&temporary_snapshot, &snapshot_path)
         .map_err(|error| format!("Could not commit recovery snapshot: {error}"))?;
     let metadata = RecoveryMetadata {
-        display_name: session.document.metadata().name.clone(),
+        display_name: session
+            .path
+            .as_ref()
+            .and_then(|path| Path::new(path).file_name())
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "Untitled".to_owned()),
         original_document_path: session.path.clone(),
     };
     let contents = serde_json::to_vec_pretty(&metadata)

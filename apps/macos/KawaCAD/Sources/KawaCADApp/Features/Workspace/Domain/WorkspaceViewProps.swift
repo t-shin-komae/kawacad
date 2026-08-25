@@ -44,18 +44,6 @@ struct CanvasStatusBarActions {
   let setBottomWorkbenchVisible: (Bool) -> Void
 }
 
-struct DocumentHeaderState {
-  let documentName: String
-  let canRenameDocument: Bool
-  let unitLabel: String
-  let paperLabel: String
-}
-
-struct DocumentHeaderActions {
-  let updateDocumentNameDraft: (String) -> Void
-  let commitDocumentName: (String) -> SyncedTextFieldCommitResult
-}
-
 struct ToolPaletteState {
   let selectedTool: CanvasTool
   let sharedStyles: [ProjectSharedStyle]
@@ -151,7 +139,6 @@ struct WorkspaceViewState {
   let compactDrawer: CompactDrawer?
   let windowLayoutMode: WindowLayoutMode
   let toolbarState: CADToolbarState
-  let documentHeaderState: DocumentHeaderState
   let toolPaletteState: ToolPaletteState
   let canvasRenderInput: LeatherCanvasRenderInput
   let canvasInteractionInput: LeatherCanvasInteractionInput
@@ -179,7 +166,6 @@ struct WorkspaceViewState {
 /// adapter.
 struct WorkspaceViewActions {
   let toolbarActions: CADToolbarActions
-  let documentHeaderActions: DocumentHeaderActions
   let toolPaletteActions: ToolPaletteActions
   let canvasActionGroups: LeatherCanvasActionGroups
   let constraintEntryHUDActions: ConstraintEntryHUDActions

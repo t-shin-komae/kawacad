@@ -3,7 +3,6 @@
   "schemaVersion": "0.1.0",
   "document": {
     "id": "document:generic-minimal",
-    "name": "Generic Minimal",
     "unit": "mm"
   },
   "settings": {

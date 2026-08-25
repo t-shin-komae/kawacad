@@ -140,11 +140,8 @@ final class CadSessionState: ObservableObject {
   }
 
   @discardableResult
-  func createDocument(
-    named name: String,
-    viewMode: CanvasViewMode
-  ) -> LeatherCoreResult<LeatherDocumentState> {
-    applyDocumentResult(documentAdapter.createNewDocument(named: name, viewMode: viewMode))
+  func createDocument(viewMode: CanvasViewMode) -> LeatherCoreResult<LeatherDocumentState> {
+    applyDocumentResult(documentAdapter.createNewDocument(viewMode: viewMode))
   }
 
   @discardableResult

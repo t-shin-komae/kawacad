@@ -252,7 +252,7 @@ impl ProjectDocument {
         &self.schema_version
     }
 
-    /// 名前や単位などのドキュメントメタデータを返す。
+    /// IDや単位などのドキュメントメタデータを返す。
     pub fn metadata(&self) -> &DocumentMetadata {
         &self.metadata
     }

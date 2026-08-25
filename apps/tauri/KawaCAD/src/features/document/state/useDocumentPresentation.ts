@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from "react";
-import type { DocumentHeaderHandle } from "@/features/document/domain/documentHeaderTypes";
 
 /** Owns document-level presentation drafts and transition guards. */
 export function useDocumentPresentation() {
@@ -10,13 +9,11 @@ export function useDocumentPresentation() {
   }>();
   const [documentWarning, setDocumentWarning] = useState<string>();
   const allowWindowClose = useRef(false);
-  const documentHeader = useRef<DocumentHeaderHandle>(null);
-  const documentNameForFileDialog = useRef<string>();
   const confirmationResolver = useRef<(choice: DocumentSaveChoice) => void>();
-  const [documentSaveConfirmation, setDocumentSaveConfirmation] = useState<{ reason: string; documentName: string }>();
-  const requestDocumentSaveConfirmation = useCallback((reason: string, documentName: string) => {
+  const [documentSaveConfirmation, setDocumentSaveConfirmation] = useState<{ reason: string; displayName: string }>();
+  const requestDocumentSaveConfirmation = useCallback((reason: string, displayName: string) => {
     confirmationResolver.current?.("cancel");
-    setDocumentSaveConfirmation({ reason, documentName });
+    setDocumentSaveConfirmation({ reason, displayName });
     return new Promise<DocumentSaveChoice>((resolve) => {
       confirmationResolver.current = resolve;
     });
@@ -35,8 +32,6 @@ export function useDocumentPresentation() {
     documentWarning,
     setDocumentWarning,
     allowWindowClose,
-    documentHeader,
-    documentNameForFileDialog,
     documentSaveConfirmation,
     requestDocumentSaveConfirmation,
     resolveDocumentSaveConfirmation,

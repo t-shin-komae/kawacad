@@ -1,52 +1,7 @@
 import Foundation
 
-/// Document naming, layer, parameter, style, and round-hole actions.
+/// Layer, parameter, style, and round-hole actions.
 extension DocumentActionHandler {
-  func updatePendingDocumentNameDraft(_ value: String) {
-    documentPresentation.setPendingNameDraft(value == documentName ? nil : value)
-  }
-
-  @discardableResult
-  func commitPendingDocumentNameDraft(_ explicitValue: String? = nil) -> SyncedTextFieldCommitResult
-  {
-    let value = explicitValue ?? documentPresentation.pendingNameDraft ?? documentName
-    switch CommonFieldValidators.requiredName(value) {
-    case .success(let canonicalValue):
-      let name = canonicalValue ?? value
-      guard renameDocument(to: name) else {
-        return .failure(.init(kind: .domain, text: AppStrings.tr("field.error.invalid_value")))
-      }
-      documentPresentation.setPendingNameDraft(nil)
-      return .success(canonicalValue: canonicalValue)
-    case .failure(let message):
-      return .failure(message)
-    }
-  }
-
-  @discardableResult
-  func commitPendingDocumentNameDraftBeforeDocumentTransition() -> Bool {
-    guard documentPresentation.pendingNameDraft != nil else {
-      return true
-    }
-    if case .success = commitPendingDocumentNameDraft() {
-      return true
-    }
-    return false
-  }
-
-  /// A replacement operation must not mutate the current document merely to
-  /// validate an in-progress title. The replacement itself either succeeds
-  /// or leaves the existing document and its draft untouched.
-  func hasValidPendingDocumentNameDraft() -> Bool {
-    guard let pendingDocumentNameDraft = documentPresentation.pendingNameDraft else {
-      return true
-    }
-    if case .success = CommonFieldValidators.requiredName(pendingDocumentNameDraft) {
-      return true
-    }
-    return false
-  }
-
   func setLayerVisibility(_ layer: ProjectLayer, visible: Bool) {
     let request = commandFactory.makeSetLayerVisibilityCommand(layer, visible: visible)
     executeDocumentCommand(request)
@@ -228,20 +183,6 @@ extension DocumentActionHandler {
   @discardableResult
   func applyActivePatternLineStyleToSelection() -> Bool {
     setSelectedEntitiesSharedStyle(activePatternDrawingStyleID)
-  }
-
-  @discardableResult
-  func renameDocument(to name: String) -> Bool {
-    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else {
-      statusMessage = AppStrings.tr("status.project_name_required")
-      return false
-    }
-    guard trimmed != documentName else {
-      return true
-    }
-    let request = commandFactory.makeRenameDocumentCommand(name: trimmed)
-    return executeDocumentCommand(request)
   }
 
   @discardableResult

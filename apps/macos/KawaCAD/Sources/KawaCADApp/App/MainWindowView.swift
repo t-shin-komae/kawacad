@@ -228,11 +228,6 @@ struct WorkspaceView: View {
 
   private func topChrome(layoutMode: WindowLayoutMode) -> some View {
     VStack(spacing: 0) {
-      DocumentHeader(state: state.documentHeaderState, actions: actions.documentHeaderActions)
-        .frame(height: 42)
-
-      Divider()
-
       responsiveToolbar(for: layoutMode)
 
       Divider()

@@ -302,7 +302,7 @@ func canvasProjection(
 }
 
 func makeDocumentState(
-  name: String = "Test Project",
+  name _: String = "Test Project",
   history: LeatherHistoryState = LeatherHistoryState(canUndo: false, canRedo: false),
   printOrientation: OutputPrintOrientation = .portrait,
   layers: [ProjectLayer] = defaultLayers(),
@@ -335,7 +335,6 @@ func makeDocumentState(
     constraintStatus: constraintStatus
   )
   let snapshot = LeatherDocumentSnapshot(
-    name: name,
     statistics: statistics,
     editDisplaySummary: summary,
     outputPreviewSummary: summary
@@ -783,7 +782,7 @@ final class ScriptedDocumentSessionBackend: DocumentSessionAdapterBackend {
   private let createResults: [LeatherCoreResult<String>]
   private var createAttempts = 0
 
-  private(set) var createdNames: [String] = []
+  private(set) var createCount = 0
   private(set) var readURLs: [URL] = []
   private(set) var lastCreatedSession: ScriptedDocumentSession?
 
@@ -801,8 +800,8 @@ final class ScriptedDocumentSessionBackend: DocumentSessionAdapterBackend {
     self.createResults = createResults
   }
 
-  func createDocument(named name: String) -> LeatherCoreResult<any LeatherDocumentSessionManaging> {
-    createdNames.append(name)
+  func createDocument() -> LeatherCoreResult<any LeatherDocumentSessionManaging> {
+    createCount += 1
     let resultIndex = min(createAttempts, createResults.count - 1)
     createAttempts += 1
     switch createResults[resultIndex] {
@@ -841,7 +840,7 @@ final class RoundTripDocumentSessionBackend: DocumentSessionAdapterBackend {
   private let transitions: [String: [String]]
   private let storage = Storage()
 
-  private(set) var createdNames: [String] = []
+  private(set) var createCount = 0
   private(set) var openedPaths: [String] = []
 
   var savedPaths: [String] {
@@ -853,8 +852,8 @@ final class RoundTripDocumentSessionBackend: DocumentSessionAdapterBackend {
     self.transitions = transitions
   }
 
-  func createDocument(named name: String) -> LeatherCoreResult<any LeatherDocumentSessionManaging> {
-    createdNames.append(name)
+  func createDocument() -> LeatherCoreResult<any LeatherDocumentSessionManaging> {
+    createCount += 1
     return makeSession(currentKey: "original")
   }
 

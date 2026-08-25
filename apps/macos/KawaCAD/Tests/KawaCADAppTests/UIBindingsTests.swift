@@ -78,12 +78,12 @@ func ui_bindings_uc4_menu_callbacks_restore_history_state() {
 
   appState.actions.uiBindings.menu.undo()
   #expect(store.undoCalls == [.editDisplay])
-  #expect(appState.actions.document.documentName == "Undo Project")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
   #expect(appState.actions.canvas.pendingConstraintTargets.isEmpty)
 
   appState.actions.uiBindings.menu.redo()
   #expect(store.redoCalls == [.editDisplay])
-  #expect(appState.actions.document.documentName == "Redo Project")
+  #expect(appState.actions.document.documentName == "無題プロジェクト")
 }
 
 @Test("UI統合回帰 UC5 menu callback で保存と再読込ができる")
@@ -119,7 +119,9 @@ func ui_bindings_uc5_menu_callbacks_save_and_reload_document() {
 
   appState.actions.uiBindings.menu.reloadFromDocument()
   #expect(store.loadStateCalls == [.editDisplay])
-  #expect(appState.actions.document.documentName == "Reloaded Project")
+  #expect(
+    appState.actions.document.documentName
+      == saveURL.deletingPathExtension().lastPathComponent)
   #expect(appState.actions.document.entities.map(\.id) == ["entity:point-b"])
 }
 

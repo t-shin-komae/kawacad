@@ -200,7 +200,6 @@ payload の機械可読な形状は、対象が保存オブジェクトなら ka
 
 | `kind` | 主な入力 | 意味 |
 | --- | --- | --- |
-| `renameDocument` | `name` | ドキュメント名を変更する |
 | `addEntity` / `updateEntity` / `deleteEntity` | `Entity` または ID | 基本図形を追加、置換、削除する |
 | `moveEntities` | entity IDs、移動量 | 選択図形を移動する |
 | `moveControlPoint` | control point、移動先 | 制御点移動の意図から正規図形を更新する |

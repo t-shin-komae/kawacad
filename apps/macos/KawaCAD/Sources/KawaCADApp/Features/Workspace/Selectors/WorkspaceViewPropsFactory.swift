@@ -35,17 +35,6 @@ struct WorkspaceViewPropsFactory {
   private var aggregatedConstraintStatus: ConstraintStatus { handler.aggregatedConstraintStatus }
   private var outputPreviewSummaryText: String? { handler.outputPreviewSummaryText }
   private var statusMessage: String { handler.statusMessage }
-  private var documentName: String { handler.documentName }
-  private var canRenameDocument: Bool { handler.canRenameDocument }
-  private var unitLabel: String { handler.unitLabel }
-  private var paperLabel: String {
-    switch workspacePreferences.a4ReferenceOrientation {
-    case .portrait:
-      return AppStrings.tr("app.paper.a4_portrait")
-    case .landscape:
-      return AppStrings.tr("app.paper.a4_landscape")
-    }
-  }
   private func setToolPanelWidth(_ value: CGFloat) { handler.setToolPanelWidth(value) }
   private func setInspectorPanelWidth(_ value: CGFloat) { handler.setInspectorPanelWidth(value) }
   private func showCompactDrawer(_ drawer: CompactDrawer?) { handler.showCompactDrawer(drawer) }
@@ -67,7 +56,6 @@ struct WorkspaceViewPropsFactory {
       compactDrawer: workspaceLayout.compactDrawer,
       windowLayoutMode: workspaceLayout.windowLayoutMode,
       toolbarState: toolbarState,
-      documentHeaderState: documentHeaderState,
       toolPaletteState: toolPaletteState,
       canvasRenderInput: actions.canvas.canvasRenderInput,
       canvasInteractionInput: actions.canvas.canvasInteractionInput,
@@ -96,7 +84,6 @@ struct WorkspaceViewPropsFactory {
   var workspaceViewActions: WorkspaceViewActions {
     WorkspaceViewActions(
       toolbarActions: toolbarActions,
-      documentHeaderActions: documentHeaderActions,
       toolPaletteActions: toolPaletteActions,
       canvasActionGroups: actions.canvas.canvasActionGroups,
       constraintEntryHUDActions: constraintEntryHUDActions,
@@ -194,22 +181,6 @@ struct WorkspaceViewPropsFactory {
 
   var canvasStatusBarActions: CanvasStatusBarActions {
     CanvasStatusBarActions(setBottomWorkbenchVisible: { [self] in setBottomWorkbenchVisible($0) })
-  }
-
-  var documentHeaderState: DocumentHeaderState {
-    DocumentHeaderState(
-      documentName: documentName,
-      canRenameDocument: canRenameDocument,
-      unitLabel: unitLabel,
-      paperLabel: paperLabel
-    )
-  }
-
-  var documentHeaderActions: DocumentHeaderActions {
-    DocumentHeaderActions(
-      updateDocumentNameDraft: { [self] in actions.document.updatePendingDocumentNameDraft($0) },
-      commitDocumentName: { [self] in actions.document.commitPendingDocumentNameDraft($0) }
-    )
   }
 
   var toolPaletteState: ToolPaletteState {

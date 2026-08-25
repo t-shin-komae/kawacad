@@ -21,9 +21,8 @@ func workspace_props_keep_render_state_and_effects_separate() {
     canvasPresentation: appState.canvasPresentation
   )
   let state = props.workspaceViewState
-  #expect(state.documentHeaderState.documentName == "Workspace Props")
-  #expect(state.documentHeaderState.paperLabel == "A4 Portrait")
   #expect(state.toolbarState.selectedTool == .line)
+  #expect(state.toolbarState.a4ReferenceOrientation == .portrait)
   #expect(state.alertMessage?.message == "test alert")
   #expect(state.compactDrawer == nil)
 
@@ -53,6 +52,6 @@ func workspace_props_keep_render_state_and_effects_separate() {
       actions: appState.actions,
       inspectorPresentation: appState.inspectorPresentation,
       canvasPresentation: appState.canvasPresentation
-    ).workspaceViewState.documentHeaderState.paperLabel == "A4 Landscape"
+    ).workspaceViewState.toolbarState.a4ReferenceOrientation == .landscape
   )
 }

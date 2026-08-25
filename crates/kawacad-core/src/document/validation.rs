@@ -240,12 +240,6 @@ impl ProjectDocument {
         if self.metadata.id.trim().is_empty() {
             return Err(DocumentValidationError::EmptyId("document metadata"));
         }
-        if self.metadata.name.trim().is_empty() {
-            return Err(DocumentValidationError::InvalidValue {
-                field: "document name",
-                reason: "must not be empty",
-            });
-        }
         if self.metadata.unit != "mm" {
             return Err(DocumentValidationError::InvalidValue {
                 field: "document unit",

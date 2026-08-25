@@ -3,7 +3,6 @@ import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { WorkspaceInspector } from "@/features/inspector/components/WorkspaceInspector";
 import { CADToolbar } from "@/features/canvas/components/CadToolbar";
 import { BottomWorkbench } from "@/features/workspace/components/BottomWorkbench";
-import { DocumentHeader } from "@/features/document/components/DocumentHeader";
 import { DocumentSaveConfirmationDialog } from "@/features/document/components/DocumentSaveConfirmationDialog";
 import { PanelResizeHandle } from "@/features/workspace/components/PanelResizeHandle";
 import { WorkspaceCanvasSurface } from "@/features/workspace/components/WorkspaceCanvasSurface";
@@ -29,7 +28,10 @@ import { canvasDisplayStateFor, visibleEntitiesFor } from "@/features/canvas/sel
 import { partCanvasHighlights } from "@/features/parts/selectors/partCanvasHighlights";
 import { compactInspectorViewModelFor, inspectorViewModelFor } from "@/features/inspector/selectors/inspectorViewModel";
 import { inspectorActionModelsFor } from "@/features/inspector/selectors/inspectorActionModels";
-import { documentWindowPresentation } from "@/features/workspace/selectors/documentWindowPresentation";
+import {
+  documentDisplayName,
+  documentWindowPresentation,
+} from "@/features/workspace/selectors/documentWindowPresentation";
 import {
   assistLine,
   constraintTools,
@@ -211,8 +213,6 @@ export function MainWindowView() {
     documentWarning,
     setDocumentWarning,
     allowWindowClose,
-    documentHeader,
-    documentNameForFileDialog,
     documentSaveConfirmation,
     requestDocumentSaveConfirmation,
     resolveDocumentSaveConfirmation,
@@ -279,8 +279,6 @@ export function MainWindowView() {
       presentTextEntry: canvasPresentation.setPendingTextEntry,
       clearPendingTextEntry: canvasPresentation.clearPendingTextEntry,
       setMessage,
-      documentHeader,
-      documentNameForFileDialog,
       requestDocumentSaveConfirmation,
       clipboard,
       storeSelectionExport: canvasPresentation.storeSelectionExport,
@@ -363,9 +361,6 @@ export function MainWindowView() {
   const partActions = actions.parts;
   const workspaceActions = actions.workspace;
   const {
-    renameDocument,
-    commitPendingDocumentName,
-    validatePendingDocumentName,
     openTextEntry,
     saveBeforeDestructiveAction,
     resolveDirtyReplacement,
@@ -485,9 +480,6 @@ export function MainWindowView() {
   useEffect(() => {
     void refresh().then(() => setMessage(appStrings.status.readyToDraw));
   }, [refresh]);
-  useEffect(() => {
-    documentNameForFileDialog.current = state?.snapshot.name;
-  }, [state?.snapshot.name]);
   useEffect(() => {
     const warning = state?.warnings.find((item) => item.message)?.message;
     if (warning) setDocumentWarning(warning);
@@ -615,8 +607,7 @@ export function MainWindowView() {
       style={{ "--tool-palette-width": `${toolPaletteWidth}px` } as CSSProperties}
       aria-label={
         state
-          ? documentWindowPresentation(state.snapshot.name, state.persistence.path, state.persistence.isDirty)
-              .accessibilityLabel
+          ? documentWindowPresentation(state.persistence.path, state.persistence.isDirty).accessibilityLabel
           : undefined
       }
     >
@@ -649,16 +640,6 @@ export function MainWindowView() {
         </>
       )}
       <section className="workspace-column">
-        <DocumentHeader
-          ref={documentHeader}
-          documentName={
-            state?.snapshot.name === "Untitled"
-              ? appStrings.document.untitled
-              : (state?.snapshot.name ?? appStrings.document.untitled)
-          }
-          paperLabel={a4Landscape ? appStrings.app.paperLandscape : appStrings.app.paperPortrait}
-          onRename={renameDocument}
-        />
         <WorkspaceBanners
           errorPresentation={errorPresentation}
           recoverySaveFailure={recoveryEffects.saveFailure}
@@ -742,14 +723,14 @@ export function MainWindowView() {
         {documentSaveConfirmation && (
           <DocumentSaveConfirmationDialog
             reason={documentSaveConfirmation.reason}
-            documentName={documentSaveConfirmation.documentName}
+            documentName={documentSaveConfirmation.displayName}
             onChoose={resolveDocumentSaveConfirmation}
           />
         )}
         {licensesOpen && <OpenSourceLicensesDialog onClose={() => setLicensesOpen(false)} />}
         {outputDestination && (
           <OutputDialog
-            documentName={state?.snapshot.name ?? appStrings.document.untitled}
+            documentName={documentDisplayName(state?.persistence.path).replace(/\.kawa$/i, "")}
             initialOrientation={a4Landscape ? "landscape" : "portrait"}
             initialDestination={outputDestination}
             onClose={() => setOutputDestination(undefined)}

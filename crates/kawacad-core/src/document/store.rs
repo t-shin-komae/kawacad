@@ -20,7 +20,7 @@ pub struct DocumentStore {
     pub(crate) file_format_version: String,
     /// このドキュメントの検証に使う外部 JSON Schema のバージョン。
     pub(crate) schema_version: String,
-    /// 名前や単位などのドキュメントメタデータ。
+    /// IDや単位などのドキュメントメタデータ。
     #[serde(rename = "document")]
     pub(crate) metadata: DocumentMetadata,
     /// 用紙と実寸印刷の設定。
@@ -60,11 +60,11 @@ pub struct DocumentStore {
 }
 
 impl DocumentStore {
-    pub(crate) fn new(name: impl Into<String>) -> Self {
+    pub(crate) fn new(_name: impl Into<String>) -> Self {
         Self {
             file_format_version: FILE_FORMAT_VERSION.to_owned(),
             schema_version: SCHEMA_VERSION.to_owned(),
-            metadata: DocumentMetadata::new(name),
+            metadata: DocumentMetadata::new(),
             settings: PrintSettings::a4_portrait(),
             layers: Layer::default_layers(),
             shared_styles: SharedStyle::default_leathercraft_presets(),
