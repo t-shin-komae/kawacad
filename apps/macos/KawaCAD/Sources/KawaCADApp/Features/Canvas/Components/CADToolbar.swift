@@ -84,6 +84,7 @@ struct CADToolbar: View {
             .frame(width: 22, height: 22)
         }
         .help(AppStrings.tr("toolbar.zoom_to_fit"))
+        .accessibilityLabel(AppStrings.tr("toolbar.zoom_to_fit"))
         .accessibilityIdentifier(AccessibilityIdentifier.toolbarZoomToFit)
 
         if density == .expanded {
@@ -94,6 +95,7 @@ struct CADToolbar: View {
               .frame(width: 22, height: 22)
           }
           .help(AppStrings.tr("toolbar.zoom_out"))
+          .accessibilityLabel(AppStrings.tr("toolbar.zoom_out"))
           .accessibilityIdentifier(AccessibilityIdentifier.toolbarZoomOut)
 
           Button {
@@ -103,6 +105,7 @@ struct CADToolbar: View {
               .frame(width: 22, height: 22)
           }
           .help(AppStrings.tr("toolbar.zoom_in"))
+          .accessibilityLabel(AppStrings.tr("toolbar.zoom_in"))
           .accessibilityIdentifier(AccessibilityIdentifier.toolbarZoomIn)
         }
       }
@@ -184,6 +187,7 @@ struct CADToolbar: View {
           .font(.system(size: 16, weight: .semibold))
       }
       .menuStyle(.borderlessButton)
+      .accessibilityLabel(AppStrings.tr("toolbar.more_actions"))
       .accessibilityIdentifier(AccessibilityIdentifier.toolbarOverflow)
     }
     .padding(.horizontal, 14)
