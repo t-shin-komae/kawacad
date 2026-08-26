@@ -243,6 +243,63 @@ test.describe("Swift and Tauri visual comparison", () => {
     await saveScreenshot(page, "tauri-wide-point-snap-off.jpg");
   });
 
+  test("captures tool palette visibility transitions in regular and wide layouts", async ({ page, core }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("leather.layout.toolPanelWidth", "260");
+      window.localStorage.removeItem("leather.layout.toolPaletteVisible");
+    });
+
+    for (const layout of [
+      { id: "regular", viewport: { width: 1280, height: 800 } },
+      { id: "wide", viewport: wideScreenshotViewport },
+    ]) {
+      await core.invoke("new_document", { name: "Untitled" });
+      await setViewportAndNotify(page, layout.viewport);
+      await openWorkspace(page);
+      await expect(page.locator(`.app-shell.layout-${layout.id}`)).toBeVisible();
+
+      const palette = page.getByRole("complementary", { name: "ツールパレット" });
+      await expect(palette).toBeVisible();
+
+      await page.evaluate(() => {
+        window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "toggleTools" }));
+      });
+      await expect(palette).toHaveCount(0);
+      const showTools = page.getByRole("button", { name: "ツールを表示", exact: true });
+      await expect(showTools).toBeVisible();
+      await expect
+        .poll(() => page.evaluate(() => window.localStorage.getItem("leather.layout.toolPaletteVisible")))
+        .toBe("false");
+      await saveScreenshot(page, `tauri-${layout.id}-tool-palette-hidden.jpg`);
+
+      await showTools.click();
+      await expect(palette).toBeVisible();
+      await expect(showTools).toHaveCount(0);
+      await expect
+        .poll(() => page.evaluate(() => window.localStorage.getItem("leather.layout.toolPaletteVisible")))
+        .toBeNull();
+      await saveScreenshot(page, `tauri-${layout.id}-tool-palette-restored.jpg`);
+
+      if (layout.id === "wide") {
+        await page.evaluate(() => {
+          window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "toggleTools" }));
+        });
+        await expect(palette).toHaveCount(0);
+        await page.evaluate(() => {
+          window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "resetLayout" }));
+        });
+        await expect(palette).toBeVisible();
+        await expect
+          .poll(() => page.evaluate(() => window.localStorage.getItem("leather.layout.toolPaletteVisible")))
+          .toBeNull();
+        await expect
+          .poll(() => page.evaluate(() => window.localStorage.getItem("leather.layout.toolPanelWidth")))
+          .toBeNull();
+        await saveScreenshot(page, "tauri-wide-tool-palette-reset.jpg");
+      }
+    }
+  });
+
   test("captures constraints, context actions, and paste placement", async ({ page }) => {
     await openWorkspace(page);
     await drawLine(page, [-120, 0], [60, 0]);

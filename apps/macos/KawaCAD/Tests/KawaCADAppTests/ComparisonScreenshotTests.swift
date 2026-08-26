@@ -45,6 +45,7 @@ final class ComparisonScreenshotTests: XCTestCase {
     try captureInitialWorkspace(outputDirectory)
     try captureDetailedToolsAndSummary(outputDirectory)
     try captureWideToolbarStates(outputDirectory)
+    try captureToolPaletteVisibilityStates(outputDirectory)
     try captureConstraintHUD(outputDirectory)
     try captureContextMenu(outputDirectory)
     try capturePasteOptions(outputDirectory)
@@ -127,6 +128,48 @@ private func captureWideToolbarStates(_ outputDirectory: URL) throws {
 
   appState.workspacePreferences.setPointSnapEnabled(false)
   try capture("swift-wide-point-snap-off.png")
+}
+
+@MainActor
+private func captureToolPaletteVisibilityStates(_ outputDirectory: URL) throws {
+  let layouts: [(String, WindowLayoutMode, CGSize)] = [
+    ("regular", .regular, regularScreenshotSize),
+    ("wide", .wide, wideScreenshotSize),
+  ]
+  for (id, mode, size) in layouts {
+    let appState = makeScreenshotAppState()
+    appState.workspaceLayout.setToolPanelWidth(260)
+    appState.workspaceLayout.setWindowLayoutMode(mode)
+    appState.workspaceLayout.setToolPaletteVisible(false)
+    try renderWorkspace(
+      appState,
+      size: size,
+      to: outputDirectory.appendingPathComponent("swift-\(id)-tool-palette-hidden.png")
+    )
+
+    appState.workspaceLayout.setToolPaletteVisible(true)
+    try renderWorkspace(
+      appState,
+      size: size,
+      to: outputDirectory.appendingPathComponent("swift-\(id)-tool-palette-restored.png")
+    )
+  }
+
+  let resetState = makeScreenshotAppState()
+  resetState.workspaceLayout.setToolPanelWidth(260)
+  resetState.workspaceLayout.setWindowLayoutMode(.wide)
+  resetState.workspaceLayout.setToolPaletteVisible(false)
+  resetState.workspacePreferences.resetStoredPreferences(
+    groupDefaults: Dictionary(
+      uniqueKeysWithValues: ToolPalette.allToolGroups.map { ($0.id, $0.defaultExpanded) }
+    )
+  )
+  resetState.workspaceLayout.resetStoredPanelWidths()
+  try renderWorkspace(
+    resetState,
+    size: wideScreenshotSize,
+    to: outputDirectory.appendingPathComponent("swift-wide-tool-palette-reset.png")
+  )
 }
 
 @MainActor
@@ -1239,6 +1282,26 @@ private func createComparisonImages(screenshotDirectory: URL) throws {
     (
       "wide-point-snap-off", "swift-wide-point-snap-off.png", "tauri-wide-point-snap-off.jpg",
       wideScreenshotSize
+    ),
+    (
+      "regular-tool-palette-hidden", "swift-regular-tool-palette-hidden.png",
+      "tauri-regular-tool-palette-hidden.jpg", regularScreenshotSize
+    ),
+    (
+      "regular-tool-palette-restored", "swift-regular-tool-palette-restored.png",
+      "tauri-regular-tool-palette-restored.jpg", regularScreenshotSize
+    ),
+    (
+      "wide-tool-palette-hidden", "swift-wide-tool-palette-hidden.png",
+      "tauri-wide-tool-palette-hidden.jpg", wideScreenshotSize
+    ),
+    (
+      "wide-tool-palette-restored", "swift-wide-tool-palette-restored.png",
+      "tauri-wide-tool-palette-restored.jpg", wideScreenshotSize
+    ),
+    (
+      "wide-tool-palette-reset", "swift-wide-tool-palette-reset.png",
+      "tauri-wide-tool-palette-reset.jpg", wideScreenshotSize
     ),
     ("constraint-hud", "swift-constraint-hud.png", "tauri-constraint-hud.jpg", standardPanelSize),
     ("context-menu", "swift-context-menu.png", "tauri-context-menu.jpg", standardPanelSize),
