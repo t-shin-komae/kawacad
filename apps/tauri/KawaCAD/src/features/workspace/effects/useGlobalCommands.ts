@@ -59,6 +59,7 @@ type GlobalPresentationCommandsInput = {
   compactDrawer: "tools" | "inspector" | undefined;
   setLicensesOpen: Dispatch<SetStateAction<boolean>>;
   setInspectorOpen: Dispatch<SetStateAction<boolean>>;
+  setToolPaletteVisible: Dispatch<SetStateAction<boolean>>;
   setBottomWorkbenchVisible: Dispatch<SetStateAction<boolean>>;
   setCompactDrawer: Dispatch<SetStateAction<"tools" | "inspector" | undefined>>;
   setMessage: (message: string) => void;
@@ -173,6 +174,7 @@ function useGlobalMenuCommands(input: GlobalMenuCommandsInput) {
     setOutputOrientation,
     setLicensesOpen,
     setInspectorOpen,
+    setToolPaletteVisible,
     setBottomWorkbenchVisible,
     setCompactDrawer,
     setMessage,
@@ -203,6 +205,9 @@ function useGlobalMenuCommands(input: GlobalMenuCommandsInput) {
       else if (action === "toggleInspector") {
         if (layoutMode === "compact") setCompactDrawer((value) => (value === "inspector" ? undefined : "inspector"));
         else setInspectorOpen((value) => !value);
+      } else if (action === "toggleTools") {
+        if (layoutMode === "compact") setCompactDrawer((value) => (value === "tools" ? undefined : "tools"));
+        else setToolPaletteVisible((value) => !value);
       } else if (action === "toggleBottomWorkbench")
         setBottomWorkbenchVisible((visible) => {
           setMessage(visible ? appStrings.status.summaryHidden : appStrings.status.summaryShown);

@@ -13,10 +13,11 @@ struct CADToolbarState {
   let gridSnapEnabled: Bool
   let pointSnapEnabled: Bool
   let inspectorPanelVisible: Bool
+  let toolPaletteVisible: Bool
 }
 
 struct CADToolbarActions {
-  let showToolPalette: () -> Void
+  let toggleToolPalette: (WindowLayoutMode) -> Void
   let toggleInspector: (WindowLayoutMode) -> Void
   let setActiveLayer: (String) -> Void
   let setViewMode: (CanvasViewMode) -> Void

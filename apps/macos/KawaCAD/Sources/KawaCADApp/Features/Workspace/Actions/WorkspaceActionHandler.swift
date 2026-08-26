@@ -81,6 +81,10 @@ extension WorkspaceActionHandler {
     workspaceLayout.setToolPanelWidth(width)
   }
 
+  func setToolPaletteVisible(_ visible: Bool) {
+    workspaceLayout.setToolPaletteVisible(visible)
+  }
+
   func setInspectorPanelWidth(_ width: CGFloat) {
     workspaceLayout.setInspectorPanelWidth(width)
   }

@@ -1,5 +1,5 @@
 import { ToolIcon } from "@/features/canvas/components/ToolIcon";
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Paintbrush, PanelLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Paintbrush } from "lucide-react";
 import { useEffect, useState } from "react";
 import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
@@ -148,7 +148,6 @@ export function ToolPalette({
   return (
     <aside className="tool-palette" aria-label={appStrings.palette.ariaLabel}>
       <header className="palette-header">
-        <PanelLeft className="palette-header-icon" size={13} strokeWidth={2} aria-hidden="true" />
         <span>
           <strong>{appStrings.palette.title}</strong>
           <small>{appStrings.palette.subtitle}</small>

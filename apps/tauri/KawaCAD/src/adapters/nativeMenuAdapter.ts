@@ -56,6 +56,7 @@ async function applyNativeMenuState(state: NativeMenuState | undefined) {
   );
   await Promise.all([
     dynamicMenuItems.get("toggleInspector")?.setText(availability.inspectorLabel),
+    dynamicMenuItems.get("toggleTools")?.setText(availability.toolPaletteLabel),
     dynamicMenuItems.get("toggleBottomWorkbench")?.setText(availability.bottomWorkbenchLabel),
   ]);
 }
@@ -120,6 +121,7 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "toggleA4Orientation",
   "zoomToFit",
   "toggleInspector",
+  "toggleTools",
   "toggleBottomWorkbench",
   "resetLayout",
   "reload",
@@ -232,6 +234,7 @@ export async function installNativeMenu() {
         "smoothArcTangencies",
         "findInspector",
         "toggleInspector",
+        "toggleTools",
         "toggleBottomWorkbench",
       ].includes(action)
     )
@@ -305,6 +308,7 @@ export async function installNativeMenu() {
     await item(appStrings.menu.item.toggleA4Orientation, "toggleA4Orientation"),
     await item(appStrings.toolbar.zoomToFit, "zoomToFit"),
     await item(appStrings.menu.item.toggleInspector, "toggleInspector"),
+    await item(appStrings.menu.item.toggleTools, "toggleTools"),
     await item(appStrings.menu.item.toggleBottomWorkbench, "toggleBottomWorkbench"),
     { item: "Separator" as const },
     await item(appStrings.menu.item.resetLayout, "resetLayout"),

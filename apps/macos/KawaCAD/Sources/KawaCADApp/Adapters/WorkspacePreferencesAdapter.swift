@@ -5,6 +5,7 @@ enum WorkspacePreferencesAdapter {
   static let showsDetailedToolsKey = "leather.toolPalette.showsDetailedTools"
   static let toolPaletteLayoutVersion = 1
   static let inspectorPanelVisibleKey = "leather.layout.inspectorPanelVisible"
+  static let toolPaletteVisibleKey = "leather.layout.toolPaletteVisible"
   static let toolPanelWidthKey = "leather.layout.toolPanelWidth"
   static let inspectorPanelWidthKey = "leather.layout.inspectorPanelWidth"
   static let defaultToolPanelWidth: CGFloat = 176
@@ -24,6 +25,14 @@ enum WorkspacePreferencesAdapter {
 
   static func setInspectorPanelVisible(_ value: Bool, userDefaults: UserDefaults = .standard) {
     userDefaults.set(value, forKey: inspectorPanelVisibleKey)
+  }
+
+  static func toolPaletteVisible(userDefaults: UserDefaults = .standard) -> Bool {
+    userDefaults.object(forKey: toolPaletteVisibleKey) as? Bool ?? true
+  }
+
+  static func setToolPaletteVisible(_ value: Bool, userDefaults: UserDefaults = .standard) {
+    userDefaults.set(value, forKey: toolPaletteVisibleKey)
   }
 
   static func toolPanelWidth(userDefaults: UserDefaults = .standard) -> CGFloat {
@@ -73,6 +82,7 @@ enum WorkspacePreferencesAdapter {
     userDefaults: UserDefaults = .standard
   ) {
     userDefaults.removeObject(forKey: inspectorPanelVisibleKey)
+    userDefaults.removeObject(forKey: toolPaletteVisibleKey)
     userDefaults.removeObject(forKey: toolPanelWidthKey)
     userDefaults.removeObject(forKey: inspectorPanelWidthKey)
     for groupID in groupIDs {

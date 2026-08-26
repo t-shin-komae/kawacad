@@ -74,7 +74,8 @@ struct WorkspaceView: View {
         contentWidth: geometry.size.width,
         storedToolWidth: state.toolPanelWidth,
         storedInspectorWidth: state.inspectorPanelWidth,
-        previousMode: state.windowLayoutMode
+        previousMode: state.windowLayoutMode,
+        toolPaletteVisible: state.toolbarState.toolPaletteVisible
       )
 
       HStack(spacing: 0) {

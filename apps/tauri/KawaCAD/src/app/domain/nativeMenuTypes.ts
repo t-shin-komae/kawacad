@@ -18,6 +18,7 @@ export type MenuAction =
   | "cancelCurrentInteraction"
   | Tool
   | "toggleInspector"
+  | "toggleTools"
   | "toggleBottomWorkbench"
   | "findInspector"
   | "zoomToFit"

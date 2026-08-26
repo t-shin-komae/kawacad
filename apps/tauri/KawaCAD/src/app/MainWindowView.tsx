@@ -222,6 +222,7 @@ export function MainWindowView() {
     layout,
     toolPaletteWidth,
     setToolPaletteWidth,
+    setToolPaletteVisible,
     compactDrawer,
     setCompactDrawer,
     closeCompactDrawer,
@@ -457,6 +458,7 @@ export function MainWindowView() {
       setOutputOrientation,
       setLicensesOpen,
       setInspectorOpen,
+      setToolPaletteVisible,
       setBottomWorkbenchVisible,
       setCompactDrawer,
       setMessage,
@@ -498,6 +500,7 @@ export function MainWindowView() {
     inspectorOpen,
     compactDrawer,
     layoutMode: layout.mode,
+    toolPaletteVisible: layout.toolDockVisible,
     inspectorTab,
     bottomWorkbenchVisible,
   });
@@ -759,13 +762,16 @@ export function MainWindowView() {
           }}
           onSnapChange={setSnapEnabled}
           onPointSnapChange={setPointSnapEnabled}
-          showToolPaletteButton={layout.mode === "compact"}
+          toolPaletteVisible={layout.mode !== "compact" && layout.toolDockVisible}
           onToggleInspector={() =>
             layout.mode === "compact"
               ? setCompactDrawer((value) => (value === "inspector" ? undefined : "inspector"))
               : setInspectorOpen((value) => !value)
           }
-          onToggleTools={() => setCompactDrawer((value) => (value === "tools" ? undefined : "tools"))}
+          onToggleTools={() => {
+            if (layout.mode === "compact") setCompactDrawer((value) => (value === "tools" ? undefined : "tools"));
+            else setToolPaletteVisible((value) => !value);
+          }}
         />
         <WorkspaceCanvasLayout
           mode={layout.mode}

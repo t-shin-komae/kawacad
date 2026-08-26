@@ -29,13 +29,14 @@ export function makeWindowLayout(
   storedToolWidth: number,
   storedInspectorWidth: number,
   previousMode?: WindowLayoutMode,
+  toolPaletteVisible = true,
 ): WindowLayout {
   const potentialToolWidth = clamp(storedToolWidth, 176, 260, 176);
   const candidateWidth = contentWidth - potentialToolWidth - windowLayout.panelResizeHandleWidth;
   const mode = resolveWindowLayoutMode(candidateWidth, previousMode);
   const toolMaximum = 260;
   const toolDockWidth = clamp(storedToolWidth, 176, toolMaximum, 176);
-  const toolDockVisible = mode !== "compact";
+  const toolDockVisible = mode !== "compact" && toolPaletteVisible;
   const workspaceWidth = contentWidth - (toolDockVisible ? toolDockWidth + windowLayout.panelResizeHandleWidth : 0);
   const overlayMaximum = Math.min(
     windowLayout.maximumInspectorWidth,

@@ -39,7 +39,7 @@ type Props = {
   onA4LandscapeChange: (value: boolean) => void;
   onSnapChange: (value: boolean) => void;
   onPointSnapChange: (value: boolean) => void;
-  showToolPaletteButton: boolean;
+  toolPaletteVisible: boolean;
   onToggleInspector: () => void;
   onToggleTools: () => void;
 };
@@ -113,7 +113,7 @@ export function CADToolbar({
   onA4LandscapeChange,
   onSnapChange,
   onPointSnapChange,
-  showToolPaletteButton,
+  toolPaletteVisible,
   onToggleInspector,
   onToggleTools,
 }: Props) {
@@ -129,22 +129,21 @@ export function CADToolbar({
       ...value,
       zoom: Math.min(canvasMetrics.zoomMaximum, value.zoom * 1.25),
     }));
+  const toolPaletteLabel = toolPaletteVisible ? appStrings.accessibility.hideTools : appStrings.accessibility.showTools;
 
   return (
     <nav className="cad-toolbar" aria-label={appStrings.accessibility.cadToolbar}>
-      {showToolPaletteButton && (
-        <button
-          className="toolbar-icon-button toolbar-tools-button"
-          type="button"
-          data-testid={accessibilityIdentifiers.toolbarTools}
-          onClick={onToggleTools}
-          aria-label={appStrings.accessibility.showTools}
-          title={appStrings.accessibility.showTools}
-        >
-          <PanelLeft />
-        </button>
-      )}
-      {showToolPaletteButton && <span className="toolbar-divider toolbar-tool-palette-divider" aria-hidden="true" />}
+      <button
+        className="toolbar-icon-button toolbar-tools-button"
+        type="button"
+        data-testid={accessibilityIdentifiers.toolbarTools}
+        onClick={onToggleTools}
+        aria-label={toolPaletteLabel}
+        title={toolPaletteLabel}
+      >
+        <PanelLeft />
+      </button>
+      <span className="toolbar-divider toolbar-tool-palette-divider" aria-hidden="true" />
       <div className="toolbar-tool-cluster">
         <span className="toolbar-tool">
           <span className="toolbar-tool-icon">
