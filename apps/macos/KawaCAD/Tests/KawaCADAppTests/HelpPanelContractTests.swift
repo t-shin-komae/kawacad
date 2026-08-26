@@ -22,7 +22,8 @@ func swift_help_panel_lists_all_tools_and_supports_search() throws {
     .deletingLastPathComponent()
     .deletingLastPathComponent()
     .deletingLastPathComponent()
-  let sourceURL = packageRoot.appendingPathComponent("Sources/KawaCADApp/App/KawaCADHelpPanel.swift")
+  let sourceURL = packageRoot.appendingPathComponent(
+    "Sources/KawaCADApp/App/KawaCADHelpPanel.swift")
   let source = try String(contentsOf: sourceURL, encoding: .utf8)
 
   #expect(source.contains("CanvasTool.allCases"))

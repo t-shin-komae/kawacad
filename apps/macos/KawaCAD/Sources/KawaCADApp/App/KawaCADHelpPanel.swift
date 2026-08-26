@@ -111,13 +111,15 @@ private struct HelpTools: View {
           Text(AppStrings.tr("help.shortcut.action"))
             .fontWeight(.semibold)
         }
-        ForEach([
-          ("⌘/Ctrl + 1〜5", AppStrings.tr("help.shortcut.tools")),
-          ("⌘/Ctrl + Z", AppStrings.tr("help.shortcut.undo")),
-          ("⌘/Ctrl + Shift + Z", AppStrings.tr("help.shortcut.redo")),
-          ("⌘/Ctrl + S", AppStrings.tr("help.shortcut.save")),
-          ("Esc", AppStrings.tr("help.shortcut.cancel")),
-        ], id: \.0) { shortcut, action in
+        ForEach(
+          [
+            ("⌘/Ctrl + 1〜5", AppStrings.tr("help.shortcut.tools")),
+            ("⌘/Ctrl + Z", AppStrings.tr("help.shortcut.undo")),
+            ("⌘/Ctrl + Shift + Z", AppStrings.tr("help.shortcut.redo")),
+            ("⌘/Ctrl + S", AppStrings.tr("help.shortcut.save")),
+            ("Esc", AppStrings.tr("help.shortcut.cancel")),
+          ], id: \.0
+        ) { shortcut, action in
           GridRow {
             Text(shortcut).monospaced()
             Text(action).foregroundStyle(.secondary)
