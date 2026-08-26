@@ -17,6 +17,7 @@ struct InspectorLayerTab: View {
         }
       }
       .font(.system(size: 12))
+      .leatherControlHeight()
 
       if appState.data.shouldShowLayerInspectorSearch {
         TextField(
@@ -27,6 +28,7 @@ struct InspectorLayerTab: View {
           )
         )
         .textFieldStyle(.roundedBorder)
+        .leatherControlHeight()
       }
 
       ForEach(appState.data.filteredInspectorLayers) { layer in
@@ -62,6 +64,7 @@ struct InspectorLayerTab: View {
       }
       .buttonStyle(.bordered)
       .font(.system(size: 12, weight: .semibold))
+      .leatherControlHeight()
     }
   }
 }

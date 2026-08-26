@@ -32,7 +32,7 @@ describe("visual style contracts", () => {
   });
 
   it("#66 keeps the shared control, card, panel, and focus tokens", () => {
-    expect(styles).toContain("--control-height: 24px");
+    expect(styles).toContain("--control-height: 28px");
     expect(styles).toContain("--card-radius: 8px");
     expect(styles).toContain("--panel-padding: 16px");
     expect(styles).toContain("--focus-ring: 2px solid #0a84ff");
@@ -55,6 +55,11 @@ describe("visual style contracts", () => {
     expect(rule(".toolbar-icon-button")).toMatch(
       /min-width: var\(--control-height\) !important;[\s\S]*height: var\(--control-height\)/u,
     );
+    expect(rule(".toolbar-inspector-button")).toMatch(
+      /min-width: var\(--control-height\) !important;[\s\S]*height: var\(--control-height\)/u,
+    );
+    expect(rule(".view-mode-segment")).toContain("height: calc(var(--control-height) + 4px)");
+    expect(rule(".view-mode-segment button")).toContain("min-height: var(--control-height)");
   });
 
   it("#69 keeps palette controls, two-column threshold, and button geometry", () => {

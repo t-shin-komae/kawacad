@@ -130,6 +130,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       .labelsHidden()
       .pickerStyle(.menu)
       .controlSize(.small)
+      .leatherControlHeight()
     }
     .help(AppStrings.tr("inspector.select_line_pattern"))
   }
@@ -148,6 +149,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       .labelsHidden()
       .pickerStyle(.menu)
       .controlSize(.small)
+      .leatherControlHeight()
     }
     .help(AppStrings.tr("inspector.select_color"))
   }
@@ -169,6 +171,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       .labelsHidden()
       .pickerStyle(.menu)
       .controlSize(.small)
+      .leatherControlHeight()
     }
     .help(AppStrings.tr("inspector.select_line_width"))
   }
@@ -382,6 +385,7 @@ struct LayerStylePickerField<Preview: View, Control: View>: View {
 
       control()
         .frame(maxWidth: .infinity, alignment: .leading)
+        .leatherControlHeight()
 
       Text(value)
         .font(.system(size: 10, weight: .medium))

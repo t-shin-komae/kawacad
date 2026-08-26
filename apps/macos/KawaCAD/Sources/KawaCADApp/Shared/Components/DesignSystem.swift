@@ -67,7 +67,7 @@ enum LeatherDesignMetrics {
   }
 
   enum Control {
-    static let height: CGFloat = 24
+    static let height: CGFloat = 28
     static let compactHeight: CGFloat = 22
     static let toolButton: CGFloat = 34
     static let paletteToolHeight: CGFloat = 38
@@ -79,6 +79,12 @@ enum LeatherDesignMetrics {
     static let selected: CGFloat = 1.2
   }
 
+}
+
+extension View {
+  func leatherControlHeight() -> some View {
+    frame(minHeight: LeatherDesignMetrics.Control.height)
+  }
 }
 
 extension Color {

@@ -14,6 +14,7 @@ struct InspectorParametersTab: View {
           )
         )
         .textFieldStyle(.roundedBorder)
+        .leatherControlHeight()
       }
 
       if appState.data.filteredInspectorParameters.isEmpty {
@@ -44,6 +45,7 @@ struct InspectorParametersTab: View {
       }
       .buttonStyle(.bordered)
       .font(.system(size: 12, weight: .semibold))
+      .leatherControlHeight()
     }
   }
 }

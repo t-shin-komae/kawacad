@@ -68,6 +68,7 @@ struct CADToolbar: View {
           }
         }
         .frame(width: 220)
+        .leatherControlHeight()
         .accessibilityIdentifier(AccessibilityIdentifier.toolbarDrawingLayer)
       }
 
@@ -81,7 +82,10 @@ struct CADToolbar: View {
           actions.zoomToFit()
         } label: {
           Image(systemName: "rectangle.arrowtriangle.2.inward")
-            .frame(width: 22, height: 22)
+            .frame(
+              width: LeatherDesignMetrics.Control.height,
+              height: LeatherDesignMetrics.Control.height
+            )
         }
         .help(AppStrings.tr("toolbar.zoom_to_fit"))
         .accessibilityLabel(AppStrings.tr("toolbar.zoom_to_fit"))
@@ -92,7 +96,10 @@ struct CADToolbar: View {
             actions.zoomOut()
           } label: {
             Image(systemName: "minus.magnifyingglass")
-              .frame(width: 22, height: 22)
+              .frame(
+                width: LeatherDesignMetrics.Control.height,
+                height: LeatherDesignMetrics.Control.height
+              )
           }
           .help(AppStrings.tr("toolbar.zoom_out"))
           .accessibilityLabel(AppStrings.tr("toolbar.zoom_out"))
@@ -102,7 +109,10 @@ struct CADToolbar: View {
             actions.zoomIn()
           } label: {
             Image(systemName: "plus.magnifyingglass")
-              .frame(width: 22, height: 22)
+              .frame(
+                width: LeatherDesignMetrics.Control.height,
+                height: LeatherDesignMetrics.Control.height
+              )
           }
           .help(AppStrings.tr("toolbar.zoom_in"))
           .accessibilityLabel(AppStrings.tr("toolbar.zoom_in"))
@@ -156,7 +166,10 @@ struct CADToolbar: View {
       } label: {
         Image(systemName: "sidebar.right")
           .font(.system(size: 12, weight: .semibold))
-          .frame(width: 24, height: 24)
+          .frame(
+            width: LeatherDesignMetrics.Control.height,
+            height: LeatherDesignMetrics.Control.height
+          )
       }
       .buttonStyle(.plain)
       .help(AppStrings.tr("menu.inspector"))
@@ -179,6 +192,7 @@ struct CADToolbar: View {
       .accessibilityLabel(AppStrings.tr("toolbar.view_mode"))
       .accessibilityIdentifier(AccessibilityIdentifier.toolbarViewMode)
       .frame(width: 236)
+      .leatherControlHeight()
 
       Menu {
         overflowMenuContent
