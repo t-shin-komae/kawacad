@@ -37,7 +37,10 @@ struct InspectorStylesTab: View {
               accessoryButtons: EmptyView(),
               deleteButton: Button(action: { appState.actions.deleteSharedStyle(style) }) {
                 Image(systemName: "trash")
-                  .frame(width: LeatherDesignMetrics.Control.height, height: LeatherDesignMetrics.Control.height)
+                  .frame(
+                    width: LeatherDesignMetrics.Control.height,
+                    height: LeatherDesignMetrics.Control.height
+                  )
               }
               .buttonStyle(.borderless)
               .foregroundStyle(LeatherColors.destructive)
