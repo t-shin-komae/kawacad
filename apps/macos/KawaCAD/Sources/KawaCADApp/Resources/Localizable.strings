@@ -229,7 +229,7 @@
 "help.basic.body" = "ツールを選び、キャンバス上で対象をクリックして作図・拘束・計測を進めます。";
 "help.basic.cancel" = "作図途中の操作はEscで取り消せます。";
 "help.basic.inspector" = "選択中の図形や拘束はインスペクタで確認・編集できます。";
-"help.basic.edit_menu" = "編集メニューから保存、Undo/Redo、コピー、複製を実行できます。";
+"help.basic.edit_menu" = "ファイルメニューから保存、編集メニューからUndo/Redo、コピー、複製を実行できます。";
 "help.basic.view_menu" = "表示メニューから編集表示と出力プレビューを切り替えられます。";
 "help.tools.title" = "ツールとショートカット";
 "help.shortcut.command" = "ショートカット";

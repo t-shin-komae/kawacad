@@ -40,9 +40,9 @@ function HelpTools({ query }: { query: string }) {
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const tools = useMemo(
     () =>
-      Object.entries(appStrings.toolNames).filter(([name, hint]) =>
-        `${name} ${hint}`.toLocaleLowerCase().includes(normalizedQuery),
-      ),
+      (Object.keys(appStrings.toolNames) as Array<keyof typeof appStrings.toolNames>)
+        .map((id) => ({ id, name: appStrings.toolNames[id], hint: appStrings.toolHints[id] }))
+        .filter(({ name, hint }) => `${name} ${hint}`.toLocaleLowerCase().includes(normalizedQuery)),
     [normalizedQuery],
   );
 
@@ -61,8 +61,8 @@ function HelpTools({ query }: { query: string }) {
       </table>
       <h4>{appStrings.help.tools.list}</h4>
       <dl className="help-tool-list">
-        {tools.map(([name, hint]) => (
-          <div key={name}>
+        {tools.map(({ id, name, hint }) => (
+          <div key={id}>
             <dt>{name}</dt>
             <dd>{hint}</dd>
           </div>
@@ -103,6 +103,13 @@ export function HelpDialog({ initialSection, onClose }: Props) {
         aria-modal="true"
         aria-labelledby="help-dialog-title"
         onMouseDown={(event) => event.stopPropagation()}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            onClose();
+          }
+        }}
       >
         <header className="help-dialog-header">
           <div>
