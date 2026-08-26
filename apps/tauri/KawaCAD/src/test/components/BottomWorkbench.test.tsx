@@ -48,4 +48,17 @@ describe("BottomWorkbench", () => {
     expect(summary).toHaveTextContent("未使用 0 件");
     expect(summary.querySelector(".constraint-status-summary svg")).toBeInTheDocument();
   });
+
+  it("uses the circled warning symbol for over-constrained status", () => {
+    render(
+      <BottomWorkbench
+        selectedEntity={undefined}
+        layers={[]}
+        constraints={[{ id: "constraint:over", kind: "fixed", status: "overConstrained" }]}
+        parameters={[]}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "サマリー" }).querySelector(".lucide-circle-alert")).toBeInTheDocument();
+  });
 });

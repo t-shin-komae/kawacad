@@ -46,5 +46,6 @@ func swift_accessibility_state_cues_are_visible() throws {
   #expect(toolbarSource.contains("checkmark"))
   #expect(designSystem.contains("checkmark.circle.fill"))
   #expect(designSystem.contains("exclamationmark.triangle.fill"))
+  #expect(designSystem.contains("exclamationmark.circle"))
   #expect(designSystem.contains("exclamationmark.octagon.fill"))
 }

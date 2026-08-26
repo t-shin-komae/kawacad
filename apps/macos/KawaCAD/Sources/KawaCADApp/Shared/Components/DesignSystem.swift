@@ -507,7 +507,7 @@ struct ConstraintStatusBadge: View {
     case .fullyConstrained:
       return "checkmark.circle.fill"
     case .overConstrained:
-      return "exclamationmark.triangle"
+      return "exclamationmark.circle"
     case .conflicting:
       return "exclamationmark.octagon.fill"
     }

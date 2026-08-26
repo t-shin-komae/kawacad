@@ -232,6 +232,16 @@ describe("React workspace shortcuts", () => {
     window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "exportPDF" }));
     expect(await screen.findByRole("dialog", { name: "PDF" })).toBeInTheDocument();
   });
+  it("shows a warning icon for Core document warnings", async () => {
+    const warningState = { ...state, warnings: [{ message: "ドキュメントの警告" }] };
+    mocks.invoke.mockImplementation(async () => warningState);
+
+    render(<App />);
+
+    const warning = await screen.findByRole("alert");
+    expect(warning).toHaveTextContent("ドキュメントの警告");
+    expect(warning.querySelector(".app-error-icon")).toBeInTheDocument();
+  });
   it("uses unmodified V to return to Select", async () => {
     render(<App />);
     await screen.findByText("ツールを選択して作図してください。");
