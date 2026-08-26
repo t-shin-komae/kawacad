@@ -9,6 +9,7 @@ struct CanvasOperationGuideTests {
       CanvasOperationGuideState.instruction(
         selectedTool: .select,
         viewMode: .editDisplay,
+        topBannerVisible: false,
         isSettingPartOrigin: false,
         filletDraftEntityCount: 0,
         filletDraftClosed: false,
@@ -25,6 +26,7 @@ struct CanvasOperationGuideTests {
       CanvasOperationGuideState.instruction(
         selectedTool: .line,
         viewMode: .editDisplay,
+        topBannerVisible: false,
         isSettingPartOrigin: false,
         filletDraftEntityCount: 0,
         filletDraftClosed: false,
@@ -41,6 +43,24 @@ struct CanvasOperationGuideTests {
       CanvasOperationGuideState.instruction(
         selectedTool: .line,
         viewMode: .outputPreview,
+        topBannerVisible: false,
+        isSettingPartOrigin: false,
+        filletDraftEntityCount: 0,
+        filletDraftClosed: false,
+        draftPointCount: 0,
+        hasArcStartPoint: false,
+        pendingConstraintTargetCount: 0
+      ) == nil
+    )
+  }
+
+  @Test("上部バナー表示中はキャンバスガイドを表示しない")
+  func top_banner_hides_guide() {
+    #expect(
+      CanvasOperationGuideState.instruction(
+        selectedTool: .line,
+        viewMode: .editDisplay,
+        topBannerVisible: true,
         isSettingPartOrigin: false,
         filletDraftEntityCount: 0,
         filletDraftClosed: false,

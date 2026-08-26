@@ -837,6 +837,7 @@ export function MainWindowView() {
                   movingContent: canvasContentMoving,
                   hasHoveredCanvasTarget,
                   snapSuppressed,
+                  topBannerVisible: Boolean(errorPresentation || recoveryEffects.saveFailure || documentWarning),
                   toolName: names[tool],
                 },
                 events: {

@@ -36,6 +36,7 @@ export type CanvasInteractionModel = {
   movingContent?: boolean;
   hasHoveredCanvasTarget?: boolean;
   snapSuppressed?: boolean;
+  topBannerVisible?: boolean;
   toolName: string;
 };
 
@@ -85,6 +86,7 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     movingContent = false,
     hasHoveredCanvasTarget = false,
     snapSuppressed = false,
+    topBannerVisible = false,
     toolName,
   } = interactionModel;
   const {
@@ -157,7 +159,7 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     draftPointCount > 0 ||
     pendingTargetCount > 0 ||
     snapSuppressed;
-  const showOperationGuide = !outputPreview && (tool !== "select" || interactionInProgress);
+  const showOperationGuide = !outputPreview && !topBannerVisible && (tool !== "select" || interactionInProgress);
   const operationGuideMessage = interactionInProgress ? interactionDescription : appStrings.toolHints[tool];
   return (
     <>
@@ -209,15 +211,17 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
         />
       )}
       {showOperationGuide && (
-        <div
-          className="canvas-operation-guide"
-          data-testid="canvas-operation-guide"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <ToolIcon tool={tool} size={16} className="canvas-operation-guide-icon" />
-          <strong>{toolName}</strong>
-          <span>{operationGuideMessage}</span>
+        <div className="canvas-operation-guide-band">
+          <div
+            className="canvas-operation-guide"
+            data-testid="canvas-operation-guide"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <ToolIcon tool={tool} size={16} className="canvas-operation-guide-icon" />
+            <strong>{toolName}</strong>
+            <span>{operationGuideMessage}</span>
+          </div>
         </div>
       )}
       <span id="cad-canvas-interaction-state" className="visually-hidden">

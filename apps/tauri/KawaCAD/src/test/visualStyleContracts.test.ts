@@ -91,9 +91,11 @@ describe("visual style contracts", () => {
     expect(inlineEditor).toContain("background: rgba(245, 245, 247, 0.94)");
   });
 
-  it("#178 keeps the canvas operation guide fixed and non-interactive", () => {
+  it("#178 keeps the canvas operation guide in a reserved non-drawable band", () => {
+    const guideBand = rule(".canvas-operation-guide-band");
+    expect(guideBand).toMatch(/position: absolute;[\s\S]*top: 0;[\s\S]*height: 42px;/u);
+    expect(guideBand).toContain("pointer-events: auto");
     const guide = rule(".canvas-operation-guide");
-    expect(guide).toMatch(/position: absolute;[\s\S]*top: 10px;[\s\S]*left: 50%;/u);
     expect(guide).toContain("pointer-events: none");
     expect(guide).toContain("max-width: calc(100% - 32px)");
   });

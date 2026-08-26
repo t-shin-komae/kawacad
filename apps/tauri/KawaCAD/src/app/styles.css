@@ -963,17 +963,26 @@ input[type="checkbox"] {
 .cad-canvas.canvas-cursor-operation-not-allowed {
   cursor: not-allowed;
 }
-.canvas-operation-guide {
+.canvas-operation-guide-band {
   position: absolute;
   z-index: 2;
-  top: 10px;
-  left: 50%;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  height: 42px;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 16px 0;
+  background: #fff;
+  pointer-events: auto;
+}
+.canvas-operation-guide {
   display: flex;
   max-width: calc(100% - 32px);
   align-items: center;
   gap: 6px;
   padding: 6px 11px;
-  transform: translateX(-50%);
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--panel-stroke));
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--window) 92%, transparent);

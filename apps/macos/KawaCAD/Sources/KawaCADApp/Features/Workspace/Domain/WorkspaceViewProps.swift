@@ -194,6 +194,7 @@ struct WorkspaceCanvasSurfaceState {
   let canvasInteractionInput: LeatherCanvasInteractionInput
   let constraintEntryHUDState: ConstraintEntryHUDState
   let pasteOptionsPresentation: PasteOptionsPresentation?
+  let topBannerVisible: Bool
 }
 
 struct WorkspaceCanvasSurfaceActions {

@@ -34,6 +34,7 @@ function canvas(
     }>;
     marqueeStart?: { xMm: number; yMm: number };
     marqueeCurrent?: { xMm: number; yMm: number };
+    topBannerVisible?: boolean;
   } = {},
 ) {
   return (
@@ -90,6 +91,7 @@ function canvas(
         settingPartOrigin: options.settingPartOrigin,
         filletDraftEntityCount: options.filletDraftEntityCount,
         filletDraftClosed: options.filletDraftClosed,
+        topBannerVisible: options.topBannerVisible,
         toolName: tool === "line" ? "線分" : tool === "arc" ? "円弧" : "フィレット",
       }}
       events={{
@@ -123,6 +125,10 @@ describe("Canvas accessibility parity", () => {
   it("shows the selected drawing tool's next operation", () => {
     render(canvas("line"));
     expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("線分の始点をクリックします");
+  });
+  it("hides the guide while a workspace banner is visible", () => {
+    render(canvas("line", [], 0, { topBannerVisible: true }));
+    expect(screen.queryByTestId("canvas-operation-guide")).not.toBeInTheDocument();
   });
   it("reports arc drawing progress without exposing mutable canvas state", () => {
     render(

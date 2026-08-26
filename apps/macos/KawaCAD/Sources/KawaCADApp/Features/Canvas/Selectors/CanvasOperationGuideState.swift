@@ -5,6 +5,7 @@ enum CanvasOperationGuideState {
   static func instruction(
     selectedTool: CanvasTool,
     viewMode: CanvasViewMode,
+    topBannerVisible: Bool,
     isSettingPartOrigin: Bool,
     filletDraftEntityCount: Int,
     filletDraftClosed: Bool,
@@ -12,7 +13,7 @@ enum CanvasOperationGuideState {
     hasArcStartPoint: Bool,
     pendingConstraintTargetCount: Int
   ) -> String? {
-    guard viewMode == .editDisplay else { return nil }
+    guard viewMode == .editDisplay, !topBannerVisible else { return nil }
 
     let interactionInProgress =
       isSettingPartOrigin
