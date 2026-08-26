@@ -79,8 +79,16 @@ describe("visual style contracts", () => {
   });
 
   it("#164 gives selected geometry a non-color boundary cue", () => {
-    expect(canvasRendering).toContain("context.setLineDash([5, 3])");
+    expect(canvasRendering).toContain("selectionDash: [5, 3]");
     expect(canvasRendering).toContain("context.setLineDash([]);");
+  });
+
+  it("#164 keeps canvas aids below primary geometry in a shared hierarchy", () => {
+    expect(canvasRendering).toContain('gridStroke: "rgba(95, 108, 119, .13)"');
+    expect(canvasRendering).toContain('a4SecondaryStroke: "rgba(95, 108, 119, .35)"');
+    expect(canvasRendering).toContain('coordinateStroke: "rgba(10,132,255,.72)"');
+    expect(canvasRendering).toContain("selectionLineWidth: 3");
+    expect(canvasRendering).toContain("selectionDash: [5, 3]");
   });
 
   it("#71 keeps the inline editor minimum width, padding, focus border, and background", () => {

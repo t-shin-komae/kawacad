@@ -2,6 +2,28 @@ import AppKit
 import KawaCADOutput
 import SwiftUI
 
+/// Shared visual priority for canvas aids. Primary geometry keeps its layer/style color.
+enum CanvasVisualHierarchy {
+  static let gridStroke = NSColor(calibratedRed: 0.372, green: 0.423, blue: 0.466, alpha: 0.13)
+  static let gridLineWidth: CGFloat = 0.5
+  static let a4SecondaryStroke = NSColor(
+    calibratedRed: 0.372, green: 0.423, blue: 0.466, alpha: 0.35)
+  static let a4PrimaryStroke = NSColor(
+    calibratedRed: 0.372, green: 0.423, blue: 0.466, alpha: 0.68)
+  static let a4SecondaryLineWidth: CGFloat = 0.8
+  static let a4PrimaryLineWidth: CGFloat = 1.2
+  static let a4ReferenceStroke = NSColor(
+    calibratedRed: 0.039, green: 0.518, blue: 1.0, alpha: 0.35)
+  static let a4ReferenceLineWidth: CGFloat = 0.8
+  static let coordinateStroke = NSColor(
+    calibratedRed: 0.039, green: 0.518, blue: 1.0, alpha: 0.72)
+  static let coordinateLineWidth: CGFloat = 1.4
+  static let selectionStroke = NSColor(
+    calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 0.28)
+  static let selectionLineWidth: CGFloat = 3.0
+  static let selectionDash: [CGFloat] = [5, 3]
+}
+
 /// Rendering responsibilities extracted from the input-oriented canvas view.
 /// The view still owns lifecycle and callbacks; this extension owns the
 /// projection of the current immutable canvas snapshot into AppKit drawing.
@@ -12,9 +34,8 @@ extension LeatherCanvasView {
     }
 
     context.saveGState()
-    context.setStrokeColor(
-      NSColor(calibratedRed: 0.372, green: 0.423, blue: 0.466, alpha: 0.13).cgColor)
-    context.setLineWidth(0.5)
+    context.setStrokeColor(CanvasVisualHierarchy.gridStroke.cgColor)
+    context.setLineWidth(CanvasVisualHierarchy.gridLineWidth)
 
     let coordinateSpace = coordinateSpace(in: pageRect)
     let canvasBounds = coordinateSpace.canvasBoundsRect
@@ -87,17 +108,20 @@ extension LeatherCanvasView {
           height: coordinateSpace.pageHeightMM * coordinateSpace.scale
         )
         let border = NSBezierPath(rect: tileRect)
-        border.lineWidth = row == pageOffset && column == pageOffset ? 1.2 : 0.8
+        border.lineWidth =
+          row == pageOffset && column == pageOffset
+          ? CanvasVisualHierarchy.a4PrimaryLineWidth
+          : CanvasVisualHierarchy.a4SecondaryLineWidth
         (row == pageOffset && column == pageOffset
-          ? NSColor.separatorColor
-          : NSColor.separatorColor.withAlphaComponent(0.72)).setStroke()
+          ? CanvasVisualHierarchy.a4PrimaryStroke
+          : CanvasVisualHierarchy.a4SecondaryStroke).setStroke()
         border.stroke()
       }
     }
 
-    NSColor.systemBlue.withAlphaComponent(0.25).setStroke()
+    CanvasVisualHierarchy.a4ReferenceStroke.setStroke()
     let referencePath = NSBezierPath(rect: pageRect)
-    referencePath.lineWidth = 0.8
+    referencePath.lineWidth = CanvasVisualHierarchy.a4ReferenceLineWidth
     referencePath.setLineDash([5, 4], count: 2, phase: 0)
     referencePath.stroke()
 
@@ -118,11 +142,11 @@ extension LeatherCanvasView {
     }
     let coordinateSpace = coordinateSpace(in: pageRect)
     let origin = coordinateSpace.originCanvasPoint
-    let axisColor = NSColor.systemBlue.withAlphaComponent(0.72)
+    let axisColor = CanvasVisualHierarchy.coordinateStroke
 
     context.saveGState()
     context.setStrokeColor(axisColor.cgColor)
-    context.setLineWidth(1.4)
+    context.setLineWidth(CanvasVisualHierarchy.coordinateLineWidth)
 
     context.move(to: origin)
     context.addLine(to: CGPoint(x: min(origin.x + 70, pageRect.maxX), y: origin.y))
