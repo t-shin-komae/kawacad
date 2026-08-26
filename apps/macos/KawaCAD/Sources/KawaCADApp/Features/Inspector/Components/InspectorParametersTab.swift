@@ -22,14 +22,14 @@ struct InspectorParametersTab: View {
           VStack(alignment: .leading, spacing: 8) {
             Text(
               AppStrings.tr(
-                appState.data.shouldShowParameterInspectorSearch
-                  ? "inspector.no_matching_parameters" : "inspector.no_named_parameters"
+                appState.data.parameterCount == 0
+                  ? "inspector.no_named_parameters" : "inspector.no_matching_parameters"
               )
             )
             .font(.system(size: 12))
             .foregroundStyle(LeatherColors.secondaryInk)
 
-            if !appState.data.shouldShowParameterInspectorSearch {
+            if appState.data.parameterCount == 0 {
               Text(AppStrings.tr("inspector.parameter_empty_hint"))
                 .font(.system(size: 11))
                 .foregroundStyle(LeatherColors.secondaryInk)
