@@ -157,12 +157,7 @@ test.describe("Tauri React workspace through the real Core process", () => {
       );
       expect(geometry.clipped, `ツールバーの要素が${width}px幅で欠けています: ${JSON.stringify(geometry)}`).toEqual([]);
       const toolPaletteButton = page.getByTestId("leather.toolbar.tools");
-      const shellClass = await page.locator(".app-shell").getAttribute("class");
-      if (shellClass?.split(/\s+/u).includes("layout-compact")) {
-        await expect(toolPaletteButton).toBeVisible();
-      } else {
-        await expect(toolPaletteButton).toHaveCount(0);
-      }
+      await expect(toolPaletteButton).toBeVisible();
     }
   });
 
