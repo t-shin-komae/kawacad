@@ -209,7 +209,12 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
         />
       )}
       {showOperationGuide && (
-        <div className="canvas-operation-guide" data-testid="canvas-operation-guide" role="status" aria-live="polite">
+        <div
+          className="canvas-operation-guide"
+          data-testid="canvas-operation-guide"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <ToolIcon tool={tool} size={16} className="canvas-operation-guide-icon" />
           <strong>{toolName}</strong>
           <span>{operationGuideMessage}</span>
