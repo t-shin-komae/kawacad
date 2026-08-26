@@ -279,7 +279,13 @@ private struct ToolbarOrientationToggle: View {
         .font(.system(size: 12, weight: .semibold))
         .frame(width: 28, height: 28)
         .foregroundStyle(
-          isLandscape ? LeatherColors.selectedControlInk : LeatherColors.secondaryInk)
+          isLandscape ? LeatherColors.selectedControlInk : LeatherColors.secondaryInk
+        )
+        .overlay(alignment: .bottomTrailing) {
+          if isLandscape {
+            ToolbarStateMark()
+          }
+        }
     }
     .toggleStyle(.button)
     .help(AppStrings.tr("toolbar.a4_landscape"))
@@ -326,6 +332,11 @@ private struct ToolbarToggleButton: View {
         color: isOn ? LeatherColors.selectedControlInk : LeatherColors.secondaryInk
       )
       .frame(width: 28, height: 28)
+      .overlay(alignment: .bottomTrailing) {
+        if isOn {
+          ToolbarStateMark()
+        }
+      }
     }
     .toggleStyle(.button)
     .help(title)
@@ -381,5 +392,19 @@ private struct ToolbarToggleIcon: View {
     case .grid, .page:
       return false
     }
+  }
+}
+
+private struct ToolbarStateMark: View {
+  var body: some View {
+    Image(systemName: "checkmark")
+      .font(.system(size: 7, weight: .bold))
+      .foregroundStyle(LeatherColors.accent)
+      .frame(width: 11, height: 11)
+      .background(LeatherColors.window, in: Circle())
+      .overlay {
+        Circle().stroke(LeatherColors.selectedStroke, lineWidth: 1)
+      }
+      .accessibilityHidden(true)
   }
 }

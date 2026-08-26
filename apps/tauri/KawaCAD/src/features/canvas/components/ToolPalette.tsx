@@ -1,5 +1,5 @@
 import { ToolIcon } from "@/features/canvas/components/ToolIcon";
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Paintbrush } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Paintbrush, PanelLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
@@ -112,7 +112,8 @@ export function PaletteToolButton({ tool, isSelected, onSelect }: PaletteToolBut
       title={hints[tool]}
     >
       <ToolIcon tool={tool} size={15} />
-      <span>{labels[tool]}</span>
+      <span className="tool-label">{labels[tool]}</span>
+      {isSelected && <Check className="tool-selection-mark" size={13} strokeWidth={3} aria-hidden="true" />}
     </button>
   );
 }
@@ -153,6 +154,7 @@ export function ToolPalette({
       aria-label={appStrings.palette.ariaLabel}
     >
       <header className="palette-header">
+        <PanelLeft className="palette-header-icon" size={13} strokeWidth={2} aria-hidden="true" />
         <span>
           <strong>{appStrings.palette.title}</strong>
           <small>{appStrings.palette.subtitle}</small>
@@ -216,7 +218,8 @@ export function ToolPalette({
             <h2>{appStrings.palette.activeDetailedTool}</h2>
             <button className="active" onClick={() => onBasicOnlyChange(false)}>
               <ToolIcon tool={activeTool} size={15} />
-              <span>{labels[activeTool]}</span>
+              <span className="tool-label">{labels[activeTool]}</span>
+              <Check className="tool-selection-mark" size={13} strokeWidth={3} aria-hidden="true" />
             </button>
           </section>
         )}

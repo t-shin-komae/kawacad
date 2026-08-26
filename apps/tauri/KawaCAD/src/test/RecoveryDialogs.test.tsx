@@ -59,6 +59,7 @@ describe("recovery presentation", () => {
     const onDismiss = vi.fn();
     render(<RecoverySaveFailureBanner details="disk full" onRetry={onRetry} onDismiss={onDismiss} />);
     const alert = screen.getByRole("alert");
+    expect(alert.querySelector(".app-error-icon")).toBeInTheDocument();
     fireEvent.click(within(alert).getByRole("button", { name: "詳細" }));
     expect(alert).toHaveTextContent("disk full");
     fireEvent.click(within(alert).getByRole("button", { name: "再試行" }));

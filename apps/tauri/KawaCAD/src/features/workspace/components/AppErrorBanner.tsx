@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { appErrorCategoryTitle, type AppErrorPresentation } from "@/features/workspace/selectors/appErrorPresentation";
 import { appStrings } from "@/localization";
 
@@ -12,6 +13,7 @@ export function AppErrorBanner({ presentation, onDismiss }: Props) {
 
   return (
     <aside className="document-warning-banner app-error-banner" role="alert">
+      <AlertTriangle className="app-error-icon" size={16} strokeWidth={2} aria-hidden="true" />
       <span>
         <strong>{appErrorCategoryTitle(presentation.identity.category)}</strong>
         <span>{presentation.message}</span>

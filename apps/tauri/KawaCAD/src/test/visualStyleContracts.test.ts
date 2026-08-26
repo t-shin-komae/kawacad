@@ -127,6 +127,15 @@ describe("visual style contracts", () => {
     );
     expect(rule(".document-warning-banner")).toContain("padding: 12px");
     expect(rule(".app-error-banner > span")).toMatch(/font-size: 12px;[\s\S]*font-weight: 600/u);
+    expect(rule(".app-error-icon")).toContain("color: var(--warning)");
+  });
+
+  it("#168 keeps state and warning cues independent of color", () => {
+    expect(rule(".toolbar-toggle-state-mark")).toContain("border-radius: 50%");
+    expect(rule(".tool-selection-mark")).toContain("color: var(--accent)");
+    expect(rule(".constraint-status-summary")).toContain("display: flex");
+    expect(styles).toContain("button:focus-visible,");
+    expect(styles).toContain("outline: var(--focus-ring)");
   });
 
   it("#75 keeps paste placement as a compact capsule with selected state", () => {

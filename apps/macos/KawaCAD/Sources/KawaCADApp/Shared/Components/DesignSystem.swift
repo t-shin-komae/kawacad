@@ -214,6 +214,12 @@ struct PaletteToolButton: View {
           .lineLimit(2)
           .multilineTextAlignment(.leading)
           .frame(maxWidth: .infinity, alignment: .leading)
+        if isSelected {
+          Image(systemName: "checkmark.circle.fill")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(LeatherColors.accent)
+            .accessibilityHidden(true)
+        }
       }
       .foregroundStyle(LeatherColors.ink)
       .padding(.horizontal, LeatherDesignMetrics.Spacing.small)
@@ -492,14 +498,34 @@ struct ConstraintStatusBadge: View {
     }
   }
 
+  private var symbolName: String {
+    switch status {
+    case .unknown:
+      return "questionmark.circle"
+    case .underConstrained:
+      return "exclamationmark.triangle.fill"
+    case .fullyConstrained:
+      return "checkmark.circle.fill"
+    case .overConstrained:
+      return "exclamationmark.triangle"
+    case .conflicting:
+      return "exclamationmark.octagon.fill"
+    }
+  }
+
   var body: some View {
-    Text(status.displayName)
-      .font(.system(size: compact ? 10 : 11, weight: .bold))
-      .foregroundStyle(colors.foreground)
-      .padding(.horizontal, compact ? 8 : 10)
-      .frame(height: compact ? 24 : 28)
-      .background(colors.background)
-      .clipShape(Capsule())
+    HStack(spacing: 4) {
+      Image(systemName: symbolName)
+        .font(.system(size: compact ? 9 : 10, weight: .semibold))
+        .accessibilityHidden(true)
+      Text(status.displayName)
+    }
+    .font(.system(size: compact ? 10 : 11, weight: .bold))
+    .foregroundStyle(colors.foreground)
+    .padding(.horizontal, compact ? 8 : 10)
+    .frame(height: compact ? 24 : 28)
+    .background(colors.background)
+    .clipShape(Capsule())
   }
 }
 

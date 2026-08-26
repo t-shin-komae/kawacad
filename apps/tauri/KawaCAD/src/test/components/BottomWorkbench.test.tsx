@@ -30,6 +30,9 @@ describe("BottomWorkbench", () => {
     expect(screen.getByRole("region", { name: "サマリー" })).not.toHaveTextContent("line:edge");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("外形カット線");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("完全拘束");
+    expect(
+      screen.getByRole("region", { name: "サマリー" }).querySelector(".constraint-status-summary svg"),
+    ).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("幅 20.00 mm");
     expect(screen.getByRole("region", { name: "サマリー" })).toHaveTextContent("使用 1 件 / 未使用 1 件");
   });
@@ -43,5 +46,6 @@ describe("BottomWorkbench", () => {
     expect(summary).not.toHaveTextContent("拘束はありません。");
     expect(summary).toHaveTextContent("パラメータなし");
     expect(summary).toHaveTextContent("未使用 0 件");
+    expect(summary.querySelector(".constraint-status-summary svg")).toBeInTheDocument();
   });
 });

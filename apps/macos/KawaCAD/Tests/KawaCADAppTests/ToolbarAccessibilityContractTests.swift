@@ -31,3 +31,20 @@ func swift_toolbar_icon_actions_have_accessibility_labels() throws {
     )
   }
 }
+
+@Test("#168 Swiftのオン状態と拘束状態は色以外の手掛かりを持つ")
+func swift_accessibility_state_cues_are_visible() throws {
+  let toolbarSource = try cadToolbarSource()
+  let designSystemURL = URL(fileURLWithPath: #filePath)
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+    .appendingPathComponent("Sources/KawaCADApp/Shared/Components/DesignSystem.swift")
+  let designSystem = try String(contentsOf: designSystemURL, encoding: .utf8)
+
+  #expect(toolbarSource.contains("ToolbarStateMark"))
+  #expect(toolbarSource.contains("checkmark"))
+  #expect(designSystem.contains("checkmark.circle.fill"))
+  #expect(designSystem.contains("exclamationmark.triangle.fill"))
+  #expect(designSystem.contains("exclamationmark.octagon.fill"))
+}

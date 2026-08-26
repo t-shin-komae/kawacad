@@ -1,5 +1,6 @@
 import {
   CircleEllipsis,
+  Check,
   Crosshair,
   File,
   Grid3X3,
@@ -80,6 +81,7 @@ function ToggleButton({ label, testId, pressed, onPressedChange, children }: Tog
       onClick={() => onPressedChange(!pressed)}
     >
       {children}
+      {pressed && <Check className="toolbar-toggle-state-mark" size={9} strokeWidth={3} aria-hidden="true" />}
     </button>
   );
 }
