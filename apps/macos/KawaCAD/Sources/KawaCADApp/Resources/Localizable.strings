@@ -314,6 +314,8 @@
 "status_item.output_preview_warning_separator" = " / ";
 
 "toolbar.tool_palette" = "ツールパレット";
+"toolbar.show_tool_palette" = "ツールを表示";
+"toolbar.hide_tool_palette" = "ツールを隠す";
 "toolbar.copy_selection" = "選択図形をコピー";
 "toolbar.paste_selection" = "コピーした図形をペースト";
 "toolbar.duplicate_selection" = "選択図形を複製";

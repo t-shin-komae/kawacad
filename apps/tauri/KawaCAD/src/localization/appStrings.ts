@@ -240,6 +240,7 @@ const appStrings = {
     zoom: "ズーム",
     displayAids: "表示補助",
     showTools: "ツールを表示",
+    hideTools: "ツールを隠す",
     showInspector: "インスペクタを表示",
     viewMode: "表示モード",
     moreActions: "その他の操作",

@@ -1846,6 +1846,26 @@ describe("React workspace shortcuts", () => {
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "toggleInspector" }));
     await waitFor(() => expect(window.localStorage.getItem("leather.layout.inspectorPanelVisible")).toBe("false"));
   });
+  it("persists a hidden tool palette across reload and restores it with layout reset", async () => {
+    const firstRender = render(<App />);
+    await screen.findByText("ツールを選択して作図してください。");
+
+    fireEvent.click(screen.getByRole("button", { name: "ツールを隠す" }));
+    await waitFor(() => expect(window.localStorage.getItem("leather.layout.toolPaletteVisible")).toBe("false"));
+    expect(screen.queryByRole("complementary", { name: "ツールパレット" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ツールを表示" })).toBeInTheDocument();
+
+    firstRender.unmount();
+    render(<App />);
+    await screen.findByText("ツールを選択して作図してください。");
+    expect(screen.queryByRole("complementary", { name: "ツールパレット" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ツールを表示" })).toBeInTheDocument();
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "resetLayout" }));
+    await waitFor(() => expect(screen.getByRole("complementary", { name: "ツールパレット" })).toBeInTheDocument());
+    expect(window.localStorage.getItem("leather.layout.toolPaletteVisible")).toBeNull();
+    expect(screen.getByRole("button", { name: "ツールを隠す" })).toBeInTheDocument();
+  });
   it("accepts native menu intents through the same command path", async () => {
     render(<App />);
     await screen.findByText("ツールを選択して作図してください。");

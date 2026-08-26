@@ -762,7 +762,7 @@ export function MainWindowView() {
           }}
           onSnapChange={setSnapEnabled}
           onPointSnapChange={setPointSnapEnabled}
-          showToolPaletteButton={layout.mode === "compact" || !layout.toolDockVisible}
+          toolPaletteVisible={layout.mode !== "compact" && layout.toolDockVisible}
           onToggleInspector={() =>
             layout.mode === "compact"
               ? setCompactDrawer((value) => (value === "inspector" ? undefined : "inspector"))
@@ -770,7 +770,7 @@ export function MainWindowView() {
           }
           onToggleTools={() => {
             if (layout.mode === "compact") setCompactDrawer((value) => (value === "tools" ? undefined : "tools"));
-            else setToolPaletteVisible(true);
+            else setToolPaletteVisible((value) => !value);
           }}
         />
         <WorkspaceCanvasLayout

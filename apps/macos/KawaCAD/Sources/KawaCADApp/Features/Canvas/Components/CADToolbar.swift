@@ -12,29 +12,35 @@ struct CADToolbar: View {
   let workspaceLayoutMode: WindowLayoutMode
   let density: CADToolbarDensity
 
+  private var toolPaletteIsVisible: Bool {
+    workspaceLayoutMode != .compact && state.toolPaletteVisible
+  }
+
+  private var toolPaletteActionLabel: String {
+    AppStrings.tr(
+      toolPaletteIsVisible ? "toolbar.hide_tool_palette" : "toolbar.show_tool_palette"
+    )
+  }
+
   var body: some View {
     HStack(spacing: 8) {
-      if workspaceLayoutMode == .compact || !state.toolPaletteVisible {
-        Button {
-          actions.showToolPalette()
-        } label: {
-          HStack(spacing: 8) {
-            Image(systemName: "sidebar.left")
-              .font(.system(size: 12, weight: .semibold))
-          }
-          .foregroundStyle(LeatherColors.secondaryInk)
-          .frame(width: 32, alignment: .leading)
+      Button {
+        actions.toggleToolPalette(workspaceLayoutMode)
+      } label: {
+        HStack(spacing: 8) {
+          Image(systemName: "sidebar.left")
+            .font(.system(size: 12, weight: .semibold))
         }
-        .buttonStyle(.plain)
-        .help(AppStrings.tr("toolbar.tool_palette"))
-        .accessibilityLabel(AppStrings.tr("toolbar.tool_palette"))
-        .accessibilityIdentifier(AccessibilityIdentifier.toolbarTools)
+        .foregroundStyle(LeatherColors.secondaryInk)
+        .frame(width: 32, alignment: .leading)
       }
+      .buttonStyle(.plain)
+      .help(toolPaletteActionLabel)
+      .accessibilityLabel(toolPaletteActionLabel)
+      .accessibilityIdentifier(AccessibilityIdentifier.toolbarTools)
 
-      if workspaceLayoutMode == .compact || !state.toolPaletteVisible {
-        Divider()
-          .frame(height: 30)
-      }
+      Divider()
+        .frame(height: 30)
 
       HStack(spacing: 8) {
         HStack(spacing: 8) {

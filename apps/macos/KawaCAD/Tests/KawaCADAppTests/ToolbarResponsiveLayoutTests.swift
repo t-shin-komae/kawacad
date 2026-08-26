@@ -32,6 +32,34 @@ func cad_toolbar_state_tracks_selected_tool_and_toggle_values() {
   #expect(props.toolbarState.pointSnapEnabled)
 }
 
+@Test("CADToolbar の表示切替はツールパレットの状態と設定を更新する")
+@MainActor
+func cad_toolbar_toggles_tool_palette_visibility() {
+  let originalVisibility = WorkspacePreferencesAdapter.toolPaletteVisible()
+  defer { WorkspacePreferencesAdapter.setToolPaletteVisible(originalVisibility) }
+  WorkspacePreferencesAdapter.setToolPaletteVisible(true)
+
+  let appState = AppCoordinator(
+    documentAdapter: StubDocumentSessionAdapter(
+      createNewDocumentState: makeDocumentState(name: "Toolbar Tool Palette")
+    ),
+    coreStatusProvider: { .connected(.init(fileFormatMajor: 0, schemaMajor: 0)) }
+  )
+  let props = WorkspaceViewPropsFactory(
+    actions: appState.actions,
+    inspectorPresentation: appState.inspectorPresentation,
+    canvasPresentation: appState.canvasPresentation
+  )
+
+  props.toolbarActions.toggleToolPalette(.wide)
+  #expect(appState.workspaceLayout.toolPaletteVisible == false)
+  #expect(WorkspacePreferencesAdapter.toolPaletteVisible() == false)
+
+  props.toolbarActions.toggleToolPalette(.wide)
+  #expect(appState.workspaceLayout.toolPaletteVisible)
+  #expect(WorkspacePreferencesAdapter.toolPaletteVisible())
+}
+
 @Test("CADToolbar の condensed 表示は regular workspace に収まり、表示モード幅を維持する")
 @MainActor
 func cad_toolbar_condensed_presentation_fits_regular_workspace() {

@@ -131,11 +131,11 @@ struct WorkspaceViewPropsFactory {
   var toolbarActions: CADToolbarActions {
     let bindings = KawaCADUIBindings(handler: actions)
     return CADToolbarActions(
-      showToolPalette: { [self] in
-        if workspaceLayout.windowLayoutMode == .compact {
+      toggleToolPalette: { [self] mode in
+        if mode == .compact {
           showCompactDrawer(.tools)
         } else {
-          setToolPaletteVisible(true)
+          setToolPaletteVisible(!workspaceLayout.toolPaletteVisible)
         }
       },
       toggleInspector: { [self] mode in

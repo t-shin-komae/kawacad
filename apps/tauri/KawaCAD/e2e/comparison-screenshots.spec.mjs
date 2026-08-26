@@ -261,9 +261,9 @@ test.describe("Swift and Tauri visual comparison", () => {
       const palette = page.getByRole("complementary", { name: "ツールパレット" });
       await expect(palette).toBeVisible();
 
-      await page.evaluate(() => {
-        window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "toggleTools" }));
-      });
+      const hideTools = page.getByRole("button", { name: "ツールを隠す", exact: true });
+      await expect(hideTools).toBeVisible();
+      await hideTools.click();
       await expect(palette).toHaveCount(0);
       const showTools = page.getByRole("button", { name: "ツールを表示", exact: true });
       await expect(showTools).toBeVisible();
@@ -281,9 +281,7 @@ test.describe("Swift and Tauri visual comparison", () => {
       await saveScreenshot(page, `tauri-${layout.id}-tool-palette-restored.jpg`);
 
       if (layout.id === "wide") {
-        await page.evaluate(() => {
-          window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "toggleTools" }));
-        });
+        await page.getByRole("button", { name: "ツールを隠す", exact: true }).click();
         await expect(palette).toHaveCount(0);
         await page.evaluate(() => {
           window.dispatchEvent(new CustomEvent("kawa-cad-menu", { detail: "resetLayout" }));
