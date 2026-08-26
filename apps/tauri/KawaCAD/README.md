@@ -27,8 +27,20 @@ npm test
 npm run test:e2e
 npm run screenshots:comparison
 npm run build
+npm run build:storybook
 npm run tauri dev
 ```
+
+## コンポーネントドキュメント
+
+Tauri/React の表示コンポーネントは Storybook で確認できます。
+
+```bash
+cd apps/tauri/KawaCAD
+npm run storybook
+```
+
+各表示責務の参照ページは [`src/stories/ComponentCatalog.stories.tsx`](src/stories/ComponentCatalog.stories.tsx)、Core や OS API を必要としない入力部品のライブ例は [`src/stories/InteractivePrimitives.stories.tsx`](src/stories/InteractivePrimitives.stories.tsx) にあります。Swift/macOS との対応は [`docs/design/ui-architecture/component-correspondence.md`](../../../docs/design/ui-architecture/component-correspondence.md) を参照してください。
 
 `npm run test:e2e` はViteで起動したUIにPlaywrightから接続し、実際の
 `kawacad-core-process` とTauriのinvoke形式の境界を通してワークスペースを検証します。

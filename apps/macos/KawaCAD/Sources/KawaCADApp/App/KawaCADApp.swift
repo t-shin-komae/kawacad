@@ -4,40 +4,54 @@ import SwiftUI
 @main
 struct KawaCADApp: App {
   @NSApplicationDelegateAdaptor(KawaCADAppDelegate.self) private var appDelegate
-  @StateObject private var appState = AppCoordinator(
-    documentRecoveryConfiguration: .live()
-  )
+  @StateObject private var stateBox: KawaCADAppStateBox
+
+  init() {
+    _stateBox = StateObject(
+      wrappedValue: KawaCADAppStateBox(
+        isComponentGallery: ProcessInfo.processInfo.arguments.contains("--component-gallery")
+      )
+    )
+  }
 
   var body: some Scene {
     WindowGroup {
-      MainWindowView()
-        .environmentObject(appState)
-        .onAppear {
-          appState.documentLifecycleController = appDelegate.documentLifecycleController
-          appDelegate.documentLifecycleController.requestWindowClose = { [weak appState] in
-            appState?.actions.document.requestWindowClose() ?? true
+      if stateBox.isComponentGallery {
+        ComponentGalleryView()
+      } else if let appState = stateBox.appState {
+        MainWindowView()
+          .environmentObject(appState)
+          .onAppear {
+            appState.documentLifecycleController = appDelegate.documentLifecycleController
+            appDelegate.documentLifecycleController.requestWindowClose = { [weak appState] in
+              appState?.actions.document.requestWindowClose() ?? true
+            }
+            appDelegate.documentLifecycleController.requestApplicationQuit = { [weak appState] in
+              appState?.actions.document.requestApplicationQuit() ?? true
+            }
+            appDelegate.didResignActive = { [weak appState] in
+              appState?.actions.recovery.handleApplicationWillResignActive()
+            }
+            appState.actions.recovery.handleApplicationLaunch()
           }
-          appDelegate.documentLifecycleController.requestApplicationQuit = { [weak appState] in
-            appState?.actions.document.requestApplicationQuit() ?? true
-          }
-          appDelegate.didResignActive = { [weak appState] in
-            appState?.actions.recovery.handleApplicationWillResignActive()
-          }
-          appState.actions.recovery.handleApplicationLaunch()
-        }
+      }
     }
     .commands {
-      KawaCADCommands(
-        actions: appState.actions,
-        cadSession: appState.cadSession,
-        annotationSelection: appState.annotationSelection,
-        canvasPresentation: appState.canvasPresentation,
-        documentPresentation: appState.documentPresentation,
-        inspectorPresentation: appState.inspectorPresentation,
-        workspacePreferences: appState.workspacePreferences,
-        workspaceLayout: appState.workspaceLayout
-      )
+      KawaCADCommands(appState: stateBox.appState)
     }
+  }
+}
+
+final class KawaCADAppStateBox: ObservableObject {
+  let isComponentGallery: Bool
+  let appState: AppCoordinator?
+
+  init(isComponentGallery: Bool) {
+    self.isComponentGallery = isComponentGallery
+    appState =
+      isComponentGallery
+      ? nil
+      : AppCoordinator(documentRecoveryConfiguration: .live())
   }
 }
 

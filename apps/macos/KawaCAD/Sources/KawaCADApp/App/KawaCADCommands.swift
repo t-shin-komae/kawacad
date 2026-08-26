@@ -1,4 +1,5 @@
 import AppKit
+import KawaCADOutput
 import SwiftUI
 
 /// Native-menu component. It observes only the feature states that influence
@@ -34,6 +35,36 @@ struct KawaCADCommands: Commands {
   }
 
   private var uiBindings: KawaCADUIBindings { actions.uiBindings }
+
+  init(appState: AppCoordinator?) {
+    if let appState {
+      self.init(
+        actions: appState.actions,
+        cadSession: appState.cadSession,
+        annotationSelection: appState.annotationSelection,
+        canvasPresentation: appState.canvasPresentation,
+        documentPresentation: appState.documentPresentation,
+        inspectorPresentation: appState.inspectorPresentation,
+        workspacePreferences: appState.workspacePreferences,
+        workspaceLayout: appState.workspaceLayout
+      )
+    } else {
+      self.init(fixture: KawaCADCommandFixture())
+    }
+  }
+
+  private init(fixture: KawaCADCommandFixture) {
+    self.init(
+      actions: fixture.actions,
+      cadSession: fixture.cadSession,
+      annotationSelection: fixture.annotationSelection,
+      canvasPresentation: fixture.canvasPresentation,
+      documentPresentation: fixture.documentPresentation,
+      inspectorPresentation: fixture.inspectorPresentation,
+      workspacePreferences: fixture.workspacePreferences,
+      workspaceLayout: fixture.workspaceLayout
+    )
+  }
 
   var body: some Commands {
     CommandGroup(replacing: .appInfo) {
@@ -295,6 +326,61 @@ struct KawaCADCommands: Commands {
         .keyboardShortcut("r", modifiers: [.command])
     }
 
+  }
+}
+
+/// Supplies inert command state while the component gallery is running.
+/// It keeps the normal application's commands available without creating an
+/// AppCoordinator, which would start the Core/document lifecycle.
+private struct KawaCADCommandFixture {
+  let actions: AppActionHandlers
+  let cadSession: CadSessionState
+  let annotationSelection: AnnotationSelectionState
+  let canvasPresentation: CanvasPresentationState
+  let documentPresentation: DocumentPresentationState
+  let inspectorPresentation: InspectorPresentationState
+  let workspacePreferences: WorkspacePreferencesState
+  let workspaceLayout: WorkspaceLayoutState
+
+  init() {
+    let annotationSelection = AnnotationSelectionState()
+    let canvasPresentation = CanvasPresentationState(annotationSelection: annotationSelection)
+    let cadSession = CadSessionState(
+      documentAdapter: DocumentSessionAdapter(),
+      coreStatusProvider: { .unavailable(AppStrings.tr("app.core.unavailable")) }
+    )
+    let documentPresentation = DocumentPresentationState()
+    let errorPresentationState = AppErrorPresentationState()
+    let inspectorPresentation = InspectorPresentationState()
+    let outputPresentation = OutputPresentationState(service: OutputService())
+    let recoverySnapshotState = RecoverySnapshotState(configuration: .disabled())
+    let workspacePreferences = WorkspacePreferencesState()
+    let workspaceLayout = WorkspaceLayoutState()
+    let partLibraryState = PartLibraryState(adapter: PartLibraryAdapter())
+
+    actions = AppActionHandlers(
+      context: AppActionHandlerContext(
+        cadSession: cadSession,
+        canvasPresentation: canvasPresentation,
+        documentPresentation: documentPresentation,
+        errorPresentationState: errorPresentationState,
+        inspectorPresentation: inspectorPresentation,
+        outputPresentation: outputPresentation,
+        recoverySnapshotState: recoverySnapshotState,
+        workspacePreferences: workspacePreferences,
+        workspaceLayout: workspaceLayout,
+        partLibraryState: partLibraryState,
+        commandFactory: DocumentCommandFactory(),
+        desktopEnvironment: DesktopEnvironmentAdapter()
+      )
+    )
+    self.cadSession = cadSession
+    self.annotationSelection = annotationSelection
+    self.canvasPresentation = canvasPresentation
+    self.documentPresentation = documentPresentation
+    self.inspectorPresentation = inspectorPresentation
+    self.workspacePreferences = workspacePreferences
+    self.workspaceLayout = workspaceLayout
   }
 }
 
