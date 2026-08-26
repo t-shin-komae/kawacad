@@ -368,6 +368,8 @@
 "inspector.shared_style_name_placeholder" = "スタイル名";
 "inspector.parameters" = "パラメータ";
 "inspector.no_named_parameters" = "名前付きパラメータはまだありません";
+"inspector.no_matching_parameters" = "検索条件に一致するパラメータはありません";
+"inspector.parameter_empty_hint" = "拘束や派生要素で再利用する寸法値を、名前付きで管理できます。";
 "inspector.add" = "追加";
 "inspector.selection" = "選択";
 "inspector.tab.selection" = "選択";
