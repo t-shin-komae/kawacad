@@ -418,7 +418,6 @@ function drawGrid(
     context.lineTo(bounds.x + bounds.width, y);
     context.stroke();
   }
-  context.strokeStyle = "#b6b6ba";
   context.beginPath();
   context.moveTo(origin.x, bounds.y);
   context.lineTo(origin.x, bounds.y + bounds.height);

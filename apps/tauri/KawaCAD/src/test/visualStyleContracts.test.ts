@@ -89,6 +89,7 @@ describe("visual style contracts", () => {
     expect(canvasRendering).toContain('coordinateStroke: "rgba(10,132,255,.72)"');
     expect(canvasRendering).toContain("selectionLineWidth: 3");
     expect(canvasRendering).toContain("selectionDash: [5, 3]");
+    expect(canvasRendering).not.toContain('context.strokeStyle = "#b6b6ba"');
   });
 
   it("#71 keeps the inline editor minimum width, padding, focus border, and background", () => {
