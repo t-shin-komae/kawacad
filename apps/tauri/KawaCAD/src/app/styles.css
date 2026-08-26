@@ -767,16 +767,9 @@ input[type="checkbox"] {
   display: flex;
   flex: 0 0 var(--palette-header-height);
   align-items: center;
-  gap: 8px;
   min-height: var(--palette-header-height);
   padding: 0 12px;
   border-bottom: 1px solid var(--panel-stroke);
-}
-.palette-header-icon {
-  width: var(--icon-size-small);
-  height: var(--icon-size-small);
-  flex: 0 0 var(--icon-size-small);
-  color: var(--accent);
 }
 .palette-header > span {
   display: grid;

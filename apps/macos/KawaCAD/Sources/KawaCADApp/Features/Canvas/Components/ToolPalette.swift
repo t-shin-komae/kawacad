@@ -72,10 +72,7 @@ struct ToolPalette: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      HStack(spacing: 8) {
-        Image(systemName: "sidebar.left")
-          .font(.system(size: 13, weight: .semibold))
-          .foregroundStyle(LeatherColors.accent)
+      HStack {
         VStack(alignment: .leading, spacing: 1) {
           Text(AppStrings.tr("sidebar.tools"))
             .font(.system(size: 13, weight: .semibold))
