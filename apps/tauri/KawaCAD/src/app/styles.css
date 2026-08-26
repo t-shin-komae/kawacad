@@ -492,6 +492,10 @@ input[type="checkbox"] {
   flex: 1 1 auto;
 }
 .toolbar-inspector-button {
+  width: var(--control-height);
+  min-width: var(--control-height) !important;
+  height: var(--control-height);
+  min-height: var(--control-height) !important;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -506,7 +510,7 @@ input[type="checkbox"] {
   display: inline-flex;
   flex: 0 0 236px;
   align-items: stretch;
-  height: 30px;
+  height: calc(var(--control-height) + 4px);
   padding: 2px;
   border-radius: 7px;
   background: rgba(60, 60, 67, 0.1);
@@ -514,7 +518,7 @@ input[type="checkbox"] {
 .view-mode-segment button {
   flex: 1 1 50%;
   min-width: 0;
-  min-height: 26px;
+  min-height: var(--control-height);
   padding: 2px 9px;
   border: 0;
   border-radius: 5px;

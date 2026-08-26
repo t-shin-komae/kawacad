@@ -19,6 +19,7 @@ struct InspectorPanel: View {
         }
         .pickerStyle(.segmented)
         .labelsHidden()
+        .leatherControlHeight()
         .accessibilityLabel(Text(AppStrings.tr("accessibility.inspector_tabs")))
 
         if model.inspectorHasPendingSelectionChange {
@@ -33,6 +34,7 @@ struct InspectorPanel: View {
             .font(.system(size: 11, weight: .semibold))
           }
           .buttonStyle(.bordered)
+          .leatherControlHeight()
         }
       }
       .padding(16)

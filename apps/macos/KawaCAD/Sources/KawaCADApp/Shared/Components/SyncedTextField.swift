@@ -184,6 +184,7 @@ struct SyncedTextField: View {
       styledTextField
         .font(font)
         .frame(width: width)
+        .leatherControlHeight()
         .focused($isFocused)
         .onSubmit(commit)
         .onChange(of: isFocused) { focused in

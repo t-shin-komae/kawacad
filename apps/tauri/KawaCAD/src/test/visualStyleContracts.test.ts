@@ -55,6 +55,11 @@ describe("visual style contracts", () => {
     expect(rule(".toolbar-icon-button")).toMatch(
       /min-width: var\(--control-height\) !important;[\s\S]*height: var\(--control-height\)/u,
     );
+    expect(rule(".toolbar-inspector-button")).toMatch(
+      /min-width: var\(--control-height\) !important;[\s\S]*height: var\(--control-height\)/u,
+    );
+    expect(rule(".view-mode-segment")).toContain("height: calc(var(--control-height) + 4px)");
+    expect(rule(".view-mode-segment button")).toContain("min-height: var(--control-height)");
   });
 
   it("#69 keeps palette controls, two-column threshold, and button geometry", () => {

@@ -199,6 +199,7 @@ struct ToolPalette: View {
       }
       .buttonStyle(.bordered)
       .controlSize(.small)
+      .leatherControlHeight()
     }
     .padding(.bottom, 3)
   }
@@ -233,6 +234,7 @@ struct ToolPalette: View {
       }
       .buttonStyle(.bordered)
       .controlSize(.small)
+      .leatherControlHeight()
       .disabled(state.selectedEntityCount == 0 || state.sharedStyles.isEmpty)
     }
     .padding(.bottom, 3)
@@ -345,7 +347,10 @@ final class PalettePopUpContainer: NSView {
   var preferredWidth: CGFloat = 0
 
   override var intrinsicContentSize: NSSize {
-    NSSize(width: preferredWidth, height: button.intrinsicContentSize.height)
+    NSSize(
+      width: preferredWidth,
+      height: max(button.intrinsicContentSize.height, LeatherDesignMetrics.Control.height)
+    )
   }
 }
 

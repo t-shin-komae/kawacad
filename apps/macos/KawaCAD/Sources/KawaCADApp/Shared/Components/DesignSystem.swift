@@ -81,6 +81,12 @@ enum LeatherDesignMetrics {
 
 }
 
+extension View {
+  func leatherControlHeight() -> some View {
+    frame(minHeight: LeatherDesignMetrics.Control.height)
+  }
+}
+
 extension Color {
   init(hex: String) {
     let value = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))

@@ -41,21 +41,21 @@ struct LayerEditorRow: View {
       accessoryButtons: Group {
         Button(action: onToggleVisibility) {
           Image(systemName: layer.visible ? "eye" : "eye.slash")
-            .frame(width: 24, height: 24)
+            .frame(width: LeatherDesignMetrics.Control.height, height: LeatherDesignMetrics.Control.height)
         }
         .buttonStyle(.borderless)
         .foregroundStyle(layer.visible ? LeatherColors.ink : LeatherColors.secondaryInk)
 
         Button(action: onTogglePrintable) {
           Image(systemName: layer.printable ? "printer.fill" : "printer")
-            .frame(width: 24, height: 24)
+            .frame(width: LeatherDesignMetrics.Control.height, height: LeatherDesignMetrics.Control.height)
         }
         .buttonStyle(.borderless)
         .foregroundStyle(layer.printable ? LeatherColors.ink : LeatherColors.secondaryInk)
       },
       deleteButton: Button(action: onDelete) {
         Image(systemName: "trash")
-          .frame(width: 24, height: 24)
+          .frame(width: LeatherDesignMetrics.Control.height, height: LeatherDesignMetrics.Control.height)
       }
       .buttonStyle(.borderless)
       .foregroundStyle(canDelete ? LeatherColors.destructive : LeatherColors.secondaryInk)

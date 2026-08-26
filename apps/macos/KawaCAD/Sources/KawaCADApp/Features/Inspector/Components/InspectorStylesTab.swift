@@ -14,6 +14,7 @@ struct InspectorStylesTab: View {
           )
         )
         .textFieldStyle(.roundedBorder)
+        .leatherControlHeight()
       }
 
       if appState.data.filteredInspectorSharedStyles.isEmpty {
@@ -36,7 +37,7 @@ struct InspectorStylesTab: View {
               accessoryButtons: EmptyView(),
               deleteButton: Button(action: { appState.actions.deleteSharedStyle(style) }) {
                 Image(systemName: "trash")
-                  .frame(width: 24, height: 24)
+                  .frame(width: LeatherDesignMetrics.Control.height, height: LeatherDesignMetrics.Control.height)
               }
               .buttonStyle(.borderless)
               .foregroundStyle(LeatherColors.destructive)
@@ -53,6 +54,7 @@ struct InspectorStylesTab: View {
       }
       .buttonStyle(.bordered)
       .font(.system(size: 12, weight: .semibold))
+      .leatherControlHeight()
     }
   }
 }
