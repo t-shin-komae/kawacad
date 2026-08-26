@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CADCanvas,
   angleArcCounterclockwise,
@@ -11,6 +11,8 @@ import {
 } from "@/features/canvas/components/CadCanvas";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { RawEntity } from "@/features/canvas/domain/cad";
+
+afterEach(cleanup);
 
 function canvas(
   tool: Tool,
@@ -110,6 +112,17 @@ describe("Canvas accessibility parity", () => {
     const element = screen.getByRole("application", { name: "型紙作図キャンバス" });
     expect(element).toHaveAttribute("aria-describedby", "cad-canvas-interaction-state");
     expect(screen.getByText(/線分、編集表示、選択 1 件、拘束対象 1 件、拘束対象を 1 件選択中/)).toBeInTheDocument();
+    expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("拘束対象を 1 件選択中");
+  });
+
+  it("hides the guide while the select tool is idle", () => {
+    render(canvas("select"));
+    expect(screen.queryByTestId("canvas-operation-guide")).not.toBeInTheDocument();
+  });
+
+  it("shows the selected drawing tool's next operation", () => {
+    render(canvas("line"));
+    expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("線分の始点をクリックします");
   });
   it("reports arc drawing progress without exposing mutable canvas state", () => {
     render(
@@ -118,7 +131,7 @@ describe("Canvas accessibility parity", () => {
         { xMm: 10, yMm: 0 },
       ]),
     );
-    expect(screen.getByText(/円弧の終点を選択中/)).toBeInTheDocument();
+    expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("円弧の終点を選択中");
   });
   it("reports drawing progress for a pending multi-reference tool", () => {
     render(canvas("fillet", [], 3));
@@ -128,9 +141,9 @@ describe("Canvas accessibility parity", () => {
   });
   it("reports fillet draft references and part-origin placement as accessible state", () => {
     const { rerender } = render(canvas("fillet", [], 0, { filletDraftEntityCount: 3 }));
-    expect(screen.getByText(/フィレット対象 3 件、開いた輪郭/)).toBeInTheDocument();
+    expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("フィレット対象 3 件、開いた輪郭");
     rerender(canvas("select", [], 0, { settingPartOrigin: true }));
-    expect(screen.getByText(/パーツ原点を選択中/)).toBeInTheDocument();
+    expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("パーツ原点を選択中");
   });
 
   it("reports the same visible marquee candidates used by canvas selection", () => {
@@ -154,7 +167,7 @@ describe("Canvas accessibility parity", () => {
         marqueeCurrent: { xMm: 5, yMm: 5 },
       }),
     );
-    expect(screen.getByText(/完全に含まれる図形を選択: 1件/)).toBeInTheDocument();
+    expect(screen.getByTestId("canvas-operation-guide")).toHaveTextContent("完全に含まれる図形を選択: 1件");
   });
 });
 

@@ -3,6 +3,7 @@ import { type CanvasRenderModel, entityIsVisible } from "@/features/canvas/selec
 import { useCanvasRenderer } from "@/features/canvas/components/useCanvasRenderer";
 import { canvasInteractionDescription } from "@/features/canvas/selectors/canvasAccessibility";
 import { canvasCursorClass } from "@/features/canvas/selectors/canvasCursor";
+import { ToolIcon } from "@/features/canvas/components/ToolIcon";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
 import {
@@ -79,6 +80,7 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     filletDraftEntityCount = 0,
     filletDraftClosed = false,
     pendingTargetCount,
+    draftPointCount,
     dragDuplicating = false,
     movingContent = false,
     hasHoveredCanvasTarget = false,
@@ -147,6 +149,16 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
     settingPartOrigin,
     movingContent,
   });
+  const interactionInProgress =
+    Boolean(marqueeStart && marqueeCurrent) ||
+    dragging ||
+    settingPartOrigin ||
+    filletDraftEntityCount > 0 ||
+    draftPointCount > 0 ||
+    pendingTargetCount > 0 ||
+    snapSuppressed;
+  const showOperationGuide = !outputPreview && (tool !== "select" || interactionInProgress);
+  const operationGuideMessage = interactionInProgress ? interactionDescription : appStrings.toolHints[tool];
   return (
     <>
       <canvas
@@ -195,6 +207,13 @@ export function CADCanvas({ renderModel, interactionModel, events }: CADCanvasPr
             }
           }}
         />
+      )}
+      {showOperationGuide && (
+        <div className="canvas-operation-guide" data-testid="canvas-operation-guide" role="status" aria-live="polite">
+          <ToolIcon tool={tool} size={16} className="canvas-operation-guide-icon" />
+          <strong>{toolName}</strong>
+          <span>{operationGuideMessage}</span>
+        </div>
       )}
       <span id="cad-canvas-interaction-state" className="visually-hidden">
         {appStrings.canvas.interactionSummary(

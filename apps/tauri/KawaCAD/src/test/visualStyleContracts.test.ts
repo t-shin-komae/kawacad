@@ -91,6 +91,13 @@ describe("visual style contracts", () => {
     expect(inlineEditor).toContain("background: rgba(245, 245, 247, 0.94)");
   });
 
+  it("#178 keeps the canvas operation guide fixed and non-interactive", () => {
+    const guide = rule(".canvas-operation-guide");
+    expect(guide).toMatch(/position: absolute;[\s\S]*top: 10px;[\s\S]*left: 50%;/u);
+    expect(guide).toContain("pointer-events: none");
+    expect(guide).toContain("max-width: calc(100% - 32px)");
+  });
+
   it("#72 keeps the context menu on its native-sized spacing contract", () => {
     expect(rule(".canvas-context-menu")).toMatch(/min-width: 120px;[\s\S]*padding: 6px/u);
     expect(rule(".canvas-context-menu button")).toMatch(/min-height: 26px;[\s\S]*font-size: 12px/u);
