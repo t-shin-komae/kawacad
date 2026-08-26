@@ -1377,6 +1377,118 @@ input[type="checkbox"] {
   overflow: auto;
   padding: 20px;
 }
+.help-dialog {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  width: min(760px, calc(100vw - 32px));
+  height: min(620px, calc(100vh - 32px));
+  min-height: min(480px, calc(100vh - 32px));
+  background: var(--dialog-fill);
+  border-radius: var(--card-radius);
+  box-shadow: var(--panel-shadow);
+  color: var(--ink);
+}
+.help-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 20px 12px;
+}
+.help-dialog-header h2,
+.help-dialog-header p {
+  margin: 0;
+}
+.help-dialog-header p {
+  margin-top: 4px;
+  color: var(--secondary-ink);
+  font-size: 12px;
+}
+.help-dialog-nav {
+  display: flex;
+  gap: 6px;
+  padding: 0 20px 12px;
+}
+.help-dialog-nav button {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--inset-fill);
+  color: var(--ink);
+  font-size: 12px;
+}
+.help-dialog-nav button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+.help-search {
+  display: grid;
+  gap: 4px;
+  padding: 0 20px 12px;
+  color: var(--secondary-ink);
+  font-size: 12px;
+}
+.help-search input {
+  width: 100%;
+}
+.help-dialog-body {
+  overflow: auto;
+  padding: 0 20px 20px;
+}
+.help-section h3,
+.help-section h4 {
+  margin: 0 0 10px;
+}
+.help-section h4 {
+  margin-top: 20px;
+}
+.help-section p,
+.help-section li,
+.help-tool-list dd {
+  color: var(--secondary-ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.help-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.help-shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.help-shortcuts th,
+.help-shortcuts td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.help-shortcuts th {
+  width: 34%;
+  color: var(--ink);
+}
+.help-shortcuts td {
+  color: var(--secondary-ink);
+}
+.help-tool-list {
+  margin: 0;
+}
+.help-tool-list > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.help-tool-list dt {
+  font-weight: 700;
+}
+.help-tool-list dd {
+  margin: 0;
+}
 .license-entry {
   padding: 0 0 18px;
 }

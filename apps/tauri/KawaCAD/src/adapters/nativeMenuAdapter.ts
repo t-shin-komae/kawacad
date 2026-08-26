@@ -124,6 +124,9 @@ export const crossPlatformMenuActions: readonly MenuAction[] = [
   "resetLayout",
   "reload",
   "openLicenses",
+  "openHelp",
+  "openToolGuide",
+  "openCanvasGuide",
 ];
 
 type MenuDefinition = { action: MenuAction; text: string; accelerator?: string } | { separator: true };
@@ -180,6 +183,7 @@ export const nativeMenuStructure = {
   file: menuTokens(fileMenuDefinitions),
   edit: menuTokens(editMenuDefinitions),
   drawing: menuTokens(drawingMenuDefinitions),
+  help: ["openHelp", "openToolGuide", "openCanvasGuide"],
 } as const;
 
 function dispatch(action: MenuAction) {
@@ -340,6 +344,14 @@ export async function installNativeMenu() {
       {
         text: appStrings.menu.section.view,
         items: viewItems,
+      },
+      {
+        text: appStrings.menu.section.help,
+        items: [
+          await item(appStrings.menu.item.help, "openHelp"),
+          await item(appStrings.menu.item.toolGuide, "openToolGuide"),
+          await item(appStrings.menu.item.canvasGuide, "openCanvasGuide"),
+        ],
       },
     ],
   });

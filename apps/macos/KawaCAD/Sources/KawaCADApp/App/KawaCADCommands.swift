@@ -130,9 +130,9 @@ struct KawaCADCommands: Commands {
       }
       .keyboardShortcut(.escape, modifiers: [])
       .disabled(!actions.canvas.canCancelCurrentInteraction)
-    }
 
-    CommandGroup(after: .pasteboard) {
+      Divider()
+
       Button(AppStrings.tr("menu.find_in_inspector")) {
         actions.inspector.revealInspectorSearchForCurrentTab()
       }
@@ -293,6 +293,18 @@ struct KawaCADCommands: Commands {
 
       Button(AppStrings.tr("menu.reload")) { uiBindings.menu.reloadFromDocument() }
         .keyboardShortcut("r", modifiers: [.command])
+    }
+
+    CommandGroup(replacing: .help) {
+      Button(AppStrings.tr("menu.kawacad_help")) {
+        KawaCADHelpPanel.present(section: .overview)
+      }
+      Button(AppStrings.tr("menu.tool_guide")) {
+        KawaCADHelpPanel.present(section: .tools)
+      }
+      Button(AppStrings.tr("menu.canvas_guide")) {
+        KawaCADHelpPanel.present(section: .canvas)
+      }
     }
 
   }
