@@ -37,9 +37,7 @@ struct WindowLayoutPolicy: Equatable {
     toolPaletteVisible: Bool = true
   ) -> WindowLayoutPolicy {
     let potentialToolDockWidth = snappedToolWidth(storedToolWidth, for: .wide)
-    let workspaceWidthWithToolDock =
-      contentWidth
-      - (toolPaletteVisible ? potentialToolDockWidth + panelResizeHandleWidth : 0)
+    let workspaceWidthWithToolDock = contentWidth - potentialToolDockWidth - panelResizeHandleWidth
     let mode = resolveMode(
       workspaceWidth: workspaceWidthWithToolDock,
       previousMode: previousMode

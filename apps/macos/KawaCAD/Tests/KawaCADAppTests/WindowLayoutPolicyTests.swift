@@ -91,6 +91,19 @@ func window_layout_policy_omits_hidden_tool_palette_from_workspace() {
   #expect(hidden.mode == .wide)
 }
 
+@Test("WindowLayoutPolicy は最小幅でツールパレットを隠しても mode を維持する")
+func window_layout_policy_keeps_minimum_width_mode_with_hidden_tool_palette() {
+  let hidden = WindowLayoutPolicy.make(
+    contentWidth: 1_024,
+    storedToolWidth: 260,
+    storedInspectorWidth: 440,
+    toolPaletteVisible: false
+  )
+
+  #expect(hidden.mode == .compact)
+  #expect(!hidden.toolDockVisible)
+}
+
 @Test("WindowLayoutPolicy はツール幅を1列または2列の安定した幅へスナップする")
 func window_layout_policy_snaps_tool_width_for_stable_palette_layout() {
   #expect(WindowLayoutPolicy.snappedToolWidth(200, for: .wide) == 176)

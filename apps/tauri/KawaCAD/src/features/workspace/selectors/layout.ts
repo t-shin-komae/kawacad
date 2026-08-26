@@ -32,8 +32,7 @@ export function makeWindowLayout(
   toolPaletteVisible = true,
 ): WindowLayout {
   const potentialToolWidth = clamp(storedToolWidth, 176, 260, 176);
-  const candidateWidth =
-    contentWidth - (toolPaletteVisible ? potentialToolWidth + windowLayout.panelResizeHandleWidth : 0);
+  const candidateWidth = contentWidth - potentialToolWidth - windowLayout.panelResizeHandleWidth;
   const mode = resolveWindowLayoutMode(candidateWidth, previousMode);
   const toolMaximum = 260;
   const toolDockWidth = clamp(storedToolWidth, 176, toolMaximum, 176);

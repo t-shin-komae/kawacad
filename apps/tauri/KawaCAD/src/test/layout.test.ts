@@ -39,6 +39,11 @@ describe("Window layout policy parity", () => {
     expect(hidden.workspaceWidth).toBe(1600);
     expect(hidden.mode).toBe("wide");
   });
+  it("keeps the minimum-width layout mode stable while the palette is hidden", () => {
+    const hidden = makeWindowLayout(1024, 260, 440, undefined, false);
+    expect(hidden.mode).toBe("compact");
+    expect(hidden.toolDockVisible).toBe(false);
+  });
   it("constrains a requested window to the visible screen", () => {
     expect(constrainedWindowWidth(1280, 1352)).toBe(1280);
     expect(constrainedWindowWidth(1520, 1352)).toBe(1352);
