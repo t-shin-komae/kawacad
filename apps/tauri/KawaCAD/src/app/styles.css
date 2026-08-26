@@ -1608,6 +1608,13 @@ input[type="checkbox"] {
   font-size: 10px;
   line-height: 1.4;
 }
+.inspector-empty-state {
+  display: grid;
+  gap: 4px;
+}
+.inspector-empty-state p {
+  margin: 0;
+}
 .parameter-usage-warning {
   color: var(--warning, #9a6700);
 }

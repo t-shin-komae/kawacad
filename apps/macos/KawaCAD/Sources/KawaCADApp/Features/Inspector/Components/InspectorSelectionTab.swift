@@ -28,18 +28,18 @@ struct InspectorSelectionTab: View {
         } else if let selectedEntity = model.data.selectedEntity {
           EntityEditor(appState: model.entityEditorModel, entity: selectedEntity)
         } else {
-          Text(AppStrings.tr("inspector.no_selection"))
-            .font(.system(size: 12))
-            .foregroundStyle(LeatherColors.secondaryInk)
+          VStack(alignment: .leading, spacing: 4) {
+            Text(AppStrings.tr("inspector.no_selection"))
+              .font(.system(size: 12, weight: .semibold))
+            Text(AppStrings.tr("inspector.no_selection_hint"))
+              .font(.system(size: 12))
+              .foregroundStyle(LeatherColors.secondaryInk)
+          }
         }
       }
 
-      InspectorSection(title: AppStrings.tr("inspector.constraint"), symbolName: "link") {
-        if model.data.constraints.isEmpty {
-          Text(AppStrings.tr("workbench.no_constraints"))
-            .font(.system(size: 12))
-            .foregroundStyle(LeatherColors.secondaryInk)
-        } else {
+      if !model.data.constraints.isEmpty {
+        InspectorSection(title: AppStrings.tr("inspector.constraint"), symbolName: "link") {
           ForEach(model.data.constraints) { constraint in
             HStack(spacing: 8) {
               Button {
@@ -66,50 +66,52 @@ struct InspectorSelectionTab: View {
         }
       }
 
-      InspectorSection(
-        title: AppStrings.tr("inspector.measurement_and_notes"),
-        symbolName: "ruler"
-      ) {
-        ForEach(model.data.measurementAnnotations) { annotation in
-          HStack(spacing: 8) {
-            Button {
-              model.actions.selectMeasurementAnnotation(annotation.id)
-            } label: {
-              Text(annotation.kind)
-                .frame(maxWidth: .infinity, alignment: .leading)
+      if !model.data.measurementAnnotations.isEmpty || !model.data.freeTexts.isEmpty {
+        InspectorSection(
+          title: AppStrings.tr("inspector.measurement_and_notes"),
+          symbolName: "ruler"
+        ) {
+          ForEach(model.data.measurementAnnotations) { annotation in
+            HStack(spacing: 8) {
+              Button {
+                model.actions.selectMeasurementAnnotation(annotation.id)
+              } label: {
+                Text(annotation.kind)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              }
+              .buttonStyle(.plain)
+              if !annotation.visible {
+                Text(AppStrings.tr("inspector.hidden"))
+                  .font(.system(size: 10))
+                  .foregroundStyle(LeatherColors.secondaryInk)
+              }
+              Button {
+                model.actions.convertMeasurementAnnotationToConstraint(annotation.id)
+              } label: {
+                Image(systemName: "link")
+              }
+              .buttonStyle(.borderless)
+              Button(role: .destructive) {
+                model.actions.deleteMeasurementAnnotation(annotation)
+              } label: {
+                Image(systemName: "trash")
+              }
+              .buttonStyle(.borderless)
             }
-            .buttonStyle(.plain)
-            if !annotation.visible {
-              Text(AppStrings.tr("inspector.hidden"))
+          }
+          ForEach(model.data.freeTexts) { freeText in
+            HStack(spacing: 8) {
+              Button {
+                model.actions.selectFreeText(freeText.id)
+              } label: {
+                Text(freeText.content)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              }
+              .buttonStyle(.plain)
+              Text(AppStrings.tr("tool.free_text"))
                 .font(.system(size: 10))
                 .foregroundStyle(LeatherColors.secondaryInk)
             }
-            Button {
-              model.actions.convertMeasurementAnnotationToConstraint(annotation.id)
-            } label: {
-              Image(systemName: "link")
-            }
-            .buttonStyle(.borderless)
-            Button(role: .destructive) {
-              model.actions.deleteMeasurementAnnotation(annotation)
-            } label: {
-              Image(systemName: "trash")
-            }
-            .buttonStyle(.borderless)
-          }
-        }
-        ForEach(model.data.freeTexts) { freeText in
-          HStack(spacing: 8) {
-            Button {
-              model.actions.selectFreeText(freeText.id)
-            } label: {
-              Text(freeText.content)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            Text(AppStrings.tr("tool.free_text"))
-              .font(.system(size: 10))
-              .foregroundStyle(LeatherColors.secondaryInk)
           }
         }
       }
