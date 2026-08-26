@@ -14,6 +14,7 @@ export type NativeMenuState = {
   canDirectPrint: boolean;
   canSmoothArcTangencies: boolean;
   inspectorOpen: boolean;
+  toolPaletteVisible: boolean;
   inspectorTab: InspectorTab;
   bottomWorkbenchVisible: boolean;
 };
@@ -32,6 +33,7 @@ export type NativeMenuAvailability = {
   smoothArcTangencies: boolean;
   findInspector: boolean;
   inspectorLabel: string;
+  toolPaletteLabel: string;
   bottomWorkbenchLabel: string;
 };
 
@@ -52,6 +54,9 @@ export function nativeMenuAvailability(state: NativeMenuState | undefined): Nati
     smoothArcTangencies: Boolean(state?.canSmoothArcTangencies && editable),
     findInspector: Boolean(state?.inspectorOpen && state.inspectorTab !== "selection"),
     inspectorLabel: state?.inspectorOpen ? appStrings.menu.item.inspectorHide : appStrings.menu.item.inspectorShow,
+    toolPaletteLabel: state?.toolPaletteVisible
+      ? appStrings.menu.item.toolPaletteHide
+      : appStrings.menu.item.toolPaletteShow,
     bottomWorkbenchLabel: state?.bottomWorkbenchVisible
       ? appStrings.menu.item.bottomWorkbenchHide
       : appStrings.menu.item.bottomWorkbenchShow,

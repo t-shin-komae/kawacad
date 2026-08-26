@@ -14,7 +14,7 @@ struct CADToolbar: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      if workspaceLayoutMode == .compact {
+      if workspaceLayoutMode == .compact || !state.toolPaletteVisible {
         Button {
           actions.showToolPalette()
         } label: {
@@ -31,7 +31,7 @@ struct CADToolbar: View {
         .accessibilityIdentifier(AccessibilityIdentifier.toolbarTools)
       }
 
-      if workspaceLayoutMode == .compact {
+      if workspaceLayoutMode == .compact || !state.toolPaletteVisible {
         Divider()
           .frame(height: 30)
       }

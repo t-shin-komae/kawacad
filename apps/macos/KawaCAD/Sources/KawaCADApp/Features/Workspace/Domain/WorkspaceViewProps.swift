@@ -13,6 +13,7 @@ struct CADToolbarState {
   let gridSnapEnabled: Bool
   let pointSnapEnabled: Bool
   let inspectorPanelVisible: Bool
+  let toolPaletteVisible: Bool
 }
 
 struct CADToolbarActions {

@@ -36,6 +36,7 @@ struct WorkspaceViewPropsFactory {
   private var outputPreviewSummaryText: String? { handler.outputPreviewSummaryText }
   private var statusMessage: String { handler.statusMessage }
   private func setToolPanelWidth(_ value: CGFloat) { handler.setToolPanelWidth(value) }
+  private func setToolPaletteVisible(_ visible: Bool) { handler.setToolPaletteVisible(visible) }
   private func setInspectorPanelWidth(_ value: CGFloat) { handler.setInspectorPanelWidth(value) }
   private func showCompactDrawer(_ drawer: CompactDrawer?) { handler.showCompactDrawer(drawer) }
   private func updateWindowLayoutMode(_ mode: WindowLayoutMode) {
@@ -122,14 +123,21 @@ struct WorkspaceViewPropsFactory {
       a4ReferenceOrientation: workspacePreferences.a4ReferenceOrientation,
       gridSnapEnabled: workspacePreferences.gridSnapEnabled,
       pointSnapEnabled: workspacePreferences.pointSnapEnabled,
-      inspectorPanelVisible: workspacePreferences.inspectorPanelVisible
+      inspectorPanelVisible: workspacePreferences.inspectorPanelVisible,
+      toolPaletteVisible: workspaceLayout.toolPaletteVisible
     )
   }
 
   var toolbarActions: CADToolbarActions {
     let bindings = KawaCADUIBindings(handler: actions)
     return CADToolbarActions(
-      showToolPalette: { [self] in showCompactDrawer(.tools) },
+      showToolPalette: { [self] in
+        if workspaceLayout.windowLayoutMode == .compact {
+          showCompactDrawer(.tools)
+        } else {
+          setToolPaletteVisible(true)
+        }
+      },
       toggleInspector: { [self] mode in
         if mode == .compact {
           showCompactDrawer(.inspector)

@@ -17,8 +17,8 @@ describe("cross-platform native menu", () => {
     expect(crossPlatformMenuActions).not.toContain("print");
   });
 
-  it("does not expose a tool palette toggle in the native menu", () => {
-    expect(crossPlatformMenuActions as readonly string[]).not.toContain("toggleTools");
+  it("exposes a tool palette toggle in the native menu", () => {
+    expect(crossPlatformMenuActions as readonly string[]).toContain("toggleTools");
   });
 
   it("keeps SwiftUI order and separator groups for the aligned menus", () => {
@@ -94,6 +94,7 @@ describe("cross-platform native menu", () => {
         canDirectPrint: true,
         canSmoothArcTangencies: true,
         inspectorOpen: true,
+        toolPaletteVisible: true,
         inspectorTab: "layers",
         bottomWorkbenchVisible: false,
       }),
@@ -105,6 +106,7 @@ describe("cross-platform native menu", () => {
       directPrint: true,
       findInspector: true,
       inspectorLabel: "インスペクタを隠す",
+      toolPaletteLabel: "ツールを隠す",
       bottomWorkbenchLabel: "サマリーを表示",
     });
     expect(
@@ -120,6 +122,7 @@ describe("cross-platform native menu", () => {
         canDirectPrint: true,
         canSmoothArcTangencies: true,
         inspectorOpen: false,
+        toolPaletteVisible: false,
         inspectorTab: "selection",
         bottomWorkbenchVisible: true,
       }),
@@ -132,6 +135,7 @@ describe("cross-platform native menu", () => {
       paste: false,
       addLayer: false,
       inspectorLabel: "インスペクタを表示",
+      toolPaletteLabel: "ツールを表示",
       bottomWorkbenchLabel: "サマリーを隠す",
     });
   });
@@ -149,6 +153,7 @@ describe("cross-platform native menu", () => {
       canDirectPrint: true,
       canSmoothArcTangencies: false,
       inspectorOpen: true,
+      toolPaletteVisible: true,
       bottomWorkbenchVisible: false,
     };
     expect(nativeMenuAvailability({ ...base, inspectorTab: "selection" }).findInspector).toBe(false);

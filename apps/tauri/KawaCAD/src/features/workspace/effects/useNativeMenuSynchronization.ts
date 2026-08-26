@@ -15,6 +15,7 @@ type Props = {
   inspectorOpen: boolean;
   compactDrawer: "tools" | "inspector" | undefined;
   layoutMode: "compact" | "regular" | "wide";
+  toolPaletteVisible: boolean;
   inspectorTab: InspectorTab;
   bottomWorkbenchVisible: boolean;
 };
@@ -31,6 +32,7 @@ export function useNativeMenuSynchronization({
   inspectorOpen,
   compactDrawer,
   layoutMode,
+  toolPaletteVisible,
   inspectorTab,
   bottomWorkbenchVisible,
 }: Props) {
@@ -51,6 +53,7 @@ export function useNativeMenuSynchronization({
         state && selectedSourceArcId(selected, state.entities, state.drawingEntityMetadata ?? []),
       ),
       inspectorOpen: layoutMode === "compact" ? compactDrawer === "inspector" : inspectorOpen,
+      toolPaletteVisible: layoutMode === "compact" ? compactDrawer === "tools" : toolPaletteVisible,
       inspectorTab,
       bottomWorkbenchVisible,
     });
@@ -61,6 +64,7 @@ export function useNativeMenuSynchronization({
     inspectorOpen,
     inspectorTab,
     layoutMode,
+    toolPaletteVisible,
     selected,
     selectedConstraintId,
     selectedFreeTextId,

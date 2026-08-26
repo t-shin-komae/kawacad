@@ -33,16 +33,19 @@ struct WindowLayoutPolicy: Equatable {
     contentWidth: CGFloat,
     storedToolWidth: CGFloat,
     storedInspectorWidth: CGFloat,
-    previousMode: WindowLayoutMode? = nil
+    previousMode: WindowLayoutMode? = nil,
+    toolPaletteVisible: Bool = true
   ) -> WindowLayoutPolicy {
     let potentialToolDockWidth = snappedToolWidth(storedToolWidth, for: .wide)
-    let workspaceWidthWithToolDock = contentWidth - potentialToolDockWidth - panelResizeHandleWidth
+    let workspaceWidthWithToolDock =
+      contentWidth
+      - (toolPaletteVisible ? potentialToolDockWidth + panelResizeHandleWidth : 0)
     let mode = resolveMode(
       workspaceWidth: workspaceWidthWithToolDock,
       previousMode: previousMode
     )
     let toolDockWidth = snappedToolWidth(storedToolWidth, for: mode)
-    let toolDockVisible = mode != .compact
+    let toolDockVisible = mode != .compact && toolPaletteVisible
     let workspaceWidth =
       contentWidth - (toolDockVisible ? toolDockWidth + panelResizeHandleWidth : 0)
     let inspectorDockRange = inspectorDockWidthRange

@@ -33,6 +33,12 @@ describe("Window layout policy parity", () => {
       compactInspectorDrawerWidth: 440,
     });
   });
+  it("omits the docked tool palette while preserving the workspace width", () => {
+    const hidden = makeWindowLayout(1600, 176, 440, undefined, false);
+    expect(hidden.toolDockVisible).toBe(false);
+    expect(hidden.workspaceWidth).toBe(1600);
+    expect(hidden.mode).toBe("wide");
+  });
   it("constrains a requested window to the visible screen", () => {
     expect(constrainedWindowWidth(1280, 1352)).toBe(1280);
     expect(constrainedWindowWidth(1520, 1352)).toBe(1352);

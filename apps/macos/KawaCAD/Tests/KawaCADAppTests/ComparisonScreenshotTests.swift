@@ -1469,6 +1469,7 @@ private struct ScreenshotPreferenceSnapshot {
     [
       WorkspacePreferencesAdapter.showsDetailedToolsKey,
       WorkspacePreferencesAdapter.inspectorPanelVisibleKey,
+      WorkspacePreferencesAdapter.toolPaletteVisibleKey,
       WorkspacePreferencesAdapter.toolPanelWidthKey,
       WorkspacePreferencesAdapter.inspectorPanelWidthKey,
     ]

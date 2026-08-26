@@ -261,6 +261,19 @@ struct KawaCADCommands: Commands {
 
       Button(
         showHideTitle(
+          isVisible: toolPaletteIsVisible,
+          label: AppStrings.tr("toolbar.tool_palette")
+        )
+      ) {
+        if workspaceLayout.windowLayoutMode == .compact {
+          actions.workspace.showCompactDrawer(.tools)
+        } else {
+          workspaceLayout.setToolPaletteVisible(!workspaceLayout.toolPaletteVisible)
+        }
+      }
+
+      Button(
+        showHideTitle(
           isVisible: workspacePreferences.inspectorPanelVisible,
           label: AppStrings.tr("menu.inspector")
         )
@@ -311,4 +324,12 @@ private func showHideTitle(isVisible: Bool, label: String) -> String {
     isVisible ? AppStrings.tr("menu.hide") : AppStrings.tr("menu.show"),
     label
   )
+}
+
+extension KawaCADCommands {
+  fileprivate var toolPaletteIsVisible: Bool {
+    workspaceLayout.windowLayoutMode == .compact
+      ? workspaceLayout.compactDrawer == .tools
+      : workspaceLayout.toolPaletteVisible
+  }
 }

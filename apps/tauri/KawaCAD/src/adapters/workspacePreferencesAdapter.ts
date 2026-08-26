@@ -7,6 +7,7 @@ import {
 const detailedToolsPreferenceKey = "leather.toolPalette.showsDetailedTools";
 const inspectorPreferenceKey = "leather.layout.inspectorPanelVisible";
 const toolPanelWidthKey = "leather.layout.toolPanelWidth";
+const toolPaletteVisibleKey = "leather.layout.toolPaletteVisible";
 
 function storedBoolean(key: string, fallback: boolean) {
   const value = window.localStorage.getItem(key);
@@ -28,6 +29,15 @@ export const workspacePreferencesAdapter = {
   saveToolPaletteWidth(value: number) {
     if (value === toolPaletteWidthRange.min) window.localStorage.removeItem(toolPanelWidthKey);
     else window.localStorage.setItem(toolPanelWidthKey, String(value));
+  },
+
+  loadToolPaletteVisible() {
+    return storedBoolean(toolPaletteVisibleKey, true);
+  },
+
+  saveToolPaletteVisible(value: boolean) {
+    if (value) window.localStorage.removeItem(toolPaletteVisibleKey);
+    else window.localStorage.setItem(toolPaletteVisibleKey, "false");
   },
 
   loadInspectorOpen() {
@@ -69,6 +79,7 @@ export const workspacePreferencesAdapter = {
   resetWorkspacePreferences() {
     window.localStorage.removeItem(detailedToolsPreferenceKey);
     window.localStorage.removeItem(inspectorPreferenceKey);
+    window.localStorage.removeItem(toolPaletteVisibleKey);
     Object.keys(toolGroupPreferenceIds).forEach((title) =>
       window.localStorage.removeItem(toolGroupPreferenceKey(title)),
     );

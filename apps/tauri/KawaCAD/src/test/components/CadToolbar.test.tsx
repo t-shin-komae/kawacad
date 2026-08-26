@@ -28,7 +28,7 @@ const toolbarProps = {
 };
 
 describe("CAD toolbar parity", () => {
-  it("shows the tool palette button only in compact layout", () => {
+  it("shows the tool palette button in compact layout and when the dock is hidden", () => {
     const { rerender } = render(<CADToolbar {...toolbarProps} showToolPaletteButton={false} />);
 
     expect(screen.queryByRole("button", { name: appStrings.accessibility.showTools })).not.toBeInTheDocument();

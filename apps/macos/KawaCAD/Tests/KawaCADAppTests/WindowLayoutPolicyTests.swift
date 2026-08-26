@@ -77,6 +77,20 @@ func window_layout_policy_clamps_stored_panel_widths() {
   #expect(compact.compactInspectorDrawerWidth == WindowLayoutPolicy.minimumInspectorContentWidth)
 }
 
+@Test("WindowLayoutPolicy は非表示のツールパレットを workspace 幅から除外する")
+func window_layout_policy_omits_hidden_tool_palette_from_workspace() {
+  let hidden = WindowLayoutPolicy.make(
+    contentWidth: 1_600,
+    storedToolWidth: 176,
+    storedInspectorWidth: 440,
+    toolPaletteVisible: false
+  )
+
+  #expect(!hidden.toolDockVisible)
+  #expect(hidden.workspaceWidth == 1_600)
+  #expect(hidden.mode == .wide)
+}
+
 @Test("WindowLayoutPolicy はツール幅を1列または2列の安定した幅へスナップする")
 func window_layout_policy_snaps_tool_width_for_stable_palette_layout() {
   #expect(WindowLayoutPolicy.snappedToolWidth(200, for: .wide) == 176)

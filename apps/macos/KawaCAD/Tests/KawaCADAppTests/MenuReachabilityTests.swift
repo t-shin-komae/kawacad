@@ -14,11 +14,11 @@ private func kawaCADCommandsSource() throws -> String {
   return try String(contentsOf: sourceURL, encoding: .utf8)
 }
 
-@Test("#26 Swiftメニューにツールパレット表示項目を追加しない")
-func swift_menu_omits_tool_palette_visibility_action() throws {
+@Test("#159 Swiftメニューからツールパレットの表示状態を変更できる")
+func swift_menu_reaches_tool_palette_visibility_action() throws {
   let source = try kawaCADCommandsSource()
-  #expect(!source.contains("showCompactDrawer(.tools)"))
-  #expect(!source.contains("setToolPalettePanelVisible"))
+  #expect(source.contains("workspaceLayout.toolPaletteVisible"))
+  #expect(source.contains("workspaceLayout.setToolPaletteVisible"))
 }
 
 @Test("#65 Swiftメニューから不足していた作図・拘束・計測ツールへ到達できる")
