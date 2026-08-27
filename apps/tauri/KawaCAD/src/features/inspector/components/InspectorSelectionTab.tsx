@@ -115,12 +115,15 @@ export function InspectorSelectionTab({ model }: { model: InspectorSelectionTabP
             onDelete={actions.deleteEntity}
           />
         ) : (
-          <p>{appStrings.inspector.noSelection}</p>
+          <div className="inspector-empty-state">
+            <strong>{appStrings.inspector.noSelection}</strong>
+            <p>{appStrings.inspector.noSelectionHint}</p>
+          </div>
         )}
       </InspectorSection>
-      <InspectorSection title={appStrings.inspector.constraint} icon={Link2}>
-        {constraints.length ? (
-          constraints.map((item) => (
+      {constraints.length > 0 && (
+        <InspectorSection title={appStrings.inspector.constraint} icon={Link2}>
+          {constraints.map((item) => (
             <div className="row inspector-list-row" key={item.id}>
               <button className="inspector-row-action" onClick={() => actions.selectConstraint(item.id)}>
                 <span>{constraintLabel(item.kind)}</span>
@@ -138,43 +141,43 @@ export function InspectorSelectionTab({ model }: { model: InspectorSelectionTabP
                 {appStrings.contextMenu.delete}
               </button>
             </div>
-          ))
-        ) : (
-          <p>{appStrings.workbench.noConstraints}</p>
-        )}
-      </InspectorSection>
-      <InspectorSection title={appStrings.inspector.measurementAndNotes} icon={Ruler}>
-        {measurements.map((item) => (
-          <div className="row inspector-list-row" key={item.id}>
-            <button className="inspector-row-action" onClick={() => actions.selectMeasurement(item.id)}>
-              {measurementLabel(item.kind)}
-            </button>
-            {!item.visible && <small>{appStrings.inspector.hidden}</small>}
-            <button
-              aria-label={`${measurementLabel(item.kind)} ${appStrings.inspector.measurementConstraint}`}
-              onClick={() => actions.convertMeasurement(item.id)}
-            >
-              {appStrings.inspector.measurementConstraint}
-            </button>
-            <button
-              aria-label={`${measurementLabel(item.kind)} ${appStrings.contextMenu.delete}`}
-              onClick={() =>
-                actions.deleteMeasurement(item.id, appStrings.inspector.operationMessage.annotationDeleted)
-              }
-            >
-              {appStrings.contextMenu.delete}
-            </button>
-          </div>
-        ))}
-        {freeTexts.map((item) => (
-          <div className="row inspector-list-row" key={item.id}>
-            <button className="inspector-row-action" onClick={() => actions.selectFreeText(item.id)}>
-              {item.content}
-            </button>
-            <small>{appStrings.toolNames.freeText}</small>
-          </div>
-        ))}
-      </InspectorSection>
+          ))}
+        </InspectorSection>
+      )}
+      {(measurements.length > 0 || freeTexts.length > 0) && (
+        <InspectorSection title={appStrings.inspector.measurementAndNotes} icon={Ruler}>
+          {measurements.map((item) => (
+            <div className="row inspector-list-row" key={item.id}>
+              <button className="inspector-row-action" onClick={() => actions.selectMeasurement(item.id)}>
+                {measurementLabel(item.kind)}
+              </button>
+              {!item.visible && <small>{appStrings.inspector.hidden}</small>}
+              <button
+                aria-label={`${measurementLabel(item.kind)} ${appStrings.inspector.measurementConstraint}`}
+                onClick={() => actions.convertMeasurement(item.id)}
+              >
+                {appStrings.inspector.measurementConstraint}
+              </button>
+              <button
+                aria-label={`${measurementLabel(item.kind)} ${appStrings.contextMenu.delete}`}
+                onClick={() =>
+                  actions.deleteMeasurement(item.id, appStrings.inspector.operationMessage.annotationDeleted)
+                }
+              >
+                {appStrings.contextMenu.delete}
+              </button>
+            </div>
+          ))}
+          {freeTexts.map((item) => (
+            <div className="row inspector-list-row" key={item.id}>
+              <button className="inspector-row-action" onClick={() => actions.selectFreeText(item.id)}>
+                {item.content}
+              </button>
+              <small>{appStrings.toolNames.freeText}</small>
+            </div>
+          ))}
+        </InspectorSection>
+      )}
       <DocumentOverview summary={documentSummary} />
     </>
   );

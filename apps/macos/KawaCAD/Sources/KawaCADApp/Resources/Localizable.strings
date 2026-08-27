@@ -384,6 +384,7 @@
 "inspector.font_size_mm" = "文字サイズ mm";
 "inspector.constraint_targets_highlighted" = "対象はキャンバス上で強調表示されています";
 "inspector.no_selection" = "何も選択されていません";
+"inspector.no_selection_hint" = "キャンバスで図形、拘束マーク、計測表示、自由テキストを選択できます。";
 "inspector.selection_count" = "選択数";
 "inspector.batch_actions" = "一括操作";
 "inspector.equal_length_constraint" = "同長拘束";

@@ -473,6 +473,7 @@ const appStrings = {
     selectionChanged: "選択が変更されました",
     showSelection: "選択を表示",
     noSelection: "何も選択されていません",
+    noSelectionHint: "キャンバスで図形、拘束マーク、計測表示、自由テキストを選択できます。",
     selection: "選択",
     kind: "種別",
     selectedGeometry: "図形",

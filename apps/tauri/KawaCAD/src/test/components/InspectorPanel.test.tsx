@@ -359,7 +359,12 @@ describe("InspectorPanel", () => {
     render(panel());
 
     expect(screen.getByText("何も選択されていません", { exact: true })).toBeInTheDocument();
-    expect(screen.getByText("拘束なし", { exact: true })).toBeInTheDocument();
+    expect(
+      screen.getByText("キャンバスで図形、拘束マーク、計測表示、自由テキストを選択できます。", { exact: true }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("拘束なし", { exact: true })).not.toBeInTheDocument();
+    expect(screen.queryByText("拘束", { exact: true })).not.toBeInTheDocument();
+    expect(screen.queryByText("計測と注記", { exact: true })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "共有スタイル" }));
     expect(screen.getByText("共有スタイルはまだありません", { exact: true })).toBeInTheDocument();

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import Testing
 
@@ -80,4 +81,21 @@ func selection_tab_accepts_focused_model() {
   )
 
   _ = InspectorSelectionTab(model: model).body
+}
+
+@Test("#169 Swiftの選択タブは空の関連セクションを表示しない")
+func selection_tab_hides_empty_related_sections() throws {
+  let packageRoot = URL(fileURLWithPath: #filePath)
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+    .deletingLastPathComponent()
+  let sourceURL = packageRoot.appendingPathComponent(
+    "Sources/KawaCADApp/Features/Inspector/Components/InspectorSelectionTab.swift")
+  let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+  #expect(source.contains("if !model.data.constraints.isEmpty"))
+  #expect(
+    source.contains(
+      "if !model.data.measurementAnnotations.isEmpty || !model.data.freeTexts.isEmpty"))
+  #expect(source.contains("inspector.no_selection_hint"))
 }
