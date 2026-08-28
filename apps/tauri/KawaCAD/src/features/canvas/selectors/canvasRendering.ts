@@ -93,6 +93,24 @@ export type CanvasRenderModel = Omit<CanvasRenderOptions, "context" | "width" | 
 type CanvasLayer = { id: string; style: DisplayStyle; visible?: boolean };
 type CanvasSharedStyle = { id: string; style: DisplayStyle };
 type CanvasFreeText = { id: string; content: string; positionMm: PointMm; fontSizeMm: number };
+
+/** Visual priority for canvas aids; primary geometry remains platform styled. */
+export const canvasVisualHierarchy = {
+  gridStroke: "rgba(95, 108, 119, .13)",
+  gridLineWidth: 0.5,
+  a4SecondaryStroke: "rgba(95, 108, 119, .35)",
+  a4PrimaryStroke: "rgba(95, 108, 119, .68)",
+  a4SecondaryLineWidth: 0.8,
+  a4PrimaryLineWidth: 1.2,
+  a4ReferenceStroke: "rgba(10,132,255,.35)",
+  a4ReferenceLineWidth: 0.8,
+  coordinateStroke: "rgba(10,132,255,.72)",
+  coordinateLineWidth: 1.4,
+  selectionStroke: "rgba(59,130,246,.28)",
+  selectionLineWidth: 3,
+  selectionDash: [5, 3],
+} as const;
+
 export function drawCanvasFrame(options: CanvasRenderOptions) {
   const {
     context,
@@ -384,8 +402,8 @@ function drawGrid(
     origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport),
     bounds = a4GridScreenRect(width, height, viewport, landscape);
   context.save();
-  context.strokeStyle = "rgba(95, 108, 119, .13)";
-  context.lineWidth = 0.5;
+  context.strokeStyle = canvasVisualHierarchy.gridStroke;
+  context.lineWidth = canvasVisualHierarchy.gridLineWidth;
   const firstX = origin.x + Math.ceil((bounds.x - origin.x) / step) * step;
   const firstY = origin.y + Math.ceil((bounds.y - origin.y) / step) * step;
   for (let x = firstX; x <= bounds.x + bounds.width; x += step) {
@@ -400,7 +418,6 @@ function drawGrid(
     context.lineTo(bounds.x + bounds.width, y);
     context.stroke();
   }
-  context.strokeStyle = "#b6b6ba";
   context.beginPath();
   context.moveTo(origin.x, bounds.y);
   context.lineTo(origin.x, bounds.y + bounds.height);
@@ -434,14 +451,20 @@ function drawA4(
         height,
         viewport,
       );
-      context.strokeStyle = row === center && column === center ? "#777780" : "#b9b9bf";
-      context.lineWidth = row === center && column === center ? 1.2 : 0.8;
+      context.strokeStyle =
+        row === center && column === center
+          ? canvasVisualHierarchy.a4PrimaryStroke
+          : canvasVisualHierarchy.a4SecondaryStroke;
+      context.lineWidth =
+        row === center && column === center
+          ? canvasVisualHierarchy.a4PrimaryLineWidth
+          : canvasVisualHierarchy.a4SecondaryLineWidth;
       context.strokeRect(topLeft.x, topLeft.y, pageWidth * scale, pageHeight * scale);
     }
   const centralTopLeft = screenPoint({ xMm: -pageWidth / 2, yMm: pageHeight / 2 }, width, height, viewport);
   context.setLineDash([5, 4]);
-  context.strokeStyle = "rgba(10,132,255,.35)";
-  context.lineWidth = 0.8;
+  context.strokeStyle = canvasVisualHierarchy.a4ReferenceStroke;
+  context.lineWidth = canvasVisualHierarchy.a4ReferenceLineWidth;
   context.strokeRect(centralTopLeft.x, centralTopLeft.y, pageWidth * scale, pageHeight * scale);
   context.setLineDash([]);
   context.fillStyle = "#6e6e73";
@@ -457,12 +480,12 @@ function drawA4(
 function drawCoordinateReference(context: CanvasRenderingContext2D, width: number, height: number, viewport: Viewport) {
   const origin = screenPoint({ xMm: 0, yMm: 0 }, width, height, viewport);
   context.save();
-  const axisColor = "rgba(10,132,255,.72)";
+  const axisColor = canvasVisualHierarchy.coordinateStroke;
   const axisEndX = Math.min(origin.x + 70, width);
   const axisEndY = Math.max(origin.y - 70, 0);
   context.strokeStyle = axisColor;
   context.fillStyle = axisColor;
-  context.lineWidth = 1.4;
+  context.lineWidth = canvasVisualHierarchy.coordinateLineWidth;
   context.beginPath();
   context.moveTo(origin.x, origin.y);
   context.lineTo(axisEndX, origin.y);
@@ -871,9 +894,9 @@ function drawEntitySelectionHighlight(
   const bounds = geometryScreenBounds(geometry, width, height, viewport);
   if (!bounds) return;
   context.save();
-  context.strokeStyle = "rgba(59,130,246,.28)";
-  context.lineWidth = 3;
-  context.setLineDash([5, 3]);
+  context.strokeStyle = canvasVisualHierarchy.selectionStroke;
+  context.lineWidth = canvasVisualHierarchy.selectionLineWidth;
+  context.setLineDash(canvasVisualHierarchy.selectionDash);
   context.beginPath();
   if (geometry.tag === "point" || geometry.tag === "circle" || geometry.tag === "arc") {
     const inset = geometry.tag === "point" ? 4 : 3;

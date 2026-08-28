@@ -26,5 +26,5 @@ func swift_selection_highlight_has_a_non_color_boundary_cue() throws {
     )
   )
   let selectionFunction = source[selectionStart.lowerBound..<selectionEnd.lowerBound]
-  #expect(selectionFunction.contains("path.setLineDash([5, 3], count: 2, phase: 0)"))
+  #expect(selectionFunction.contains("CanvasVisualHierarchy.selectionDash"))
 }
