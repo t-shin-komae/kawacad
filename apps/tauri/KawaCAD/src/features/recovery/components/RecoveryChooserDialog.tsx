@@ -1,5 +1,6 @@
 import type { RecoveryCandidate } from "@/adapters/recoveryAdapter";
 import { appStrings } from "@/localization";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 type Props = {
   candidates: RecoveryCandidate[];
@@ -12,7 +13,13 @@ type Props = {
 export function RecoveryChooserDialog({ candidates, onRestore, onDiscard, onReveal, onPostpone }: Props) {
   return (
     <div className="modal-backdrop" role="presentation">
-      <section className="recovery-chooser-dialog" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
+      <section
+        className="recovery-chooser-dialog"
+        data-testid={accessibilityIdentifiers.componentRecoveryDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="recovery-title"
+      >
         <h2 id="recovery-title">{appStrings.app.recoveryChooserTitle}</h2>
         <p>{appStrings.app.recoveryChooserMessage}</p>
         <div className="recovery-candidate-list">

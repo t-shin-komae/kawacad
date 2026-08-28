@@ -2,6 +2,7 @@ import { useState } from "react";
 import { parseDecimal } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
 import { derivedValueInitialText } from "@/features/constraints/domain/derivedValueDefaults";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 export type DerivedValue = { fixedMm: number } | { parameter: string };
 export type OffsetSourceOption = {
@@ -79,6 +80,7 @@ export function DerivedValueDialog({
     >
       <section
         className="constraint-value-dialog"
+        data-testid={accessibilityIdentifiers.componentConstraintHUD}
         role="dialog"
         aria-modal="true"
         aria-label={appStrings.dialog.value.ariaLabel(appStrings.dialog.derived.value(kind))}

@@ -3,25 +3,44 @@ import SwiftUI
 struct ValueEntryDialogPresenter: View {
   let state: ConstraintEntryHUDState
   let actions: ConstraintEntryHUDActions
+  var standalone: Bool = false
 
+  @ViewBuilder
   var body: some View {
-    GeometryReader { proxy in
-      if let draft = state.draft,
-        draft.kind != "fillet" || draft.filletIsReadyForValueEntry
-      {
-        dialog(for: draft)
-          .frame(width: hudWidth(for: draft))
-          .background(LeatherColors.panel.opacity(0.94))
-          .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-          .overlay(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-              .stroke(LeatherColors.panelStroke.opacity(0.55))
-          )
-          .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
-          .position(hudPosition(in: proxy.size, width: hudWidth(for: draft), draft: draft))
+    Group {
+      if standalone {
+        if let draft = state.draft,
+          draft.kind != "fillet" || draft.filletIsReadyForValueEntry
+        {
+          styledDialog(for: draft)
+        }
+      } else {
+        GeometryReader { proxy in
+          if let draft = state.draft,
+            draft.kind != "fillet" || draft.filletIsReadyForValueEntry
+          {
+            styledDialog(for: draft)
+              .position(hudPosition(in: proxy.size, width: hudWidth(for: draft), draft: draft))
+          }
+        }
       }
     }
     .allowsHitTesting(state.draft != nil)
+  }
+
+  private func styledDialog(for draft: PendingConstraintValueDraft) -> some View {
+    dialog(for: draft)
+      .frame(
+        width: hudWidth(for: draft),
+        height: hudHeight(for: draft)
+      )
+      .background(LeatherColors.panel.opacity(0.94))
+      .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
+          .stroke(LeatherColors.panelStroke.opacity(0.55))
+      )
+      .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
   }
 
   @ViewBuilder

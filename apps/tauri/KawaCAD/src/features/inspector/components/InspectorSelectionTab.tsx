@@ -77,7 +77,11 @@ export function InspectorSelectionTab({ model }: { model: InspectorSelectionTabP
   );
   return (
     <>
-      <InspectorSection title={appStrings.inspector.selection} icon={MousePointer2}>
+      <InspectorSection
+        title={appStrings.inspector.selection}
+        icon={MousePointer2}
+        className="component-selection-inspector"
+      >
         {selectedConstraint ? (
           <SelectedConstraintEditor
             constraint={selectedConstraint}

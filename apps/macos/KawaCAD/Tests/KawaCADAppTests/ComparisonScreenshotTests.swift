@@ -5,11 +5,6 @@ import XCTest
 
 @testable import KawaCADApp
 
-private let regularScreenshotSize = CGSize(width: 1280, height: 800)
-private let wideScreenshotSize = CGSize(width: 1800, height: 900)
-private let themeMatrixWideScreenshotSize = CGSize(width: 1600, height: 900)
-private let compactScreenshotSize = CGSize(width: 1024, height: 700)
-
 private enum ScreenshotTheme: String, CaseIterable {
   case light
   case dark
@@ -22,6 +17,16 @@ private enum ScreenshotTheme: String, CaseIterable {
       return .darkAqua
     }
   }
+}
+
+private enum ComponentFixtureKind {
+  case toolbar(CADToolbarDensity)
+  case toolPalette
+  case canvas
+  case inspector
+  case summary
+  case constraintHUD
+  case pasteOptions
 }
 
 final class ComparisonScreenshotTests: XCTestCase {
@@ -42,138 +47,175 @@ final class ComparisonScreenshotTests: XCTestCase {
     let preferences = ScreenshotPreferenceSnapshot.capture()
     defer { preferences.restore() }
 
-    try captureInitialWorkspace(outputDirectory)
-    try captureDetailedToolsAndSummary(outputDirectory)
-    try captureWideToolbarStates(outputDirectory)
-    try captureToolPaletteVisibilityStates(outputDirectory)
-    try captureConstraintHUD(outputDirectory)
-    try captureContextMenu(outputDirectory)
-    try capturePasteOptions(outputDirectory)
-    try captureFreeText(
-      outputDirectory,
-      fileName: "swift-free-text-default.png",
-      selectedTool: .freeText
-    )
-    try captureFreeText(
-      outputDirectory,
-      fileName: "swift-inline-text-editor.png",
-      selectedTool: .select
-    )
-    try captureCompactDrawers(outputDirectory)
-    try captureLicenses(outputDirectory)
-    try captureLayerDeletion(outputDirectory)
-    try captureInspectorManagementTabs(outputDirectory)
-    try captureSelectionEntityEditors(outputDirectory)
-    try captureRecoveryCandidates(outputDirectory)
-    try capturePDFOutput(outputDirectory)
-    try captureRepresentativeThemeMatrix(outputDirectory)
+    try captureIndependentComponents(outputDirectory)
     try createComparisonImages(screenshotDirectory: outputDirectory)
   }
 }
 
 @MainActor
-private func captureInitialWorkspace(_ outputDirectory: URL) throws {
-  try renderWorkspace(
-    makeScreenshotAppState(),
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-browser-initial.png")
+private func captureIndependentComponents(_ outputDirectory: URL) throws {
+  let line = lineEntity(
+    id: "entity:comparison-line",
+    label: "線分",
+    start: ModelPoint(xMM: -70, yMM: -20),
+    end: ModelPoint(xMM: 70, yMM: 20)
   )
-}
-
-@MainActor
-private func captureDetailedToolsAndSummary(_ outputDirectory: URL) throws {
-  let appState = makeScreenshotAppState()
-  appState.workspacePreferences.setDetailedToolsVisible(true)
-  appState.workspacePreferences.setBottomWorkbenchVisible(true)
-  for group in ToolPalette.allToolGroups {
-    appState.workspacePreferences.setToolGroupCollapsed(false, groupID: group.id)
-  }
-  try renderWorkspace(
-    appState,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-detailed-tools-summary.png")
+  let parameter = ProjectParameter(
+    id: "parameter:width",
+    name: "幅",
+    valueMM: 25,
+    unit: "millimeter",
+    memo: "",
+    usageCount: 0,
+    usedConstraintIDs: []
   )
-}
 
-@MainActor
-private func captureWideToolbarStates(_ outputDirectory: URL) throws {
-  let appState = makeScreenshotAppState()
-  appState.workspaceLayout.setToolPanelWidth(260)
-  appState.workspaceLayout.setWindowLayoutMode(.wide)
-  let capture: (String) throws -> Void = { fileName in
-    try renderWorkspace(
-      appState,
-      size: wideScreenshotSize,
-      to: outputDirectory.appendingPathComponent(fileName)
+  for theme in ScreenshotTheme.allCases {
+    let suffix = theme.rawValue
+    let appearanceName = theme.appearanceName
+
+    let expandedToolbar = makeScreenshotAppState()
+    expandedToolbar.workspaceLayout.setWindowLayoutMode(.wide)
+    try renderComponentFixture(
+      expandedToolbar,
+      kind: .toolbar(.expanded),
+      size: CGSize(width: 1532, height: 54),
+      to: outputDirectory.appendingPathComponent("swift-toolbar-expanded-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let condensedToolbar = makeScreenshotAppState()
+    condensedToolbar.workspaceLayout.setWindowLayoutMode(.regular)
+    try renderComponentFixture(
+      condensedToolbar,
+      kind: .toolbar(.condensed),
+      size: CGSize(width: 900, height: 54),
+      to: outputDirectory.appendingPathComponent("swift-toolbar-condensed-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let basicPalette = makeScreenshotAppState()
+    basicPalette.workspacePreferences.setDetailedToolsVisible(false)
+    try renderComponentFixture(
+      basicPalette,
+      kind: .toolPalette,
+      size: CGSize(width: 240, height: 800),
+      to: outputDirectory.appendingPathComponent("swift-tool-palette-basic-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let detailedPalette = makeScreenshotAppState()
+    detailedPalette.workspacePreferences.setDetailedToolsVisible(true)
+    for group in ToolPalette.allToolGroups {
+      detailedPalette.workspacePreferences.setToolGroupCollapsed(false, groupID: group.id)
+    }
+    try renderComponentFixture(
+      detailedPalette,
+      kind: .toolPalette,
+      size: CGSize(width: 240, height: 800),
+      to: outputDirectory.appendingPathComponent("swift-tool-palette-detailed-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let emptyCanvas = makeScreenshotAppState()
+    try renderComponentFixture(
+      emptyCanvas,
+      kind: .canvas,
+      size: CGSize(width: 800, height: 520),
+      to: outputDirectory.appendingPathComponent("swift-canvas-empty-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let geometryState = makeScreenshotAppState(
+      documentState: makeDocumentState(name: "比較用ドキュメント", entities: [line])
+    )
+    geometryState.canvasPresentation.selectEntity(line.id)
+    try renderComponentFixture(
+      geometryState,
+      kind: .canvas,
+      size: CGSize(width: 800, height: 520),
+      to: outputDirectory.appendingPathComponent("swift-canvas-geometry-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let inspectorState = makeScreenshotAppState(
+      documentState: makeDocumentState(
+        name: "比較用ドキュメント",
+        parameters: [parameter],
+        entities: [line]
+      )
+    )
+    inspectorState.canvasPresentation.selectEntity(line.id)
+    try renderComponentFixture(
+      inspectorState,
+      kind: .inspector,
+      size: CGSize(width: 520, height: 820),
+      to: outputDirectory.appendingPathComponent("swift-inspector-selection-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let summaryState = makeScreenshotAppState(
+      documentState: makeDocumentState(
+        name: "比較用ドキュメント",
+        parameters: [parameter],
+        entities: [line]
+      )
+    )
+    summaryState.canvasPresentation.selectEntity(line.id)
+    try renderComponentFixture(
+      summaryState,
+      kind: .summary,
+      size: CGSize(width: 1032, height: 84),
+      to: outputDirectory.appendingPathComponent("swift-summary-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    try captureConstraintHUD(
+      outputDirectory,
+      fileName: "swift-constraint-hud-\(suffix).png",
+      appearanceName: appearanceName
+    )
+    try captureContextMenu(
+      outputDirectory,
+      fileName: "swift-context-menu-\(suffix).png",
+      appearanceName: appearanceName
+    )
+    try capturePasteOptions(
+      outputDirectory,
+      fileName: "swift-paste-options-\(suffix).png",
+      appearanceName: appearanceName
+    )
+    try captureLicenses(
+      outputDirectory,
+      fileName: "swift-licenses-dialog-\(suffix).png",
+      appearanceName: appearanceName
+    )
+    try captureRecoveryCandidates(
+      outputDirectory,
+      fileName: "swift-recovery-dialog-\(suffix).png",
+      appearanceName: appearanceName
+    )
+    try captureLayerDeletion(
+      outputDirectory,
+      fileName: "swift-layer-deletion-dialog-\(suffix).png",
+      appearanceName: appearanceName,
+      size: CGSize(width: 360, height: 160)
+    )
+    try capturePDFOutput(
+      outputDirectory,
+      fileName: "swift-pdf-dialog-\(suffix).png",
+      appearanceName: appearanceName
     )
   }
-
-  try capture("swift-wide-toolbar.png")
-
-  appState.workspacePreferences.setGridVisible(false)
-  try capture("swift-wide-grid-off.png")
-  appState.workspacePreferences.setGridVisible(true)
-
-  appState.workspacePreferences.setA4ReferenceVisible(false)
-  try capture("swift-wide-a4-reference-off.png")
-  appState.workspacePreferences.setA4ReferenceVisible(true)
-
-  appState.workspacePreferences.setA4ReferenceOrientation(.landscape)
-  try capture("swift-wide-a4-landscape.png")
-  appState.workspacePreferences.setA4ReferenceOrientation(.portrait)
-
-  appState.workspacePreferences.setGridSnapEnabled(false)
-  try capture("swift-wide-grid-snap-off.png")
-  appState.workspacePreferences.setGridSnapEnabled(true)
-
-  appState.workspacePreferences.setPointSnapEnabled(false)
-  try capture("swift-wide-point-snap-off.png")
 }
 
 @MainActor
-private func captureToolPaletteVisibilityStates(_ outputDirectory: URL) throws {
-  let layouts: [(String, WindowLayoutMode, CGSize)] = [
-    ("regular", .regular, regularScreenshotSize),
-    ("wide", .wide, wideScreenshotSize),
-  ]
-  for (id, mode, size) in layouts {
-    let appState = makeScreenshotAppState()
-    appState.workspaceLayout.setToolPanelWidth(260)
-    appState.workspaceLayout.setWindowLayoutMode(mode)
-    appState.workspaceLayout.setToolPaletteVisible(false)
-    try renderWorkspace(
-      appState,
-      size: size,
-      to: outputDirectory.appendingPathComponent("swift-\(id)-tool-palette-hidden.png")
-    )
-
-    appState.workspaceLayout.setToolPaletteVisible(true)
-    try renderWorkspace(
-      appState,
-      size: size,
-      to: outputDirectory.appendingPathComponent("swift-\(id)-tool-palette-restored.png")
-    )
-  }
-
-  let resetState = makeScreenshotAppState()
-  resetState.workspaceLayout.setToolPanelWidth(260)
-  resetState.workspaceLayout.setWindowLayoutMode(.wide)
-  resetState.workspaceLayout.setToolPaletteVisible(false)
-  resetState.workspacePreferences.resetStoredPreferences(
-    groupDefaults: Dictionary(
-      uniqueKeysWithValues: ToolPalette.allToolGroups.map { ($0.id, $0.defaultExpanded) }
-    )
-  )
-  resetState.workspaceLayout.resetStoredPanelWidths()
-  try renderWorkspace(
-    resetState,
-    size: wideScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-wide-tool-palette-reset.png")
-  )
-}
-
-@MainActor
-private func captureConstraintHUD(_ outputDirectory: URL) throws {
+private func captureConstraintHUD(
+  _ outputDirectory: URL,
+  fileName: String = "swift-constraint-hud.png",
+  appearanceName: NSAppearance.Name = .aqua
+) throws {
+  let size = CGSize(width: 190, height: 46)
   let line = lineEntity(
     id: "entity:verification-line",
     label: "線分",
@@ -221,72 +263,50 @@ private func captureConstraintHUD(_ outputDirectory: URL) throws {
       anchorCanvasPoint: CGPoint(x: 420, y: 290)
     )
   )
-  try renderWorkspace(
+  try renderComponentFixture(
     appState,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-constraint-hud.png")
+    kind: .constraintHUD,
+    size: size,
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
   )
 }
 
 @MainActor
-private func captureContextMenu(_ outputDirectory: URL) throws {
-  let line = lineEntity(
-    id: "entity:context-line",
-    start: ModelPoint(xMM: -30, yMM: 0),
-    end: ModelPoint(xMM: 30, yMM: 0)
-  )
-  let constraint = ProjectConstraint(
-    id: "constraint:context-horizontal",
-    rawKind: "horizontal",
-    kind: "水平",
-    targets: [line.id],
-    targetsJSON: #"[{"entity":"entity:context-line"}]"#,
-    valueMM: nil,
-    valueDegrees: nil,
-    valueParameterID: nil,
-    status: .underConstrained
-  )
-  var state = makeDocumentState(
-    name: "無題プロジェクト",
-    entities: [line],
-    constraints: [constraint],
-    constraintStatus: .underConstrained
-  )
-  state.canvasProjection = canvasProjection(
-    constraintMarkers: [resolvedCanvasPoint(id: constraint.id, position: .zero)]
-  )
-  let appState = makeScreenshotAppState(documentState: state)
-  appState.canvasPresentation.selectConstraint(constraint.id)
-
+private func captureContextMenu(
+  _ outputDirectory: URL,
+  fileName: String = "swift-context-menu.png",
+  appearanceName: NSAppearance.Name = .aqua
+) throws {
   // A native NSMenu is a separate WindowServer window. Represent the same
   // item in-process so this visual fixture remains deterministic and does not
   // require Screen Recording permission.
-  let comparisonView = ZStack(alignment: .topLeading) {
-    workspaceView(appState)
-    Text(AppStrings.tr("canvas.menu.delete_constraint"))
-      .font(.system(size: 13))
-      .foregroundStyle(Color(nsColor: .systemRed))
-      .frame(width: 164, alignment: .leading)
-      .padding(.horizontal, 12)
-      .padding(.vertical, 7)
-      .background(Color(nsColor: .windowBackgroundColor))
-      .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-      .overlay {
-        RoundedRectangle(cornerRadius: 6, style: .continuous)
-          .stroke(Color.black.opacity(0.14), lineWidth: 0.5)
-      }
-      .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-      .offset(x: regularScreenshotSize.width * 0.46, y: regularScreenshotSize.height * 0.48)
-  }
+  let comparisonView = Text(AppStrings.tr("canvas.menu.delete_constraint"))
+    .font(.system(size: 13))
+    .foregroundStyle(Color(nsColor: .systemRed))
+    .padding(.horizontal, 8)
+    .frame(width: 120, height: 40, alignment: .leading)
+    .background(Color(nsColor: .windowBackgroundColor))
+    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 6, style: .continuous)
+        .stroke(Color.black.opacity(0.14), lineWidth: 0.5)
+    }
+    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
   try renderScreenshot(
     comparisonView,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-context-menu.png")
+    size: CGSize(width: 120, height: 40),
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
   )
 }
 
 @MainActor
-private func capturePasteOptions(_ outputDirectory: URL) throws {
+private func capturePasteOptions(
+  _ outputDirectory: URL,
+  fileName: String = "swift-paste-options.png",
+  appearanceName: NSAppearance.Name = .aqua
+) throws {
   let line = lineEntity(
     id: "entity:pasted-line",
     start: ModelPoint(xMM: -60, yMM: 55),
@@ -318,101 +338,51 @@ private func capturePasteOptions(_ outputDirectory: URL) throws {
       activeMode: .cursor
     )
   )
-  try renderWorkspace(
+  try renderComponentFixture(
     appState,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-paste-options.png")
+    kind: .pasteOptions,
+    size: CGSize(width: 172, height: 28),
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
   )
 }
 
 @MainActor
-private func captureFreeText(
+private func captureLicenses(
   _ outputDirectory: URL,
-  fileName: String,
-  selectedTool: CanvasTool
+  fileName: String = "swift-oss-licenses.png",
+  appearanceName: NSAppearance.Name = .aqua
 ) throws {
-  let note = ProjectFreeText(
-    id: "free-text:verification-note",
-    content: "注記",
-    positionMM: ModelPoint(xMM: -10, yMM: 10),
-    fontSizeMM: 4
-  )
-  var state = makeDocumentState(name: "無題プロジェクト", freeTexts: [note])
-  state.canvasProjection = canvasProjection(visibleFreeTextIDs: [note.id])
-  let appState = makeScreenshotAppState(documentState: state)
-  appState.canvasPresentation.selectFreeText(note.id)
-  appState.canvasPresentation.setSelectedTool(selectedTool)
-  appState.canvasPresentation.setFreeTextInlineEditRequestID(note.id)
-  try renderWorkspace(
-    appState,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent(fileName)
-  )
-}
-
-@MainActor
-private func captureCompactDrawers(_ outputDirectory: URL) throws {
-  let note = ProjectFreeText(
-    id: "free-text:compact-note",
-    content: "注記",
-    positionMM: ModelPoint(xMM: -10, yMM: 10),
-    fontSizeMM: 4
-  )
-  var state = makeDocumentState(name: "無題プロジェクト", freeTexts: [note])
-  state.canvasProjection = canvasProjection(visibleFreeTextIDs: [note.id])
-
-  let toolsState = makeScreenshotAppState(documentState: state)
-  toolsState.workspaceLayout.setWindowLayoutMode(.compact)
-  toolsState.workspaceLayout.setCompactDrawer(.tools)
-  try renderWorkspace(
-    toolsState,
-    size: compactScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-compact-tools-drawer.png")
-  )
-
-  let inspectorState = makeScreenshotAppState(documentState: state)
-  inspectorState.canvasPresentation.selectFreeText(note.id)
-  inspectorState.workspaceLayout.setWindowLayoutMode(.compact)
-  inspectorState.workspaceLayout.setCompactDrawer(.inspector)
-  try renderWorkspace(
-    inspectorState,
-    size: compactScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-compact-inspector-drawer.png")
-  )
-}
-
-@MainActor
-private func captureLicenses(_ outputDirectory: URL) throws {
-  let appState = makeScreenshotAppState()
-  let comparisonView = ZStack {
-    workspaceView(appState)
-    Color.black.opacity(0.14)
-    VStack(spacing: 0) {
-      HStack {
-        Text(AppStrings.tr("menu.open_source_licenses"))
-          .font(.system(size: 16, weight: .semibold))
-        Spacer()
-      }
-      .padding(.horizontal, 20)
-      .frame(height: 52)
-      Divider()
-      OpenSourceLicensesDialog(notices: KawaCADLicensesPanel.noticeText())
+  let comparisonView = VStack(spacing: 0) {
+    HStack {
+      Text(AppStrings.tr("menu.open_source_licenses"))
+        .font(.system(size: 16, weight: .semibold))
+      Spacer()
     }
-    .frame(width: 680, height: 520)
-    .background(LeatherColors.panel)
-    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
+    .padding(.horizontal, 20)
+    .frame(height: 52)
+    Divider()
+    OpenSourceLicensesDialog(notices: KawaCADLicensesPanel.noticeText())
   }
+  .frame(width: 680, height: 520)
+  .background(LeatherColors.panel)
+  .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+  .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
   try renderScreenshot(
     comparisonView,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-oss-licenses.png")
+    size: CGSize(width: 680, height: 520),
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
   )
 }
 
 @MainActor
-private func captureLayerDeletion(_ outputDirectory: URL) throws {
-  let cutLayer = defaultLayers()[0]
+private func captureLayerDeletion(
+  _ outputDirectory: URL,
+  fileName: String = "swift-layer-deletion-confirmation.png",
+  appearanceName: NSAppearance.Name = .aqua,
+  size: CGSize = CGSize(width: 300, height: 150)
+) throws {
   let verificationLayer = ProjectLayer(
     id: "layer:verification",
     name: "検証レイヤー",
@@ -423,253 +393,44 @@ private func captureLayerDeletion(_ outputDirectory: URL) throws {
     strokeWidthMM: 0.13,
     linePattern: .dashed
   )
-  let line = lineEntity(
-    id: "entity:verification-layer-line",
-    layerID: verificationLayer.id,
-    start: ModelPoint(xMM: -30, yMM: 0),
-    end: ModelPoint(xMM: 30, yMM: 0)
-  )
-  let appState = makeScreenshotAppState(
-    documentState: makeDocumentState(
-      name: "無題プロジェクト",
-      layers: [cutLayer, verificationLayer],
-      entities: [line]
-    )
-  )
-  appState.actions.inspector.setInspectorTab(.layers)
-  appState.documentPresentation.setLayerDeletionConfirmation(
-    LayerDeletionConfirmation(layer: verificationLayer, entityCount: 1)
-  )
-  try renderWorkspace(
-    appState,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-layer-deletion-confirmation.png")
-  )
-}
-
-@MainActor
-private func captureInspectorManagementTabs(_ outputDirectory: URL) throws {
-  let verificationLayer = ProjectLayer(
-    id: "layer:verification",
-    name: "検証レイヤー",
-    kind: .construction,
-    visible: true,
-    printable: false,
-    colorHex: "#6B7280",
-    strokeWidthMM: 0.13,
-    linePattern: .dashed
-  )
-  let sharedStyles = [
-    ProjectSharedStyle(
-      id: "style:outer-cut-line", name: "外形カット線", colorHex: "#111827",
-      strokeWidthMM: 0.25, linePattern: .solid),
-    ProjectSharedStyle(
-      id: "style:stitch", name: "縫い線", colorHex: "#DC2626", strokeWidthMM: 0.2,
-      linePattern: .dashed),
-    ProjectSharedStyle(
-      id: "style:fold", name: "折り線", colorHex: "#2563EB", strokeWidthMM: 0.2,
-      linePattern: .dashed),
-    ProjectSharedStyle(
-      id: "style:center", name: "中心線", colorHex: "#16A34A", strokeWidthMM: 0.2,
-      linePattern: .dotted),
-    ProjectSharedStyle(
-      id: "style:construction", name: "補助線", colorHex: "#6B7280", strokeWidthMM: 0.13,
-      linePattern: .construction),
-    ProjectSharedStyle(
-      id: "style:dimension", name: "寸法線", colorHex: "#9333EA", strokeWidthMM: 0.2,
-      linePattern: .solid),
-  ]
-  let parameter = ProjectParameter(
-    id: "parameter:width",
-    name: "幅",
-    valueMM: 25,
-    unit: "millimeter",
-    memo: "",
-    usageCount: 0,
-    usedConstraintIDs: []
-  )
-  let outline = [
-    lineEntity(
-      id: "entity:part-bottom",
-      start: ModelPoint(xMM: -40, yMM: -20),
-      end: ModelPoint(xMM: 40, yMM: -20)
-    ),
-    lineEntity(
-      id: "entity:part-right",
-      start: ModelPoint(xMM: 40, yMM: -20),
-      end: ModelPoint(xMM: 0, yMM: 40)
-    ),
-    lineEntity(
-      id: "entity:part-left",
-      start: ModelPoint(xMM: 0, yMM: 40),
-      end: ModelPoint(xMM: -40, yMM: -20)
-    ),
-  ]
-  let part = ProjectPart(
-    id: "part:body",
-    name: "本体",
-    originMM: ModelPoint(xMM: 0, yMM: 1.67),
-    outlineEntityIDs: outline.map(\.id),
-    holeEntityIDGroups: [],
-    entityIDs: outline.map(\.id),
-    derivedElementIDs: [],
-    freeTextIDs: [],
-    measurementAnnotationIDs: [],
-    quantity: 1
-  )
-  let managementState = makeDocumentState(
-    name: "無題プロジェクト",
-    layers: [defaultLayers()[0], verificationLayer],
-    sharedStyles: sharedStyles,
-    parameters: [parameter]
-  )
-
-  let layersState = makeScreenshotAppState(documentState: managementState)
-  layersState.actions.inspector.setInspectorTab(.layers)
-  layersState.inspectorPresentation.setSelectedLayerID(verificationLayer.id)
-  try renderWorkspace(
-    layersState,
-    size: wideScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-inspector-layers.png")
-  )
-
-  let stylesState = makeScreenshotAppState(documentState: managementState)
-  stylesState.actions.inspector.setInspectorTab(.sharedStyles)
-  stylesState.inspectorPresentation.setSelectedSharedStyleID(sharedStyles[0].id)
-  try renderWorkspace(
-    stylesState,
-    size: wideScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-inspector-shared-styles.png")
-  )
-
-  let parametersState = makeScreenshotAppState(documentState: managementState)
-  parametersState.actions.inspector.setInspectorTab(.parameters)
-  parametersState.inspectorPresentation.setSelectedParameterID(parameter.id)
-  try renderWorkspace(
-    parametersState,
-    size: wideScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-inspector-parameters.png")
-  )
-
-  let partsState = makeScreenshotAppState(
-    documentState: makeDocumentState(
-      name: "無題プロジェクト",
-      sharedStyles: sharedStyles,
-      parameters: [parameter],
-      parts: [part],
-      entities: outline
-    )
-  )
-  partsState.actions.inspector.setInspectorTab(.parts)
-  partsState.inspectorPresentation.setSelectedPartID(part.id)
-  try renderWorkspace(
-    partsState,
-    size: wideScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-inspector-parts.png")
-  )
-}
-
-@MainActor
-private func captureSelectionEntityEditors(_ outputDirectory: URL) throws {
-  let layerID = defaultLayers()[0].id
-  let style = ProjectSharedStyle(
-    id: "style:outer-cut-line",
-    name: "外形カット線",
-    colorHex: "#111827",
-    strokeWidthMM: 0.25,
-    linePattern: .solid
-  )
-  let entities: [(String, CanvasEntity)] = [
-    (
-      "line",
-      CanvasEntity(
-        id: "entity:selection-line",
-        label: "線分",
-        kind: .lineSegment,
-        layerID: layerID,
-        styleID: style.id,
-        geometry: .line(
-          start: ModelPoint(xMM: -30, yMM: 0),
-          end: ModelPoint(xMM: 30, yMM: 0),
-          centerLine: false
-        )
-      )
-    ),
-    (
-      "circle",
-      CanvasEntity(
-        id: "entity:selection-circle",
-        label: "円",
-        kind: .circle,
-        layerID: layerID,
-        styleID: style.id,
-        geometry: .circle(center: .zero, radiusMM: 25)
-      )
-    ),
-    (
-      "arc",
-      CanvasEntity(
-        id: "entity:selection-arc",
-        label: "円弧",
-        kind: .arc,
-        layerID: layerID,
-        styleID: style.id,
-        geometry: .arc(
-          center: .zero,
-          radiusMM: 25,
-          startAngleRad: 0,
-          sweepAngleRad: .pi / 2
-        )
-      )
-    ),
-    (
-      "point",
-      CanvasEntity(
-        id: "entity:selection-point",
-        label: "点",
-        kind: .point,
-        layerID: layerID,
-        styleID: style.id,
-        geometry: .point(.zero)
-      )
-    ),
-    (
-      "center-line",
-      CanvasEntity(
-        id: "entity:selection-center-line",
-        label: "中心線",
-        kind: .centerLine,
-        layerID: layerID,
-        styleID: style.id,
-        geometry: .line(
-          start: ModelPoint(xMM: -30, yMM: 0),
-          end: ModelPoint(xMM: 30, yMM: 0),
-          centerLine: true
-        )
-      )
-    ),
-  ]
-
-  for (name, entity) in entities {
-    let appState = makeScreenshotAppState(
-      documentState: makeDocumentState(
-        name: "無題プロジェクト",
-        sharedStyles: [style],
-        entities: [entity]
-      )
-    )
-    appState.canvasPresentation.selectEntity(entity.id)
-    appState.canvasPresentation.setSelectedTool(.select)
-    try renderWorkspace(
-      appState,
-      size: wideScreenshotSize,
-      to: outputDirectory.appendingPathComponent("swift-selection-\(name).png")
-    )
+  let confirmation = LayerDeletionConfirmation(layer: verificationLayer, entityCount: 1)
+  // SwiftUI's confirmationDialog is a separate native presentation and is not
+  // included when an NSHostingView is drawn into a bitmap. Keep this fixture
+  // in-process, just like the native context-menu fixture above.
+  let comparisonView = VStack(alignment: .leading, spacing: 12) {
+    Text(AppStrings.tr("dialog.delete_layer_title", verificationLayer.name))
+      .font(.system(size: 14, weight: .semibold))
+    Text(confirmation.message)
+      .font(.system(size: 12))
+      .foregroundStyle(LeatherColors.secondaryInk)
+    HStack(spacing: 8) {
+      Spacer()
+      Button(AppStrings.tr("common.cancel")) {}
+        .buttonStyle(.bordered)
+      Button(AppStrings.tr("common.delete")) {}
+        .buttonStyle(.borderedProminent)
+        .tint(.red)
+    }
   }
+  .padding(18)
+  .frame(width: size.width, alignment: .topLeading)
+  .background(Color(nsColor: .windowBackgroundColor))
+  .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+  .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
+  try renderScreenshot(
+    comparisonView,
+    size: size,
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
+  )
 }
 
 @MainActor
-private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
+private func captureRecoveryCandidates(
+  _ outputDirectory: URL,
+  fileName: String = "swift-recovery-candidates.png",
+  appearanceName: NSAppearance.Name = .aqua
+) throws {
   let originalTimeZone = NSTimeZone.default
   NSTimeZone.default = TimeZone(identifier: "Asia/Tokyo")!
   defer { NSTimeZone.default = originalTimeZone }
@@ -705,23 +466,20 @@ private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
   let dialogState = workspace.recoveryChooserState
   let dialogActions = workspace.recoveryChooserActions
   appState.recoverySnapshotState.setChooser(nil)
-  let comparisonView = ZStack {
-    workspaceView(appState)
-    Color.black.opacity(0.14)
-    RecoveryChooserDialog(
-      state: dialogState,
-      actions: dialogActions,
-      chooser: chooser
-    )
-    .frame(width: 660, height: 400)
-    .background(Color(nsColor: .windowBackgroundColor))
-    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
-  }
+  let comparisonView = RecoveryChooserDialog(
+    state: dialogState,
+    actions: dialogActions,
+    chooser: chooser
+  )
+  .frame(width: 660, height: 400)
+  .background(Color(nsColor: .windowBackgroundColor))
+  .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+  .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
   try renderScreenshot(
     comparisonView,
-    size: regularScreenshotSize,
-    to: outputDirectory.appendingPathComponent("swift-recovery-candidates.png")
+    size: CGSize(width: 660, height: 400),
+    to: outputDirectory.appendingPathComponent(fileName),
+    appearanceName: appearanceName
   )
 }
 
@@ -729,8 +487,7 @@ private func captureRecoveryCandidates(_ outputDirectory: URL) throws {
 private func capturePDFOutput(
   _ outputDirectory: URL,
   fileName: String = "swift-pdf-output-settings.png",
-  appearanceName: NSAppearance.Name = .aqua,
-  size: CGSize = regularScreenshotSize
+  appearanceName: NSAppearance.Name = .aqua
 ) throws {
   let appState = makeScreenshotAppState()
   let presentationOptions = OutputPresentationOptions(
@@ -768,17 +525,14 @@ private func capturePDFOutput(
   let dialogState = workspace.outputRequestSheetState
   let dialogActions = workspace.outputRequestSheetActions
   appState.outputPresentation.setRequestDraft(nil)
-  let comparisonView = ZStack {
-    workspaceView(appState)
-    Color.black.opacity(0.14)
-    OutputDialog(state: dialogState, actions: dialogActions)
-      .frame(width: 920, height: 640)
-      .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-      .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
-  }
+  let dialogSize = CGSize(width: 920, height: 640)
+  let comparisonView = OutputDialog(state: dialogState, actions: dialogActions)
+    .frame(width: dialogSize.width, height: dialogSize.height)
+    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .shadow(color: .black.opacity(0.24), radius: 18, x: 0, y: 8)
   try renderScreenshot(
     comparisonView,
-    size: size,
+    size: dialogSize,
     to: outputDirectory.appendingPathComponent(fileName),
     appearanceName: appearanceName
   )
@@ -840,69 +594,6 @@ private func comparisonPDFOutputDocumentModel() -> OutputDocumentModel {
       )
     ]
   )
-}
-
-@MainActor
-private func captureRepresentativeThemeMatrix(_ outputDirectory: URL) throws {
-  let line = lineEntity(
-    id: "entity:theme-matrix-line",
-    start: ModelPoint(xMM: -35, yMM: 0),
-    end: ModelPoint(xMM: 35, yMM: 0)
-  )
-  let selectedState = makeDocumentState(
-    name: "無題プロジェクト",
-    entities: [line]
-  )
-
-  for theme in ScreenshotTheme.allCases {
-    let prefix = "swift-\(theme.rawValue)"
-
-    let emptyState = makeScreenshotAppState()
-    emptyState.workspaceLayout.setWindowLayoutMode(.compact)
-    try renderWorkspace(
-      emptyState,
-      size: compactScreenshotSize,
-      to: outputDirectory.appendingPathComponent("\(prefix)-compact-empty.png"),
-      appearanceName: theme.appearanceName
-    )
-
-    let toolsState = makeScreenshotAppState()
-    toolsState.workspaceLayout.setWindowLayoutMode(.compact)
-    toolsState.workspaceLayout.setCompactDrawer(.tools)
-    try renderWorkspace(
-      toolsState,
-      size: compactScreenshotSize,
-      to: outputDirectory.appendingPathComponent("\(prefix)-compact-tools-drawer.png"),
-      appearanceName: theme.appearanceName
-    )
-
-    let inspectorState = makeScreenshotAppState()
-    inspectorState.workspaceLayout.setWindowLayoutMode(.compact)
-    inspectorState.workspaceLayout.setCompactDrawer(.inspector)
-    try renderWorkspace(
-      inspectorState,
-      size: compactScreenshotSize,
-      to: outputDirectory.appendingPathComponent("\(prefix)-compact-inspector-drawer.png"),
-      appearanceName: theme.appearanceName
-    )
-
-    let selectedInspectorState = makeScreenshotAppState(documentState: selectedState)
-    selectedInspectorState.canvasPresentation.selectEntity(line.id)
-    selectedInspectorState.workspaceLayout.setWindowLayoutMode(.regular)
-    try renderWorkspace(
-      selectedInspectorState,
-      size: regularScreenshotSize,
-      to: outputDirectory.appendingPathComponent("\(prefix)-regular-selected-inspector.png"),
-      appearanceName: theme.appearanceName
-    )
-
-    try capturePDFOutput(
-      outputDirectory,
-      fileName: "\(prefix)-wide-dialog.png",
-      appearanceName: theme.appearanceName,
-      size: themeMatrixWideScreenshotSize
-    )
-  }
 }
 
 @MainActor
@@ -1050,27 +741,93 @@ private func workspaceProps(_ appState: AppCoordinator) -> WorkspaceViewPropsFac
 }
 
 @MainActor
-private func workspaceView(_ appState: AppCoordinator) -> WorkspaceView {
-  let workspace = workspaceProps(appState)
-  return WorkspaceView(
-    state: workspace.workspaceViewState,
-    actions: workspace.workspaceViewActions
-  )
-}
-
-@MainActor
-private func renderWorkspace(
+private func renderComponentFixture(
   _ appState: AppCoordinator,
+  kind: ComponentFixtureKind,
   size: CGSize,
   to outputURL: URL,
   appearanceName: NSAppearance.Name = .aqua
 ) throws {
-  try renderScreenshot(
-    workspaceView(appState),
-    size: size,
-    to: outputURL,
-    appearanceName: appearanceName
-  )
+  let workspace = workspaceProps(appState)
+  let state = workspace.workspaceViewState
+  let actions = workspace.workspaceViewActions
+
+  let content: AnyView
+  var renderToFittingSize = false
+  switch kind {
+  case .toolbar(let density):
+    content = AnyView(
+      CADToolbar(
+        state: state.toolbarState,
+        actions: actions.toolbarActions,
+        workspaceLayoutMode: state.windowLayoutMode,
+        density: density
+      )
+      .background(LeatherColors.panel)
+    )
+  case .toolPalette:
+    content = AnyView(
+      ToolPalette(
+        state: state.toolPaletteState,
+        actions: actions.toolPaletteActions,
+        width: size.width
+      )
+    )
+  case .inspector:
+    content = AnyView(
+      WorkspaceInspector(model: state.inspectorPanelModel, width: size.width)
+    )
+  case .summary:
+    content = AnyView(BottomWorkbench(state: state.bottomWorkbenchState))
+  case .constraintHUD:
+    content = AnyView(
+      ValueEntryDialogPresenter(
+        state: state.constraintEntryHUDState,
+        actions: actions.constraintEntryHUDActions,
+        standalone: true
+      )
+    )
+  case .pasteOptions:
+    guard let presentation = state.pasteOptionsPresentation else {
+      throw ScreenshotCaptureError.missingFixtureState("paste-options")
+    }
+    let standalonePresentation = PasteOptionsPresentation(
+      clipboard: presentation.clipboard,
+      sourceAnchor: presentation.sourceAnchor,
+      pasteNamespace: presentation.pasteNamespace,
+      cursorPoint: presentation.cursorPoint,
+      canvasPoint: nil,
+      nearSourcePoint: presentation.nearSourcePoint,
+      activeMode: presentation.activeMode
+    )
+    content = AnyView(
+      ZStack(alignment: .topLeading) {
+        PasteOptionsOverlay(
+          presentation: standalonePresentation,
+          selectMode: actions.selectPastePlacement,
+          dismiss: actions.dismissPasteOptions,
+          standalone: true
+        )
+      }
+      .background(LeatherColors.canvas)
+    )
+    renderToFittingSize = true
+  case .canvas:
+    content = AnyView(
+      CADCanvas(
+        renderInput: state.canvasRenderInput,
+        interactionInput: state.canvasInteractionInput,
+        actions: actions.canvasActionGroups
+      )
+      .background(LeatherColors.canvas)
+    )
+  }
+
+  if renderToFittingSize {
+    try renderFittedScreenshot(content, to: outputURL, appearanceName: appearanceName)
+  } else {
+    try renderScreenshot(content, size: size, to: outputURL, appearanceName: appearanceName)
+  }
 }
 
 @MainActor
@@ -1091,6 +848,22 @@ private func renderScreenshot<Content: View>(
   syncInlineTextEditor(in: hostingView)
   settle(hostingView)
   try capture(view: hostingView, logicalSize: size, to: outputURL)
+}
+
+@MainActor
+private func renderFittedScreenshot<Content: View>(
+  _ content: Content,
+  to outputURL: URL,
+  appearanceName: NSAppearance.Name = .aqua
+) throws {
+  let sizingView = NSHostingView(rootView: content)
+  sizingView.layoutSubtreeIfNeeded()
+  let fittingSize = sizingView.fittingSize
+  let size = CGSize(
+    width: max(1, ceil(fittingSize.width)),
+    height: max(1, ceil(fittingSize.height))
+  )
+  try renderScreenshot(content, size: size, to: outputURL, appearanceName: appearanceName)
 }
 
 @MainActor
@@ -1183,14 +956,22 @@ private func syncInlineTextEditor(in view: NSView) {
 
 @MainActor
 private func capture(view: NSView, logicalSize: CGSize, to outputURL: URL) throws {
-  let bounds = NSRect(origin: .zero, size: logicalSize)
-  view.frame = bounds
+  try capture(
+    view: view,
+    rect: NSRect(origin: .zero, size: logicalSize),
+    to: outputURL
+  )
+}
+
+@MainActor
+private func capture(view: NSView, rect: NSRect, to outputURL: URL) throws {
   view.layoutSubtreeIfNeeded()
+  let captureRect = rect.integral
   guard
     let bitmap = NSBitmapImageRep(
       bitmapDataPlanes: nil,
-      pixelsWide: Int(logicalSize.width),
-      pixelsHigh: Int(logicalSize.height),
+      pixelsWide: max(1, Int(captureRect.width)),
+      pixelsHigh: max(1, Int(captureRect.height)),
       bitsPerSample: 8,
       samplesPerPixel: 4,
       hasAlpha: true,
@@ -1202,8 +983,8 @@ private func capture(view: NSView, logicalSize: CGSize, to outputURL: URL) throw
   else {
     throw ScreenshotCaptureError.cannotAllocateBitmap
   }
-  bitmap.size = logicalSize
-  view.cacheDisplay(in: bounds, to: bitmap)
+  bitmap.size = captureRect.size
+  view.cacheDisplay(in: captureRect, to: bitmap)
 
   guard let data = bitmap.representation(using: .png, properties: [:]) else {
     throw ScreenshotCaptureError.cannotEncodePNG
@@ -1212,166 +993,13 @@ private func capture(view: NSView, logicalSize: CGSize, to outputURL: URL) throw
 }
 
 private func createComparisonImages(screenshotDirectory: URL) throws {
-  let standardPanelSize = regularScreenshotSize
-  let pairs: [(String, String, String, CGSize)] = [
-    (
-      "light-compact-empty", "swift-light-compact-empty.png",
-      "tauri-light-compact-empty.jpg", compactScreenshotSize
-    ),
-    (
-      "light-compact-tools-drawer", "swift-light-compact-tools-drawer.png",
-      "tauri-light-compact-tools-drawer.jpg", compactScreenshotSize
-    ),
-    (
-      "light-compact-inspector-drawer", "swift-light-compact-inspector-drawer.png",
-      "tauri-light-compact-inspector-drawer.jpg", compactScreenshotSize
-    ),
-    (
-      "light-regular-selected-inspector", "swift-light-regular-selected-inspector.png",
-      "tauri-light-regular-selected-inspector.jpg", standardPanelSize
-    ),
-    (
-      "light-wide-dialog", "swift-light-wide-dialog.png", "tauri-light-wide-dialog.jpg",
-      themeMatrixWideScreenshotSize
-    ),
-    (
-      "dark-compact-empty", "swift-dark-compact-empty.png",
-      "tauri-dark-compact-empty.jpg", compactScreenshotSize
-    ),
-    (
-      "dark-compact-tools-drawer", "swift-dark-compact-tools-drawer.png",
-      "tauri-dark-compact-tools-drawer.jpg", compactScreenshotSize
-    ),
-    (
-      "dark-compact-inspector-drawer", "swift-dark-compact-inspector-drawer.png",
-      "tauri-dark-compact-inspector-drawer.jpg", compactScreenshotSize
-    ),
-    (
-      "dark-regular-selected-inspector", "swift-dark-regular-selected-inspector.png",
-      "tauri-dark-regular-selected-inspector.jpg", standardPanelSize
-    ),
-    (
-      "dark-wide-dialog", "swift-dark-wide-dialog.png", "tauri-dark-wide-dialog.jpg",
-      themeMatrixWideScreenshotSize
-    ),
-    ("initial", "swift-browser-initial.png", "tauri-browser-initial.jpg", standardPanelSize),
-    (
-      "detailed-tools-summary", "swift-detailed-tools-summary.png",
-      "tauri-detailed-tools-summary.jpg", standardPanelSize
-    ),
-    (
-      "wide-toolbar", "swift-wide-toolbar.png", "tauri-wide-toolbar.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "wide-grid-off", "swift-wide-grid-off.png", "tauri-wide-grid-off.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "wide-a4-reference-off", "swift-wide-a4-reference-off.png",
-      "tauri-wide-a4-reference-off.jpg", wideScreenshotSize
-    ),
-    (
-      "wide-a4-landscape", "swift-wide-a4-landscape.png", "tauri-wide-a4-landscape.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "wide-grid-snap-off", "swift-wide-grid-snap-off.png", "tauri-wide-grid-snap-off.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "wide-point-snap-off", "swift-wide-point-snap-off.png", "tauri-wide-point-snap-off.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "regular-tool-palette-hidden", "swift-regular-tool-palette-hidden.png",
-      "tauri-regular-tool-palette-hidden.jpg", regularScreenshotSize
-    ),
-    (
-      "regular-tool-palette-restored", "swift-regular-tool-palette-restored.png",
-      "tauri-regular-tool-palette-restored.jpg", regularScreenshotSize
-    ),
-    (
-      "wide-tool-palette-hidden", "swift-wide-tool-palette-hidden.png",
-      "tauri-wide-tool-palette-hidden.jpg", wideScreenshotSize
-    ),
-    (
-      "wide-tool-palette-restored", "swift-wide-tool-palette-restored.png",
-      "tauri-wide-tool-palette-restored.jpg", wideScreenshotSize
-    ),
-    (
-      "wide-tool-palette-reset", "swift-wide-tool-palette-reset.png",
-      "tauri-wide-tool-palette-reset.jpg", wideScreenshotSize
-    ),
-    ("constraint-hud", "swift-constraint-hud.png", "tauri-constraint-hud.jpg", standardPanelSize),
-    ("context-menu", "swift-context-menu.png", "tauri-context-menu.jpg", standardPanelSize),
-    ("paste-options", "swift-paste-options.png", "tauri-paste-options.jpg", standardPanelSize),
-    (
-      "free-text-default", "swift-free-text-default.png", "tauri-free-text-default.jpg",
-      standardPanelSize
-    ),
-    (
-      "inline-text-editor", "swift-inline-text-editor.png", "tauri-inline-text-editor.jpg",
-      standardPanelSize
-    ),
-    (
-      "compact-tools-drawer", "swift-compact-tools-drawer.png", "tauri-compact-tools-drawer.jpg",
-      standardPanelSize
-    ),
-    (
-      "compact-inspector-drawer", "swift-compact-inspector-drawer.png",
-      "tauri-compact-inspector-drawer.jpg", standardPanelSize
-    ),
-    ("oss-licenses", "swift-oss-licenses.png", "tauri-oss-licenses.jpg", standardPanelSize),
-    (
-      "layer-deletion-confirmation", "swift-layer-deletion-confirmation.png",
-      "tauri-layer-deletion-confirmation.jpg", standardPanelSize
-    ),
-    (
-      "inspector-layers", "swift-inspector-layers.png", "tauri-inspector-layers.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "inspector-shared-styles", "swift-inspector-shared-styles.png",
-      "tauri-inspector-shared-styles.jpg", wideScreenshotSize
-    ),
-    (
-      "inspector-parameters", "swift-inspector-parameters.png",
-      "tauri-inspector-parameters.jpg", wideScreenshotSize
-    ),
-    (
-      "inspector-parts", "swift-inspector-parts.png", "tauri-inspector-parts.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "selection-line", "swift-selection-line.png", "tauri-selection-line.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "selection-circle", "swift-selection-circle.png", "tauri-selection-circle.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "selection-arc", "swift-selection-arc.png", "tauri-selection-arc.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "selection-point", "swift-selection-point.png", "tauri-selection-point.jpg",
-      wideScreenshotSize
-    ),
-    (
-      "selection-center-line", "swift-selection-center-line.png",
-      "tauri-selection-center-line.jpg", wideScreenshotSize
-    ),
-    (
-      "recovery-candidates", "swift-recovery-candidates.png", "tauri-recovery-candidates.jpg",
-      standardPanelSize
-    ),
-    (
-      "pdf-output-settings", "swift-pdf-output-settings.png", "tauri-pdf-output-settings.jpg",
-      standardPanelSize
-    ),
-  ]
+  let screenshotNames = try FileManager.default.contentsOfDirectory(
+    at: screenshotDirectory,
+    includingPropertiesForKeys: nil
+  )
+  .map(\.lastPathComponent)
+  .filter { $0.hasPrefix("tauri-") && $0.hasSuffix(".jpg") }
+  .sorted()
   let comparisonDirectory =
     screenshotDirectory
     .deletingLastPathComponent()
@@ -1381,7 +1009,9 @@ private func createComparisonImages(screenshotDirectory: URL) throws {
     withIntermediateDirectories: true
   )
 
-  for (name, swiftFileName, tauriFileName, panelSize) in pairs {
+  for tauriFileName in screenshotNames {
+    let key = String(tauriFileName.dropFirst("tauri-".count).dropLast(".jpg".count))
+    let swiftFileName = "swift-\(key).png"
     let swiftURL = screenshotDirectory.appendingPathComponent(swiftFileName)
     let tauriURL = screenshotDirectory.appendingPathComponent(tauriFileName)
     guard let swiftImage = NSImage(contentsOf: swiftURL),
@@ -1389,11 +1019,15 @@ private func createComparisonImages(screenshotDirectory: URL) throws {
     else {
       continue
     }
+    let panelSize = CGSize(
+      width: max(swiftImage.size.width, tauriImage.size.width),
+      height: max(swiftImage.size.height, tauriImage.size.height)
+    )
     try renderComparisonImage(
       swiftImage: swiftImage,
       tauriImage: tauriImage,
       panelSize: panelSize,
-      to: comparisonDirectory.appendingPathComponent("comparison-\(name).png")
+      to: comparisonDirectory.appendingPathComponent("comparison-\(key).png")
     )
   }
 }
@@ -1545,4 +1179,5 @@ private struct ScreenshotPreferenceSnapshot {
 private enum ScreenshotCaptureError: Error {
   case cannotAllocateBitmap
   case cannotEncodePNG
+  case missingFixtureState(String)
 }

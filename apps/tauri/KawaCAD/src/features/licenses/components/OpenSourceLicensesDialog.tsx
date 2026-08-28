@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { thirdPartyLicenses, type ThirdPartyLicense } from "@/features/licenses/thirdPartyLicenses";
 import { appStrings } from "@/localization";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 type OpenSourceLicensesDialogProps = {
   onClose: () => void;
@@ -29,6 +30,7 @@ export function OpenSourceLicensesDialog({ onClose }: OpenSourceLicensesDialogPr
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
         className="licenses-dialog"
+        data-testid={accessibilityIdentifiers.componentLicensesDialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby="open-source-licenses-title"

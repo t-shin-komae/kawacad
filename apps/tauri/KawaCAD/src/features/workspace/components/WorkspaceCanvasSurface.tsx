@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { CADCanvas } from "@/features/canvas/components/CadCanvas";
 import { CanvasContextMenu } from "@/features/canvas/components/CanvasContextMenu";
 import { PasteOptionsOverlay } from "@/features/document/components/PasteOptionsOverlay";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 export type WorkspaceCanvasSurfaceProps = {
   canvas: ComponentProps<typeof CADCanvas>;
@@ -13,7 +14,7 @@ export type WorkspaceCanvasSurfaceProps = {
 /** Canvas rendering and its transient overlays, independent from workspace chrome. */
 export function WorkspaceCanvasSurface({ canvas, hudText, pasteOptions, contextMenu }: WorkspaceCanvasSurfaceProps) {
   return (
-    <section className="canvas-area">
+    <section className="canvas-area" data-testid={accessibilityIdentifiers.componentCanvasSurface}>
       <CADCanvas {...canvas} />
       <div className="canvas-hud" aria-hidden="true">
         {hudText}

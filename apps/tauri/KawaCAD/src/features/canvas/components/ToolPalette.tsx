@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { appStrings } from "@/localization";
 import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import { parseDecimal } from "@/shared/state/syncedField";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 // Keep the historical component import surface while the preference data is
 // owned by the canvas domain and can be consumed by adapters without pulling
@@ -146,7 +147,11 @@ export function ToolPalette({
     onCollapsedGroupsChange(next);
   };
   return (
-    <aside className="tool-palette" aria-label={appStrings.palette.ariaLabel}>
+    <aside
+      className="tool-palette"
+      data-testid={accessibilityIdentifiers.componentToolPalette}
+      aria-label={appStrings.palette.ariaLabel}
+    >
       <header className="palette-header">
         <span>
           <strong>{appStrings.palette.title}</strong>
