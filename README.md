@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/tauri/KawaCAD/src-tauri/icons/128x128.png" alt="KawaCADアイコン" width="128">
+</p>
+
 # KawaCAD
 
 > **WIP:** KawaCADは現在開発中で、実用段階にはありません。仕様や実装は今後変更される可能性があります。
@@ -5,6 +9,10 @@
 KawaCADは、レザークラフトの型紙制作を目的としたmacOS中心のパラメトリック2D CADです。
 
 現在の製品は、拘束付き自由作図、派生ジオメトリ、レザークラフトの意味情報、複数パーツの型紙管理、`.kawa`永続化、A4実寸PDF出力およびmacOS直接印刷を提供します。
+
+<p align="center">
+  <img src="docs/assets/kawacad-demo.gif" alt="KawaCADで図形を作成し、設定やパーツを編集するデモ" width="1000">
+</p>
 
 ## ドキュメント
 
