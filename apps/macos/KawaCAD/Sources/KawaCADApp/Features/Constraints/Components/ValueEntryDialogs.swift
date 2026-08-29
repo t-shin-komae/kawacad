@@ -224,7 +224,7 @@ private struct ValueEntryFields: View {
         .onSubmit(actions.commit)
 
         Text(draft.unit)
-          .font(.system(size: 11, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .medium))
           .foregroundStyle(LeatherColors.secondaryInk)
       }
 
@@ -232,11 +232,12 @@ private struct ValueEntryFields: View {
         actions.cancel()
       } label: {
         Image(systemName: "xmark")
-          .frame(width: 18, height: 18)
+          .frame(width: 24, height: 24)
       }
       .buttonStyle(.borderless)
       .keyboardShortcut(.cancelAction)
       .help(AppStrings.tr("common.cancel"))
+      .accessibilityLabel(AppStrings.tr("common.cancel"))
 
       Button {
         actions.commit()

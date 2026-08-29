@@ -19,7 +19,7 @@ struct InspectorPanel: View {
         }
         .pickerStyle(.segmented)
         .labelsHidden()
-        .leatherControlHeight()
+        .leatherInspectorTabHeight()
         .accessibilityLabel(Text(AppStrings.tr("accessibility.inspector_tabs")))
 
         if model.inspectorHasPendingSelectionChange {
@@ -31,7 +31,7 @@ struct InspectorPanel: View {
               Spacer(minLength: 8)
               Text(AppStrings.tr("inspector.show_selection"))
             }
-            .font(.system(size: 11, weight: .semibold))
+            .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
           }
           .buttonStyle(.bordered)
           .leatherControlHeight()

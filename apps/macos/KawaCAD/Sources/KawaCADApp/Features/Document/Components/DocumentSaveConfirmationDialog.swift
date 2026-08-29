@@ -21,11 +21,13 @@ struct DocumentSaveConfirmationDialog: View {
           actions.cancel()
         }
         .keyboardShortcut(.cancelAction)
+        .leatherControlHeight()
 
         Button(AppStrings.tr("document.save_confirmation.discard"), role: .destructive) {
           actions.discard()
         }
         .buttonStyle(.borderedProminent)
+        .leatherControlHeight()
         .tint(.red)
         .accessibilityLabel(AppStrings.tr("document.save_confirmation.discard"))
 
@@ -33,6 +35,7 @@ struct DocumentSaveConfirmationDialog: View {
           actions.save()
         }
         .keyboardShortcut(.defaultAction)
+        .leatherControlHeight()
       }
     }
     .padding(20)

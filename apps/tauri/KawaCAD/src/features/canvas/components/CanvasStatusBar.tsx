@@ -55,7 +55,7 @@ export function CanvasStatusBar({
             : appStrings.app.outputPages(outputPageCount)}
         </span>
       )}
-      <span className="statusbar-item" role="status" aria-live="polite">
+      <span className="statusbar-item statusbar-message" role="status" aria-live="polite">
         <Info size={12} strokeWidth={1.8} aria-hidden="true" />
         {message}
       </span>

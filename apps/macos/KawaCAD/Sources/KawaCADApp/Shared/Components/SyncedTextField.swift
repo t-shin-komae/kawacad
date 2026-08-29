@@ -198,7 +198,7 @@ struct SyncedTextField: View {
 
       if let message = fieldState.message {
         Text(message.text)
-          .font(.system(size: 11))
+          .font(.system(size: LeatherDesignMetrics.Typography.section))
           .foregroundStyle(
             message.kind == .conflict ? LeatherColors.warning : LeatherColors.destructive
           )
@@ -212,13 +212,13 @@ struct SyncedTextField: View {
             fieldState.acceptLatestSource()
           }
           .buttonStyle(.plain)
-          .font(.system(size: 11, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
 
           Button(AppStrings.tr("field.conflict.apply_draft")) {
             commit()
           }
           .buttonStyle(.plain)
-          .font(.system(size: 11, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
         }
       }
     }

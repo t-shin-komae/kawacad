@@ -42,7 +42,9 @@ describe("visual style contracts", () => {
     expect(rule(".inspector-header")).toContain("padding: 16px");
     expect(rule(".inspector-header")).toContain("background: var(--dialog-fill)");
     expect(rule(".inspector-content")).toContain("overflow: auto");
-    expect(rule(".inspector-tabs button")).toContain("min-height: 28px");
+    expect(styles).toContain("--control-inspector-tab-height: 30px");
+    expect(rule(".inspector-tabs button")).toContain("min-height: var(--control-inspector-tab-height)");
+    expect(rule(".inspector-tabs button")).toContain("font-size: var(--font-size-section)");
     expect(rule(".inspector-tabs")).toContain("background: var(--control-fill)");
     expect(rule(".inspector-section-content")).toContain("padding: 0 4px 0 24px");
   });
@@ -63,7 +65,7 @@ describe("visual style contracts", () => {
   });
 
   it("#69 keeps palette controls, two-column threshold, and button geometry", () => {
-    expect(rule(".palette-select,\n.palette-input")).toContain("height: var(--control-compact-height)");
+    expect(rule(".palette-select,\n.palette-input")).toContain("height: var(--control-height)");
     const toolButton = rule(".tool-grid button");
     expect(toolButton).toContain("min-height: var(--palette-tool-height)");
     expect(toolButton).toContain("background: rgba(255, 255, 255, 0.36)");
@@ -107,7 +109,7 @@ describe("visual style contracts", () => {
 
   it("#72 keeps the context menu on its native-sized spacing contract", () => {
     expect(rule(".canvas-context-menu")).toMatch(/min-width: 120px;[\s\S]*padding: 6px/u);
-    expect(rule(".canvas-context-menu button")).toMatch(/min-height: 26px;[\s\S]*font-size: 12px/u);
+    expect(rule(".canvas-context-menu button")).toMatch(/min-height: var\(--control-height\);[\s\S]*font-size: 12px/u);
   });
 
   it("#73 keeps value entry as a compact floating HUD", () => {
@@ -151,8 +153,22 @@ describe("visual style contracts", () => {
 
   it("#77 keeps bottom summary and status bar dimensions and typography", () => {
     expect(rule(".statusbar")).toMatch(/min-height: 36px;[\s\S]*font-size: 11px/u);
+    expect(rule(".statusbar-message")).toContain("font-size: var(--font-size-body)");
     expect(rule(".bottom-workbench")).toMatch(/min-height: 84px;[\s\S]*padding: 8px 12px/u);
-    expect(rule(".bottom-workbench-section h2")).toMatch(/font-size: 11px;[\s\S]*font-weight: 600/u);
+    expect(rule(".bottom-workbench-section h2")).toMatch(
+      /font-size: var\(--font-size-section\);[\s\S]*font-weight: 600/u,
+    );
+    expect(rule(".bottom-workbench-section strong")).toContain("font-size: var(--font-size-body)");
+    expect(styles).toContain(
+      ".bottom-workbench-section small,\n.bottom-workbench-section span {\n  color: var(--secondary-ink);\n  font-size: var(--font-size-label);",
+    );
+  });
+
+  it("#163 keeps shared text hierarchy and warning controls readable", () => {
+    expect(rule("label")).toContain("font-size: var(--font-size-body)");
+    expect(rule(".document-warning-banner button")).toContain("min-height: var(--control-height)");
+    expect(rule(".document-warning-banner button")).toContain("font-size: var(--font-size-section)");
+    expect(rule(".palette-options h2,\n.inspector h2")).toContain("font-size: var(--font-size-label)");
   });
 
   it("#78 keeps minimum window and panel dimensions", () => {

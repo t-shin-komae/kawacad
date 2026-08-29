@@ -31,7 +31,7 @@ struct PasteOptionsOverlay: View {
         }
       } label: {
         Label(AppStrings.tr("paste_options.label"), systemImage: "clipboard")
-          .font(.system(size: 11, weight: .semibold))
+          .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
           .padding(.horizontal, 8)
           .padding(.vertical, 5)
           .background(.regularMaterial, in: Capsule())
@@ -41,7 +41,7 @@ struct PasteOptionsOverlay: View {
       Button(action: dismiss) {
         Image(systemName: "xmark")
           .font(.system(size: 9, weight: .bold))
-          .frame(width: 20, height: 20)
+          .frame(width: 24, height: 24)
       }
       .buttonStyle(.borderless)
       .accessibilityLabel(AppStrings.tr("paste_options.dismiss"))

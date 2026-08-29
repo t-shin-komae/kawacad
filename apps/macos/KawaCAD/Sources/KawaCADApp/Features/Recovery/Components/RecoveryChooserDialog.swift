@@ -28,6 +28,7 @@ struct RecoveryChooserDialog: View {
           actions.postpone()
         }
         .keyboardShortcut(.cancelAction)
+        .leatherControlHeight()
       }
     }
     .padding(20)
@@ -64,17 +65,20 @@ private struct RecoveryCandidateRow: View {
           actions.recover(candidate)
         }
         .disabled(!candidate.isRecoverable)
+        .leatherControlHeight()
 
         Button(AppStrings.tr("document.recovery.discard")) {
           actions.discard(candidate)
         }
         .buttonStyle(.borderedProminent)
+        .leatherControlHeight()
         .tint(.red)
 
         Button(AppStrings.tr("document.recovery.show_in_finder")) {
           actions.revealInFinder(candidate)
         }
         .buttonStyle(.plain)
+        .leatherControlHeight()
       }
     }
     .padding(12)

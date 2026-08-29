@@ -29,7 +29,7 @@ struct InspectorPartsTab: View {
       if !appState.data.parts.isEmpty {
         Divider()
         Text(AppStrings.tr("inspector.part_arrangement_help"))
-          .font(.system(size: 10))
+          .font(.system(size: LeatherDesignMetrics.Typography.label))
           .foregroundStyle(LeatherColors.secondaryInk)
         HStack(spacing: 6) {
           ForEach(
@@ -50,6 +50,7 @@ struct InspectorPartsTab: View {
           }
         }
         .buttonStyle(.bordered)
+        .leatherControlHeight()
         .disabled(appState.data.arrangementSelectedPartIDs.count < 2)
         HStack(spacing: 8) {
           Button(AppStrings.tr("inspector.distribute_horizontal")) {
@@ -60,6 +61,7 @@ struct InspectorPartsTab: View {
           }
         }
         .buttonStyle(.bordered)
+        .leatherControlHeight()
         .disabled(appState.data.arrangementSelectedPartIDs.count < 3)
       }
 
@@ -73,7 +75,8 @@ struct InspectorPartsTab: View {
         .frame(maxWidth: .infinity)
       }
       .buttonStyle(.borderedProminent)
-      .font(.system(size: 12, weight: .semibold))
+      .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
+      .leatherControlHeight()
       .disabled(appState.data.selectedEntities.isEmpty)
     }
 
@@ -88,7 +91,7 @@ struct InspectorPartsTab: View {
             VStack(alignment: .leading, spacing: 2) {
               Text(entry.name).font(.system(size: 12, weight: .semibold))
               Text(AppStrings.tr("inspector.part_library_quantity", entry.sourcePart.quantity))
-                .font(.system(size: 10))
+                .font(.system(size: LeatherDesignMetrics.Typography.label))
                 .foregroundStyle(LeatherColors.secondaryInk)
             }
             Spacer()
@@ -104,6 +107,7 @@ struct InspectorPartsTab: View {
             }
           }
           .buttonStyle(.bordered)
+          .leatherControlHeight()
         }
       }
     }

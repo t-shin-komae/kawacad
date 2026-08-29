@@ -25,7 +25,10 @@ private enum ComponentFixtureKind {
   case canvas
   case inspector
   case inspectorParametersEmpty
+  case statusBar
   case summary
+  case recoveryBanner
+  case errorBanner
   case constraintHUD
   case pasteOptions
 }
@@ -166,6 +169,18 @@ private func captureIndependentComponents(_ outputDirectory: URL) throws {
       appearanceName: appearanceName
     )
 
+    let statusBarState = makeScreenshotAppState(
+      documentState: makeDocumentState(name: "比較用ドキュメント", entities: [line])
+    )
+    statusBarState.cadSession.setMessage("線分を追加しました")
+    try renderComponentFixture(
+      statusBarState,
+      kind: .statusBar,
+      size: CGSize(width: 1032, height: 36),
+      to: outputDirectory.appendingPathComponent("swift-statusbar-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
     let summaryState = makeScreenshotAppState(
       documentState: makeDocumentState(
         name: "比較用ドキュメント",
@@ -179,6 +194,42 @@ private func captureIndependentComponents(_ outputDirectory: URL) throws {
       kind: .summary,
       size: CGSize(width: 1032, height: 84),
       to: outputDirectory.appendingPathComponent("swift-summary-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let recoveryBannerState = makeScreenshotAppState()
+    recoveryBannerState.recoverySnapshotState.setBanner(
+      DocumentRecoveryBannerState(
+        recoveryID: "comparison-recovery",
+        message: "自動復旧ファイルを保存できませんでした",
+        details: "自動復旧ファイルの保存先を確認してください。"
+      )
+    )
+    try renderComponentFixture(
+      recoveryBannerState,
+      kind: .recoveryBanner,
+      size: CGSize(width: 760, height: 92),
+      to: outputDirectory.appendingPathComponent("swift-recovery-banner-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let errorBannerState = makeScreenshotAppState()
+    errorBannerState.errorPresentationState.present(
+      AppErrorPresentation.make(
+        category: .operationFailure,
+        code: "comparison",
+        operation: "comparison fixture",
+        message: "線分長を更新できませんでした",
+        details: "comparison fixture details",
+        recoverySuggestion: "入力値を確認してください",
+        commandKind: "line"
+      )
+    )
+    try renderComponentFixture(
+      errorBannerState,
+      kind: .errorBanner,
+      size: CGSize(width: 760, height: 92),
+      to: outputDirectory.appendingPathComponent("swift-error-banner-\(suffix).png"),
       appearanceName: appearanceName
     )
 
@@ -795,8 +846,35 @@ private func renderComponentFixture(
         .frame(width: size.width, alignment: .topLeading)
     )
     renderToFittingSize = true
+  case .statusBar:
+    content = AnyView(
+      CanvasStatusBar(
+        state: state.canvasStatusBarState,
+        actions: actions.canvasStatusBarActions
+      )
+    )
   case .summary:
     content = AnyView(BottomWorkbench(state: state.bottomWorkbenchState))
+  case .recoveryBanner:
+    guard let banner = state.recoveryBanner else {
+      throw ScreenshotCaptureError.missingFixtureState("recovery-banner")
+    }
+    content = AnyView(
+      RecoverySaveFailureBanner(
+        banner: banner,
+        onRetry: {},
+        onDismiss: {}
+      )
+      .frame(width: size.width, alignment: .leading)
+    )
+  case .errorBanner:
+    guard let presentation = state.errorPresentation else {
+      throw ScreenshotCaptureError.missingFixtureState("error-banner")
+    }
+    content = AnyView(
+      AppErrorBanner(presentation: presentation, onDismiss: {})
+        .frame(width: size.width, alignment: .leading)
+    )
   case .constraintHUD:
     content = AnyView(
       ValueEntryDialogPresenter(
