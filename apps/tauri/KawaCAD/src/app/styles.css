@@ -258,6 +258,10 @@ input[type="checkbox"] {
   font-size: 12px;
   font-weight: 600;
 }
+.app-error-icon {
+  flex: 0 0 16px;
+  color: var(--warning);
+}
 .app-error-banner small {
   color: var(--secondary-ink);
   font-size: 11px;
@@ -436,6 +440,7 @@ input[type="checkbox"] {
   background: rgba(60, 60, 67, 0.03);
 }
 .toolbar-icon-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -465,6 +470,18 @@ input[type="checkbox"] {
 }
 .toolbar-control-group .toolbar-toggle {
   color: var(--secondary-ink);
+}
+.toolbar-toggle-state-mark {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  padding: 1px;
+  border: 1px solid var(--selected-stroke);
+  border-radius: 50%;
+  background: var(--dialog-fill);
+  color: var(--accent);
 }
 .toolbar-control-group .toolbar-toggle svg {
   width: 12px;
@@ -924,6 +941,14 @@ input[type="checkbox"] {
   line-height: 15px;
   text-align: left;
 }
+.tool-grid button .tool-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.tool-selection-mark {
+  flex: 0 0 13px;
+  color: var(--accent);
+}
 .tool-grid button:hover:not(:disabled) {
   background: rgba(10, 132, 255, 0.07);
 }
@@ -940,6 +965,15 @@ input[type="checkbox"] {
   font-weight: 600;
 }
 .tool-grid button.active svg {
+  color: var(--accent);
+}
+.constraint-status-summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.constraint-status-summary svg {
+  flex: 0 0 13px;
   color: var(--accent);
 }
 @container palette (min-width: 220px) {

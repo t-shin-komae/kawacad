@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { aggregateConstraintStatus } from "@/features/canvas/components/CadToolbar";
 import { CADToolbar } from "@/features/canvas/components/CadToolbar";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
 
 const toolbarProps = {
@@ -28,6 +29,8 @@ const toolbarProps = {
 };
 
 describe("CAD toolbar parity", () => {
+  afterEach(cleanup);
+
   it("uses the tool palette button to hide and show the dock", () => {
     const onToggleTools = vi.fn();
     const { rerender } = render(<CADToolbar {...toolbarProps} onToggleTools={onToggleTools} toolPaletteVisible />);
@@ -54,6 +57,19 @@ describe("CAD toolbar parity", () => {
     expect(screen.queryByText(appStrings.toolbar.pasteSelection)).not.toBeInTheDocument();
     expect(screen.queryByText(appStrings.toolbar.duplicateSelection)).not.toBeInTheDocument();
     expect(screen.queryByTitle(appStrings.accessibility.constraintStatus)).not.toBeInTheDocument();
+  });
+
+  it("shows a non-color mark for an enabled display toggle", () => {
+    const { rerender } = render(<CADToolbar {...toolbarProps} toolPaletteVisible={false} />);
+    const grid = screen.getByTestId(accessibilityIdentifiers.toolbarGrid);
+
+    expect(grid).toHaveAttribute("aria-pressed", "true");
+    expect(grid.querySelector(".toolbar-toggle-state-mark")).toBeInTheDocument();
+
+    rerender(<CADToolbar {...toolbarProps} gridVisible={false} toolPaletteVisible={false} />);
+    expect(
+      screen.getByTestId(accessibilityIdentifiers.toolbarGrid).querySelector(".toolbar-toggle-state-mark"),
+    ).not.toBeInTheDocument();
   });
 
   it("uses the SwiftUI status priority when multiple Core constraints are present", () => {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { AlertTriangle } from "lucide-react";
 import { ToolPalette } from "@/features/canvas/components/ToolPalette";
 import { WorkspaceInspector } from "@/features/inspector/components/WorkspaceInspector";
 import { CADToolbar } from "@/features/canvas/components/CadToolbar";
@@ -652,6 +653,7 @@ export function MainWindowView() {
         />
         {documentWarning && (
           <aside className="document-warning-banner" role="alert">
+            <AlertTriangle className="app-error-icon" size={16} strokeWidth={2} aria-hidden="true" />
             <span>{documentWarning}</span>
             <button type="button" onClick={() => setDocumentWarning(undefined)}>
               {appStrings.common.close}

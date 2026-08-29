@@ -1,9 +1,20 @@
 import { aggregateConstraintStatus } from "@/features/canvas/components/CadToolbar";
 import { geometryOf, type RawEntity } from "@/features/canvas/domain/cad";
 import type { ReactNode } from "react";
-import { CircleDot, Hash, Link2, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  CircleAlert,
+  CircleCheck,
+  CircleDot,
+  CircleHelp,
+  Hash,
+  Link2,
+  OctagonAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { appStrings } from "@/localization";
+import type { ConstraintStatus } from "@/features/canvas/domain/canvasDomainModels";
 
 type Layer = { id: string; name: string };
 type Constraint = {
@@ -39,10 +50,19 @@ function entityKindLabel(entity: RawEntity) {
   }
 }
 
-function constraintSummary(constraints: Constraint[]) {
-  return constraints.length
-    ? appStrings.constraintStatus[aggregateConstraintStatus(constraints.map((item) => item.status))]
-    : appStrings.workbench.noConstraints;
+function constraintStatusIcon(status: ConstraintStatus): LucideIcon {
+  switch (status) {
+    case "fullyConstrained":
+      return CircleCheck;
+    case "underConstrained":
+      return AlertTriangle;
+    case "overConstrained":
+      return CircleAlert;
+    case "conflicting":
+      return OctagonAlert;
+    case "unknown":
+      return CircleHelp;
+  }
 }
 
 const sectionIcons: Record<string, LucideIcon> = {
@@ -63,6 +83,10 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
   const layerName = selectedLayer
     ? (layers.find((item) => item.id === selectedLayer)?.name ?? selectedLayer)
     : appStrings.workbench.none;
+  const constraintStatus: ConstraintStatus = constraints.length
+    ? aggregateConstraintStatus(constraints.map((item) => item.status))
+    : "unknown";
+  const ConstraintStatusIcon = constraintStatusIcon(constraintStatus);
 
   return (
     <section
@@ -88,7 +112,12 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
         )}
       </SummarySection>
       <SummarySection title={appStrings.workbench.constraint} icon="constraints">
-        <strong>{constraintSummary(constraints)}</strong>
+        <div className="constraint-status-summary">
+          <ConstraintStatusIcon size={13} strokeWidth={2.2} aria-hidden="true" />
+          <strong>
+            {constraints.length ? appStrings.constraintStatus[constraintStatus] : appStrings.workbench.noConstraints}
+          </strong>
+        </div>
         <small>{appStrings.workbench.itemCount(constraints.length)}</small>
         <span>
           {constraints.length

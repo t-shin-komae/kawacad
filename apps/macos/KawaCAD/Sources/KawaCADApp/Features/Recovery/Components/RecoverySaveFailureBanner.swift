@@ -9,6 +9,12 @@ struct RecoverySaveFailureBanner: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       HStack(alignment: .top, spacing: 10) {
+        Image(systemName: "exclamationmark.triangle.fill")
+          .font(.system(size: 16, weight: .semibold))
+          .foregroundStyle(LeatherColors.warning)
+          .accessibilityHidden(true)
+          .frame(width: 18)
+
         VStack(alignment: .leading, spacing: 4) {
           Text(banner.message)
             .font(.system(size: 12, weight: .semibold))
