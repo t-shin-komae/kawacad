@@ -25,12 +25,17 @@ private enum ComponentFixtureKind {
   case canvas
   case inspector
   case inspectorParametersEmpty
+  case inspectorParameters
+  case inspectorLayers
+  case inspectorStyles
+  case inspectorParts
   case statusBar
   case summary
   case recoveryBanner
   case errorBanner
   case constraintHUD
   case pasteOptions
+  case documentSaveConfirmation
 }
 
 final class ComparisonScreenshotTests: XCTestCase {
@@ -166,6 +171,106 @@ private func captureIndependentComponents(_ outputDirectory: URL) throws {
       kind: .inspectorParametersEmpty,
       size: CGSize(width: 520, height: 280),
       to: outputDirectory.appendingPathComponent("swift-inspector-parameters-empty-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let parametersState = makeScreenshotAppState(
+      documentState: makeDocumentState(
+        name: "比較用ドキュメント",
+        parameters: [parameter],
+        entities: [line]
+      )
+    )
+    parametersState.inspectorPresentation.setSelectedParameterID(parameter.id)
+    try renderComponentFixture(
+      parametersState,
+      kind: .inspectorParameters,
+      size: CGSize(width: 520, height: 620),
+      to: outputDirectory.appendingPathComponent("swift-inspector-parameters-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let layersState = makeScreenshotAppState(
+      documentState: makeDocumentState(name: "比較用ドキュメント", entities: [line])
+    )
+    layersState.inspectorPresentation.setSelectedLayerID("layer:cut-line")
+    try renderComponentFixture(
+      layersState,
+      kind: .inspectorLayers,
+      size: CGSize(width: 520, height: 620),
+      to: outputDirectory.appendingPathComponent("swift-inspector-layers-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let sharedStyle = ProjectSharedStyle(
+      id: "style:comparison",
+      name: "カット線スタイル",
+      colorHex: "#1F2937",
+      strokeWidthMM: 0.25,
+      linePattern: .dashed
+    )
+    let stylesState = makeScreenshotAppState(
+      documentState: makeDocumentState(
+        name: "比較用ドキュメント",
+        sharedStyles: [sharedStyle],
+        entities: [line]
+      )
+    )
+    stylesState.inspectorPresentation.setSelectedSharedStyleID(sharedStyle.id)
+    try renderComponentFixture(
+      stylesState,
+      kind: .inspectorStyles,
+      size: CGSize(width: 520, height: 620),
+      to: outputDirectory.appendingPathComponent("swift-inspector-styles-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let part = ProjectPart(
+      id: "part:comparison",
+      name: "ポケット",
+      originMM: ModelPoint(xMM: 12, yMM: 8),
+      outlineEntityIDs: [line.id],
+      holeEntityIDGroups: [],
+      entityIDs: [line.id],
+      derivedElementIDs: [],
+      freeTextIDs: [],
+      measurementAnnotationIDs: [],
+      quantity: 2
+    )
+    let partsState = makeScreenshotAppState(
+      documentState: makeDocumentState(
+        name: "比較用ドキュメント",
+        parts: [part],
+        entities: [line]
+      )
+    )
+    partsState.partLibraryState.replaceEntries([
+      PartLibraryEntry(
+        id: "part-library:comparison",
+        name: "ポケット（ライブラリ）",
+        sourcePart: part,
+        clipboardJSON: "{}",
+        createdAt: Date(timeIntervalSince1970: 1_786_582_800)
+      )
+    ])
+    partsState.inspectorPresentation.setSelectedPartID(part.id)
+    partsState.inspectorPresentation.setArrangementSelectedPartIDs([part.id])
+    try renderComponentFixture(
+      partsState,
+      kind: .inspectorParts,
+      size: CGSize(width: 520, height: 820),
+      to: outputDirectory.appendingPathComponent("swift-inspector-parts-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let saveConfirmationState = makeScreenshotAppState(
+      documentState: makeDocumentState(name: "比較用ドキュメント", entities: [line])
+    )
+    try renderComponentFixture(
+      saveConfirmationState,
+      kind: .documentSaveConfirmation,
+      size: CGSize(width: 520, height: 240),
+      to: outputDirectory.appendingPathComponent("swift-document-save-confirmation-\(suffix).png"),
       appearanceName: appearanceName
     )
 
@@ -843,9 +948,34 @@ private func renderComponentFixture(
   case .inspectorParametersEmpty:
     content = AnyView(
       InspectorParametersTab(appState: state.inspectorPanelModel.parameters)
-        .frame(width: size.width, alignment: .topLeading)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .background(LeatherColors.panel)
     )
     renderToFittingSize = true
+  case .inspectorParameters:
+    content = AnyView(
+      InspectorParametersTab(appState: state.inspectorPanelModel.parameters)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .background(LeatherColors.panel)
+    )
+  case .inspectorLayers:
+    content = AnyView(
+      InspectorLayerTab(appState: state.inspectorPanelModel.layers)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .background(LeatherColors.panel)
+    )
+  case .inspectorStyles:
+    content = AnyView(
+      InspectorStylesTab(appState: state.inspectorPanelModel.styles)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .background(LeatherColors.panel)
+    )
+  case .inspectorParts:
+    content = AnyView(
+      InspectorPartsTab(appState: state.inspectorPanelModel.parts)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .background(LeatherColors.panel)
+    )
   case .statusBar:
     content = AnyView(
       CanvasStatusBar(
@@ -908,6 +1038,19 @@ private func renderComponentFixture(
       .background(LeatherColors.canvas)
     )
     renderToFittingSize = true
+  case .documentSaveConfirmation:
+    let confirmation = DocumentSaveConfirmation(
+      documentName: "比較用ドキュメント",
+      reason: AppStrings.tr("document.save_confirmation.reason.close_window")
+    )
+    content = AnyView(
+      DocumentSaveConfirmationDialog(
+        confirmation: confirmation,
+        actions: actions.documentSaveConfirmationActions
+      )
+      .frame(width: size.width, height: size.height, alignment: .topLeading)
+      .background(LeatherColors.panel)
+    )
   case .canvas:
     content = AnyView(
       CADCanvas(

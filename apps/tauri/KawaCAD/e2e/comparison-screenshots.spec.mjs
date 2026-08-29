@@ -19,6 +19,10 @@ const fixtures = [
   { id: "canvas-geometry", width: 800, height: 520, target: "canvas" },
   { id: "inspector-selection", width: 520, height: 820, target: "inspector" },
   { id: "inspector-parameters-empty", width: 520, height: 280, target: "fixture" },
+  { id: "inspector-parameters", width: 520, height: 620, target: "fixture" },
+  { id: "inspector-layers", width: 520, height: 620, target: "fixture" },
+  { id: "inspector-styles", width: 520, height: 620, target: "fixture" },
+  { id: "inspector-parts", width: 520, height: 820, target: "fixture" },
   { id: "statusbar", width: 1032, height: 36, target: "fixture" },
   { id: "summary", width: 1032, height: 84, target: "summary" },
   { id: "recovery-banner", width: 760, height: 92, target: "fixture" },
@@ -29,6 +33,7 @@ const fixtures = [
   { id: "licenses-dialog", width: 680, height: 520, target: "licenses" },
   { id: "recovery-dialog", width: 660, height: 400, target: "recovery" },
   { id: "layer-deletion-dialog", width: 360, height: 160, target: "layer-deletion" },
+  { id: "document-save-confirmation", width: 520, height: 240, target: "save-confirmation" },
   { id: "pdf-dialog", width: 920, height: 640, target: "pdf" },
 ];
 
@@ -95,6 +100,8 @@ function screenshotTarget(page, target) {
       return page.getByTestId("leather.component.recovery-dialog");
     case "layer-deletion":
       return page.getByTestId("leather.component.layer-deletion-dialog");
+    case "save-confirmation":
+      return page.locator(".document-save-confirmation-dialog");
     case "pdf":
       return page.getByTestId("leather.pdf-export.dialog");
   }
@@ -111,6 +118,9 @@ async function captureFixture(page, fixture, theme) {
   await page.evaluate(() => document.fonts.ready);
   const target = screenshotTarget(page, fixture.target);
   await expect(target).toBeVisible();
+  if (["inspector-parameters", "inspector-layers", "inspector-styles", "inspector-parts"].includes(fixture.id)) {
+    await target.locator(".inspector-disclosure-summary").first().click();
+  }
   if (fixture.target === "pdf") {
     await expect(target.getByRole("img", { name: "PDF 1ページ目" })).toBeVisible();
   }

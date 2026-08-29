@@ -69,9 +69,16 @@ private struct StatusItem: View {
   var body: some View {
     HStack(spacing: 5) {
       Image(systemName: symbolName)
-        .font(.system(size: emphasis ? LeatherDesignMetrics.Typography.body : LeatherDesignMetrics.Typography.label))
+        .font(
+          .system(
+            size: emphasis
+              ? LeatherDesignMetrics.Typography.body : LeatherDesignMetrics.Typography.label))
       Text(text)
-        .font(.system(size: emphasis ? LeatherDesignMetrics.Typography.body : LeatherDesignMetrics.Typography.label))
+        .font(
+          .system(
+            size: emphasis
+              ? LeatherDesignMetrics.Typography.body : LeatherDesignMetrics.Typography.label)
+        )
         .lineLimit(1)
     }
     .foregroundStyle(LeatherColors.ink)

@@ -9,11 +9,21 @@ import {
 } from "@/features/canvas/components/CadCanvas";
 import type { CanvasRenderModel } from "@/features/canvas/selectors/canvasRendering";
 import { ConstraintValueDialog } from "@/features/constraints/components/ConstraintValueDialog";
+import { DocumentSaveConfirmationDialog } from "@/features/document/components/DocumentSaveConfirmationDialog";
 import { LayerDeletionDialog } from "@/features/document/components/LayerDeletionDialog";
 import { PasteOptionsOverlay } from "@/features/document/components/PasteOptionsOverlay";
+import { InspectorLayerTab } from "@/features/inspector/components/InspectorLayerTab";
 import { InspectorPanel } from "@/features/inspector/components/InspectorPanel";
 import { InspectorParametersTab } from "@/features/inspector/components/InspectorParametersTab";
-import { initialParametersTabState } from "@/features/inspector/selectors/inspectorFeature";
+import { InspectorPartsTab } from "@/features/parts/components/InspectorPartsTab";
+import { InspectorStylesTab } from "@/features/inspector/components/InspectorStylesTab";
+import { ParameterEditor, StyleFields } from "@/features/inspector/components/InspectorSelectionEditors";
+import { PartEditor } from "@/features/parts/components/InspectorPartEditors";
+import {
+  initialLayerTabState,
+  initialParametersTabState,
+  initialStylesTabState,
+} from "@/features/inspector/selectors/inspectorFeature";
 import type {
   InspectorLayer,
   InspectorParameter,
@@ -30,7 +40,7 @@ import { BottomWorkbench } from "@/features/workspace/components/BottomWorkbench
 import { appStrings } from "@/localization";
 import type { CanvasViewMode, Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { RawEntity, Viewport } from "@/features/canvas/domain/cad";
-import type { CanvasProjection, LineStyle } from "@/shared/domain/coreWireTypes";
+import type { CanvasProjection, LineStyle, Part, PartLibraryEntry } from "@/shared/domain/coreWireTypes";
 import type { AppErrorPresentation } from "@/features/workspace/selectors/appErrorPresentation";
 
 export type ComparisonFixtureName =
@@ -42,6 +52,10 @@ export type ComparisonFixtureName =
   | "canvas-geometry"
   | "inspector-selection"
   | "inspector-parameters-empty"
+  | "inspector-parameters"
+  | "inspector-layers"
+  | "inspector-styles"
+  | "inspector-parts"
   | "statusbar"
   | "summary"
   | "recovery-banner"
@@ -52,6 +66,7 @@ export type ComparisonFixtureName =
   | "licenses-dialog"
   | "recovery-dialog"
   | "layer-deletion-dialog"
+  | "document-save-confirmation"
   | "pdf-dialog";
 
 const ignore = (..._args: unknown[]) => {};
@@ -71,6 +86,27 @@ const fixtureLine: RawEntity = {
       end: { xMm: 80, yMm: 25 },
     },
   },
+};
+
+const fixturePart: Part = {
+  id: "part:fixture",
+  name: appStrings.inspector.partName,
+  quantity: 2,
+  visible: true,
+  printable: true,
+  originMm: { xMm: 12, yMm: 8 },
+  entityIds: [fixtureLine.id],
+  outlineEntityIds: [fixtureLine.id],
+  holeEntityIdGroups: [],
+  derivedElementIds: [],
+  freeTextIds: [],
+  measurementAnnotationIds: [],
+};
+const fixturePartLibraryEntry: PartLibraryEntry = {
+  id: "part-library:fixture",
+  name: appStrings.inspector.partLibrary,
+  libraryJson: "{}",
+  sourcePart: { ...fixturePart, id: "part:fixture-library" },
 };
 
 const fixtureViewport: Viewport = { zoom: 1, panX: 0, panY: 0 };
@@ -297,9 +333,9 @@ function inspectorModel(): InspectorViewModel {
     },
     parts: {
       selectedCount: 1,
-      parts: [],
+      parts: [fixturePart],
       arrangementPartIds: new Set(),
-      partLibrary: [],
+      partLibrary: [fixturePartLibraryEntry],
       actions: {
         create: ignore,
         select: ignore,
@@ -425,6 +461,69 @@ export function ComparisonFixture({ name }: { name: ComparisonFixtureName }) {
           />
         </FixtureFrame>
       );
+    case "inspector-parameters": {
+      const model = inspectorModel();
+      return (
+        <FixtureFrame className="comparison-fixture-inspector-parameters" width={520} height={620}>
+          <InspectorParametersTab
+            model={model.parameters}
+            state={initialParametersTabState}
+            updateState={ignore}
+            renderParameterEditor={(parameter) => (
+              <ParameterEditor parameter={parameter} actions={model.parameters.actions} />
+            )}
+          />
+        </FixtureFrame>
+      );
+    }
+    case "inspector-layers": {
+      const model = inspectorModel();
+      return (
+        <FixtureFrame className="comparison-fixture-inspector" width={520} height={620}>
+          <InspectorLayerTab
+            model={model.layers}
+            state={initialLayerTabState}
+            updateState={ignore}
+            renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
+          />
+        </FixtureFrame>
+      );
+    }
+    case "inspector-styles": {
+      const model = inspectorModel();
+      return (
+        <FixtureFrame className="comparison-fixture-inspector" width={520} height={620}>
+          <InspectorStylesTab
+            model={model.styles}
+            state={initialStylesTabState}
+            updateState={ignore}
+            defaultStyle={fixtureStyle}
+            renderStyleFields={(style, onChange) => <StyleFields style={style} onChange={onChange} />}
+          />
+        </FixtureFrame>
+      );
+    }
+    case "inspector-parts": {
+      const model = inspectorModel();
+      return (
+        <FixtureFrame className="comparison-fixture-inspector" width={520} height={820}>
+          <InspectorPartsTab
+            model={model.parts}
+            renderPartEditor={(part) => (
+              <PartEditor
+                part={part}
+                arrangementSelected={model.parts.arrangementPartIds.has(part.id)}
+                actions={model.parts.actions}
+                onSelect={() => model.parts.actions.select(part)}
+                onToggleArrangement={() => model.parts.actions.toggleArrangement(part.id)}
+                onAddToLibrary={() => model.parts.actions.addToLibrary(part)}
+                onBeginSetOrigin={() => model.parts.actions.beginSetOrigin(part)}
+              />
+            )}
+          />
+        </FixtureFrame>
+      );
+    }
     case "statusbar":
       return (
         <FixtureFrame className="comparison-fixture-statusbar" width={1032} height={36}>
@@ -535,6 +634,14 @@ export function ComparisonFixture({ name }: { name: ComparisonFixtureName }) {
           affectedCount={1}
           onConfirm={ignore}
           onCancel={ignore}
+        />
+      );
+    case "document-save-confirmation":
+      return (
+        <DocumentSaveConfirmationDialog
+          reason={appStrings.app.saveAndCloseQuestion}
+          documentName={appStrings.app.untitled}
+          onChoose={ignore}
         />
       );
     case "pdf-dialog":
