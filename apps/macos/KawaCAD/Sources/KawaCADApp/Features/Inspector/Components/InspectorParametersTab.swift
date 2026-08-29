@@ -18,9 +18,34 @@ struct InspectorParametersTab: View {
       }
 
       if appState.data.filteredInspectorParameters.isEmpty {
-        Text(AppStrings.tr("inspector.no_named_parameters"))
-          .font(.system(size: 12))
-          .foregroundStyle(LeatherColors.secondaryInk)
+        InsetSurface {
+          VStack(alignment: .leading, spacing: 8) {
+            Text(
+              AppStrings.tr(
+                appState.data.parameterCount == 0
+                  ? "inspector.no_named_parameters" : "inspector.no_matching_parameters"
+              )
+            )
+            .font(.system(size: 12))
+            .foregroundStyle(LeatherColors.secondaryInk)
+
+            if appState.data.parameterCount == 0 {
+              Text(AppStrings.tr("inspector.parameter_empty_hint"))
+                .font(.system(size: 11))
+                .foregroundStyle(LeatherColors.secondaryInk)
+
+              Button {
+                appState.actions.addParameter()
+              } label: {
+                Label(AppStrings.tr("inspector.add"), systemImage: "plus")
+                  .frame(maxWidth: .infinity)
+              }
+              .buttonStyle(.bordered)
+              .font(.system(size: 12, weight: .semibold))
+              .leatherControlHeight()
+            }
+          }
+        }
       } else {
         ForEach(appState.data.filteredInspectorParameters) { parameter in
           InspectorDisclosureRow(
@@ -37,15 +62,17 @@ struct InspectorParametersTab: View {
         }
       }
 
-      Button {
-        appState.actions.addParameter()
-      } label: {
-        Label(AppStrings.tr("inspector.add"), systemImage: "plus")
-          .frame(maxWidth: .infinity)
+      if !appState.data.filteredInspectorParameters.isEmpty {
+        Button {
+          appState.actions.addParameter()
+        } label: {
+          Label(AppStrings.tr("inspector.add"), systemImage: "plus")
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .font(.system(size: 12, weight: .semibold))
+        .leatherControlHeight()
       }
-      .buttonStyle(.bordered)
-      .font(.system(size: 12, weight: .semibold))
-      .leatherControlHeight()
     }
   }
 }

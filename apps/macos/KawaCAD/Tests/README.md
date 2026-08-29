@@ -42,9 +42,10 @@ from the repository root:
 node scripts/capture-comparison-screenshots.mjs
 ```
 
-The fixture matrix covers the toolbar, tool palette, canvas, inspector, summary,
-constraint HUD, context menu, paste overlay, and dialogs in light and dark
-themes. Each fixture instantiates the corresponding component directly with a
+The fixture matrix covers the toolbar, tool palette, canvas, inspector,
+parameter empty state, summary, constraint HUD, context menu, paste overlay,
+and dialogs in light and dark themes. Each fixture instantiates the
+corresponding component directly with a
 fixed component-sized frame. It does not lay out the whole workspace and crop
 the result. Each fixture uses a fresh in-memory document so the result does not
 depend on test order.

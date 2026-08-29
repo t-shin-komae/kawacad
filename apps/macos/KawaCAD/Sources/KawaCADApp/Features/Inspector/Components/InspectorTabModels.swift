@@ -201,6 +201,7 @@ struct StyleInspectorModel {
 struct ParameterInspectorData {
   let inspectorSelectedParameterID: String?
   let inspectorParameterSearchQuery: String
+  let parameterCount: Int
   let filteredInspectorParameters: [ProjectParameter]
   let shouldShowParameterInspectorSearch: Bool
 }

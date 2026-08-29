@@ -99,6 +99,23 @@ describe("Inspector management tabs", () => {
     expect(actions.add).toHaveBeenCalledOnce();
   });
 
+  it("keeps the parameter add action inside the empty state", () => {
+    const actions = { update: vi.fn(), delete: vi.fn(), add: vi.fn() } as ParameterInspectorModel["actions"];
+    render(
+      <InspectorParametersTab
+        model={{ parameters: [], constraints: [], actions }}
+        state={initialParametersTabState}
+        updateState={vi.fn()}
+        renderParameterEditor={() => null}
+      />,
+    );
+
+    expect(screen.getByText("名前付きパラメータはまだありません")).toBeInTheDocument();
+    expect(screen.getByText("拘束や派生要素で再利用する寸法値を、名前付きで管理できます。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    expect(actions.add).toHaveBeenCalledOnce();
+  });
+
   it("renders the parts tab from only a parts model", () => {
     const actions = {
       create: vi.fn(),

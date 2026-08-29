@@ -137,6 +137,7 @@ enum InspectorFeatureModelFactory {
       data: ParameterInspectorData(
         inspectorSelectedParameterID: inspectorPresentation.selectedParameterID,
         inspectorParameterSearchQuery: inspectorPresentation.parameterSearchQuery,
+        parameterCount: document.parameters.count,
         filteredInspectorParameters: filteredParameters,
         shouldShowParameterInspectorSearch: InspectorViewStateFactory.shouldShowSearch(
           itemCount: document.parameters.count,

@@ -40,29 +40,52 @@ export function InspectorParametersTab({
           />
         </label>
       )}
-      {filteredParameters.length === 0 && <p>{appStrings.inspector.noNamedParameters}</p>}
-      {filteredParameters.map((item) => {
-        const usageCount =
-          item.usageCount ?? model.constraints.filter((constraint) => constraint.value?.parameter === item.id).length;
-        return (
-          <InspectorDisclosureRow
-            key={item.id}
-            title={item.name}
-            subtitle={`${item.valueMm.toFixed(2)} ${item.unit === "millimeter" ? "mm" : item.unit}`}
-            metadata={
-              usageCount === 0 ? appStrings.inspector.parameterUnused : appStrings.inspector.parameterUsage(usageCount)
-            }
-            expanded={selectedParameterId === item.id}
-            onToggle={() => setSelectedParameterId(item.id)}
-          >
-            {renderParameterEditor(item)}
-          </InspectorDisclosureRow>
-        );
-      })}
-      <button className="inspector-add-button" onClick={model.actions.add}>
-        <Plus aria-hidden="true" />
-        {appStrings.inspector.add}
-      </button>
+      {filteredParameters.length === 0 ? (
+        <div className="inspector-editor-surface">
+          <p>
+            {model.parameters.length === 0
+              ? appStrings.inspector.noNamedParameters
+              : appStrings.inspector.noMatchingParameters}
+          </p>
+          {model.parameters.length === 0 ? (
+            <>
+              <p className="inspector-help">{appStrings.inspector.parameterEmptyHint}</p>
+              <button type="button" className="inspector-add-button" onClick={model.actions.add}>
+                <Plus aria-hidden="true" />
+                {appStrings.inspector.add}
+              </button>
+            </>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          {filteredParameters.map((item) => {
+            const usageCount =
+              item.usageCount ??
+              model.constraints.filter((constraint) => constraint.value?.parameter === item.id).length;
+            return (
+              <InspectorDisclosureRow
+                key={item.id}
+                title={item.name}
+                subtitle={`${item.valueMm.toFixed(2)} ${item.unit === "millimeter" ? "mm" : item.unit}`}
+                metadata={
+                  usageCount === 0
+                    ? appStrings.inspector.parameterUnused
+                    : appStrings.inspector.parameterUsage(usageCount)
+                }
+                expanded={selectedParameterId === item.id}
+                onToggle={() => setSelectedParameterId(item.id)}
+              >
+                {renderParameterEditor(item)}
+              </InspectorDisclosureRow>
+            );
+          })}
+          <button type="button" className="inspector-add-button" onClick={model.actions.add}>
+            <Plus aria-hidden="true" />
+            {appStrings.inspector.add}
+          </button>
+        </>
+      )}
     </InspectorSection>
   );
 }
