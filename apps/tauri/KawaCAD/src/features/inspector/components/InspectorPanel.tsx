@@ -33,6 +33,7 @@ import type {
   Measurement,
   SelectionInspectorModel,
 } from "@/features/inspector/domain/inspectorViewModel";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 export type PendingTextEntry = {
   title: string;
@@ -85,7 +86,11 @@ export function InspectorPanel(model: InspectorViewModel) {
     if (selectionChanged && shell.inspectorTab !== "selection") setPendingSelectionChange(true);
   }, [shell.inspectorTab, selectionKey]);
   return (
-    <aside className="inspector" aria-label={appStrings.inspector.ariaLabel}>
+    <aside
+      className="inspector"
+      data-testid={accessibilityIdentifiers.componentInspector}
+      aria-label={appStrings.inspector.ariaLabel}
+    >
       <div className="inspector-header">
         <nav className="inspector-tabs" role="tablist" aria-label={appStrings.inspector.tabList}>
           {tabs.map(([id, label]) => (

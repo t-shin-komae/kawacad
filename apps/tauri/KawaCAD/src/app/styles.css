@@ -79,6 +79,29 @@
   white-space: nowrap;
   width: 1px;
 }
+.comparison-fixture {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--window);
+  color: var(--ink);
+}
+.comparison-fixture-toolbar {
+  container: workspace-column / inline-size;
+}
+.comparison-fixture-palette > .tool-palette,
+.comparison-fixture-inspector > .inspector {
+  width: 100%;
+  height: 100%;
+}
+.comparison-fixture-canvas {
+  background: #fff;
+}
+.comparison-fixture-overlay {
+  background: var(--canvas);
+}
 body {
   margin: 0;
   min-width: 1024px;
@@ -1462,6 +1485,16 @@ input[type="checkbox"] {
   font-size: 12px;
   padding: 3px 8px;
   text-align: left;
+}
+.canvas-context-menu button.destructive-action {
+  border-color: transparent;
+  background: transparent;
+  color: var(--destructive-action);
+}
+.canvas-context-menu button.destructive-action:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--destructive-fill);
+  color: var(--destructive-action);
 }
 .canvas-context-menu button:hover:not(:disabled) {
   background: var(--selected-fill);

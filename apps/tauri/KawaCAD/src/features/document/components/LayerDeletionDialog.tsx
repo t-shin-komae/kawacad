@@ -1,4 +1,5 @@
 import { appStrings } from "@/localization";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 type Props = { layerName: string; affectedCount: number; onConfirm: () => void; onCancel: () => void };
 
@@ -7,6 +8,7 @@ export function LayerDeletionDialog({ layerName, affectedCount, onConfirm, onCan
     <div className="constraint-value-backdrop" role="presentation">
       <section
         className="constraint-value-dialog layer-deletion-dialog"
+        data-testid={accessibilityIdentifiers.componentLayerDeletionDialog}
         role="alertdialog"
         aria-modal="true"
         aria-label={appStrings.dialog.layerDeletion.ariaLabel}

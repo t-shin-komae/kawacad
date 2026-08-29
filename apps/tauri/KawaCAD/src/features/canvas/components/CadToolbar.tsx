@@ -132,7 +132,11 @@ export function CADToolbar({
   const toolPaletteLabel = toolPaletteVisible ? appStrings.accessibility.hideTools : appStrings.accessibility.showTools;
 
   return (
-    <nav className="cad-toolbar" aria-label={appStrings.accessibility.cadToolbar}>
+    <nav
+      className="cad-toolbar"
+      data-testid={accessibilityIdentifiers.componentToolbar}
+      aria-label={appStrings.accessibility.cadToolbar}
+    >
       <button
         className="toolbar-icon-button toolbar-tools-button"
         type="button"

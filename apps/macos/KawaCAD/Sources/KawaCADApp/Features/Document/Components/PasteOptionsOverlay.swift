@@ -4,8 +4,18 @@ struct PasteOptionsOverlay: View {
   let presentation: PasteOptionsPresentation
   let selectMode: (PastePlacementMode) -> Void
   let dismiss: () -> Void
+  var standalone: Bool = false
 
+  @ViewBuilder
   var body: some View {
+    if standalone {
+      content
+    } else {
+      content.position(overlayPosition)
+    }
+  }
+
+  private var content: some View {
     HStack(spacing: 2) {
       Menu {
         Button {
@@ -36,6 +46,7 @@ struct PasteOptionsOverlay: View {
       .buttonStyle(.borderless)
       .accessibilityLabel(AppStrings.tr("paste_options.dismiss"))
     }
+    .frame(minHeight: 28)
     .accessibilityIdentifier(AccessibilityIdentifier.pasteOptions)
     .accessibilityLabel(AppStrings.tr("paste_options.label"))
     .accessibilityValue(
@@ -45,7 +56,6 @@ struct PasteOptionsOverlay: View {
           : "paste_options.active_near_source"
       )
     )
-    .position(overlayPosition)
   }
 
   @ViewBuilder

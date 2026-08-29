@@ -1,3 +1,9 @@
+interface ImportMeta {
+  readonly env: {
+    readonly DEV: boolean;
+  };
+}
+
 interface KawaCADProductInfo {
   name: string;
   version: string;

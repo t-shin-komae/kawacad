@@ -160,6 +160,7 @@ export function PDFExportDialog({
       <section
         className="pdf-export-dialog"
         data-testid={accessibilityIdentifiers.pdfExportDialog}
+        data-component-id={accessibilityIdentifiers.componentPDFDialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby="pdf-export-title"

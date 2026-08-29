@@ -51,19 +51,20 @@ node scripts/capture-comparison-screenshots.mjs
 ```
 
 Generated images are written below `test-results/comparison-screenshots/`, which
-is ignored by Git. Swift runs the screenshot case through SwiftPM and draws its
-`NSHostingView` directly into fixed-size PNG bitmaps. It does not bring an app to
-the foreground, use Screen Capture APIs, or require Screen & System Audio
-Recording permission. Standard controls can therefore use inactive colors; this
-fixture does not verify active-window appearance. The context-menu image uses an
-in-process visual fixture because a native `NSMenu` is a separate WindowServer
-window.
+is ignored by Git. Swift and Tauri instantiate each corresponding toolbar,
+palette, canvas, inspector, summary, or dialog fixture directly in a fixed
+component-sized frame; they do not lay out the whole workspace and crop it.
+The fixture IDs are shared between both frontends and appear in the output file
+names. The capture does not bring an app to the foreground, use Screen Capture
+APIs, or require Screen & System Audio Recording permission. Standard controls
+can therefore use inactive colors; this fixture does not verify active-window
+appearance. The context-menu image uses an in-process visual fixture because a
+native `NSMenu` is a separate WindowServer window.
 
-The representative matrix covers both light and dark themes at compact
-`1024x700`, regular `1280x800`, and wide `1600x900`. It uses fixed fixture data
-and resets the Tauri Core document between viewport states, so generated output
-does not depend on test order or elapsed time. The remaining images retain the
-broader toolbar, inspector, recovery, and output-dialog scenarios.
+The matrix covers light and dark themes for the toolbar, palette, canvas,
+inspector, bottom summary, constraint HUD, context menu, paste overlay, and
+dialogs. Fixture data is fixed and isolated, so generated output does not
+depend on test order or elapsed time.
 
 ## Local UI review
 

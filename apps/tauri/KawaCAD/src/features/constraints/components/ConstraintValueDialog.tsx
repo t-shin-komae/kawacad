@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { parseDecimal } from "@/shared/state/syncedField";
 import { appStrings } from "@/localization";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 import { formatInspectorNumber } from "@/features/inspector/domain/inspectorValueFormatting";
 
 type Value = { fixedMm?: number; fixedDegrees?: number; parameter?: string };
@@ -70,6 +71,7 @@ export function ConstraintValueDialog({
         className={`constraint-value-dialog${floating ? " floating-constraint-value-dialog" : ""}${
           floating && parameters.length ? " has-parameters" : ""
         }`}
+        data-testid={accessibilityIdentifiers.componentConstraintHUD}
         role="dialog"
         aria-modal={floating ? undefined : true}
         aria-label={appStrings.dialog.value.ariaLabel(label)}

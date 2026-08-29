@@ -68,6 +68,7 @@ export function BottomWorkbench({ selectedEntity, layers, constraints, parameter
     <section
       className="bottom-workbench"
       data-testid={accessibilityIdentifiers.statusBottomWorkbench}
+      data-component-id={accessibilityIdentifiers.componentBottomWorkbench}
       aria-label={appStrings.accessibility.summary}
     >
       <SummarySection title={appStrings.workbench.selection} icon="selection">

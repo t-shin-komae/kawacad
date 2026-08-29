@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { PointMm } from "@/features/canvas/domain/cad";
 import { appStrings } from "@/localization";
+import { accessibilityIdentifiers } from "@/shared/accessibility/accessibilityIdentifiers";
 
 export type CanvasContextMenuProps = {
   position: { x: number; y: number; point: PointMm };
@@ -52,6 +53,7 @@ export function CanvasContextMenu({
       <div
         ref={menuRef}
         className="canvas-context-menu"
+        data-testid={accessibilityIdentifiers.componentContextMenu}
         role="menu"
         style={{ left: position.x, top: position.y }}
         onMouseLeave={onDismiss}
@@ -82,6 +84,7 @@ export function CanvasContextMenu({
       <div
         ref={menuRef}
         className="canvas-context-menu"
+        data-testid={accessibilityIdentifiers.componentContextMenu}
         role="menu"
         style={{ left: position.x, top: position.y }}
         onMouseLeave={onDismiss}
@@ -114,6 +117,7 @@ export function CanvasContextMenu({
       <div
         ref={menuRef}
         className="canvas-context-menu"
+        data-testid={accessibilityIdentifiers.componentContextMenu}
         role="menu"
         style={{ left: position.x, top: position.y }}
         onMouseLeave={onDismiss}
@@ -166,6 +170,7 @@ export function CanvasContextMenu({
     <div
       ref={menuRef}
       className="canvas-context-menu"
+      data-testid={accessibilityIdentifiers.componentContextMenu}
       role="menu"
       style={{ left: position.x, top: position.y }}
       onMouseLeave={onDismiss}
