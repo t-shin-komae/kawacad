@@ -11,6 +11,8 @@ import { ConstraintValueDialog } from "@/features/constraints/components/Constra
 import { LayerDeletionDialog } from "@/features/document/components/LayerDeletionDialog";
 import { PasteOptionsOverlay } from "@/features/document/components/PasteOptionsOverlay";
 import { InspectorPanel } from "@/features/inspector/components/InspectorPanel";
+import { InspectorParametersTab } from "@/features/inspector/components/InspectorParametersTab";
+import { initialParametersTabState } from "@/features/inspector/selectors/inspectorFeature";
 import type {
   InspectorLayer,
   InspectorParameter,
@@ -35,6 +37,7 @@ export type ComparisonFixtureName =
   | "canvas-empty"
   | "canvas-geometry"
   | "inspector-selection"
+  | "inspector-parameters-empty"
   | "summary"
   | "constraint-hud"
   | "context-menu"
@@ -313,6 +316,10 @@ function inspectorModel(): InspectorViewModel {
   };
 }
 
+function inspectorParametersEmptyModel(): InspectorViewModel["parameters"] {
+  return { ...inspectorModel().parameters, parameters: [] };
+}
+
 function fixtureRecoveryCandidates() {
   return [
     {
@@ -383,6 +390,17 @@ export function ComparisonFixture({ name }: { name: ComparisonFixtureName }) {
       return (
         <FixtureFrame className="comparison-fixture-inspector" width={520} height={820}>
           <InspectorPanel {...inspectorModel()} />
+        </FixtureFrame>
+      );
+    case "inspector-parameters-empty":
+      return (
+        <FixtureFrame className="comparison-fixture-inspector-parameters" width={520} height={280}>
+          <InspectorParametersTab
+            model={inspectorParametersEmptyModel()}
+            state={initialParametersTabState}
+            updateState={ignore}
+            renderParameterEditor={() => null}
+          />
         </FixtureFrame>
       );
     case "summary":

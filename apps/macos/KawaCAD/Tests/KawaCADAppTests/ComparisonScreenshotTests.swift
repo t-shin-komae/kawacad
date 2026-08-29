@@ -24,6 +24,7 @@ private enum ComponentFixtureKind {
   case toolPalette
   case canvas
   case inspector
+  case inspectorParametersEmpty
   case summary
   case constraintHUD
   case pasteOptions
@@ -151,6 +152,17 @@ private func captureIndependentComponents(_ outputDirectory: URL) throws {
       kind: .inspector,
       size: CGSize(width: 520, height: 820),
       to: outputDirectory.appendingPathComponent("swift-inspector-selection-\(suffix).png"),
+      appearanceName: appearanceName
+    )
+
+    let emptyParametersState = makeScreenshotAppState(
+      documentState: makeDocumentState(name: "比較用ドキュメント")
+    )
+    try renderComponentFixture(
+      emptyParametersState,
+      kind: .inspectorParametersEmpty,
+      size: CGSize(width: 520, height: 280),
+      to: outputDirectory.appendingPathComponent("swift-inspector-parameters-empty-\(suffix).png"),
       appearanceName: appearanceName
     )
 
@@ -777,6 +789,12 @@ private func renderComponentFixture(
     content = AnyView(
       WorkspaceInspector(model: state.inspectorPanelModel, width: size.width)
     )
+  case .inspectorParametersEmpty:
+    content = AnyView(
+      InspectorParametersTab(appState: state.inspectorPanelModel.parameters)
+        .frame(width: size.width, alignment: .topLeading)
+    )
+    renderToFittingSize = true
   case .summary:
     content = AnyView(BottomWorkbench(state: state.bottomWorkbenchState))
   case .constraintHUD:

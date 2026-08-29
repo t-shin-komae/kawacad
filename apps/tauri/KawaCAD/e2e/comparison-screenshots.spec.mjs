@@ -18,6 +18,7 @@ const fixtures = [
   { id: "canvas-empty", width: 800, height: 520, target: "canvas" },
   { id: "canvas-geometry", width: 800, height: 520, target: "canvas" },
   { id: "inspector-selection", width: 520, height: 820, target: "inspector" },
+  { id: "inspector-parameters-empty", width: 520, height: 280, target: "fixture" },
   { id: "summary", width: 1032, height: 84, target: "summary" },
   { id: "constraint-hud", width: 190, height: 46, target: "constraint" },
   { id: "context-menu", width: 120, height: 40, target: "context" },
@@ -75,6 +76,8 @@ function screenshotTarget(page, target) {
       return page.getByTestId("leather.workspace.canvas");
     case "inspector":
       return page.getByTestId("leather.component.inspector");
+    case "fixture":
+      return page.getByTestId("comparison-fixture");
     case "summary":
       return page.getByTestId("leather.status.bottom-workbench");
     case "constraint":
