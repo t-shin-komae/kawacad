@@ -832,6 +832,12 @@ function constraintGuidanceText(tool: Tool, pendingTargetCount: number) {
   }
 }
 
+export function targetHighlightKind(pendingTarget: boolean, hoveredTarget: boolean) {
+  if (pendingTarget) return "pending" as const;
+  if (hoveredTarget) return "hovered" as const;
+  return undefined;
+}
+
 function drawEntity(
   context: CanvasRenderingContext2D,
   entity: RawEntity,
@@ -897,8 +903,9 @@ function drawEntity(
   }
   if (selected) drawEntitySelectionHighlight(context, geometry, width, height, viewport);
   if (highlightedPart && !selected) drawEntityPartHighlight(context, geometry, width, height, viewport);
-  if (pendingTarget || hoveredTarget)
-    drawEntityTargetHighlight(context, geometry, width, height, viewport, hoveredTarget);
+  const targetHighlight = targetHighlightKind(pendingTarget, hoveredTarget);
+  if (targetHighlight)
+    drawEntityTargetHighlight(context, geometry, width, height, viewport, targetHighlight === "hovered");
   if (selected) {
     context.fillStyle = "#fff";
     context.strokeStyle = "#0a84ff";
