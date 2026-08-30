@@ -15,7 +15,7 @@ struct CanvasStatusBar: View {
         StatusItem(symbolName: outputPreviewSummarySymbolName, text: outputPreviewSummaryText)
           .layoutPriority(1)
       }
-      StatusItem(symbolName: "info.circle", text: state.statusMessage)
+      StatusItem(symbolName: "info.circle", text: state.statusMessage, emphasis: true)
         .layoutPriority(1)
       Spacer(minLength: 0)
       Button(action: toggleBottomWorkbench) {
@@ -27,7 +27,7 @@ struct CanvasStatusBar: View {
         )
       }
       .buttonStyle(.borderless)
-      .font(.system(size: 11, weight: .medium))
+      .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
       .foregroundStyle(LeatherColors.secondaryInk)
       .accessibilityIdentifier(AccessibilityIdentifier.statusBottomWorkbench)
     }
@@ -64,13 +64,21 @@ struct CanvasStatusBar: View {
 private struct StatusItem: View {
   let symbolName: String
   let text: String
+  var emphasis = false
 
   var body: some View {
     HStack(spacing: 5) {
       Image(systemName: symbolName)
-        .font(.system(size: 11))
+        .font(
+          .system(
+            size: emphasis
+              ? LeatherDesignMetrics.Typography.body : LeatherDesignMetrics.Typography.label))
       Text(text)
-        .font(.system(size: 11))
+        .font(
+          .system(
+            size: emphasis
+              ? LeatherDesignMetrics.Typography.body : LeatherDesignMetrics.Typography.label)
+        )
         .lineLimit(1)
     }
     .foregroundStyle(LeatherColors.ink)

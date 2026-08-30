@@ -26,7 +26,7 @@ struct AppErrorBanner: View {
 
           if let recoverySuggestion = presentation.recoverySuggestion {
             Text(recoverySuggestion)
-              .font(.system(size: 11))
+              .font(.system(size: LeatherDesignMetrics.Typography.label))
               .foregroundStyle(LeatherColors.secondaryInk)
           }
         }
@@ -38,19 +38,21 @@ struct AppErrorBanner: View {
             detailsExpanded.toggle()
           }
           .buttonStyle(.plain)
-          .font(.system(size: 11, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
+          .leatherControlHeight()
         }
 
         Button(AppStrings.tr("error.banner.dismiss")) {
           onDismiss()
         }
         .buttonStyle(.plain)
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
+        .leatherControlHeight()
       }
 
       if detailsExpanded, let details = presentation.details {
         Text(details)
-          .font(.system(size: 11))
+          .font(.system(size: LeatherDesignMetrics.Typography.label))
           .foregroundStyle(LeatherColors.secondaryInk)
       }
     }

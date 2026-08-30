@@ -22,7 +22,7 @@ struct RecoverySaveFailureBanner: View {
 
           if detailsExpanded {
             Text(banner.details)
-              .font(.system(size: 11))
+              .font(.system(size: LeatherDesignMetrics.Typography.label))
               .foregroundStyle(LeatherColors.secondaryInk)
           }
         }
@@ -33,19 +33,22 @@ struct RecoverySaveFailureBanner: View {
           onRetry()
         }
         .buttonStyle(.plain)
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
+        .leatherControlHeight()
 
         Button(AppStrings.tr("error.banner.details")) {
           detailsExpanded.toggle()
         }
         .buttonStyle(.plain)
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
+        .leatherControlHeight()
 
         Button(AppStrings.tr("error.banner.dismiss")) {
           onDismiss()
         }
         .buttonStyle(.plain)
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
+        .leatherControlHeight()
       }
     }
     .padding(12)

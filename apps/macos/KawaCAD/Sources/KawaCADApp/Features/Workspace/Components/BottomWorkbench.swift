@@ -81,11 +81,11 @@ private struct CompactWorkbenchSection<Content: View>: View {
     VStack(alignment: .leading, spacing: 6) {
       HStack(spacing: 7) {
         Image(systemName: symbolName)
-          .font(.system(size: 11, weight: .semibold))
+          .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .semibold))
           .foregroundStyle(LeatherColors.accent)
           .frame(width: 14)
         Text(title)
-          .font(.system(size: 11, weight: .semibold))
+          .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
           .foregroundStyle(LeatherColors.ink)
         Spacer(minLength: 0)
       }
@@ -113,12 +113,12 @@ private struct CompactWorkbenchLine: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 1) {
       Text(primary)
-        .font(.system(size: 11, weight: .medium))
+        .font(.system(size: LeatherDesignMetrics.Typography.body, weight: .medium))
         .foregroundStyle(LeatherColors.ink)
         .lineLimit(1)
         .truncationMode(.middle)
       Text(secondary)
-        .font(.system(size: 10))
+        .font(.system(size: LeatherDesignMetrics.Typography.label))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .truncationMode(.tail)
@@ -133,10 +133,10 @@ private struct CompactWorkbenchMeta: View {
   var body: some View {
     HStack(spacing: 6) {
       Text(label)
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
       Text(value)
-        .font(.system(size: 10))
+        .font(.system(size: LeatherDesignMetrics.Typography.label))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .truncationMode(.middle)
@@ -152,7 +152,7 @@ private struct CompactWorkbenchConstraintSummary: View {
     HStack(spacing: 8) {
       ConstraintStatusBadge(status: status, compact: true)
       Text(AppStrings.tr("workbench.item_count", count))
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
     }
   }

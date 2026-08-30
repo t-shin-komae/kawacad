@@ -77,7 +77,7 @@ struct OutputDialog: View {
 
           if let disabledReason = state.disabledReason {
             Text(disabledReason)
-              .font(.system(size: 11, weight: .medium))
+              .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .medium))
               .foregroundStyle(LeatherColors.secondaryInk)
               .accessibilityLabel(Text(disabledReason))
           }
@@ -90,11 +90,13 @@ struct OutputDialog: View {
               actions.cancel()
             }
             .buttonStyle(.bordered)
+            .leatherControlHeight()
 
             Button(draft.confirmationTitle) {
               actions.confirm()
             }
             .buttonStyle(.borderedProminent)
+            .leatherControlHeight()
             .disabled(state.disabledReason != nil)
           }
         }
@@ -141,7 +143,7 @@ struct OutputDialog: View {
             ForEach(Array(preparedState.buildResult.warnings.enumerated()), id: \.offset) {
               _, warning in
               Label(warning.message, systemImage: warningSymbolName(for: warning))
-                .font(.system(size: 11))
+                .font(.system(size: LeatherDesignMetrics.Typography.section))
                 .foregroundStyle(LeatherColors.ink)
             }
 

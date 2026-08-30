@@ -119,6 +119,7 @@ struct SelectedMeasurementEditor: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
+        .leatherControlHeight()
         Button(role: .destructive) {
           appState.delete(measurement)
         } label: {
@@ -146,6 +147,7 @@ struct SelectedStitchStartPointEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
     }
   }
 
@@ -200,6 +202,7 @@ struct EntityEditor: View {
         .frame(maxWidth: .infinity)
     }
     .buttonStyle(.bordered)
+    .leatherControlHeight()
   }
 }
 
@@ -238,7 +241,7 @@ struct PartEditor: View {
           ))
       }
       .toggleStyle(.checkbox)
-      .font(.system(size: 10))
+      .font(.system(size: LeatherDesignMetrics.Typography.body))
 
       Stepper(
         AppStrings.tr("inspector.part_quantity", part.quantity),
@@ -248,7 +251,7 @@ struct PartEditor: View {
         ),
         in: 1...999
       )
-      .font(.system(size: 11))
+      .font(.system(size: LeatherDesignMetrics.Typography.body))
 
       SyncedTextField(
         placeholder: AppStrings.tr("inspector.part_name"),
@@ -289,6 +292,7 @@ struct PartEditor: View {
         .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
 
       DetailRow(
         label: AppStrings.tr("inspector.part_derived_members"),
@@ -306,6 +310,7 @@ struct PartEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
 
       HStack(spacing: 8) {
         Button {
@@ -330,6 +335,7 @@ struct PartEditor: View {
         }
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
       .help(AppStrings.tr("inspector.move_part_10mm"))
 
       Button {
@@ -339,6 +345,7 @@ struct PartEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.borderedProminent)
+      .leatherControlHeight()
 
       Button {
         appState.actions.addPartToLibrary(part)
@@ -347,11 +354,12 @@ struct PartEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
 
       Divider()
 
       Text(AppStrings.tr("inspector.part_fixed_help"))
-        .font(.system(size: 10))
+        .font(.system(size: LeatherDesignMetrics.Typography.label))
         .foregroundStyle(LeatherColors.secondaryInk)
 
       Button(role: .destructive) {
@@ -361,6 +369,7 @@ struct PartEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
     }
   }
 
@@ -409,7 +418,7 @@ struct InspectorDisclosureRow<Content: View>: View {
           }
           Spacer(minLength: 8)
           Text(metadata)
-            .font(.system(size: 10, weight: .medium))
+            .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .medium))
             .foregroundStyle(LeatherColors.secondaryInk)
             .multilineTextAlignment(.trailing)
         }
@@ -485,6 +494,7 @@ struct FreeTextEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
     }
   }
 
@@ -530,6 +540,7 @@ struct SelectedConstraintEditor: View {
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.bordered)
+      .leatherControlHeight()
     }
     .onAppear {
       appState.hover(nil)
@@ -571,6 +582,7 @@ struct MultiSelectionSummary: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
+        .leatherControlHeight()
 
         if appState.canConstrainSelectedLineLengthsEqual {
           Button {
@@ -580,6 +592,7 @@ struct MultiSelectionSummary: View {
               .frame(maxWidth: .infinity)
           }
           .buttonStyle(.bordered)
+          .leatherControlHeight()
         }
       }
 
@@ -728,6 +741,7 @@ struct DerivedElementEditor: View {
         }
         .buttonStyle(.bordered)
         .font(.system(size: 12, weight: .semibold))
+        .leatherControlHeight()
       }
     }
   }
@@ -849,6 +863,7 @@ struct EntityGeometryEditor: View {
         }
         .buttonStyle(.bordered)
         .font(.system(size: 12, weight: .semibold))
+        .leatherControlHeight()
         DetailRow(
           label: AppStrings.tr("inspector.end_point"),
           value: "\(format(end.xMM)), \(format(end.yMM))")

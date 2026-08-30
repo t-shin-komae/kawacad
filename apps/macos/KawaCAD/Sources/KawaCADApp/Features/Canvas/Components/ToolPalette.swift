@@ -75,10 +75,10 @@ struct ToolPalette: View {
       HStack {
         VStack(alignment: .leading, spacing: 1) {
           Text(AppStrings.tr("sidebar.tools"))
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: LeatherDesignMetrics.Typography.title, weight: .semibold))
             .foregroundStyle(LeatherColors.ink)
           Text(AppStrings.tr("sidebar.utility_palette"))
-            .font(.system(size: 10))
+            .font(.system(size: LeatherDesignMetrics.Typography.label))
             .foregroundStyle(LeatherColors.secondaryInk)
         }
         Spacer(minLength: 0)
@@ -177,7 +177,7 @@ struct ToolPalette: View {
   private var displayModeSection: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text(AppStrings.tr("sidebar.tool_display_mode"))
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .padding(.horizontal, 2)
@@ -204,7 +204,7 @@ struct ToolPalette: View {
   private var patternLineStyleSection: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text(AppStrings.tr("sidebar.pattern_line_style"))
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .padding(.horizontal, 2)
@@ -240,7 +240,7 @@ struct ToolPalette: View {
   private var roundHoleSection: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text(AppStrings.tr("sidebar.round_hole"))
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .padding(.horizontal, 2)
@@ -297,7 +297,7 @@ struct ToolPalette: View {
   private var activeDetailedToolSection: some View {
     VStack(alignment: .leading, spacing: 6) {
       Text(AppStrings.tr("sidebar.active_detailed_tool"))
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.section, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .padding(.horizontal, 2)

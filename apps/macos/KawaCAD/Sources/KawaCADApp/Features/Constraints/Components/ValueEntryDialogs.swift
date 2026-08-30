@@ -224,7 +224,7 @@ private struct ValueEntryFields: View {
         .onSubmit(actions.commit)
 
         Text(draft.unit)
-          .font(.system(size: 11, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .medium))
           .foregroundStyle(LeatherColors.secondaryInk)
       }
 
@@ -232,22 +232,30 @@ private struct ValueEntryFields: View {
         actions.cancel()
       } label: {
         Image(systemName: "xmark")
-          .frame(width: 18, height: 18)
+          .frame(
+            width: LeatherDesignMetrics.Control.height,
+            height: LeatherDesignMetrics.Control.height
+          )
       }
       .buttonStyle(.borderless)
       .keyboardShortcut(.cancelAction)
       .help(AppStrings.tr("common.cancel"))
+      .accessibilityLabel(AppStrings.tr("common.cancel"))
 
       Button {
         actions.commit()
       } label: {
         Image(systemName: "checkmark")
-          .frame(width: 18, height: 18)
+          .frame(
+            width: LeatherDesignMetrics.Control.height,
+            height: LeatherDesignMetrics.Control.height
+          )
       }
       .buttonStyle(.borderless)
       .keyboardShortcut(.defaultAction)
       .help(AppStrings.tr("common.apply"))
       .foregroundStyle(LeatherColors.accent)
+      .accessibilityLabel(AppStrings.tr("common.apply"))
     }
     .onAppear { isFocused = true }
   }

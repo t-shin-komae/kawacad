@@ -14,7 +14,7 @@ Swift/macOS と Tauri/React の共通 UI を変更するときに参照する、
 | 文字階層 | `LeatherDesignMetrics.Typography` | `--font-size-*` / `--font-weight-*` |
 | 余白 | `LeatherDesignMetrics.Spacing` | `--space-*` |
 | 角丸 | `LeatherDesignMetrics.Radius` | `--control-radius` / `--card-radius` / `--radius-pill` |
-| 操作部品の高さ | `LeatherDesignMetrics.Control` | `--control-height` / `--control-compact-height` |
+| 操作部品の高さ | `LeatherDesignMetrics.Control` | `--control-height` / `--control-compact-height` / `--control-inspector-tab-height` |
 | アイコン寸法 | `LeatherDesignMetrics.Icon` | `--icon-size-*` |
 | 境界 | `LeatherDesignMetrics.Border` | `--border-width-*` と `--panel-stroke` |
 | 影 | OS の標準表示または feature の View | `--panel-shadow` と feature 固有の影 |
@@ -42,8 +42,12 @@ Swift側の共通表示部品は `apps/macos/KawaCAD/Sources/KawaCADApp/Shared/C
 | `Radius.control = 6` | `--control-radius: 6px` | ボタン、入力、選択 UI |
 | `Radius.card = 8` | `--card-radius: 8px` | カード、浮動パネル |
 | `Typography.body = 13` | `--font-size-body: 13px` | 通常 UI の本文 |
+| `Typography.title = 15` | `--font-size-title: 15px` | ダイアログタイトル、主要見出し |
+| `Typography.section = 12` | `--font-size-section: 12px` | 区画見出し、操作ラベル |
 | `Typography.label = 11` | `--font-size-label: 11px` | 補助ラベル |
 | `Icon.toolbar = 22` | `--icon-size-toolbar: 22px` | 上部ツールバーのアイコン枠 |
 | `Icon.palette = 15` | `--icon-size-palette: 15px` | ツールパレットのアイコン |
 | `Control.height = 28` | `--control-height: 28px` | 標準操作部品 |
+| `Control.inspectorTabHeight = 30` | `--control-inspector-tab-height: 30px` | インスペクタのタブ |
+| `Control.paletteToolHeight = 38` | `--palette-tool-height: 38px` | ツールパレットのツールセル |
 | `Border.hairline = 1` | `--border-width-hairline: 1px` | 通常の境界線 |

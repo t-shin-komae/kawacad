@@ -182,7 +182,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       switch editor {
       case .color:
         Text(AppStrings.tr("inspector.custom_color"))
-          .font(.system(size: 10, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .medium))
           .foregroundStyle(LeatherColors.secondaryInk)
         SyncedTextField(
           placeholder: "#RRGGBB",
@@ -201,7 +201,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
         )
       case .strokeWidth:
         Text(AppStrings.tr("inspector.custom_line_width"))
-          .font(.system(size: 10, weight: .medium))
+          .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .medium))
           .foregroundStyle(LeatherColors.secondaryInk)
         SyncedTextField(
           placeholder: AppStrings.tr("inspector.stroke_width_placeholder"),
@@ -213,7 +213,7 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
           onValidate: CommonFieldValidators.optionalDecimalSyntax
         )
         Text(AppStrings.tr("common.unit_mm"))
-          .font(.system(size: 10))
+          .font(.system(size: LeatherDesignMetrics.Typography.label))
           .foregroundStyle(LeatherColors.secondaryInk)
       }
       Spacer(minLength: 0)
@@ -222,10 +222,11 @@ struct StyleEditorRow<AccessoryButtons: View, DeleteButton: View>: View {
       } label: {
         Image(systemName: "xmark")
           .font(.system(size: 10, weight: .semibold))
-          .frame(width: 18, height: 18)
+          .frame(width: 24, height: 24)
       }
       .buttonStyle(.borderless)
       .foregroundStyle(LeatherColors.secondaryInk)
+      .accessibilityLabel(AppStrings.tr("inspector.close_custom_input"))
       .help(AppStrings.tr("inspector.close_custom_input"))
     }
     .padding(.horizontal, 8)
@@ -388,7 +389,7 @@ struct LayerStylePickerField<Preview: View, Control: View>: View {
         .leatherControlHeight()
 
       Text(value)
-        .font(.system(size: 10, weight: .medium))
+        .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .medium))
         .foregroundStyle(LeatherColors.secondaryInk)
         .lineLimit(1)
         .minimumScaleFactor(0.85)
@@ -476,7 +477,7 @@ struct ParameterEditor: View {
               onCommitResult: commitNameResult
             )
             Text(parameterUsageText)
-              .font(.system(size: 10))
+              .font(.system(size: LeatherDesignMetrics.Typography.label))
               .foregroundStyle(LeatherColors.secondaryInk)
               .lineLimit(1)
           }
@@ -592,7 +593,7 @@ struct WrapChips: View {
   var body: some View {
     FlowLayout(items: items) { item in
       Text(item)
-        .font(.system(size: 10, weight: .semibold))
+        .font(.system(size: LeatherDesignMetrics.Typography.label, weight: .semibold))
         .foregroundStyle(LeatherColors.secondaryInk)
         .padding(.horizontal, 8)
         .frame(height: 24)

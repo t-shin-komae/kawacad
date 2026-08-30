@@ -49,7 +49,7 @@ struct InspectorSelectionTab: View {
                   Text(constraint.kind)
                     .font(.system(size: 12, weight: .semibold))
                   Text(constraint.status.displayName)
-                    .font(.system(size: 10))
+                    .font(.system(size: LeatherDesignMetrics.Typography.label))
                     .foregroundStyle(LeatherColors.secondaryInk)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -82,7 +82,7 @@ struct InspectorSelectionTab: View {
               .buttonStyle(.plain)
               if !annotation.visible {
                 Text(AppStrings.tr("inspector.hidden"))
-                  .font(.system(size: 10))
+                  .font(.system(size: LeatherDesignMetrics.Typography.label))
                   .foregroundStyle(LeatherColors.secondaryInk)
               }
               Button {
@@ -109,7 +109,7 @@ struct InspectorSelectionTab: View {
               }
               .buttonStyle(.plain)
               Text(AppStrings.tr("tool.free_text"))
-                .font(.system(size: 10))
+                .font(.system(size: LeatherDesignMetrics.Typography.label))
                 .foregroundStyle(LeatherColors.secondaryInk)
             }
           }
