@@ -232,7 +232,10 @@ private struct ValueEntryFields: View {
         actions.cancel()
       } label: {
         Image(systemName: "xmark")
-          .frame(width: 24, height: 24)
+          .frame(
+            width: LeatherDesignMetrics.Control.height,
+            height: LeatherDesignMetrics.Control.height
+          )
       }
       .buttonStyle(.borderless)
       .keyboardShortcut(.cancelAction)
@@ -243,12 +246,16 @@ private struct ValueEntryFields: View {
         actions.commit()
       } label: {
         Image(systemName: "checkmark")
-          .frame(width: 18, height: 18)
+          .frame(
+            width: LeatherDesignMetrics.Control.height,
+            height: LeatherDesignMetrics.Control.height
+          )
       }
       .buttonStyle(.borderless)
       .keyboardShortcut(.defaultAction)
       .help(AppStrings.tr("common.apply"))
       .foregroundStyle(LeatherColors.accent)
+      .accessibilityLabel(AppStrings.tr("common.apply"))
     }
     .onAppear { isFocused = true }
   }

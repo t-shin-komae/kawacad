@@ -153,7 +153,11 @@ describe("visual style contracts", () => {
 
   it("#77 keeps bottom summary and status bar dimensions and typography", () => {
     expect(rule(".statusbar")).toMatch(/min-height: 36px;[\s\S]*font-size: 11px/u);
-    expect(rule(".statusbar-message")).toContain("font-size: var(--font-size-body)");
+    expect(rule(".statusbar-auxiliary")).toMatch(/flex: 0 1 auto;[\s\S]*min-width: 0;[\s\S]*overflow: hidden/u);
+    expect(rule(".statusbar-message")).toMatch(
+      /flex: 1 0 auto;[\s\S]*min-width: 0;[\s\S]*overflow: hidden;[\s\S]*font-size: var\(--font-size-body\)/u,
+    );
+    expect(rule(".statusbar-summary-toggle")).toContain("flex: 0 0 auto");
     expect(rule(".bottom-workbench")).toMatch(/min-height: 84px;[\s\S]*padding: 8px 12px/u);
     expect(rule(".bottom-workbench-section h2")).toMatch(
       /font-size: var\(--font-size-section\);[\s\S]*font-weight: 600/u,
@@ -169,6 +173,9 @@ describe("visual style contracts", () => {
     expect(rule(".document-warning-banner button")).toContain("min-height: var(--control-height)");
     expect(rule(".document-warning-banner button")).toContain("font-size: var(--font-size-section)");
     expect(rule(".palette-options h2,\n.inspector h2")).toContain("font-size: var(--font-size-label)");
+    expect(rule(".floating-value-entry-row button")).toMatch(
+      /width: var\(--control-height\);[\s\S]*height: var\(--control-height\);[\s\S]*min-height: var\(--control-height\)/u,
+    );
   });
 
   it("#78 keeps minimum window and panel dimensions", () => {

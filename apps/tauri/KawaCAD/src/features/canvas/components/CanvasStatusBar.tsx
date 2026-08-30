@@ -29,7 +29,7 @@ export function CanvasStatusBar({
 }: Props) {
   return (
     <footer className="statusbar" data-testid={accessibilityIdentifiers.workspaceStatusBar}>
-      <span>
+      <span className="statusbar-auxiliary">
         <span className="statusbar-item">
           <CircleDot size={12} strokeWidth={1.8} aria-hidden="true" />
           {appStrings.app.statusGeometry(visibleEntityCount)}
@@ -48,7 +48,7 @@ export function CanvasStatusBar({
         </span>
       </span>
       {viewMode === "outputPreview" && (
-        <span>
+        <span className="statusbar-auxiliary">
           <FileOutput size={12} strokeWidth={1.8} aria-hidden="true" />{" "}
           {outputWarningCount
             ? appStrings.app.outputWarnings(outputWarningCount)
