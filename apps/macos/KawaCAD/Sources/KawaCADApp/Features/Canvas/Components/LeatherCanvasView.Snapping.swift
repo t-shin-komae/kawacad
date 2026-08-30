@@ -206,14 +206,23 @@ extension LeatherCanvasView {
       return
     }
     let point = canvasPoint(for: snapIndicatorPoint, in: pageRect)
-    NSColor(calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 0.82).setStroke()
+    CanvasVisualHierarchy.snapStroke.setStroke()
     let path = NSBezierPath()
-    path.move(to: CGPoint(x: point.x - 7, y: point.y))
-    path.line(to: CGPoint(x: point.x + 7, y: point.y))
-    path.move(to: CGPoint(x: point.x, y: point.y - 7))
-    path.line(to: CGPoint(x: point.x, y: point.y + 7))
-    path.lineWidth = 1.5
+    path.move(to: CGPoint(x: point.x - CanvasVisualHierarchy.snapCrossSize, y: point.y))
+    path.line(to: CGPoint(x: point.x + CanvasVisualHierarchy.snapCrossSize, y: point.y))
+    path.move(to: CGPoint(x: point.x, y: point.y - CanvasVisualHierarchy.snapCrossSize))
+    path.line(to: CGPoint(x: point.x, y: point.y + CanvasVisualHierarchy.snapCrossSize))
+    path.lineWidth = CanvasVisualHierarchy.snapLineWidth
     path.stroke()
+    let ring = NSBezierPath(
+      ovalIn: CGRect(
+        x: point.x - CanvasVisualHierarchy.snapRingRadius,
+        y: point.y - CanvasVisualHierarchy.snapRingRadius,
+        width: CanvasVisualHierarchy.snapRingRadius * 2,
+        height: CanvasVisualHierarchy.snapRingRadius * 2
+      ))
+    ring.lineWidth = CanvasVisualHierarchy.snapLineWidth
+    ring.stroke()
   }
 
   func drawSnapSuppressionBadge(at modelPoint: ModelPoint, in pageRect: CGRect) {

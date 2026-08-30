@@ -375,14 +375,32 @@ final class LeatherCanvasView: NSView {
   func drawSelectedPartOrigin(in pageRect: CGRect) {
     guard !isOutputPreviewMode, let selectedPartOrigin else { return }
     let point = coordinateSpace(in: pageRect).canvasPoint(for: selectedPartOrigin)
-    let radius: CGFloat = isSettingPartOrigin ? 8 : 6
+    let radius =
+      isSettingPartOrigin
+      ? CanvasVisualHierarchy.originRadius
+      : CanvasVisualHierarchy.originRadius - 2
+    let marker = NSBezierPath(
+      ovalIn: CGRect(
+        x: point.x - radius,
+        y: point.y - radius,
+        width: radius * 2,
+        height: radius * 2
+      ))
+    CanvasVisualHierarchy.originFill.setFill()
+    marker.fill()
+    CanvasVisualHierarchy.originStroke.setStroke()
+    marker.lineWidth = CanvasVisualHierarchy.originLineWidth
+    marker.stroke()
     let path = NSBezierPath()
     path.move(to: CGPoint(x: point.x - radius, y: point.y))
     path.line(to: CGPoint(x: point.x + radius, y: point.y))
     path.move(to: CGPoint(x: point.x, y: point.y - radius))
     path.line(to: CGPoint(x: point.x, y: point.y + radius))
-    path.lineWidth = isSettingPartOrigin ? 2.5 : 2
-    NSColor.systemOrange.setStroke()
+    path.lineWidth =
+      isSettingPartOrigin
+      ? CanvasVisualHierarchy.originLineWidth + 1
+      : CanvasVisualHierarchy.originLineWidth
+    CanvasVisualHierarchy.originStroke.setStroke()
     path.stroke()
 
     let ring = NSBezierPath(
@@ -392,7 +410,8 @@ final class LeatherCanvasView: NSView {
         width: radius,
         height: radius
       ))
-    ring.lineWidth = 1.5
+    CanvasVisualHierarchy.originStroke.setStroke()
+    ring.lineWidth = CanvasVisualHierarchy.originLineWidth
     ring.stroke()
   }
 

@@ -178,14 +178,20 @@ extension LeatherCanvasView {
     let mode = CanvasMarqueeSelectionMode(startPoint: startPoint, currentPoint: currentPoint)
     let color: NSColor =
       mode == .contained
-      ? NSColor(calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 1)
-      : NSColor(calibratedRed: 0.18, green: 0.62, blue: 0.37, alpha: 1)
-    color.withAlphaComponent(0.12).setFill()
+      ? CanvasVisualHierarchy.marqueeContainedStroke
+      : CanvasVisualHierarchy.marqueeCrossingStroke
+    (mode == .contained
+      ? CanvasVisualHierarchy.marqueeContainedFill
+      : CanvasVisualHierarchy.marqueeCrossingFill).setFill()
     color.withAlphaComponent(0.85).setStroke()
     let path = NSBezierPath(rect: rect)
-    path.lineWidth = 1
+    path.lineWidth = CanvasVisualHierarchy.marqueeLineWidth
     if mode == .crossing {
-      path.setLineDash([5, 3], count: 2, phase: 0)
+      path.setLineDash(
+        CanvasVisualHierarchy.marqueeCrossingDash,
+        count: CanvasVisualHierarchy.marqueeCrossingDash.count,
+        phase: 0
+      )
     }
     path.fill()
     path.stroke()
@@ -206,8 +212,12 @@ extension LeatherCanvasView {
   func drawMarqueeCandidateHighlight(around rect: CGRect, color: NSColor) {
     color.withAlphaComponent(0.58).setStroke()
     let path = NSBezierPath(roundedRect: rect.insetBy(dx: -3, dy: -3), xRadius: 6, yRadius: 6)
-    path.lineWidth = 2
-    path.setLineDash([3, 2], count: 2, phase: 0)
+    path.lineWidth = CanvasVisualHierarchy.marqueeCandidateLineWidth
+    path.setLineDash(
+      CanvasVisualHierarchy.marqueeCandidateDash,
+      count: CanvasVisualHierarchy.marqueeCandidateDash.count,
+      phase: 0
+    )
     path.stroke()
   }
 
@@ -616,8 +626,8 @@ extension LeatherCanvasView {
   }
 
   func drawEntityConstraintTarget(_ entity: CanvasEntity, in pageRect: CGRect) {
-    let stroke = NSColor(calibratedRed: 0.125, green: 0.290, blue: 0.675, alpha: 0.95)
-    let fill = NSColor(calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 0.14)
+    let stroke = CanvasVisualHierarchy.targetPendingStroke
+    let fill = CanvasVisualHierarchy.targetPendingFill
     let rect = hitRect(for: entity, in: pageRect).insetBy(dx: -5, dy: -5)
     let path: NSBezierPath
     switch entity.geometry {
@@ -628,7 +638,12 @@ extension LeatherCanvasView {
     }
     fill.setFill()
     stroke.setStroke()
-    path.lineWidth = 3.0
+    path.lineWidth = CanvasVisualHierarchy.targetPendingLineWidth
+    path.setLineDash(
+      CanvasVisualHierarchy.targetPendingDash,
+      count: CanvasVisualHierarchy.targetPendingDash.count,
+      phase: 0
+    )
     path.fill()
     path.stroke()
   }
@@ -636,13 +651,20 @@ extension LeatherCanvasView {
   func drawConstraintTarget(_ target: CanvasSelectionTarget, selected: Bool, in pageRect: CGRect) {
     let stroke =
       selected
-      ? NSColor(calibratedRed: 0.125, green: 0.290, blue: 0.675, alpha: 0.95)
-      : NSColor(calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 0.92)
+      ? CanvasVisualHierarchy.targetPendingStroke
+      : CanvasVisualHierarchy.targetHoveredStroke
     let fill =
       selected
-      ? NSColor(calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 0.14)
-      : NSColor(calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 0.10)
-    let lineWidth: CGFloat = selected ? 3.0 : 2.0
+      ? CanvasVisualHierarchy.targetPendingFill
+      : CanvasVisualHierarchy.targetHoveredFill
+    let lineWidth =
+      selected
+      ? CanvasVisualHierarchy.targetPendingLineWidth
+      : CanvasVisualHierarchy.targetHoveredLineWidth
+    let dash =
+      selected
+      ? CanvasVisualHierarchy.targetPendingDash
+      : CanvasVisualHierarchy.targetHoveredDash
 
     if target.isLineTarget,
       let line =
@@ -658,6 +680,7 @@ extension LeatherCanvasView {
       path.line(to: canvasPoint(for: line.end, in: pageRect))
       path.lineWidth = lineWidth
       path.lineCapStyle = .round
+      path.setLineDash(dash, count: dash.count, phase: 0)
       stroke.setStroke()
       path.stroke()
       return
@@ -665,11 +688,18 @@ extension LeatherCanvasView {
 
     if let point = target.point {
       let canvasPoint = canvasPoint(for: point, in: pageRect)
-      let rect = CGRect(x: canvasPoint.x - 8, y: canvasPoint.y - 8, width: 16, height: 16)
+      let diameter = CanvasVisualHierarchy.targetFeedbackRadius * 2
+      let rect = CGRect(
+        x: canvasPoint.x - CanvasVisualHierarchy.targetFeedbackRadius,
+        y: canvasPoint.y - CanvasVisualHierarchy.targetFeedbackRadius,
+        width: diameter,
+        height: diameter
+      )
       fill.setFill()
       stroke.setStroke()
       let path = NSBezierPath(ovalIn: rect)
       path.lineWidth = lineWidth
+      path.setLineDash(dash, count: dash.count, phase: 0)
       path.fill()
       path.stroke()
       return
@@ -689,6 +719,7 @@ extension LeatherCanvasView {
       path = NSBezierPath(roundedRect: rect, xRadius: 8, yRadius: 8)
     }
     path.lineWidth = lineWidth
+    path.setLineDash(dash, count: dash.count, phase: 0)
     path.fill()
     path.stroke()
   }
@@ -698,7 +729,7 @@ extension LeatherCanvasView {
       string: constraintGuidanceText(),
       attributes: [
         .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
-        .foregroundColor: NSColor(calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 1.0),
+        .foregroundColor: CanvasVisualHierarchy.targetHoveredStroke,
       ]
     )
     let textSize = text.size()
@@ -709,7 +740,7 @@ extension LeatherCanvasView {
       height: textSize.height + 7
     )
     NSColor(calibratedWhite: 1.0, alpha: 0.92).setFill()
-    NSColor(calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 0.58).setStroke()
+    CanvasVisualHierarchy.targetHoveredStroke.withAlphaComponent(0.58).setStroke()
     let path = NSBezierPath(roundedRect: rect, xRadius: 6, yRadius: 6)
     path.lineWidth = 1
     path.fill()

@@ -17,6 +17,7 @@ const fixtures = [
   { id: "tool-palette-detailed", width: 240, height: 800, target: "palette" },
   { id: "canvas-empty", width: 800, height: 520, target: "canvas" },
   { id: "canvas-geometry", width: 800, height: 520, target: "canvas" },
+  { id: "canvas-feedback", width: 800, height: 520, target: "canvas" },
   { id: "inspector-selection", width: 520, height: 820, target: "inspector" },
   { id: "inspector-parameters-empty", width: 520, height: 280, target: "fixture" },
   { id: "inspector-parameters", width: 520, height: 620, target: "fixture" },

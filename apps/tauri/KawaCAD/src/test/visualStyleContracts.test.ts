@@ -96,6 +96,13 @@ describe("visual style contracts", () => {
     expect(canvasRendering).toContain('coordinateStroke: "rgba(10,132,255,.72)"');
     expect(canvasRendering).toContain("selectionLineWidth: 3");
     expect(canvasRendering).toContain("selectionDash: [5, 3]");
+    expect(canvasRendering).toContain("targetPendingDash: [7, 4]");
+    expect(canvasRendering).toContain("targetHoveredDash: [2, 3]");
+    expect(canvasRendering).toContain("snapRingRadius: 4");
+    expect(canvasRendering).toContain("marqueeCrossingDash: [6, 4]");
+    expect(canvasRendering).toContain("canvasVisualHierarchy.originStroke");
+    expect(canvasRendering).toContain("canvasVisualHierarchy.targetHoveredStroke");
+    expect(canvasRendering).toContain("canvasVisualHierarchy.snapStroke");
     expect(canvasRendering).not.toContain('context.strokeStyle = "#b6b6ba"');
   });
 

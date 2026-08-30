@@ -18,10 +18,43 @@ enum CanvasVisualHierarchy {
   static let coordinateStroke = NSColor(
     calibratedRed: 0.039, green: 0.518, blue: 1.0, alpha: 0.72)
   static let coordinateLineWidth: CGFloat = 1.4
+  static let originStroke = NSColor(
+    calibratedRed: 1.0, green: 0.624, blue: 0.039, alpha: 0.92)
+  static let originFill = NSColor(
+    calibratedRed: 1.0, green: 0.624, blue: 0.039, alpha: 0.16)
+  static let originLineWidth: CGFloat = 1.5
+  static let originRadius: CGFloat = 8
+  static let originCrossSize: CGFloat = 12
   static let selectionStroke = NSColor(
     calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 0.28)
   static let selectionLineWidth: CGFloat = 3.0
   static let selectionDash: [CGFloat] = [5, 3]
+  static let targetPendingStroke = NSColor(
+    calibratedRed: 0.125, green: 0.290, blue: 0.675, alpha: 0.95)
+  static let targetPendingFill = NSColor(
+    calibratedRed: 0.231, green: 0.510, blue: 0.964, alpha: 0.14)
+  static let targetPendingLineWidth: CGFloat = 3.0
+  static let targetPendingDash: [CGFloat] = [7, 4]
+  static let targetHoveredStroke = NSColor(
+    calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 0.92)
+  static let targetHoveredFill = NSColor(
+    calibratedRed: 0.016, green: 0.506, blue: 0.455, alpha: 0.10)
+  static let targetHoveredLineWidth: CGFloat = 2.0
+  static let targetHoveredDash: [CGFloat] = [2, 3]
+  static let targetFeedbackRadius: CGFloat = 8
+  static let snapStroke = targetHoveredStroke
+  static let snapLineWidth: CGFloat = 1.5
+  static let snapCrossSize: CGFloat = 8
+  static let snapRingRadius: CGFloat = 4
+  static let marqueeContainedStroke = NSColor(calibratedRed: 0.039, green: 0.518, blue: 1, alpha: 1)
+  static let marqueeContainedFill = marqueeContainedStroke.withAlphaComponent(0.12)
+  static let marqueeCrossingStroke = NSColor(
+    calibratedRed: 0.204, green: 0.780, blue: 0.349, alpha: 1)
+  static let marqueeCrossingFill = marqueeCrossingStroke.withAlphaComponent(0.12)
+  static let marqueeLineWidth: CGFloat = 1.5
+  static let marqueeCrossingDash: [CGFloat] = [6, 4]
+  static let marqueeCandidateDash: [CGFloat] = [4, 3]
+  static let marqueeCandidateLineWidth: CGFloat = 2
 }
 
 /// Rendering responsibilities extracted from the input-oriented canvas view.
