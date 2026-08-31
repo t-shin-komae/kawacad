@@ -106,9 +106,34 @@ export const canvasVisualHierarchy = {
   a4ReferenceLineWidth: 0.8,
   coordinateStroke: "rgba(10,132,255,.72)",
   coordinateLineWidth: 1.4,
+  originStroke: "rgba(255,159,10,.92)",
+  originFill: "rgba(255,159,10,.16)",
+  originLineWidth: 1.5,
+  originRadius: 8,
+  originCrossSize: 12,
   selectionStroke: "rgba(59,130,246,.28)",
   selectionLineWidth: 3,
   selectionDash: [5, 3],
+  targetPendingStroke: "rgba(32,74,179,.95)",
+  targetPendingFill: "rgba(59,130,246,.14)",
+  targetPendingLineWidth: 3,
+  targetPendingDash: [7, 4],
+  targetHoveredStroke: "rgba(4,129,116,.92)",
+  targetHoveredFill: "rgba(4,129,116,.10)",
+  targetHoveredLineWidth: 2,
+  targetHoveredDash: [2, 3],
+  targetFeedbackRadius: 8,
+  snapStroke: "rgba(4,129,116,.92)",
+  snapLineWidth: 1.5,
+  snapCrossSize: 8,
+  snapRingRadius: 4,
+  marqueeContainedStroke: "#0a84ff",
+  marqueeContainedFill: "rgba(10,132,255,.12)",
+  marqueeCrossingStroke: "#34c759",
+  marqueeCrossingFill: "rgba(52,199,89,.12)",
+  marqueeLineWidth: 1.5,
+  marqueeCrossingDash: [6, 4],
+  marqueeCandidateDash: [4, 3],
 } as const;
 
 export function drawCanvasFrame(options: CanvasRenderOptions) {
@@ -556,14 +581,15 @@ function drawSelectionMarquee(
   const screenCurrent = screenPoint(current, width, height, viewport);
   const rect = normalizedScreenRect(screenStart, screenCurrent);
   const ids = new Set(selectionInRect(entities, start, current, crossing));
+  const stroke = crossing ? canvasVisualHierarchy.marqueeCrossingStroke : canvasVisualHierarchy.marqueeContainedStroke;
   context.save();
-  context.fillStyle = crossing ? "rgba(52,199,89,.12)" : "rgba(10,132,255,.12)";
-  context.strokeStyle = crossing ? "#34c759" : "#0a84ff";
-  context.lineWidth = 1.5;
-  context.setLineDash(crossing ? [6, 4] : []);
+  context.fillStyle = crossing ? canvasVisualHierarchy.marqueeCrossingFill : canvasVisualHierarchy.marqueeContainedFill;
+  context.strokeStyle = stroke;
+  context.lineWidth = canvasVisualHierarchy.marqueeLineWidth;
+  context.setLineDash(crossing ? canvasVisualHierarchy.marqueeCrossingDash : []);
   context.fillRect(rect.x, rect.y, rect.width, rect.height);
   context.strokeRect(rect.x, rect.y, rect.width, rect.height);
-  context.setLineDash([4, 3]);
+  context.setLineDash(canvasVisualHierarchy.marqueeCandidateDash);
   for (const entity of entities) {
     if (!ids.has(entity.id)) continue;
     const bounds = geometryScreenBounds(entity, width, height, viewport);
@@ -578,7 +604,7 @@ function drawSelectionMarquee(
       : appStrings.status.marqueeFeedback("contained", ids.size),
     rect.x,
     Math.max(6, rect.y - 25),
-    crossing ? "#34c759" : "#0a84ff",
+    stroke,
   );
   context.restore();
 }
@@ -636,11 +662,11 @@ function drawPendingTargetFeedback(
     return;
   const screen = screenPoint(point, width, height, viewport);
   context.save();
-  context.strokeStyle = "#048174";
-  context.lineWidth = 2;
-  context.setLineDash([]);
+  context.strokeStyle = canvasVisualHierarchy.targetHoveredStroke;
+  context.lineWidth = canvasVisualHierarchy.targetHoveredLineWidth;
+  context.setLineDash(canvasVisualHierarchy.targetHoveredDash);
   context.beginPath();
-  context.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
+  context.arc(screen.x, screen.y, canvasVisualHierarchy.targetFeedbackRadius, 0, Math.PI * 2);
   context.stroke();
   context.setLineDash([]);
   drawOutlinedCanvasBadge(
@@ -648,7 +674,7 @@ function drawPendingTargetFeedback(
     constraintGuidanceText(tool, pendingTargetEntityIds.size),
     screen.x + 12,
     screen.y + 12,
-    "#048174",
+    canvasVisualHierarchy.targetHoveredStroke,
   );
   context.restore();
 }
@@ -690,13 +716,17 @@ function drawSnapFeedback(
   }
   if (!enabled) return;
   context.save();
-  context.strokeStyle = "#048174";
-  context.lineWidth = 1.5;
+  context.strokeStyle = canvasVisualHierarchy.snapStroke;
+  context.lineWidth = canvasVisualHierarchy.snapLineWidth;
+  context.lineCap = "round";
   context.beginPath();
-  context.moveTo(screen.x - 8, screen.y);
-  context.lineTo(screen.x + 8, screen.y);
-  context.moveTo(screen.x, screen.y - 8);
-  context.lineTo(screen.x, screen.y + 8);
+  context.moveTo(screen.x - canvasVisualHierarchy.snapCrossSize, screen.y);
+  context.lineTo(screen.x + canvasVisualHierarchy.snapCrossSize, screen.y);
+  context.moveTo(screen.x, screen.y - canvasVisualHierarchy.snapCrossSize);
+  context.lineTo(screen.x, screen.y + canvasVisualHierarchy.snapCrossSize);
+  context.stroke();
+  context.beginPath();
+  context.arc(screen.x, screen.y, canvasVisualHierarchy.snapRingRadius, 0, Math.PI * 2);
   context.stroke();
   context.restore();
 }
@@ -802,6 +832,12 @@ function constraintGuidanceText(tool: Tool, pendingTargetCount: number) {
   }
 }
 
+export function targetHighlightKind(pendingTarget: boolean, hoveredTarget: boolean) {
+  if (pendingTarget) return "pending" as const;
+  if (hoveredTarget) return "hovered" as const;
+  return undefined;
+}
+
 function drawEntity(
   context: CanvasRenderingContext2D,
   entity: RawEntity,
@@ -867,8 +903,9 @@ function drawEntity(
   }
   if (selected) drawEntitySelectionHighlight(context, geometry, width, height, viewport);
   if (highlightedPart && !selected) drawEntityPartHighlight(context, geometry, width, height, viewport);
-  if (pendingTarget || hoveredTarget)
-    drawEntityTargetHighlight(context, geometry, width, height, viewport, hoveredTarget);
+  const targetHighlight = targetHighlightKind(pendingTarget, hoveredTarget);
+  if (targetHighlight)
+    drawEntityTargetHighlight(context, geometry, width, height, viewport, targetHighlight === "hovered");
   if (selected) {
     context.fillStyle = "#fff";
     context.strokeStyle = "#0a84ff";
@@ -925,13 +962,17 @@ function drawEntityTargetHighlight(
 ) {
   const bounds = geometryScreenBounds(geometry, width, height, viewport);
   if (!bounds) return;
-  const stroke = hovered ? "rgba(4,129,116,.92)" : "rgba(32,74,179,.95)";
-  const fill = hovered ? "rgba(4,129,116,.10)" : "rgba(59,130,246,.14)";
+  const stroke = hovered ? canvasVisualHierarchy.targetHoveredStroke : canvasVisualHierarchy.targetPendingStroke;
+  const fill = hovered ? canvasVisualHierarchy.targetHoveredFill : canvasVisualHierarchy.targetPendingFill;
+  const lineWidth = hovered
+    ? canvasVisualHierarchy.targetHoveredLineWidth
+    : canvasVisualHierarchy.targetPendingLineWidth;
+  const dash = hovered ? canvasVisualHierarchy.targetHoveredDash : canvasVisualHierarchy.targetPendingDash;
   context.save();
   context.strokeStyle = stroke;
   context.fillStyle = fill;
-  context.lineWidth = hovered ? 2 : 3;
-  context.setLineDash([]);
+  context.lineWidth = lineWidth;
+  context.setLineDash(dash);
   context.beginPath();
   if (geometry.tag === "lineSegment" || geometry.tag === "centerLine") {
     const start = screenPoint(geometry.start, width, height, viewport);
@@ -1077,18 +1118,18 @@ function drawPartOrigin(
 ) {
   const point = screenPoint(pointMm, width, height, viewport);
   context.save();
-  context.strokeStyle = "#0a84ff";
-  context.fillStyle = "rgba(10,132,255,.16)";
-  context.lineWidth = 1.5;
+  context.strokeStyle = canvasVisualHierarchy.originStroke;
+  context.fillStyle = canvasVisualHierarchy.originFill;
+  context.lineWidth = canvasVisualHierarchy.originLineWidth;
   context.beginPath();
-  context.arc(point.x, point.y, 8, 0, Math.PI * 2);
+  context.arc(point.x, point.y, canvasVisualHierarchy.originRadius, 0, Math.PI * 2);
   context.fill();
   context.stroke();
   context.beginPath();
-  context.moveTo(point.x - 12, point.y);
-  context.lineTo(point.x + 12, point.y);
-  context.moveTo(point.x, point.y - 12);
-  context.lineTo(point.x, point.y + 12);
+  context.moveTo(point.x - canvasVisualHierarchy.originCrossSize, point.y);
+  context.lineTo(point.x + canvasVisualHierarchy.originCrossSize, point.y);
+  context.moveTo(point.x, point.y - canvasVisualHierarchy.originCrossSize);
+  context.lineTo(point.x, point.y + canvasVisualHierarchy.originCrossSize);
   context.stroke();
   context.restore();
 }

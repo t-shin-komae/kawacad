@@ -9,4 +9,10 @@ func canvas_visual_hierarchy_keeps_primary_geometry_prominent() {
   #expect(CanvasVisualHierarchy.a4PrimaryLineWidth < CanvasVisualHierarchy.coordinateLineWidth)
   #expect(CanvasVisualHierarchy.coordinateLineWidth < CanvasVisualHierarchy.selectionLineWidth)
   #expect(CanvasVisualHierarchy.selectionDash == [5, 3])
+  #expect(
+    CanvasVisualHierarchy.targetHoveredLineWidth < CanvasVisualHierarchy.targetPendingLineWidth
+  )
+  #expect(CanvasVisualHierarchy.targetPendingDash != CanvasVisualHierarchy.targetHoveredDash)
+  #expect(CanvasVisualHierarchy.snapRingRadius > 0)
+  #expect(!CanvasVisualHierarchy.marqueeCrossingDash.isEmpty)
 }

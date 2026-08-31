@@ -50,6 +50,7 @@ export type ComparisonFixtureName =
   | "tool-palette-detailed"
   | "canvas-empty"
   | "canvas-geometry"
+  | "canvas-feedback"
   | "inspector-selection"
   | "inspector-parameters-empty"
   | "inspector-parameters"
@@ -84,6 +85,17 @@ const fixtureLine: RawEntity = {
     lineSegment: {
       start: { xMm: -80, yMm: -25 },
       end: { xMm: 80, yMm: 25 },
+    },
+  },
+};
+const fixtureFeedbackLine: RawEntity = {
+  id: "entity:fixture-feedback-line",
+  layerId: fixtureLayer.id,
+  styleId: "style:fixture",
+  kind: {
+    lineSegment: {
+      start: { xMm: -55, yMm: 45 },
+      end: { xMm: 55, yMm: 45 },
     },
   },
 };
@@ -226,6 +238,23 @@ const canvasInteractionModel: CanvasInteractionModel = {
   hasHoveredCanvasTarget: false,
   snapSuppressed: false,
   toolName: appStrings.toolNames.select,
+};
+const canvasFeedbackRenderModel: CanvasRenderModel = {
+  ...canvasRenderModel,
+  entities: [fixtureLine, fixtureFeedbackLine],
+  selectedIds: new Set(),
+  highlightedEntityIds: new Set(),
+  tool: "segmentLength",
+  cursorPoint: { xMm: 38, yMm: 45 },
+  hoveredTargetEntityId: fixtureFeedbackLine.id,
+  pendingTargetEntityIds: new Set([fixtureLine.id]),
+  snapActive: true,
+};
+const canvasFeedbackInteractionModel: CanvasInteractionModel = {
+  ...canvasInteractionModel,
+  pendingTargetCount: 1,
+  hasHoveredCanvasTarget: true,
+  toolName: appStrings.toolNames.segmentLength,
 };
 
 const canvasEvents: CanvasEventHandlers = {
@@ -442,6 +471,16 @@ export function ComparisonFixture({ name }: { name: ComparisonFixtureName }) {
       return (
         <FixtureFrame className="comparison-fixture-canvas" width={800} height={520}>
           <CADCanvas renderModel={canvasRenderModel} interactionModel={canvasInteractionModel} events={canvasEvents} />
+        </FixtureFrame>
+      );
+    case "canvas-feedback":
+      return (
+        <FixtureFrame className="comparison-fixture-canvas" width={800} height={520}>
+          <CADCanvas
+            renderModel={canvasFeedbackRenderModel}
+            interactionModel={canvasFeedbackInteractionModel}
+            events={canvasEvents}
+          />
         </FixtureFrame>
       );
     case "inspector-selection":

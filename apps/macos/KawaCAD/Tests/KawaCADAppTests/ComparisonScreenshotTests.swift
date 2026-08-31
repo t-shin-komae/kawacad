@@ -23,6 +23,7 @@ private enum ComponentFixtureKind {
   case toolbar(CADToolbarDensity)
   case toolPalette
   case canvas
+  case canvasFeedback
   case inspector
   case inspectorParametersEmpty
   case inspectorParameters
@@ -145,6 +146,52 @@ private func captureIndependentComponents(_ outputDirectory: URL) throws {
       size: CGSize(width: 800, height: 520),
       to: outputDirectory.appendingPathComponent("swift-canvas-geometry-\(suffix).png"),
       appearanceName: appearanceName
+    )
+
+    let feedbackLine = lineEntity(
+      id: "entity:comparison-feedback-line",
+      label: "ホバー線",
+      start: ModelPoint(xMM: -55, yMM: 45),
+      end: ModelPoint(xMM: 55, yMM: 45)
+    )
+    let feedbackState = makeScreenshotAppState(
+      documentState: makeDocumentState(
+        name: "比較用ドキュメント",
+        entities: [line, feedbackLine]
+      )
+    )
+    feedbackState.canvasPresentation.setSelectedTool(.segmentLength)
+    feedbackState.canvasPresentation.setPendingConstraintTargets([
+      CanvasSelectionTarget(
+        entityID: line.id,
+        entityLabel: "線分",
+        entityKind: .lineSegment,
+        controlPoint: nil,
+        point: nil
+      )
+    ])
+    try renderComponentFixture(
+      feedbackState,
+      kind: .canvasFeedback,
+      size: CGSize(width: 800, height: 520),
+      to: outputDirectory.appendingPathComponent("swift-canvas-feedback-\(suffix).png"),
+      appearanceName: appearanceName,
+      configureCanvas: { canvas in
+        canvas.interactionController.updateHover(
+          target: CanvasSelectionTarget(
+            entityID: feedbackLine.id,
+            entityLabel: "ホバー線",
+            entityKind: .lineSegment,
+            controlPoint: nil,
+            point: nil
+          ),
+          at: CGPoint(x: 508, y: 132)
+        )
+        canvas.interactionController.updateSnap(
+          indicator: ModelPoint(xMM: 38, yMM: 45),
+          suppression: nil
+        )
+      }
     )
 
     let inspectorState = makeScreenshotAppState(
@@ -914,7 +961,8 @@ private func renderComponentFixture(
   kind: ComponentFixtureKind,
   size: CGSize,
   to outputURL: URL,
-  appearanceName: NSAppearance.Name = .aqua
+  appearanceName: NSAppearance.Name = .aqua,
+  configureCanvas: ((LeatherCanvasView) -> Void)? = nil
 ) throws {
   let workspace = workspaceProps(appState)
   let state = workspace.workspaceViewState
@@ -1060,12 +1108,27 @@ private func renderComponentFixture(
       )
       .background(LeatherColors.canvas)
     )
+  case .canvasFeedback:
+    content = AnyView(
+      CADCanvas(
+        renderInput: state.canvasRenderInput,
+        interactionInput: state.canvasInteractionInput,
+        actions: actions.canvasActionGroups
+      )
+      .background(LeatherColors.canvas)
+    )
   }
 
   if renderToFittingSize {
     try renderFittedScreenshot(content, to: outputURL, appearanceName: appearanceName)
   } else {
-    try renderScreenshot(content, size: size, to: outputURL, appearanceName: appearanceName)
+    try renderScreenshot(
+      content,
+      size: size,
+      to: outputURL,
+      appearanceName: appearanceName,
+      configureCanvas: configureCanvas
+    )
   }
 }
 
@@ -1074,7 +1137,8 @@ private func renderScreenshot<Content: View>(
   _ content: Content,
   size: CGSize,
   to outputURL: URL,
-  appearanceName: NSAppearance.Name = .aqua
+  appearanceName: NSAppearance.Name = .aqua,
+  configureCanvas: ((LeatherCanvasView) -> Void)? = nil
 ) throws {
   let (window, hostingView) = try makeScreenshotWindow(
     content,
@@ -1084,9 +1148,26 @@ private func renderScreenshot<Content: View>(
   defer { closeScreenshotWindow(window) }
 
   settle(hostingView)
+  if let configureCanvas, let canvas = descendantCanvas(in: hostingView) {
+    configureCanvas(canvas)
+    canvas.needsDisplay = true
+  }
   syncInlineTextEditor(in: hostingView)
   settle(hostingView)
   try capture(view: hostingView, logicalSize: size, to: outputURL)
+}
+
+@MainActor
+private func descendantCanvas(in view: NSView) -> LeatherCanvasView? {
+  if let canvas = view as? LeatherCanvasView {
+    return canvas
+  }
+  for subview in view.subviews {
+    if let canvas = descendantCanvas(in: subview) {
+      return canvas
+    }
+  }
+  return nil
 }
 
 @MainActor

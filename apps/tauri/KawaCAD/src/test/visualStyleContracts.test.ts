@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { targetHighlightKind } from "@/features/canvas/selectors/canvasRendering";
 
 declare global {
   interface ImportMeta {
@@ -96,7 +97,21 @@ describe("visual style contracts", () => {
     expect(canvasRendering).toContain('coordinateStroke: "rgba(10,132,255,.72)"');
     expect(canvasRendering).toContain("selectionLineWidth: 3");
     expect(canvasRendering).toContain("selectionDash: [5, 3]");
+    expect(canvasRendering).toContain("targetPendingDash: [7, 4]");
+    expect(canvasRendering).toContain("targetHoveredDash: [2, 3]");
+    expect(canvasRendering).toContain("snapRingRadius: 4");
+    expect(canvasRendering).toContain("marqueeCrossingDash: [6, 4]");
+    expect(canvasRendering).toContain("canvasVisualHierarchy.originStroke");
+    expect(canvasRendering).toContain("canvasVisualHierarchy.targetHoveredStroke");
+    expect(canvasRendering).toContain("canvasVisualHierarchy.snapStroke");
     expect(canvasRendering).not.toContain('context.strokeStyle = "#b6b6ba"');
+  });
+
+  it("#164 keeps pending target styling when the same target is hovered", () => {
+    expect(targetHighlightKind(true, true)).toBe("pending");
+    expect(targetHighlightKind(true, false)).toBe("pending");
+    expect(targetHighlightKind(false, true)).toBe("hovered");
+    expect(targetHighlightKind(false, false)).toBeUndefined();
   });
 
   it("#71 keeps the inline editor minimum width, padding, focus border, and background", () => {
