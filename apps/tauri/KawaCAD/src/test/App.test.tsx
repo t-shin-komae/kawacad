@@ -1905,6 +1905,15 @@ describe("React workspace shortcuts", () => {
     fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "openLicenses" }));
     expect(await screen.findByText("last notice", { exact: true })).toBeInTheDocument();
   });
+  it("opens the requested help section from native menu actions", async () => {
+    render(<App />);
+    await screen.findByText("ツールを選択して作図してください。");
+
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "openToolGuide" }));
+    expect(await screen.findByRole("heading", { name: "ツールとショートカット" })).toBeInTheDocument();
+    fireEvent(window, new CustomEvent("kawa-cad-menu", { detail: "openCanvasGuide" }));
+    expect(await screen.findByRole("heading", { name: "スナップとキャンバス操作" })).toBeInTheDocument();
+  });
   it("reloads the saved document through the adapter command", async () => {
     const reloadedState = {
       ...state,

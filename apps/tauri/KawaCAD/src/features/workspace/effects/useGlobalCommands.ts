@@ -4,6 +4,7 @@ import type { Tool } from "@/features/canvas/domain/canvasDomainModels";
 import type { MenuAction } from "@/app/domain/nativeMenuTypes";
 import type { AppActionSurface } from "@/app/actions/useAppActions";
 import type { OutputDestination } from "@/features/output/state/useOutputPresentation";
+import type { HelpSection } from "@/features/help/state/useHelpPresentation";
 
 function isTextEditingElement(element: EventTarget | null) {
   return (
@@ -58,6 +59,7 @@ type GlobalPresentationCommandsInput = {
   setOutputOrientation: (landscape: boolean) => void;
   compactDrawer: "tools" | "inspector" | undefined;
   setLicensesOpen: Dispatch<SetStateAction<boolean>>;
+  setHelpSection: Dispatch<SetStateAction<HelpSection | undefined>>;
   setInspectorOpen: Dispatch<SetStateAction<boolean>>;
   setToolPaletteVisible: Dispatch<SetStateAction<boolean>>;
   setBottomWorkbenchVisible: Dispatch<SetStateAction<boolean>>;
@@ -173,6 +175,7 @@ function useGlobalMenuCommands(input: GlobalMenuCommandsInput) {
     setOutputDestination,
     setOutputOrientation,
     setLicensesOpen,
+    setHelpSection,
     setInspectorOpen,
     setToolPaletteVisible,
     setBottomWorkbenchVisible,
@@ -221,6 +224,9 @@ function useGlobalMenuCommands(input: GlobalMenuCommandsInput) {
       else if (action === "toggleA4Orientation") setOutputOrientation(!a4Landscape);
       else if (action === "addLayer") documentActions.addLayer();
       else if (action === "openLicenses") setLicensesOpen(true);
+      else if (action === "openHelp") setHelpSection("overview");
+      else if (action === "openToolGuide") setHelpSection("tools");
+      else if (action === "openCanvasGuide") setHelpSection("canvas");
       else canvasActions.selectTool(action);
     };
     window.addEventListener("kawa-cad-menu", onMenu);

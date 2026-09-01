@@ -65,6 +65,7 @@ import { useDocumentPresentation } from "@/features/document/state/useDocumentPr
 import { useInspectorPresentation } from "@/features/inspector/state/useInspectorPresentation";
 import { useOutputPresentation } from "@/features/output/state/useOutputPresentation";
 import { useLicensesPresentation } from "@/features/licenses/state/useLicensesPresentation";
+import { useHelpPresentation } from "@/features/help/state/useHelpPresentation";
 import { useAppActions } from "@/app/actions/useAppActions";
 import { useDocumentLifecycleComposition } from "@/app/actions/useDocumentLifecycleComposition";
 import { RecoveryChooserDialog } from "@/features/recovery/components/RecoveryChooserDialog";
@@ -76,10 +77,12 @@ import { useGlobalInteractionCancellation } from "@/features/workspace/effects/u
 import { useCompactInspectorActions } from "@/features/workspace/effects/useCompactInspectorActions";
 import { useRecoveryEffects } from "@/features/recovery/effects/useRecoveryEffects";
 import { OpenSourceLicensesDialog } from "@/features/licenses/components/OpenSourceLicensesDialog";
+import { HelpDialog } from "@/features/help/components/HelpDialog";
 import { OutputDialog } from "@/features/output/components/OutputDialog";
 
 export function MainWindowView() {
   const { licensesOpen, setLicensesOpen } = useLicensesPresentation();
+  const { helpSection, setHelpSection } = useHelpPresentation();
   const { outputDestination, setOutputDestination } = useOutputPresentation();
   const {
     inspectorTab,
@@ -458,6 +461,7 @@ export function MainWindowView() {
       setOutputDestination,
       setOutputOrientation,
       setLicensesOpen,
+      setHelpSection,
       setInspectorOpen,
       setToolPaletteVisible,
       setBottomWorkbenchVisible,
@@ -733,6 +737,7 @@ export function MainWindowView() {
           />
         )}
         {licensesOpen && <OpenSourceLicensesDialog onClose={() => setLicensesOpen(false)} />}
+        {helpSection && <HelpDialog initialSection={helpSection} onClose={() => setHelpSection(undefined)} />}
         {outputDestination && (
           <OutputDialog
             documentName={documentDisplayName(state?.persistence.path).replace(/\.kawa$/i, "")}

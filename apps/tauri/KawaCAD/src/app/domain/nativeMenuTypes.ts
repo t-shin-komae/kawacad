@@ -29,4 +29,7 @@ export type MenuAction =
   | "reload"
   | "smoothArcTangencies"
   | "toggleA4Orientation"
-  | "openLicenses";
+  | "openLicenses"
+  | "openHelp"
+  | "openToolGuide"
+  | "openCanvasGuide";

@@ -12,6 +12,9 @@ describe("cross-platform native menu", () => {
     expect(crossPlatformMenuActions).toContain("tangent");
     expect(crossPlatformMenuActions).toContain("outputPreview");
     expect(crossPlatformMenuActions).toContain("openLicenses");
+    expect(crossPlatformMenuActions).toContain("openHelp");
+    expect(crossPlatformMenuActions).toContain("openToolGuide");
+    expect(crossPlatformMenuActions).toContain("openCanvasGuide");
     expect(crossPlatformMenuActions).toContain("exportPDF");
     expect(crossPlatformMenuActions).toContain("cancelCurrentInteraction");
     expect(crossPlatformMenuActions).not.toContain("print");
@@ -64,6 +67,7 @@ describe("cross-platform native menu", () => {
       "offset",
       "fillet",
     ]);
+    expect(nativeMenuStructure.help).toEqual(["openHelp", "openToolGuide", "openCanvasGuide"]);
   });
 
   it("uses the shared product metadata for the About item", () => {
