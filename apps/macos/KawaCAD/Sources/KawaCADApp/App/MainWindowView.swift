@@ -200,7 +200,8 @@ struct WorkspaceView: View {
           canvasRenderInput: state.canvasRenderInput,
           canvasInteractionInput: state.canvasInteractionInput,
           constraintEntryHUDState: state.constraintEntryHUDState,
-          pasteOptionsPresentation: state.pasteOptionsPresentation
+          pasteOptionsPresentation: state.pasteOptionsPresentation,
+          topBannerVisible: state.recoveryBanner != nil || state.errorPresentation != nil
         ),
         actions: WorkspaceCanvasSurfaceActions(
           canvasActionGroups: actions.canvasActionGroups,
